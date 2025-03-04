@@ -1,4 +1,3 @@
-
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { JobCalendar } from "@/components/dashboard/JobCalendar";
