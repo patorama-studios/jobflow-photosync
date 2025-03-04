@@ -156,7 +156,7 @@ const Login = () => {
           
           {showVerificationAlert && (
             <div className="px-6">
-              <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200">
+              <Alert variant="default" className="mb-4 bg-amber-50 border-amber-200">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 <AlertTitle className="text-amber-800">Email verification required</AlertTitle>
                 <AlertDescription className="text-amber-700">
