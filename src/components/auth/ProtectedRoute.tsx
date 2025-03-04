@@ -8,11 +8,10 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   if (isLoading) {
-    // Show a better loading spinner
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <span className="ml-2 text-lg font-medium">Loading your dashboard...</span>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+        <span className="text-lg font-medium">Loading your dashboard...</span>
       </div>
     );
   }
@@ -22,5 +21,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // User is authenticated and loaded, render the protected content
   return <>{children}</>;
 };

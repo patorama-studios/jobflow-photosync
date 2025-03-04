@@ -6,9 +6,6 @@ import {
   Calendar, 
   Users, 
   Settings, 
-  Image, 
-  FileText, 
-  DollarSign,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -43,6 +40,11 @@ export function SidebarLayout({ children }: SidebarProps) {
 
   const toggleSidebar = () => setCollapsed(!collapsed);
   const toggleMobileSidebar = () => setMobileOpen(!mobileOpen);
+
+  // Helper function to determine if a link is active
+  const isActiveLink = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -83,7 +85,7 @@ export function SidebarLayout({ children }: SidebarProps) {
                 className={cn(
                   "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  location.pathname === link.path 
+                  isActiveLink(link.path) 
                     ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                     : "text-sidebar-foreground"
                 )}
@@ -145,7 +147,7 @@ export function SidebarLayout({ children }: SidebarProps) {
                     className={cn(
                       "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      location.pathname === link.path 
+                      isActiveLink(link.path) 
                         ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                         : "text-sidebar-foreground"
                     )}

@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Verify from './pages/Verify';
+import Learning from './pages/Learning';
 
 function App() {
   return (
@@ -30,37 +31,36 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Redirect /dashboard/* to /dashboard for now */}
-              <Route path="/dashboard/*" element={
-                <Navigate to="/dashboard" replace />
-              } />
-              
-              {/* Placeholder routes for new sections */}
               <Route path="/calendar" element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              
               <Route path="/orders" element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              
               <Route path="/customers" element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              
               <Route path="/production" element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } />
+              
               <Route path="/learning" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Learning />
                 </ProtectedRoute>
               } />
+              
               <Route path="/settings" element={
                 <ProtectedRoute>
                   <Dashboard />
