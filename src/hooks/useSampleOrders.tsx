@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { addDays } from 'date-fns';
 
@@ -25,6 +24,9 @@ export type Order = {
   internalNotes?: string;
   mediaUploaded?: boolean;
   mediaLinks?: string[];
+  // Adding new fields for Calendar integration
+  drivingTimeMin?: number;
+  previousLocation?: string;
 };
 
 export const useSampleOrders = () => {
@@ -61,7 +63,9 @@ export const useSampleOrders = () => {
         customerNotes: "Customer prefers shots with natural lighting. Property will be staged by 9:30 AM.",
         internalNotes: "This is a VIP client, ensure all shots are perfect. Previous order had issues with bathroom lighting.",
         mediaUploaded: true,
-        mediaLinks: ['/images/sample1.jpg', '/images/sample2.jpg']
+        mediaLinks: ['/images/sample1.jpg', '/images/sample2.jpg'],
+        drivingTimeMin: 25,
+        previousLocation: "Office"
       },
       {
         id: 2,
@@ -213,7 +217,19 @@ export const useSampleOrders = () => {
       }
     ];
     
-    setOrders(sampleOrders);
+    // Add drivingTimeMin and previousLocation to all other orders
+    const updatedOrders = sampleOrders.map((order, index) => {
+      if (index > 0) {
+        return {
+          ...order,
+          drivingTimeMin: 15 + Math.floor(Math.random() * 30), // Random driving time between 15-45 mins
+          previousLocation: index === 0 ? "Office" : sampleOrders[index - 1].address
+        };
+      }
+      return order;
+    });
+    
+    setOrders(updatedOrders);
   }, []);
   
   return { orders };
