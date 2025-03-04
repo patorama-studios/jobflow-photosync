@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { isToday, isThisWeek, parseISO } from 'date-fns';
 import { OrderTable } from './OrderTable';
 import { OrderFilter } from './OrderFilter';
@@ -12,6 +12,35 @@ export const OrdersView: React.FC = () => {
   const { orders } = useSampleOrders();
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // Only recompute when orders change, not on every render
+  const { todayOrders, thisWeekOrders, filteredRemainingOrders } = useMemo(() => {
+    // Filter orders by date
+    const today = orders.filter(order => isToday(parseISO(order.scheduledDate)));
+    
+    const thisWeek = orders.filter(order => 
+      isThisWeek(parseISO(order.scheduledDate)) && 
+      !isToday(parseISO(order.scheduledDate))
+    );
+
+    // Filter remaining orders by status
+    const remaining = orders.filter(order => 
+      !isToday(parseISO(order.scheduledDate)) && 
+      !isThisWeek(parseISO(order.scheduledDate))
+    );
+
+    const filtered = remaining.filter(order => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'outstanding') return order.status !== 'completed';
+      return order.status === statusFilter;
+    });
+
+    return {
+      todayOrders: today,
+      thisWeekOrders: thisWeek,
+      filteredRemainingOrders: filtered
+    };
+  }, [orders, statusFilter]);
 
   if (showCreateForm) {
     return (
@@ -26,26 +55,6 @@ export const OrdersView: React.FC = () => {
       </div>
     );
   }
-
-  // Filter orders by date
-  const todayOrders = orders.filter(order => isToday(parseISO(order.scheduledDate)));
-  
-  const thisWeekOrders = orders.filter(order => 
-    isThisWeek(parseISO(order.scheduledDate)) && 
-    !isToday(parseISO(order.scheduledDate))
-  );
-
-  // Filter remaining orders by status
-  const remainingOrders = orders.filter(order => 
-    !isToday(parseISO(order.scheduledDate)) && 
-    !isThisWeek(parseISO(order.scheduledDate))
-  );
-
-  const filteredRemainingOrders = remainingOrders.filter(order => {
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'outstanding') return order.status !== 'completed';
-    return order.status === statusFilter;
-  });
 
   return (
     <div className="space-y-6">

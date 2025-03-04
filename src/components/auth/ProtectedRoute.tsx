@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
   const location = useLocation();
+  const [longLoadingDetected, setLongLoadingDetected] = useState(false);
 
   // Add logging to help debug the issue
   useEffect(() => {
@@ -18,9 +19,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const timeoutId = setTimeout(() => {
       if (isLoading) {
         console.warn('Auth loading timeout exceeded - may be stuck in loading state');
-        // You can add additional logic here if needed
+        setLongLoadingDetected(true);
       }
-    }, 5000); // 5 second timeout
+    }, 3000); // Reduced from 5 seconds to 3 seconds for faster feedback
 
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
@@ -30,7 +31,19 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
         <span className="text-lg font-medium">Loading your dashboard...</span>
-        <span className="text-sm text-muted-foreground mt-2">This is taking longer than expected...</span>
+        {longLoadingDetected && (
+          <div className="mt-4 max-w-md text-center">
+            <span className="text-sm text-muted-foreground">This is taking longer than expected. You may refresh the page if this continues.</span>
+            <div className="mt-2 bg-muted rounded-lg p-2 text-xs text-left">
+              <p>Possible solutions:</p>
+              <ul className="list-disc pl-4 mt-1">
+                <li>Check your internet connection</li>
+                <li>Clear browser cache</li>
+                <li>Try logging in again</li>
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
