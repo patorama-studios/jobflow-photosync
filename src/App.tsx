@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Verify from './pages/Verify';
 import Learning from './pages/Learning';
+import Calendar from './pages/Calendar';
 
 function App() {
   return (
@@ -33,7 +34,7 @@ function App() {
               
               <Route path="/calendar" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Calendar />
                 </ProtectedRoute>
               } />
               
