@@ -1,4 +1,4 @@
-<lov-codelov-code>
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -176,4 +176,3 @@ export function SidebarLayout({ children }: SidebarProps) {
     </div>
   );
 }
-</lov-code>
