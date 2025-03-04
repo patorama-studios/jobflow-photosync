@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { Apple, Mail, Github, Laptop } from "lucide-react";
+import { Apple, Mail, Github, Laptop, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +31,19 @@ const Login = () => {
         password,
       });
 
-      if (error) throw error;
-      toast({
-        title: "Successfully signed in",
-        description: "Welcome back!",
-      });
-      navigate("/dashboard");
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          setShowVerificationAlert(true);
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Successfully signed in",
+          description: "Welcome back!",
+        });
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       toast({
         title: "Error signing in",
@@ -50,17 +60,20 @@ const Login = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
       if (error) throw error;
+      
+      setShowVerificationAlert(true);
       toast({
         title: "Sign up successful",
         description: "Please check your email for verification instructions.",
@@ -73,6 +86,44 @@ const Login = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setResendingEmail(true);
+    
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Verification email sent",
+        description: "Please check your inbox for the verification link",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error sending verification email",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setResendingEmail(false);
     }
   };
 
@@ -102,6 +153,26 @@ const Login = () => {
             <CardTitle className="text-2xl font-bold">Patorama Studios</CardTitle>
             <CardDescription>Sign in to access your account</CardDescription>
           </CardHeader>
+          
+          {showVerificationAlert && (
+            <div className="px-6">
+              <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <AlertTitle className="text-amber-800">Email verification required</AlertTitle>
+                <AlertDescription className="text-amber-700">
+                  Please check your email for a verification link. 
+                  <Button 
+                    variant="link" 
+                    onClick={resendVerificationEmail}
+                    disabled={resendingEmail}
+                    className="text-amber-600 p-0 h-auto font-semibold"
+                  >
+                    {resendingEmail ? "Sending..." : "Resend verification email"}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
           
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
