@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -48,6 +47,8 @@ const formSchema = z.object({
   photographer: z.string().optional(),
   photographerPayoutRate: z.number().optional(),
   notes: z.string().optional(),
+  customerNotes: z.string().optional(),
+  internalNotes: z.string().optional(),
   package: z.string().min(1, { message: "Please select a package" }),
   customFields: z.record(z.string(), z.any()).optional(),
 });
@@ -83,6 +84,8 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
       propertyType: "",
       squareFeet: "",
       notes: "",
+      customerNotes: "",
+      internalNotes: "",
       package: "standard",
       photographerPayoutRate: 100,
     },
@@ -171,7 +174,7 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
                   {step === 1 && "Location & Client Information"}
                   {step === 2 && "Property Details"}
                   {step === 3 && "Scheduling & Photographer"}
-                  {step === 4 && "Additional Details"}
+                  {step === 4 && "Additional Details & Notes"}
                 </h3>
                 <div className="text-sm text-muted-foreground">
                   Step {step} of 4
@@ -720,6 +723,48 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
                       ))}
                     </div>
                   )}
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">Order Notes</h4>
+                  
+                  <FormField
+                    control={form.control}
+                    name="customerNotes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Customer Notes (Visible to Customer)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Notes that will be shared with the customer"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="internalNotes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Internal Notes (Staff Only)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Notes for internal use only, not visible to customers"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <Separator />

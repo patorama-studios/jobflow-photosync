@@ -21,6 +21,10 @@ export type Order = {
     description: string;
   }>;
   customFields?: Record<string, any>;
+  customerNotes?: string;
+  internalNotes?: string;
+  mediaUploaded?: boolean;
+  mediaLinks?: string[];
 };
 
 export const useSampleOrders = () => {
@@ -53,7 +57,11 @@ export const useSampleOrders = () => {
           specialInstructions: "Focus on kitchen and master bathroom",
           accessCode: "1234",
           lockboxLocation: "Front door"
-        }
+        },
+        customerNotes: "Customer prefers shots with natural lighting. Property will be staged by 9:30 AM.",
+        internalNotes: "This is a VIP client, ensure all shots are perfect. Previous order had issues with bathroom lighting.",
+        mediaUploaded: true,
+        mediaLinks: ['/images/sample1.jpg', '/images/sample2.jpg']
       },
       {
         id: 2,
@@ -67,7 +75,9 @@ export const useSampleOrders = () => {
         scheduledDate: addDays(new Date(), 1).toISOString(),
         scheduledTime: "2:00 PM",
         squareFeet: 2500,
-        status: "scheduled"
+        status: "scheduled",
+        customerNotes: "Focus on the open layout and natural light. Avoid showing the storage area.",
+        internalNotes: "Client is very particular about angles. Check previous orders for reference."
       },
       {
         id: 3,
@@ -84,7 +94,8 @@ export const useSampleOrders = () => {
         status: "scheduled",
         customFields: {
           specialInstructions: "Staged home, no editing needed"
-        }
+        },
+        customerNotes: "This is a luxury property, emphasize the view and high-end finishes."
       },
       {
         id: 4,
@@ -105,7 +116,8 @@ export const useSampleOrders = () => {
             time: "10:00 AM",
             description: "Twilight shots"
           }
-        ]
+        ],
+        customerNotes: "First time working with this photographer, please review shots before finalizing."
       },
       {
         id: 5,
@@ -119,7 +131,9 @@ export const useSampleOrders = () => {
         scheduledDate: addDays(new Date(), -5).toISOString(),
         scheduledTime: "3:30 PM",
         squareFeet: 1600,
-        status: "completed"
+        status: "completed",
+        mediaUploaded: true,
+        mediaLinks: ['/images/sample3.jpg', '/images/sample4.jpg']
       }
     ];
     
