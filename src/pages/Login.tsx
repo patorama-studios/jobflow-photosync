@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { activateUser } = useAuth();
+  const { activateUser, sendVerificationEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -22,6 +23,7 @@ const Login = () => {
   const [showVerificationAlert, setShowVerificationAlert] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [activatingUser, setActivatingUser] = useState(false);
+  const [sendingMagicLink, setSendingMagicLink] = useState(false);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +78,10 @@ const Login = () => {
       if (error) throw error;
       
       setShowVerificationAlert(true);
+      
+      // Send a custom verification email
+      await sendVerificationEmail(email);
+      
       toast({
         title: "Sign up successful",
         description: "Please check your email for verification instructions.",
@@ -104,26 +110,7 @@ const Login = () => {
     setResendingEmail(true);
     
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Verification email sent",
-        description: "Please check your inbox for the verification link",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error sending verification email",
-        description: error.message,
-        variant: "destructive",
-      });
+      await sendVerificationEmail(email);
     } finally {
       setResendingEmail(false);
     }
@@ -182,6 +169,43 @@ const Login = () => {
       });
     } finally {
       setActivatingUser(false);
+    }
+  };
+
+  const sendMagicLink = async () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSendingMagicLink(true);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Magic link sent",
+        description: "Check your email for a link to sign in",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error sending magic link",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMagicLink(false);
     }
   };
 
@@ -262,6 +286,17 @@ const Login = () => {
                   
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign In with Email"}
+                  </Button>
+                  
+                  {/* Magic link button */}
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={sendMagicLink}
+                    disabled={sendingMagicLink}
+                  >
+                    {sendingMagicLink ? "Sending magic link..." : "Sign in with Magic Link"}
                   </Button>
                   
                   {/* Development helper button */}
