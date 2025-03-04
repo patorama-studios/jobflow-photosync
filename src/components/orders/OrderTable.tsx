@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { format, isToday, isThisWeek } from 'date-fns';
+import { format } from 'date-fns';
 import { Order } from '@/hooks/useSampleOrders';
 import { Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +34,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-lg font-medium">{title} ({orders.length})</h3>
+      {title && <h3 className="text-lg font-medium">{title} ({orders.length})</h3>}
+      
       {orders.length === 0 ? (
         <div className="bg-muted/30 p-4 rounded-md text-center">
           <p className="text-muted-foreground">No orders found</p>
