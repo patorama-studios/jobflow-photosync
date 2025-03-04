@@ -11,6 +11,8 @@ import Client from "./pages/Client";
 import Learning from "./pages/Learning";
 import NotFound from "./pages/NotFound";
 
+import { CalendarPage } from "@/components/dashboard/CalendarPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -23,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/client" element={<Client />} />
             <Route path="/learning" element={<Learning />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
