@@ -13,6 +13,7 @@ import NotFound from './pages/NotFound';
 import Verify from './pages/Verify';
 import Learning from './pages/Learning';
 import Calendar from './pages/Calendar';
+import Orders from './pages/Orders';
 
 function App() {
   return (
@@ -40,7 +41,7 @@ function App() {
               
               <Route path="/orders" element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Orders />
                 </ProtectedRoute>
               } />
               
