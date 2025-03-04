@@ -1,51 +1,63 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { 
   Calendar as CalendarComponent, 
   CalendarProps 
 } from '@/components/ui/calendar';
-import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
+import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, parseISO } from 'date-fns';
 import { 
   ChevronLeft, 
   ChevronRight, 
   Users, 
   CalendarDays, 
   Calendar as CalendarIcon, 
-  ClockIcon
+  ClockIcon,
+  Car
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-
-// Sample data for photographers and jobs
-const PHOTOGRAPHERS = [
-  { id: 1, name: "Alex Johnson", color: "#4f46e5" },
-  { id: 2, name: "Maria Garcia", color: "#0ea5e9" },
-  { id: 3, name: "Wei Chen", color: "#10b981" },
-  { id: 4, name: "Priya Patel", color: "#f59e0b" },
-  { id: 5, name: "Thomas Wilson", color: "#ec4899" },
-];
-
-const JOBS = [
-  { id: 1, title: "Wedding Shoot", photographer: 1, date: new Date(2023, 6, 12), client: "Smith Family" },
-  { id: 2, title: "Corporate Headshots", photographer: 2, date: new Date(2023, 6, 15), client: "Acme Inc." },
-  { id: 3, title: "Product Photography", photographer: 3, date: new Date(2023, 6, 18), client: "TechGadgets" },
-  { id: 4, title: "Family Portraits", photographer: 4, date: new Date(2023, 6, 20), client: "Johnson Family" },
-  { id: 5, title: "Fashion Catalog", photographer: 5, date: new Date(2023, 6, 25), client: "StyleBoutique" },
-  { id: 6, title: "Real Estate Photos", photographer: 1, date: new Date(2023, 6, 28), client: "Dream Homes" },
-];
+import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ViewMode = 'month' | 'week' | 'day';
+
+// Sample photographer starting locations (would come from settings in a real app)
+const PHOTOGRAPHER_STARTING_LOCATIONS = {
+  1: { address: "123 Main St, Seattle, WA", lat: 47.6062, lng: -122.3321 },
+  2: { address: "456 Pine Ave, Bellevue, WA", lat: 47.6101, lng: -122.2015 },
+  3: { address: "789 Oak Blvd, Kirkland, WA", lat: 47.6769, lng: -122.2060 },
+  4: { address: "321 Elm St, Redmond, WA", lat: 47.6740, lng: -122.1215 },
+  5: { address: "654 Cedar Rd, Renton, WA", lat: 47.4829, lng: -122.2171 },
+};
+
+// Function to calculate driving time between two locations
+const calculateDrivingTime = (startLat, startLng, endLat, endLng) => {
+  // In a real app, this would use a mapping API like Google Maps
+  // Here we'll use a simple distance formula and convert to minutes
+  const R = 6371; // Radius of the earth in km
+  const dLat = (endLat - startLat) * Math.PI / 180;
+  const dLon = (endLng - startLng) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(startLat * Math.PI / 180) * Math.cos(endLat * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c; // Distance in km
+  
+  // Assume average speed of 40 km/h in city traffic
+  const timeInMinutes = Math.round((distance / 40) * 60);
+  return timeInMinutes;
+};
 
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>(
-    PHOTOGRAPHERS.map(p => p.id)
-  );
+  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>([1, 2, 3, 4, 5]);
+  const { orders } = useSampleOrders();
 
   const togglePhotographer = (id: number) => {
     setSelectedPhotographers(prev => 
@@ -55,8 +67,83 @@ const Calendar: React.FC = () => {
     );
   };
 
-  const filteredJobs = JOBS.filter(job => 
-    selectedPhotographers.includes(job.photographer)
+  // Create array of photographer objects from orders
+  const photographers = Array.from(
+    new Set(orders.map(order => order.photographer))
+  ).map(name => {
+    const id = orders.findIndex(order => order.photographer === name) + 1;
+    return { 
+      id, 
+      name,
+      color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` // Random color
+    };
+  });
+
+  // Convert orders to calendar events with additional driving time information
+  const calendarEvents = orders.map(order => {
+    const photographerId = photographers.find(p => p.name === order.photographer)?.id || 1;
+    return {
+      ...order,
+      photographerId,
+      date: new Date(order.scheduledDate), // Convert ISO string to Date
+    };
+  });
+
+  // Process events to add driving time information
+  const processedEvents = [...calendarEvents].sort((a, b) => {
+    // Sort by date, then by time
+    const dateA = a.date;
+    const dateB = b.date;
+    const timeA = a.scheduledTime;
+    const timeB = b.scheduledTime;
+    
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateA.getTime() - dateB.getTime();
+    }
+    
+    // Convert time strings to comparable values (assuming format like "10:00 AM")
+    const timeValueA = timeA.replace(':', '').replace(/\s/g, '');
+    const timeValueB = timeB.replace(':', '').replace(/\s/g, '');
+    return timeValueA.localeCompare(timeValueB);
+  });
+
+  // Add driving time information
+  processedEvents.forEach((event, index) => {
+    const photographerId = event.photographerId;
+    const startLocation = PHOTOGRAPHER_STARTING_LOCATIONS[photographerId];
+    
+    // If it's the first event of the day for this photographer
+    const prevEventSameDay = processedEvents.slice(0, index).reverse().find(e => 
+      e.photographerId === photographerId && 
+      e.date.getDate() === event.date.getDate() &&
+      e.date.getMonth() === event.date.getMonth() &&
+      e.date.getFullYear() === event.date.getFullYear()
+    );
+    
+    if (!prevEventSameDay) {
+      // Calculate driving time from starting location
+      event.drivingTimeMin = calculateDrivingTime(
+        startLocation.lat, 
+        startLocation.lng, 
+        startLocation.lat + (Math.random() * 0.1), // Dummy end location (would be geocoded from address)
+        startLocation.lng + (Math.random() * 0.1)
+      );
+      event.previousLocation = startLocation.address;
+    } else {
+      // Calculate driving time from previous event
+      event.drivingTimeMin = calculateDrivingTime(
+        startLocation.lat + (Math.random() * 0.1), // Dummy start (would be previous event location)
+        startLocation.lng + (Math.random() * 0.1),
+        startLocation.lat + (Math.random() * 0.1), // Dummy end (would be current event location)
+        startLocation.lng + (Math.random() * 0.1)
+      );
+      event.previousLocation = prevEventSameDay.address;
+    }
+  });
+
+  // Filter events based on selected photographers
+  const filteredEvents = processedEvents.filter(event => 
+    selectedPhotographers.includes(event.photographerId)
   );
 
   const handlePrevious = () => {
@@ -93,8 +180,22 @@ const Calendar: React.FC = () => {
     }
   };
 
+  // Format driving time for display
+  const formatDrivingTime = (minutes) => {
+    if (!minutes) return '';
+    
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    } else {
+      return `${mins}m`;
+    }
+  };
+
   // We'll use this to highlight dates with jobs
-  const datesWithJobs = filteredJobs.map(job => job.date);
+  const datesWithJobs = filteredEvents.map(event => event.date);
 
   const renderMonthView = () => (
     <div className="bg-white rounded-md shadow">
@@ -121,16 +222,21 @@ const Calendar: React.FC = () => {
             new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay()),
             index
           );
-          const dayJobs = filteredJobs.filter(job => 
-            job.date.getDate() === day.getDate() && 
-            job.date.getMonth() === day.getMonth() && 
-            job.date.getFullYear() === day.getFullYear()
-          );
+          const dayEvents = filteredEvents.filter(event => 
+            event.date.getDate() === day.getDate() && 
+            event.date.getMonth() === day.getMonth() && 
+            event.date.getFullYear() === day.getFullYear()
+          ).sort((a, b) => {
+            // Sort by time
+            const timeA = a.scheduledTime.replace(':', '').replace(/\s/g, '');
+            const timeB = b.scheduledTime.replace(':', '').replace(/\s/g, '');
+            return timeA.localeCompare(timeB);
+          });
           
           return (
             <div 
               key={index} 
-              className={`min-h-[150px] border rounded-md p-2 ${
+              className={`min-h-[200px] border rounded-md p-2 ${
                 day.getDate() === new Date().getDate() && 
                 day.getMonth() === new Date().getMonth() && 
                 day.getFullYear() === new Date().getFullYear() 
@@ -142,14 +248,29 @@ const Calendar: React.FC = () => {
                 <div className="text-sm text-muted-foreground">{format(day, 'EEE')}</div>
                 <div className="text-lg">{format(day, 'd')}</div>
               </div>
-              <div className="space-y-1">
-                {dayJobs.map(job => (
-                  <div 
-                    key={job.id} 
-                    className="text-xs p-1 rounded truncate" 
-                    style={{ backgroundColor: PHOTOGRAPHERS.find(p => p.id === job.photographer)?.color + '20' }}
-                  >
-                    {job.title}
+              <div className="space-y-2">
+                {dayEvents.map((event, eventIndex) => (
+                  <div key={event.id} className="space-y-1">
+                    {event.drivingTimeMin > 0 && (
+                      <div className="flex items-center text-xs text-muted-foreground space-x-1 pl-1">
+                        <Car className="h-3 w-3" />
+                        <span>{formatDrivingTime(event.drivingTimeMin)}</span>
+                      </div>
+                    )}
+                    <div 
+                      className="text-xs p-2 rounded" 
+                      style={{ 
+                        backgroundColor: photographers.find(p => p.id === event.photographerId)?.color + '20',
+                        borderLeft: `3px solid ${photographers.find(p => p.id === event.photographerId)?.color}`
+                      }}
+                    >
+                      <div className="font-medium truncate">{event.orderNumber}</div>
+                      <div className="truncate">{event.address.split(',')[0]}</div>
+                      <div className="flex justify-between">
+                        <span>{event.scheduledTime}</span>
+                        <span className="truncate max-w-[80px]">{event.client.split(' - ')[0]}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -167,34 +288,67 @@ const Calendar: React.FC = () => {
           {format(currentDate, 'EEEE, MMMM d')}
         </div>
         
-        {Array.from({ length: 12 }).map((_, index) => {
-          const hour = index + 8; // Start from 8 AM
-          const hourJobs = filteredJobs.filter(job => 
-            job.date.getDate() === currentDate.getDate() && 
-            job.date.getMonth() === currentDate.getMonth() && 
-            job.date.getFullYear() === currentDate.getFullYear()
-          );
-          
-          return (
-            <div key={index} className="grid grid-cols-12 border-b py-2">
-              <div className="col-span-1 text-right pr-4 text-muted-foreground">
-                {hour % 12 === 0 ? 12 : hour % 12}{hour < 12 ? 'am' : 'pm'}
+        <div className="space-y-4">
+          {Array.from({ length: 12 }).map((_, index) => {
+            const hour = index + 8; // Start from 8 AM
+            const hourEvents = filteredEvents.filter(event => 
+              event.date.getDate() === currentDate.getDate() && 
+              event.date.getMonth() === currentDate.getMonth() && 
+              event.date.getFullYear() === currentDate.getFullYear() &&
+              parseInt(event.scheduledTime.split(':')[0]) === (hour % 12 === 0 ? 12 : hour % 12) &&
+              event.scheduledTime.includes(hour < 12 ? 'AM' : 'PM')
+            );
+            
+            return (
+              <div key={index} className="grid grid-cols-12 border-b py-2">
+                <div className="col-span-1 text-right pr-4 text-muted-foreground">
+                  {hour % 12 === 0 ? 12 : hour % 12}{hour < 12 ? 'am' : 'pm'}
+                </div>
+                <div className="col-span-11 border-l pl-4 min-h-[40px]">
+                  {hourEvents.map((event, eventIndex) => (
+                    <div key={event.id} className="space-y-1 mb-3">
+                      {event.drivingTimeMin > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center text-xs text-muted-foreground space-x-1 pl-1">
+                                <Car className="h-3 w-3" />
+                                <span>{formatDrivingTime(event.drivingTimeMin)}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                              <p className="text-xs">Drive from: {event.previousLocation}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <div 
+                        className="text-sm p-2 rounded" 
+                        style={{ 
+                          backgroundColor: photographers.find(p => p.id === event.photographerId)?.color + '20',
+                          borderLeft: `3px solid ${photographers.find(p => p.id === event.photographerId)?.color}`
+                        }}
+                      >
+                        <div className="font-medium flex justify-between">
+                          <span>{event.orderNumber}</span>
+                          <span className="text-xs text-muted-foreground">{event.scheduledTime}</span>
+                        </div>
+                        <div className="text-xs">{event.address}</div>
+                        <div className="text-xs flex justify-between mt-1">
+                          <span>Client: {event.client.split(' - ')[0]}</span>
+                          <span className="text-muted-foreground">{event.client.split(' - ')[1] || ''}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Photographer: {event.photographer}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="col-span-11 border-l pl-4 min-h-[40px]">
-                {hourJobs.map(job => (
-                  <div 
-                    key={job.id} 
-                    className="text-sm p-2 rounded mb-1" 
-                    style={{ backgroundColor: PHOTOGRAPHERS.find(p => p.id === job.photographer)?.color + '20' }}
-                  >
-                    <div className="font-medium">{job.title}</div>
-                    <div className="text-xs text-muted-foreground">{job.client}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -273,7 +427,7 @@ const Calendar: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {PHOTOGRAPHERS.map((photographer) => (
+                  {photographers.map((photographer) => (
                     <div key={photographer.id} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`photographer-${photographer.id}`}
