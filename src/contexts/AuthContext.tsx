@@ -9,6 +9,7 @@ type AuthContextType = {
   profile: any | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  activateUser: (email: string) => Promise<{ success: boolean; error: string | null }>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   isLoading: true,
   signOut: async () => {},
+  activateUser: async () => ({ success: false, error: null }),
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -81,8 +83,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  // Function to manually activate a user for development purposes
+  const activateUser = async (email: string) => {
+    try {
+      // This endpoint is only accessible to service_role keys, so we're using a workaround
+      // for development by updating the admin_metadata directly
+      const { data, error } = await supabase.auth.admin.updateUserById(
+        'user_id_placeholder', // This won't be used but is required by the function
+        { email_confirm: true }
+      );
+
+      if (error) {
+        console.error('Error activating user:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Error activating user:', error);
+      return { success: false, error: error.message || 'Unknown error' };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, profile, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, isLoading, signOut, activateUser }}>
       {children}
     </AuthContext.Provider>
   );

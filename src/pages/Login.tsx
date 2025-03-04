@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,16 +9,19 @@ import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Apple, Mail, Github, Laptop, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { activateUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerificationAlert, setShowVerificationAlert] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [activatingUser, setActivatingUser] = useState(false);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +129,62 @@ const Login = () => {
     }
   };
 
+  const handleActivateUser = async () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address to activate",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setActivatingUser(true);
+    
+    try {
+      // First, try direct login bypassing confirmation
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          // For development only: Force login by sending a magic link
+          const { error: magicLinkError } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo: `${window.location.origin}/dashboard`,
+            }
+          });
+          
+          if (magicLinkError) throw magicLinkError;
+          
+          toast({
+            title: "Magic link sent",
+            description: "Check your email for a link to sign in directly",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Successfully signed in",
+          description: "Welcome back!",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error activating user",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setActivatingUser(false);
+    }
+  };
+
   const signInWithProvider = async (provider: 'google' | 'apple' | 'azure') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -204,6 +262,17 @@ const Login = () => {
                   
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign In with Email"}
+                  </Button>
+                  
+                  {/* Development helper button */}
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full border-amber-500 text-amber-700 hover:bg-amber-50" 
+                    onClick={handleActivateUser}
+                    disabled={activatingUser}
+                  >
+                    {activatingUser ? "Sending magic link..." : "Send Magic Link (Dev Only)"}
                   </Button>
                   
                   <div className="relative">
