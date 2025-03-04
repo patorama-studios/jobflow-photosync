@@ -137,22 +137,15 @@ export function JobCalendar() {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     modifiers={{
-                      booked: dates => 
-                        dates.some(date => 
-                          jobs.some(job => 
-                            date && isSameDay(job.date, date)
-                          )
-                        )
+                      booked: (date) => 
+                        jobs.some(job => isSameDay(job.date, date))
                     }}
                     modifiersClassNames={{
                       booked: "!font-bold border border-primary"
                     }}
                     className="rounded-md"
-                    styles={{
-                      day: (date) => {
-                        const customClass = getDayClass(date);
-                        return { className: customClass };
-                      }
+                    classNames={{
+                      day_selected: getDayClass(new Date())
                     }}
                   />
                 </div>

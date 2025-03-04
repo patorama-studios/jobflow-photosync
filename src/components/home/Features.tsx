@@ -60,8 +60,7 @@ export function Features() {
           {features.map((feature, index) => (
             <GlassCard 
               key={index} 
-              className="flex flex-col items-center text-center p-8 animate-slide-in-bottom"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`flex flex-col items-center text-center p-8 animate-slide-in-bottom`}
               hoverEffect
             >
               <div className="mb-6">{feature.icon}</div>

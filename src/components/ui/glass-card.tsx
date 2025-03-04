@@ -1,14 +1,15 @@
 
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode } from "react";
 
 interface GlassCardProps {
   children: ReactNode;
   className?: string;
   hoverEffect?: boolean;
+  style?: CSSProperties;
 }
 
-export function GlassCard({ children, className, hoverEffect = false }: GlassCardProps) {
+export function GlassCard({ children, className, hoverEffect = false, style }: GlassCardProps) {
   return (
     <div 
       className={cn(
@@ -16,6 +17,7 @@ export function GlassCard({ children, className, hoverEffect = false }: GlassCar
         hoverEffect && "hover:shadow-xl hover:translate-y-[-4px]",
         className
       )}
+      style={style}
     >
       {children}
     </div>
