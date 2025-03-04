@@ -1,19 +1,26 @@
 
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { session, user, profile, signOut } = useAuth();
 
   // Track scroll position for navbar styling
   useEffect(() => {
@@ -31,6 +38,21 @@ export function Navbar() {
   }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
+
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    return 'PS';
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    window.location.href = '/';
+  };
 
   return (
     <header
@@ -75,9 +97,32 @@ export function Navbar() {
             <Link to="/dashboard" className={`nav-link ${isActive("/dashboard") ? "active" : ""}`}>
               Dashboard
             </Link>
-            <Button asChild>
-              <Link to="/login">Login</Link>
-            </Button>
+            
+            {session ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar>
+                      <AvatarImage src={profile?.avatar_url} />
+                      <AvatarFallback>{getInitials()}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -122,9 +167,20 @@ export function Navbar() {
             >
               Learning Hub
             </Link>
-            <Button className="w-full" asChild>
-              <Link to="/login">Login</Link>
-            </Button>
+            {session ? (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            ) : (
+              <Button className="w-full" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+            )}
           </div>
         </div>
       )}
