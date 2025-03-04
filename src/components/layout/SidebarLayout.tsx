@@ -12,7 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X
+  X,
+  ShoppingCart,
+  Kanban,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,10 +34,10 @@ export function SidebarLayout({ children }: SidebarProps) {
   const sidebarLinks = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { name: "Calendar", icon: Calendar, path: "/calendar" },
-    { name: "Clients", icon: Users, path: "/clients" },
-    { name: "Jobs", icon: FileText, path: "/jobs" },
-    { name: "Gallery", icon: Image, path: "/gallery" },
-    { name: "Finances", icon: DollarSign, path: "/finances" },
+    { name: "Orders", icon: ShoppingCart, path: "/orders" },
+    { name: "Customers", icon: Users, path: "/customers" },
+    { name: "Production Board", icon: Kanban, path: "/production" },
+    { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
     { name: "Settings", icon: Settings, path: "/settings" }
   ];
 
