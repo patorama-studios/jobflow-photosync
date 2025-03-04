@@ -1,10 +1,9 @@
-
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { JobCalendar } from "@/components/dashboard/JobCalendar";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ListFilter, Bell, Plus, Search, Kanban, Clock } from "lucide-react";
+import { ListFilter, Bell, Plus, Search, Kanban, Clock, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -41,7 +40,7 @@ const Dashboard = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Today's Jobs</h3>
                 <Button variant="outline" size="sm">
-                  <Calendar className="h-4 w-4 mr-2" />
+                  <CalendarIcon className="h-4 w-4 mr-2" />
                   View Calendar
                 </Button>
               </div>
