@@ -60,7 +60,7 @@ export const OrdersView: React.FC = () => {
         </Button>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-4">
         <OrderTable 
           orders={todayOrders} 
           title="Today's Orders" 
@@ -73,9 +73,9 @@ export const OrdersView: React.FC = () => {
           hideIfEmpty
         />
         
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">All Other Orders</h3>
+        <div className="border rounded-md p-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium">All Other Orders ({filteredRemainingOrders.length})</h3>
             <OrderFilter 
               status={statusFilter} 
               onStatusChange={setStatusFilter}
