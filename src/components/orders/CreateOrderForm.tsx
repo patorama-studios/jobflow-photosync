@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, MapPin, Clock, User, Info } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, Clock, User, Info, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -33,6 +33,7 @@ import { toast } from '@/components/ui/use-toast';
 import { AvailabilitySelector } from './AvailabilitySelector';
 
 const formSchema = z.object({
+  orderNumber: z.string().optional(),
   address: z.string().min(5, { message: "Address is required" }),
   city: z.string().min(1, { message: "City is required" }),
   state: z.string().min(1, { message: "State is required" }),
@@ -45,8 +46,10 @@ const formSchema = z.object({
   scheduledDate: z.date({ required_error: "Please select a date" }),
   scheduledTime: z.string().min(1, { message: "Please select a time" }),
   photographer: z.string().optional(),
+  photographerPayoutRate: z.number().optional(),
   notes: z.string().optional(),
   package: z.string().min(1, { message: "Please select a package" }),
+  customFields: z.record(z.string(), z.any()).optional(),
 });
 
 type CreateOrderFormProps = {
@@ -56,10 +59,20 @@ type CreateOrderFormProps = {
 export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [useAiSuggestions, setUseAiSuggestions] = useState(false);
+  const [additionalAppointments, setAdditionalAppointments] = useState<Array<{
+    date: Date | undefined;
+    time: string;
+    description: string;
+  }>>([]);
+  const [customFields, setCustomFields] = useState<Array<{
+    key: string;
+    value: string;
+  }>>([]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
       address: "",
       city: "",
       state: "",
@@ -71,12 +84,26 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
       squareFeet: "",
       notes: "",
       package: "standard",
+      photographerPayoutRate: 100,
     },
   });
   
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     // Here you would normally send the data to your backend
-    console.log(values);
+    const orderData = {
+      ...values,
+      additionalAppointments: additionalAppointments.map(apt => ({
+        date: apt.date?.toISOString() || '',
+        time: apt.time,
+        description: apt.description
+      })),
+      customFields: customFields.reduce((acc, field) => {
+        acc[field.key] = field.value;
+        return acc;
+      }, {} as Record<string, string>)
+    };
+    
+    console.log(orderData);
     toast({
       title: "Order created successfully",
       description: "The photography session has been scheduled.",
@@ -94,6 +121,45 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
     setStep(step - 1);
   };
 
+  const addAppointment = () => {
+    setAdditionalAppointments([...additionalAppointments, {
+      date: undefined,
+      time: "",
+      description: ""
+    }]);
+  };
+
+  const removeAppointment = (index: number) => {
+    setAdditionalAppointments(
+      additionalAppointments.filter((_, i) => i !== index)
+    );
+  };
+
+  const updateAppointment = (index: number, field: string, value: any) => {
+    const updatedAppointments = [...additionalAppointments];
+    updatedAppointments[index] = {
+      ...updatedAppointments[index],
+      [field]: value
+    };
+    setAdditionalAppointments(updatedAppointments);
+  };
+
+  const addCustomField = () => {
+    setCustomFields([...customFields, { key: "", value: "" }]);
+  };
+
+  const removeCustomField = (index: number) => {
+    setCustomFields(
+      customFields.filter((_, i) => i !== index)
+    );
+  };
+
+  const updateCustomField = (index: number, field: 'key' | 'value', value: string) => {
+    const updatedFields = [...customFields];
+    updatedFields[index][field] = value;
+    setCustomFields(updatedFields);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -105,21 +171,36 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
                   {step === 1 && "Location & Client Information"}
                   {step === 2 && "Property Details"}
                   {step === 3 && "Scheduling & Photographer"}
+                  {step === 4 && "Additional Details"}
                 </h3>
                 <div className="text-sm text-muted-foreground">
-                  Step {step} of 3
+                  Step {step} of 4
                 </div>
               </div>
               <div className="w-full bg-secondary h-2 mt-4 rounded-full overflow-hidden">
                 <div 
                   className="bg-primary h-full transition-all duration-300 ease-in-out"
-                  style={{ width: `${(step / 3) * 100}%` }}
+                  style={{ width: `${(step / 4) * 100}%` }}
                 />
               </div>
             </div>
               
             {step === 1 && (
               <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="orderNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Order Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Auto-generated order number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid gap-4 grid-cols-1">
                   <FormField
                     control={form.control}
@@ -510,8 +591,194 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="photographerPayoutRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Photographer Payout Rate ($)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="Payout rate for this job"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 )}
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-sm font-medium">Additional Appointments</h4>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={addAppointment}
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Appointment
+                    </Button>
+                  </div>
+
+                  {additionalAppointments.length === 0 ? (
+                    <div className="text-sm text-muted-foreground p-4 text-center border border-dashed rounded-md">
+                      No additional appointments added
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {additionalAppointments.map((appointment, index) => (
+                        <div key={index} className="grid gap-4 grid-cols-1 md:grid-cols-3 p-4 border rounded-md relative">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={() => removeAppointment(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">Date</label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !appointment.date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {appointment.date ? (
+                                    format(appointment.date, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={appointment.date}
+                                  onSelect={(date) => updateAppointment(index, 'date', date)}
+                                  disabled={(date) => date < new Date()}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">Time</label>
+                            <Select 
+                              value={appointment.time}
+                              onValueChange={(value) => updateAppointment(index, 'time', value)}
+                            >
+                              <SelectTrigger>
+                                <div className="flex items-center">
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  <SelectValue placeholder="Select time" />
+                                </div>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="9:00 AM">9:00 AM</SelectItem>
+                                <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+                                <SelectItem value="11:00 AM">11:00 AM</SelectItem>
+                                <SelectItem value="12:00 PM">12:00 PM</SelectItem>
+                                <SelectItem value="1:00 PM">1:00 PM</SelectItem>
+                                <SelectItem value="2:00 PM">2:00 PM</SelectItem>
+                                <SelectItem value="3:00 PM">3:00 PM</SelectItem>
+                                <SelectItem value="4:00 PM">4:00 PM</SelectItem>
+                                <SelectItem value="5:00 PM">5:00 PM</SelectItem>
+                                <SelectItem value="6:00 PM">6:00 PM (Twilight)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">Description</label>
+                            <Input 
+                              placeholder="e.g., Twilight shots, Drone footage"
+                              value={appointment.description}
+                              onChange={(e) => updateAppointment(index, 'description', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-sm font-medium">Custom Fields</h4>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={addCustomField}
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Field
+                    </Button>
+                  </div>
+
+                  {customFields.length === 0 ? (
+                    <div className="text-sm text-muted-foreground p-4 text-center border border-dashed rounded-md">
+                      No custom fields added
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {customFields.map((field, index) => (
+                        <div key={index} className="grid gap-4 grid-cols-1 md:grid-cols-2 p-4 border rounded-md relative">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={() => removeCustomField(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">Field Name</label>
+                            <Input 
+                              placeholder="e.g., Lockbox Code, Special Instructions"
+                              value={field.key}
+                              onChange={(e) => updateCustomField(index, 'key', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-sm font-medium">Field Value</label>
+                            <Input 
+                              placeholder="Enter value"
+                              value={field.value}
+                              onChange={(e) => updateCustomField(index, 'value', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -524,7 +791,7 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
                 <div></div>
               )}
               
-              {step < 3 ? (
+              {step < 4 ? (
                 <Button type="button" onClick={nextStep}>
                   Continue
                 </Button>
