@@ -30,6 +30,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
 import { AvailabilitySelector } from './AvailabilitySelector';
+import { GoogleAddressAutocomplete } from '@/components/ui/google-address-autocomplete';
+import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 
 const formSchema = z.object({
   orderNumber: z.string().optional(),
@@ -90,6 +92,8 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
       photographerPayoutRate: 100,
     },
   });
+  
+  const { isLoaded } = useGoogleMaps();
   
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     // Here you would normally send the data to your backend
@@ -163,6 +167,24 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
     setCustomFields(updatedFields);
   };
 
+  const handleAddressSelect = (address: {
+    formattedAddress: string;
+    streetAddress: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    lat: number;
+    lng: number;
+  }) => {
+    form.setValue('address', address.streetAddress);
+    form.setValue('city', address.city);
+    form.setValue('state', address.state);
+    form.setValue('zip', address.postalCode);
+    
+    console.log('Selected address:', address);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -214,12 +236,22 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onComplete }) 
                         <FormControl>
                           <div className="flex">
                             <div className="relative flex-1">
-                              <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input 
-                                placeholder="Enter the property address" 
-                                className="pl-10" 
-                                {...field} 
-                              />
+                              {isLoaded ? (
+                                <GoogleAddressAutocomplete 
+                                  onAddressSelect={handleAddressSelect}
+                                  placeholder="Enter the property address"
+                                  defaultValue={field.value}
+                                />
+                              ) : (
+                                <>
+                                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input 
+                                    placeholder="Enter the property address" 
+                                    className="pl-10" 
+                                    {...field} 
+                                  />
+                                </>
+                              )}
                             </div>
                           </div>
                         </FormControl>
