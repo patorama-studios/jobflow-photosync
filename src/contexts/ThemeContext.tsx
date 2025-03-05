@@ -9,12 +9,12 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'system',
+  theme: 'light',
   setTheme: () => null,
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>('system');
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -22,9 +22,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       setTheme(savedTheme);
       document.documentElement.classList.toggle('dark', savedTheme === 'dark');
     } else {
-      // Default to system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
+      // Default to light mode instead of system preference
+      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 
