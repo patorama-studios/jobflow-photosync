@@ -1,131 +1,82 @@
 
 import React, { useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  isThisMonth, 
-  isThisWeek, 
-  parseISO, 
-  startOfMonth, 
-  endOfMonth, 
-  format,
-  addWeeks,
-  isSameWeek
-} from 'date-fns';
-import { DollarSign, TrendingUp, CalendarRange, BarChart3 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { Order } from '@/types/orders';
+import { CircleDollarSign, CalendarDays, HomeIcon } from 'lucide-react';
 
 interface OrderStatsProps {
   orders: Order[];
 }
 
-// Custom isNextWeek function since date-fns doesn't export it directly
-const isNextWeek = (date: Date): boolean => {
-  const nextWeekStart = addWeeks(new Date(), 1);
-  return isSameWeek(date, nextWeekStart);
-};
-
 export const OrderStats: React.FC<OrderStatsProps> = ({ orders }) => {
+  // Calculate stats based on orders
   const stats = useMemo(() => {
-    // Filter for booked or completed orders
-    const relevantOrders = orders.filter(o => 
-      o.status === 'scheduled' || o.status === 'completed'
-    );
+    const now = new Date();
+    const currentWeekStart = startOfWeek(now);
+    const currentWeekEnd = endOfWeek(now);
     
-    // This week's orders
-    const thisWeekOrders = relevantOrders.filter(order => 
-      isThisWeek(parseISO(order.scheduled_date))
-    );
-    const thisWeekTotal = thisWeekOrders.reduce((sum, order) => sum + Number(order.price), 0);
+    // Total revenue
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.price || 0), 0);
     
-    // Next week's orders
-    const nextWeekOrders = relevantOrders.filter(order => 
-      isNextWeek(parseISO(order.scheduled_date))
-    );
-    const nextWeekTotal = nextWeekOrders.reduce((sum, order) => sum + Number(order.price), 0);
+    // Orders this week
+    const ordersThisWeek = orders.filter(order => {
+      if (!order.scheduledDate) return false;
+      const orderDate = new Date(order.scheduledDate);
+      return isWithinInterval(orderDate, {
+        start: currentWeekStart,
+        end: currentWeekEnd
+      });
+    }).length;
     
-    // This month's orders
-    const thisMonthOrders = relevantOrders.filter(order => 
-      isThisMonth(parseISO(order.scheduled_date))
-    );
-    const monthlyTotal = thisMonthOrders.reduce((sum, order) => sum + Number(order.price), 0);
+    // Pending orders
+    const pendingOrders = orders.filter(order => order.status === 'pending').length;
     
-    // Average order value
-    const averageOrderValue = relevantOrders.length > 0 
-      ? relevantOrders.reduce((sum, order) => sum + Number(order.price), 0) / relevantOrders.length 
-      : 0;
-    
-    // Current month range for display
-    const currentMonth = new Date();
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const monthRange = `${format(monthStart, 'MMM d')} - ${format(monthEnd, 'MMM d, yyyy')}`;
+    // Completed orders
+    const completedOrders = orders.filter(order => order.status === 'completed').length;
     
     return {
-      thisWeekTotal,
-      nextWeekTotal,
-      monthlyTotal,
-      averageOrderValue,
-      monthRange
+      totalRevenue,
+      ordersThisWeek,
+      pendingOrders,
+      completedOrders
     };
   }, [orders]);
-  
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid gap-4 md:grid-cols-3">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">This Week</CardTitle>
-          <CalendarRange className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+          <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${stats.thisWeekTotal.toFixed(2)}</div>
+          <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">Across all orders</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Jobs This Week</CardTitle>
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.ordersThisWeek}</div>
           <p className="text-xs text-muted-foreground">
-            Projected revenue this week
+            {stats.pendingOrders} pending, {stats.completedOrders} completed
           </p>
         </CardContent>
       </Card>
       
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Next Week</CardTitle>
-          <CalendarRange className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Properties</CardTitle>
+          <HomeIcon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${stats.nextWeekTotal.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">
-            Projected revenue next week
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">${stats.monthlyTotal.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">
-            {stats.monthRange}
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Average Order</CardTitle>
-          <BarChart3 className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">${stats.averageOrderValue.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">
-            Average order value
-          </p>
+          <div className="text-2xl font-bold">{orders.length}</div>
+          <p className="text-xs text-muted-foreground">Total orders in system</p>
         </CardContent>
       </Card>
     </div>

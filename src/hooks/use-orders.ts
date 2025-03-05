@@ -59,16 +59,35 @@ export function useOrders() {
             customFieldsObject[field.field_key] = field.field_value;
           });
 
-          // Return enhanced order with additional data
+          // Return enhanced order with additional data, mapping snake_case to camelCase
           return {
-            ...order,
+            id: order.id,
+            orderNumber: order.order_number,
+            address: order.address,
+            city: order.city,
+            state: order.state,
+            zip: order.zip,
+            client: order.client,
+            clientEmail: order.client_email,
+            clientPhone: order.client_phone,
+            photographer: order.photographer,
+            photographerPayoutRate: order.photographer_payout_rate,
+            price: order.price,
+            propertyType: order.property_type,
+            scheduledDate: order.scheduled_date,
+            scheduledTime: order.scheduled_time,
+            squareFeet: order.square_feet,
+            status: order.status,
             additionalAppointments: orderAppointments.map(app => ({
               id: app.id,
               date: app.date,
               time: app.time,
               description: app.description
             })),
-            customFields: customFieldsObject
+            customFields: customFieldsObject,
+            customerNotes: order.customer_notes,
+            internalNotes: order.internal_notes,
+            package: order.package
           } as Order;
         });
 
