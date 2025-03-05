@@ -1,4 +1,4 @@
-<lov-code>
+
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -268,7 +268,7 @@ export function UploadFormView({ orderId, initialProductType }: UploadFormViewPr
       case "video":
         return <Video className="h-5 w-5" />;
       case "drone":
-        return <Plane className="h-5 w-5" />;
+        return <Plane className="h-5 w-5" />; // Changed from Drone to Plane
       case "virtual-tour":
         return <Compass className="h-5 w-5" />;
       default:
@@ -823,3 +823,93 @@ export function UploadFormView({ orderId, initialProductType }: UploadFormViewPr
                   </>
                 )}
                 
+                {selectedProductType === "floorplan" && (
+                  <>
+                    <div className="p-4 pl-8 flex justify-between">
+                      <span>Floor Plan Files</span>
+                      <span>{floorPlanForm.files.length} files</span>
+                    </div>
+                    {floorPlanForm.primaryLink && (
+                      <div className="p-4 pl-8 flex justify-between">
+                        <span>Primary Link</span>
+                        <span className="max-w-[300px] truncate">{floorPlanForm.primaryLink}</span>
+                      </div>
+                    )}
+                    {floorPlanForm.secondaryLinks.filter(Boolean).length > 0 && (
+                      <div className="p-4 pl-8 flex justify-between">
+                        <span>Additional Links</span>
+                        <span>{floorPlanForm.secondaryLinks.filter(Boolean).length} links</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                
+                {selectedProductType === "video" && (
+                  <>
+                    <div className="p-4 pl-8 flex justify-between">
+                      <span>Drone Footage</span>
+                      <span>{videoForm.droneFootage.length} files</span>
+                    </div>
+                    <div className="p-4 pl-8 flex justify-between">
+                      <span>Vertical Footage</span>
+                      <span>{videoForm.verticalFootage.length} files</span>
+                    </div>
+                    <div className="p-4 pl-8 flex justify-between">
+                      <span>Landscape Footage</span>
+                      <span>{videoForm.landscapeFootage.length} files</span>
+                    </div>
+                    {videoForm.musicPreference && (
+                      <div className="p-4 pl-8 flex justify-between">
+                        <span>Music Preference</span>
+                        <span className="max-w-[300px] truncate">{videoForm.musicPreference}</span>
+                      </div>
+                    )}
+                    {videoForm.notes && (
+                      <div className="p-4 pl-8 flex flex-col">
+                        <span className="font-medium">Editing Notes</span>
+                        <p className="text-sm mt-2 text-muted-foreground">{videoForm.notes}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 0}
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Previous
+          </Button>
+          
+          <div>
+            {isUploading && (
+              <div className="flex items-center mr-4 text-sm text-muted-foreground">
+                <span className="mr-2">Uploading...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+            )}
+          </div>
+          
+          <Button
+            onClick={handleNext}
+            disabled={isOverLimit(selectedProductType) || isUploading}
+          >
+            {currentStep < steps.length - 1 ? (
+              <>
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </>
+            ) : (
+              'Submit Upload'
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}
