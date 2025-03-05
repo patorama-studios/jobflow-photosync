@@ -1,5 +1,5 @@
 
-import { useEffect, useState, memo } from 'react';
+import { useEffect, useState, memo, useCallback } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -9,23 +9,26 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
   const location = useLocation();
   const [longLoadingDetected, setLongLoadingDetected] = useState(false);
 
-  // Add logging to help debug the issue
+  // Simplified logging with less overhead
   useEffect(() => {
-    console.log('ProtectedRoute - Auth state:', { isLoading, hasSession: !!session });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ProtectedRoute - Auth state:', { isLoading, hasSession: !!session });
+    }
   }, [isLoading, session]);
 
-  // Add a fallback mechanism in case loading takes too long
+  // More efficient loading detection
   useEffect(() => {
+    // Only set timers if still loading
+    if (!isLoading) return;
+    
     const timeoutId = setTimeout(() => {
-      if (isLoading) {
-        console.warn('Auth loading timeout exceeded - may be stuck in loading state');
-        setLongLoadingDetected(true);
-      }
-    }, 2000); // Reduced from 3 seconds to 2 seconds for faster feedback
+      setLongLoadingDetected(true);
+    }, 1500); // Reduced from 2 seconds to 1.5 seconds for faster feedback
 
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
 
+  // Early return pattern for better performance
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -49,13 +52,16 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
   }
 
   if (!session) {
-    console.log('ProtectedRoute - No session, redirecting to login');
-    // Redirect to login if not authenticated
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ProtectedRoute - No session, redirecting to login');
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // User is authenticated and loaded, render the protected content
-  console.log('ProtectedRoute - Authenticated, rendering content');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ProtectedRoute - Authenticated, rendering content');
+  }
   return <>{children}</>;
 });
 

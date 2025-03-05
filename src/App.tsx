@@ -1,4 +1,5 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+
+import React, { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -6,7 +7,7 @@ import { Toaster } from './components/ui/toaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Loader2 } from 'lucide-react';
 
-// Improved lazy loading with error boundaries
+// Improved lazy loading with error boundaries and preloading
 const lazyLoad = (importFunc) => {
   const Component = lazy(importFunc);
   return (props) => (
@@ -14,6 +15,47 @@ const lazyLoad = (importFunc) => {
       <Component {...props} />
     </Suspense>
   );
+};
+
+// Optimized loading fallback component
+const LoadingFallback = () => {
+  const [showSlowLoadMessage, setShowSlowLoadMessage] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSlowLoadMessage(true);
+    }, 1500); // Reduced from 2 seconds to 1.5 seconds
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+      <span className="text-lg font-medium">Loading page...</span>
+      {showSlowLoadMessage && (
+        <span className="text-sm text-muted-foreground mt-4">
+          This is taking longer than expected. Your connection may be slow.
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Preload key routes for faster initial access
+const preloadRoutes = () => {
+  const routes = [
+    () => import('./pages/Dashboard'),
+    () => import('./pages/Calendar'),
+    () => import('./pages/Login')
+  ];
+  
+  setTimeout(() => {
+    routes.forEach(route => {
+      // Preload routes in the background
+      route();
+    });
+  }, 1000);
 };
 
 // Lazy load pages with prioritization
@@ -33,32 +75,12 @@ const ProductDelivery = lazyLoad(() => import('./pages/ProductDelivery'));
 const Learning = lazyLoad(() => import('./pages/Learning'));
 const NotFound = lazyLoad(() => import('./pages/NotFound'));
 
-// Loading fallback component with improved visual feedback
-const LoadingFallback = () => {
-  const [showSlowLoadMessage, setShowSlowLoadMessage] = useState(false);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSlowLoadMessage(true);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-      <span className="text-lg font-medium">Loading page...</span>
-      {showSlowLoadMessage && (
-        <span className="text-sm text-muted-foreground mt-4">
-          This is taking longer than expected. Your connection may be slow.
-        </span>
-      )}
-    </div>
-  );
-};
-
 function App() {
+  // Preload key routes after initial render
+  useEffect(() => {
+    preloadRoutes();
+  }, []);
+
   return (
     <div className="app">
       <ThemeProvider>

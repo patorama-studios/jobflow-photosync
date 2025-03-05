@@ -1,39 +1,41 @@
 
-import * as React from "react"
+import { useState, useEffect, useCallback } from "react"
 
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean>(false)
+  const [isMobile, setIsMobile] = useState<boolean>(false)
   const [isMounted, setIsMounted] = React.useState<boolean>(false)
 
-  React.useEffect(() => {
+  // Memoize the resize handler for better performance
+  const checkMobile = useCallback(() => {
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+  }, [])
+  
+  useEffect(() => {
     // Set mounted state
     setIsMounted(true)
     
     // Set initial state
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    
-    // Check on mount
     checkMobile()
     
-    // Add event listener for resize with debounce
+    // Add event listener for resize with improved debounce
     let resizeTimer: ReturnType<typeof setTimeout>
+    
     const handleResize = () => {
-      clearTimeout(resizeTimer)
-      resizeTimer = setTimeout(checkMobile, 100) // Debounce resize events
+      if (resizeTimer) clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(checkMobile, 100)
     }
     
-    window.addEventListener("resize", handleResize)
+    // Use passive event listener for better performance
+    window.addEventListener("resize", handleResize, { passive: true })
     
     // Clean up
     return () => {
       window.removeEventListener("resize", handleResize)
       clearTimeout(resizeTimer)
     }
-  }, [])
+  }, [checkMobile])
 
   // Return false for SSR
   return isMounted ? isMobile : false
