@@ -1,5 +1,5 @@
 
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useCallback } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { isSameDay, format } from "date-fns";
 import { DayContentProps } from "react-day-picker";
@@ -13,8 +13,13 @@ interface CalendarViewProps {
   onDateSelected: (date: Date | undefined) => void;
 }
 
+interface DayContentComponentProps {
+  date: Date;
+  daysWithJobs: Set<string>;
+}
+
 // Memoized day content component for better performance
-const CustomDayContent = memo(({ date, daysWithJobs }: { date: Date, daysWithJobs: Set<string> }) => {
+const CustomDayContent = memo(({ date, daysWithJobs }: DayContentComponentProps) => {
   const dateStr = date.toISOString().split('T')[0];
   const hasJobs = daysWithJobs.has(dateStr);
   
@@ -22,11 +27,14 @@ const CustomDayContent = memo(({ date, daysWithJobs }: { date: Date, daysWithJob
     <div className="relative">
       <span>{date.getDate()}</span>
       {hasJobs && (
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full" />
       )}
     </div>
   );
 });
+
+// Set display name for React DevTools
+CustomDayContent.displayName = 'CustomDayContent';
 
 export function CalendarView({ 
   orders, 
@@ -42,8 +50,12 @@ export function CalendarView({
     
     orders.forEach(order => {
       if (order.scheduledDate) {
-        const dateStr = new Date(order.scheduledDate).toISOString().split('T')[0];
-        days.add(dateStr);
+        try {
+          const dateStr = new Date(order.scheduledDate).toISOString().split('T')[0];
+          days.add(dateStr);
+        } catch (error) {
+          console.error("Error parsing date:", order.scheduledDate, error);
+        }
       }
     });
     
@@ -52,7 +64,7 @@ export function CalendarView({
   }, [orders]);
 
   // Handle date selection with notification
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = useCallback((date: Date | undefined) => {
     try {
       onSelectDate(date);
       
@@ -71,20 +83,20 @@ export function CalendarView({
     } catch (error) {
       console.error("Error in date selection:", error);
     }
-  };
+  }, [onSelectDate, orders, toast]);
 
   // Optimized custom day renderer
-  const customDayContent = (dayProps: DayContentProps) => {
+  const customDayContent = useCallback((dayProps: DayContentProps) => {
     try {
       return <CustomDayContent date={dayProps.date} daysWithJobs={daysWithJobs} />;
     } catch (error) {
       console.error("Error rendering calendar day:", error);
       return <div>{dayProps.date.getDate()}</div>;
     }
-  };
+  }, [daysWithJobs]);
 
   return (
-    <div>
+    <div className="calendar-container">
       <Calendar
         mode="single"
         selected={selectedDate}
@@ -97,3 +109,6 @@ export function CalendarView({
     </div>
   );
 }
+
+// Export with memo for better performance
+export default memo(CalendarView);

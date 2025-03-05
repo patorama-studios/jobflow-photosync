@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, memo, useMemo } from 'react';
+import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,8 +10,14 @@ import { JobList } from './calendar/JobList';
 import { CalendarSkeleton } from './calendar/CalendarSkeleton';
 import { isSameDay } from 'date-fns';
 
+// Define the interface for the JobCountBadge component props
+interface JobCountBadgeProps {
+  selectedDate: Date | undefined;
+  orders: Order[];
+}
+
 // Use memo to avoid re-renders
-const JobCountBadge = memo(({ selectedDate, orders }: { selectedDate: Date | undefined, orders: Order[] }) => {
+const JobCountBadge = memo(({ selectedDate, orders }: JobCountBadgeProps) => {
   const jobsForSelectedDay = useMemo(() => {
     if (!selectedDate) return [];
     
@@ -29,6 +35,9 @@ const JobCountBadge = memo(({ selectedDate, orders }: { selectedDate: Date | und
   );
 });
 
+// Ensure the display name is set for React DevTools
+JobCountBadge.displayName = 'JobCountBadge';
+
 export function JobCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
@@ -38,19 +47,19 @@ export function JobCalendar() {
   useEffect(() => {
     console.log("JobCalendar component mounted");
     
-    // Reduced loading time for better performance
-    const timer = setTimeout(() => {
+    // Use requestAnimationFrame for smoother loading transition
+    const timer = requestAnimationFrame(() => {
       setIsLoading(false);
-    }, 100);
+    });
     
     return () => {
       console.log("JobCalendar component unmounted");
-      clearTimeout(timer);
+      cancelAnimationFrame(timer);
     };
   }, []);
 
   // Handle date change with error handling
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = useCallback((date: Date | undefined) => {
     try {
       setSelectedDate(date);
     } catch (error) {
@@ -61,7 +70,7 @@ export function JobCalendar() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   if (isLoading) {
     return <CalendarSkeleton />;
@@ -111,3 +120,6 @@ export function JobCalendarWithErrorBoundary() {
     </ErrorBoundary>
   );
 }
+
+// Add default export for lazy loading
+export default JobCalendarWithErrorBoundary;
