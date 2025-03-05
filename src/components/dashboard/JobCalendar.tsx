@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CalendarView } from './calendar/CalendarView';
 import { JobList } from './calendar/JobList';
 import { CalendarSkeleton } from './calendar/CalendarSkeleton';
+import { isSameDay } from 'date-fns';
 
 export function JobCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -77,7 +78,7 @@ export function JobCalendar() {
 // Simple component to show job count for selected date
 const JobCountBadge = ({ selectedDate, orders }) => {
   const jobsForSelectedDay = orders.filter(order => 
-    order.scheduledDate && new Date(order.scheduledDate).toDateString() === selectedDate.toDateString()
+    order.scheduledDate && isSameDay(new Date(order.scheduledDate), selectedDate)
   );
   
   if (jobsForSelectedDay.length === 0) return null;
