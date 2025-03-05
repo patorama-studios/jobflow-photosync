@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { X } from 'lucide-react';
 import { 
@@ -33,6 +33,15 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   const [appointmentDate, setAppointmentDate] = useState<string>(
     `${formattedDate} ${initialAppointmentTime}`
   );
+
+  // Update appointment date when selectedDate or selectedTime changes
+  useEffect(() => {
+    if (selectedDate) {
+      const formattedDate = format(selectedDate, "MMM dd, yyyy");
+      const time = selectedTime || initialAppointmentTime;
+      setAppointmentDate(`${formattedDate} ${time}`);
+    }
+  }, [selectedDate, selectedTime, initialAppointmentTime]);
 
   const handleCreateAppointment = () => {
     // In a real app, this would save the appointment

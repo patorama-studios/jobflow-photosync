@@ -97,12 +97,15 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick }: JobCale
   }, [toast]);
 
   // Handle time slot click
-  const handleTimeSlotClick = useCallback((time: string) => {
+  const handleTimeSlotClick = useCallback((time: string, date?: Date) => {
     console.log("Time slot clicked:", time);
-    if (onTimeSlotClick) {
+    const clickedDate = date || selectedDate;
+    
+    if (onTimeSlotClick && clickedDate) {
+      // Format the time nicely and pass it to the parent component
       onTimeSlotClick(time);
     }
-  }, [onTimeSlotClick]);
+  }, [onTimeSlotClick, selectedDate]);
 
   if (isLoading) {
     return <CalendarSkeleton />;
