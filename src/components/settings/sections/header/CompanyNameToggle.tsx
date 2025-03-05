@@ -1,14 +1,14 @@
 
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 
-export function CompanyNameToggle() {
+export const CompanyNameToggle = memo(function CompanyNameToggle() {
   const { settings, updateSettings } = useHeaderSettings();
 
-  const handleCompanyNameToggle = (checked: boolean) => {
+  const handleCompanyNameToggle = useCallback((checked: boolean) => {
     updateSettings({ ...settings, showCompanyName: checked });
-  };
+  }, [settings, updateSettings]);
 
   return (
     <div className="space-y-2">
@@ -24,4 +24,4 @@ export function CompanyNameToggle() {
       </div>
     </div>
   );
-}
+});
