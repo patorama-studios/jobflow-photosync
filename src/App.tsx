@@ -17,6 +17,7 @@ const Calendar = lazy(() => import('./pages/Calendar'));
 const Orders = lazy(() => import('./pages/Orders'));
 const Customers = lazy(() => import('./pages/Customers'));
 const CustomerDetails = lazy(() => import('./pages/CustomerDetails'));
+const CompanyDetails = lazy(() => import('./pages/CompanyDetails'));
 const ProductionBoard = lazy(() => import('./pages/ProductionBoard'));
 const ProductionOrderDetails = lazy(() => import('./pages/ProductionOrderDetails'));
 const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
@@ -67,9 +68,21 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
-                <Route path="/customers/:customerId/*" element={
+                <Route path="/clients" element={
+                  <ProtectedRoute>
+                    <Customers />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/clients/:clientId/*" element={
                   <ProtectedRoute>
                     <CustomerDetails />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/companies/:companyId/*" element={
+                  <ProtectedRoute>
+                    <CompanyDetails />
                   </ProtectedRoute>
                 } />
                 

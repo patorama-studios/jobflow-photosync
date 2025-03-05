@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { 
   Search, 
   Filter, 
-  MessageSquare 
+  MessageSquare,
+  Building
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { mockCustomers } from "@/components/clients/mock-data";
+import { mockCustomers, mockCompanies } from "@/components/clients/mock-data";
 
 export function ClientTable() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +30,12 @@ export function ClientTable() {
       client.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Find company ID by name for linking
+  const getCompanyIdByName = (companyName: string) => {
+    const company = mockCompanies.find(c => c.name === companyName);
+    return company ? company.id : undefined;
+  };
 
   return (
     <Card>
@@ -57,6 +64,7 @@ export function ClientTable() {
               <TableRow>
                 <TableHead className="w-[80px]">Photo</TableHead>
                 <TableHead>Client</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead>Contact Info</TableHead>
                 <TableHead className="text-center">Jobs</TableHead>
                 <TableHead className="text-center">Outstanding</TableHead>
@@ -76,7 +84,21 @@ export function ClientTable() {
                   <TableCell>
                     <div>
                       <p className="font-medium">{client.name}</p>
-                      <p className="text-sm text-muted-foreground">{client.company}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      {client.company ? (
+                        <Link 
+                          to={`/companies/${getCompanyIdByName(client.company)}`}
+                          className="text-sm font-medium text-primary flex items-center hover:underline"
+                        >
+                          <Building className="h-3 w-3 mr-1" />
+                          {client.company}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Not assigned</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

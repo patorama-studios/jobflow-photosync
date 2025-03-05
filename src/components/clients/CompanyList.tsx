@@ -7,7 +7,8 @@ import {
   Building,
   Calendar,
   DollarSign,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,9 +53,11 @@ export function CompanyList({ viewMode }: CompanyListProps) {
           <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />
           </Button>
-          <Button size="sm">
-            <Building className="h-4 w-4 mr-2" />
-            Add Company
+          <Button size="sm" asChild>
+            <Link to="/companies/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Company
+            </Link>
           </Button>
         </div>
       </div>
