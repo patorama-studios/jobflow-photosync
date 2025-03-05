@@ -1,23 +1,33 @@
 
-import { Download, Lock, FileText, File } from "lucide-react";
+import { Download, Lock, FileText, File, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FloorPlan {
   id: string;
   imageUrl: string;
   pdfUrl: string;
   title: string;
+  boxFolderId?: string; // Box folder ID
 }
 
 interface FloorPlanSectionProps {
   floorPlans: FloorPlan[];
   isDownloadAllowed: boolean;
   contentLocked: boolean;
+  orderNumber?: string;
+  propertyAddress?: string;
 }
 
-export function FloorPlanSection({ floorPlans, isDownloadAllowed, contentLocked }: FloorPlanSectionProps) {
+export function FloorPlanSection({ 
+  floorPlans, 
+  isDownloadAllowed, 
+  contentLocked, 
+  orderNumber, 
+  propertyAddress 
+}: FloorPlanSectionProps) {
   const { toast } = useToast();
   
   const handleDownload = (floorPlan: FloorPlan, type: 'pdf' | 'image') => {
@@ -45,6 +55,41 @@ export function FloorPlanSection({ floorPlans, isDownloadAllowed, contentLocked 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+  
+  const openBoxFolder = (floorPlan: FloorPlan) => {
+    if (!isDownloadAllowed) {
+      toast({
+        title: "Access Restricted",
+        description: "Content is locked. Please complete payment to access.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (floorPlan.boxFolderId) {
+      toast({
+        title: "Opening Box Folder",
+        description: `Opening Box folder for ${floorPlan.title}`,
+      });
+      
+      // Open Box folder in a new tab
+      window.open(`https://app.box.com/folder/${floorPlan.boxFolderId}`, '_blank');
+    } else {
+      toast({
+        title: "Box Folder Not Available",
+        description: "The Box folder for this floor plan is not available.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Generate Box folder name based on order number and property address
+  const getBoxFolderName = () => {
+    if (orderNumber && propertyAddress) {
+      return `[${orderNumber}] - ${propertyAddress}`;
+    }
+    return "Floor Plans Folder";
   };
   
   return (
@@ -98,6 +143,23 @@ export function FloorPlanSection({ floorPlans, isDownloadAllowed, contentLocked 
                       <Download className="h-4 w-4 mr-2" />
                       Download Image
                     </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="secondary" 
+                            onClick={() => openBoxFolder(floorPlan)}
+                            disabled={contentLocked || !floorPlan.boxFolderId}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open in Box
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Open in Box: {getBoxFolderName()}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               </div>

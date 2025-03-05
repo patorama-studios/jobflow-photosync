@@ -3,18 +3,27 @@ import React, { useState, useEffect } from 'react';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { 
-  Calendar as CalendarComponent, 
-  CalendarProps 
-} from '@/components/ui/calendar';
-import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, parseISO } from 'date-fns';
+  format, 
+  addDays, 
+  subDays, 
+  startOfWeek, 
+  endOfWeek, 
+  addWeeks, 
+  subWeeks, 
+  isSameDay,
+  eachDayOfInterval,
+  parseISO,
+  addMonths,
+  subMonths
+} from 'date-fns';
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Users, 
-  CalendarDays, 
-  Calendar as CalendarIcon, 
-  ClockIcon,
-  Car
+  Calendar as CalendarIcon,
+  ArrowLeft,
+  ListFilter,
+  Plus,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,40 +31,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type ViewMode = 'month' | 'week' | 'day';
+type ViewMode = 'day' | 'week' | 'month' | 'list';
 
-// Sample photographer starting locations (would come from settings in a real app)
-const PHOTOGRAPHER_STARTING_LOCATIONS = {
-  1: { address: "123 Main St, Seattle, WA", lat: 47.6062, lng: -122.3321 },
-  2: { address: "456 Pine Ave, Bellevue, WA", lat: 47.6101, lng: -122.2015 },
-  3: { address: "789 Oak Blvd, Kirkland, WA", lat: 47.6769, lng: -122.2060 },
-  4: { address: "321 Elm St, Redmond, WA", lat: 47.6740, lng: -122.1215 },
-  5: { address: "654 Cedar Rd, Renton, WA", lat: 47.4829, lng: -122.2171 },
-};
+const timeSlots = [
+  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", 
+  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30",
+  "19:00", "19:30", "20:00", "20:30", "21:00"
+];
 
-// Function to calculate driving time between two locations
-const calculateDrivingTime = (startLat, startLng, endLat, endLng) => {
-  // In a real app, this would use a mapping API like Google Maps
-  // Here we'll use a simple distance formula and convert to minutes
-  const R = 6371; // Radius of the earth in km
-  const dLat = (endLat - startLat) * Math.PI / 180;
-  const dLon = (endLng - startLng) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(startLat * Math.PI / 180) * Math.cos(endLat * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c; // Distance in km
-  
-  // Assume average speed of 40 km/h in city traffic
-  const timeInMinutes = Math.round((distance / 40) * 60);
-  return timeInMinutes;
+// Sample colors for different event types
+const eventColors = {
+  "residential": "#e57373", // Red
+  "commercial": "#64b5f6", // Blue
+  "drone": "#ffb74d", // Orange
+  "floorplan": "#81c784", // Green
+  "video": "#9575cd", // Purple
+  "training": "#4db6ac", // Teal
+  "meeting": "#f06292", // Pink
+  "drive": "#ffd54f"  // Amber
 };
 
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [viewMode, setViewMode] = useState<ViewMode>('week'); // Default to week view
   const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>([1, 2, 3, 4, 5]);
   const { orders } = useSampleOrders();
 
@@ -79,70 +81,46 @@ const Calendar: React.FC = () => {
     };
   });
 
-  // Convert orders to calendar events with additional driving time information
-  const calendarEvents = orders.map(order => {
+  // Convert orders to events
+  const events = orders.map(order => {
     const photographerId = photographers.find(p => p.name === order.photographer)?.id || 1;
+    // Extract time from scheduledTime (format: "10:00 AM")
+    const timeString = order.scheduledTime.split(' ')[0];
+    // Create a random duration between 1-3 hours
+    const durationHours = Math.floor(Math.random() * 3) + 1;
+    
+    // Parse the time
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const isAM = order.scheduledTime.includes('AM');
+    
+    // Create a date object for the start time
+    const startDate = new Date(order.scheduledDate);
+    startDate.setHours(isAM ? hours : hours + 12);
+    startDate.setMinutes(minutes);
+    
+    // Create a date object for the end time
+    const endDate = new Date(startDate);
+    endDate.setHours(endDate.getHours() + durationHours);
+    
+    // Random event type
+    const eventTypes = Object.keys(eventColors);
+    const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    
     return {
-      ...order,
+      id: order.id,
+      title: `#${order.orderNumber} - ${order.client.split(' - ')[0]}`,
       photographerId,
-      date: new Date(order.scheduledDate), // Convert ISO string to Date
+      photographer: order.photographer,
+      start: startDate,
+      end: endDate,
+      address: order.address,
+      eventType,
+      color: eventColors[eventType as keyof typeof eventColors]
     };
   });
 
-  // Process events to add driving time information
-  const processedEvents = [...calendarEvents].sort((a, b) => {
-    // Sort by date, then by time
-    const dateA = a.date;
-    const dateB = b.date;
-    const timeA = a.scheduledTime;
-    const timeB = b.scheduledTime;
-    
-    if (dateA.getTime() !== dateB.getTime()) {
-      return dateA.getTime() - dateB.getTime();
-    }
-    
-    // Convert time strings to comparable values (assuming format like "10:00 AM")
-    const timeValueA = timeA.replace(':', '').replace(/\s/g, '');
-    const timeValueB = timeB.replace(':', '').replace(/\s/g, '');
-    return timeValueA.localeCompare(timeValueB);
-  });
-
-  // Add driving time information
-  processedEvents.forEach((event, index) => {
-    const photographerId = event.photographerId;
-    const startLocation = PHOTOGRAPHER_STARTING_LOCATIONS[photographerId];
-    
-    // If it's the first event of the day for this photographer
-    const prevEventSameDay = processedEvents.slice(0, index).reverse().find(e => 
-      e.photographerId === photographerId && 
-      e.date.getDate() === event.date.getDate() &&
-      e.date.getMonth() === event.date.getMonth() &&
-      e.date.getFullYear() === event.date.getFullYear()
-    );
-    
-    if (!prevEventSameDay) {
-      // Calculate driving time from starting location
-      event.drivingTimeMin = calculateDrivingTime(
-        startLocation.lat, 
-        startLocation.lng, 
-        startLocation.lat + (Math.random() * 0.1), // Dummy end location (would be geocoded from address)
-        startLocation.lng + (Math.random() * 0.1)
-      );
-      event.previousLocation = startLocation.address;
-    } else {
-      // Calculate driving time from previous event
-      event.drivingTimeMin = calculateDrivingTime(
-        startLocation.lat + (Math.random() * 0.1), // Dummy start (would be previous event location)
-        startLocation.lng + (Math.random() * 0.1),
-        startLocation.lat + (Math.random() * 0.1), // Dummy end (would be current event location)
-        startLocation.lng + (Math.random() * 0.1)
-      );
-      event.previousLocation = prevEventSameDay.address;
-    }
-  });
-
   // Filter events based on selected photographers
-  const filteredEvents = processedEvents.filter(event => 
+  const filteredEvents = events.filter(event => 
     selectedPhotographers.includes(event.photographerId)
   );
 
@@ -170,285 +148,346 @@ const Calendar: React.FC = () => {
     setCurrentDate(new Date());
   };
 
-  const getDateTitle = () => {
+  const getDateRangeTitle = () => {
     if (viewMode === 'month') {
       return format(currentDate, 'MMMM yyyy');
     } else if (viewMode === 'week') {
-      return `Week of ${format(currentDate, 'MMM d, yyyy')}`;
-    } else {
+      const start = startOfWeek(currentDate);
+      const end = endOfWeek(currentDate);
+      
+      // If start and end are in the same month
+      if (start.getMonth() === end.getMonth()) {
+        return `${format(start, 'MMM d')} – ${format(end, 'd, yyyy')}`;
+      }
+      
+      // If they span different months
+      return `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
+    } else if (viewMode === 'day') {
       return format(currentDate, 'EEEE, MMMM d, yyyy');
-    }
-  };
-
-  // Format driving time for display
-  const formatDrivingTime = (minutes) => {
-    if (!minutes) return '';
-    
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
     } else {
-      return `${mins}m`;
+      return format(currentDate, 'MMMM yyyy');
     }
   };
 
-  // We'll use this to highlight dates with jobs
-  const datesWithJobs = filteredEvents.map(event => event.date);
+  // Get events for a specific time slot and day
+  const getEventsForTimeSlot = (day: Date, timeSlot: string) => {
+    const [hours, minutes] = timeSlot.split(':').map(Number);
+    const slotTime = new Date(day);
+    slotTime.setHours(hours, minutes, 0, 0);
+    
+    const nextSlotTime = new Date(slotTime);
+    nextSlotTime.setMinutes(nextSlotTime.getMinutes() + 30); // 30 minute slots
+    
+    return filteredEvents.filter(event => {
+      const eventStart = event.start;
+      const eventEnd = event.end;
+      
+      // Check if event overlaps with this time slot
+      return (eventStart < nextSlotTime && eventEnd > slotTime);
+    });
+  };
 
-  const renderMonthView = () => (
-    <div className="bg-white rounded-md shadow">
-      <CalendarComponent
-        mode="single"
-        selected={currentDate}
-        onSelect={(date) => date && setCurrentDate(date)}
-        className="rounded-md border"
-        modifiers={{
-          hasJob: datesWithJobs,
-        }}
-        modifiersClassNames={{
-          hasJob: "bg-primary/20 font-medium text-primary",
-        }}
-      />
-    </div>
-  );
-
-  const renderWeekView = () => (
-    <div className="bg-white rounded-md shadow p-4">
-      <div className="grid grid-cols-7 gap-1">
-        {Array.from({ length: 7 }).map((_, index) => {
-          const day = addDays(
-            new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - currentDate.getDay()),
-            index
-          );
-          const dayEvents = filteredEvents.filter(event => 
-            event.date.getDate() === day.getDate() && 
-            event.date.getMonth() === day.getMonth() && 
-            event.date.getFullYear() === day.getFullYear()
-          ).sort((a, b) => {
-            // Sort by time
-            const timeA = a.scheduledTime.replace(':', '').replace(/\s/g, '');
-            const timeB = b.scheduledTime.replace(':', '').replace(/\s/g, '');
-            return timeA.localeCompare(timeB);
-          });
+  // Function to render the week view calendar
+  const renderWeekView = () => {
+    // Get the days of the week
+    const startDate = startOfWeek(currentDate);
+    const endDate = endOfWeek(currentDate);
+    const daysOfWeek = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return (
+      <div className="flex flex-col h-[75vh] overflow-hidden rounded-lg border border-border">
+        {/* Header with days of the week */}
+        <div className="grid grid-cols-8 bg-background border-b">
+          {/* Empty cell for the time column */}
+          <div className="p-2 font-medium text-sm text-center border-r">Timezone</div>
           
-          return (
+          {/* Days of the week */}
+          {daysOfWeek.map((day, index) => (
             <div 
               key={index} 
-              className={`min-h-[200px] border rounded-md p-2 ${
-                day.getDate() === new Date().getDate() && 
-                day.getMonth() === new Date().getMonth() && 
-                day.getFullYear() === new Date().getFullYear() 
-                  ? 'bg-primary/10 border-primary' 
-                  : ''
+              className={`p-2 text-center border-r ${
+                isSameDay(day, new Date()) ? 'bg-primary/10 font-bold' : ''
               }`}
             >
-              <div className="text-center mb-2 font-medium">
-                <div className="text-sm text-muted-foreground">{format(day, 'EEE')}</div>
-                <div className="text-lg">{format(day, 'd')}</div>
-              </div>
-              <div className="space-y-2">
-                {dayEvents.map((event, eventIndex) => (
-                  <div key={event.id} className="space-y-1">
-                    {event.drivingTimeMin > 0 && (
-                      <div className="flex items-center text-xs text-muted-foreground space-x-1 pl-1">
-                        <Car className="h-3 w-3" />
-                        <span>{formatDrivingTime(event.drivingTimeMin)}</span>
-                      </div>
-                    )}
-                    <div 
-                      className="text-xs p-2 rounded" 
-                      style={{ 
-                        backgroundColor: photographers.find(p => p.id === event.photographerId)?.color + '20',
-                        borderLeft: `3px solid ${photographers.find(p => p.id === event.photographerId)?.color}`
-                      }}
-                    >
-                      <div className="font-medium truncate">{event.orderNumber}</div>
-                      <div className="truncate">{event.address.split(',')[0]}</div>
-                      <div className="flex justify-between">
-                        <span>{event.scheduledTime}</span>
-                        <span className="truncate max-w-[80px]">{event.client.split(' - ')[0]}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-xs text-muted-foreground">
+                {format(day, 'EEE M/d')}
               </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const renderDayView = () => (
-    <div className="bg-white rounded-md shadow p-4">
-      <div className="space-y-2">
-        <div className="text-center font-medium text-lg mb-4">
-          {format(currentDate, 'EEEE, MMMM d')}
+          ))}
         </div>
         
-        <div className="space-y-4">
-          {Array.from({ length: 12 }).map((_, index) => {
-            const hour = index + 8; // Start from 8 AM
-            const hourEvents = filteredEvents.filter(event => 
-              event.date.getDate() === currentDate.getDate() && 
-              event.date.getMonth() === currentDate.getMonth() && 
-              event.date.getFullYear() === currentDate.getFullYear() &&
-              parseInt(event.scheduledTime.split(':')[0]) === (hour % 12 === 0 ? 12 : hour % 12) &&
-              event.scheduledTime.includes(hour < 12 ? 'AM' : 'PM')
-            );
+        {/* Time slots */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-8">
+            {/* Time column */}
+            <div className="border-r">
+              {timeSlots.map((timeSlot, index) => (
+                <div 
+                  key={index}
+                  className="h-14 border-b px-2 text-xs text-muted-foreground flex items-center justify-end pr-2"
+                >
+                  {timeSlot}
+                </div>
+              ))}
+            </div>
             
-            return (
-              <div key={index} className="grid grid-cols-12 border-b py-2">
-                <div className="col-span-1 text-right pr-4 text-muted-foreground">
-                  {hour % 12 === 0 ? 12 : hour % 12}{hour < 12 ? 'am' : 'pm'}
-                </div>
-                <div className="col-span-11 border-l pl-4 min-h-[40px]">
-                  {hourEvents.map((event, eventIndex) => (
-                    <div key={event.id} className="space-y-1 mb-3">
-                      {event.drivingTimeMin > 0 && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center text-xs text-muted-foreground space-x-1 pl-1">
-                                <Car className="h-3 w-3" />
-                                <span>{formatDrivingTime(event.drivingTimeMin)}</span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">
-                              <p className="text-xs">Drive from: {event.previousLocation}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                      <div 
-                        className="text-sm p-2 rounded" 
-                        style={{ 
-                          backgroundColor: photographers.find(p => p.id === event.photographerId)?.color + '20',
-                          borderLeft: `3px solid ${photographers.find(p => p.id === event.photographerId)?.color}`
-                        }}
-                      >
-                        <div className="font-medium flex justify-between">
-                          <span>{event.orderNumber}</span>
-                          <span className="text-xs text-muted-foreground">{event.scheduledTime}</span>
-                        </div>
-                        <div className="text-xs">{event.address}</div>
-                        <div className="text-xs flex justify-between mt-1">
-                          <span>Client: {event.client.split(' - ')[0]}</span>
-                          <span className="text-muted-foreground">{event.client.split(' - ')[1] || ''}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Photographer: {event.photographer}
-                        </div>
-                      </div>
+            {/* Days columns */}
+            {daysOfWeek.map((day, dayIndex) => (
+              <div key={dayIndex} className="border-r relative">
+                {timeSlots.map((timeSlot, timeIndex) => {
+                  const eventsForSlot = getEventsForTimeSlot(day, timeSlot);
+                  
+                  return (
+                    <div key={timeIndex} className="h-14 border-b hover:bg-muted/30 relative">
+                      {eventsForSlot.map((event, eventIndex) => {
+                        // Calculate position and height based on event timing
+                        const eventStartTime = event.start;
+                        const eventEndTime = event.end;
+                        
+                        // Check if this is the starting slot for the event
+                        const isStartingSlot = eventStartTime.getHours() === parseInt(timeSlot.split(':')[0]) && 
+                                             Math.floor(eventStartTime.getMinutes() / 30) * 30 === parseInt(timeSlot.split(':')[1]);
+                        
+                        if (!isStartingSlot) return null;
+                        
+                        // Calculate duration in 30 min slots
+                        const durationMs = eventEndTime.getTime() - eventStartTime.getTime();
+                        const durationSlots = Math.ceil(durationMs / (30 * 60 * 1000));
+                        
+                        return (
+                          <div
+                            key={eventIndex}
+                            className="absolute left-0 right-0 mx-1 rounded-md p-1 text-xs overflow-hidden shadow-md z-10"
+                            style={{
+                              top: '2px',
+                              height: `${durationSlots * 3.5}rem - 4px`,
+                              backgroundColor: event.color,
+                              color: '#fff',
+                              zIndex: 10
+                            }}
+                          >
+                            <div className="font-medium">
+                              {event.title}
+                            </div>
+                            <div className="text-white/80 text-[10px]">
+                              {format(eventStartTime, 'h:mm a')} - {format(eventEndTime, 'h:mm a')}
+                            </div>
+                            <div className="text-white/80 text-[10px] truncate">
+                              {event.photographer}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <SidebarLayout>
       <PageTransition>
-        <div className="mb-8 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <div>
-            <h1 className="text-3xl font-semibold">Photography Calendar</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your shooting schedule and assignments
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleToday}>
-              Today
-            </Button>
-            <Button variant="outline" size="icon" onClick={handlePrevious}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleNext}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <span className="text-lg font-medium w-40 text-center">
-              {getDateTitle()}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-12 gap-6">
-          {/* Main content - calendar views */}
-          <div className="col-span-12 md:col-span-9">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Schedule</CardTitle>
-                  <Tabs 
-                    value={viewMode} 
-                    onValueChange={(v) => setViewMode(v as ViewMode)}
-                    className="w-fit"
+        <div className="space-y-4">
+          {/* Top navigation area */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="icon" className="h-8 w-8">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-2xl font-semibold">Calendar</h1>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8"
+                onClick={handleToday}
+              >
+                Today
+              </Button>
+              
+              <div className="flex items-center rounded-md border border-input">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-r-none border-r"
+                  onClick={handlePrevious}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="px-3 text-sm">
+                  {getDateRangeTitle()}
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-l-none border-l"
+                  onClick={handleNext}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <Tabs 
+                value={viewMode} 
+                onValueChange={(v) => setViewMode(v as ViewMode)}
+                className="h-8"
+              >
+                <TabsList className="h-8">
+                  <TabsTrigger 
+                    value="day" 
+                    className="text-xs px-2 h-7"
                   >
-                    <TabsList>
-                      <TabsTrigger value="month" className="flex items-center">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        Month
-                      </TabsTrigger>
-                      <TabsTrigger value="week" className="flex items-center">
-                        <CalendarDays className="mr-2 h-4 w-4" />
-                        Week
-                      </TabsTrigger>
-                      <TabsTrigger value="day" className="flex items-center">
-                        <ClockIcon className="mr-2 h-4 w-4" />
-                        Day
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {viewMode === 'month' && renderMonthView()}
-                {viewMode === 'week' && renderWeekView()}
-                {viewMode === 'day' && renderDayView()}
-              </CardContent>
-            </Card>
+                    Day
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="week" 
+                    className="text-xs px-2 h-7"
+                  >
+                    Week
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="month" 
+                    className="text-xs px-2 h-7"
+                  >
+                    Month
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="list" 
+                    className="text-xs px-2 h-7"
+                  >
+                    List
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              <Button variant="default" size="sm" className="h-8">
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Create
+              </Button>
+            </div>
           </div>
-
-          {/* Sidebar - photographer filters */}
-          <div className="col-span-12 md:col-span-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Photographers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {photographers.map((photographer) => (
-                    <div key={photographer.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`photographer-${photographer.id}`}
-                        checked={selectedPhotographers.includes(photographer.id)}
-                        onCheckedChange={() => togglePhotographer(photographer.id)}
-                      />
-                      <label 
-                        htmlFor={`photographer-${photographer.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
-                      >
-                        <span 
-                          className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: photographer.color }}
-                        ></span>
-                        {photographer.name}
-                      </label>
-                    </div>
-                  ))}
+          
+          {/* Main calendar content */}
+          <div className="grid grid-cols-12 gap-4">
+            {/* Sidebar: Filters and photographers */}
+            <div className="col-span-12 md:col-span-3 space-y-4">
+              {/* Timezone selector */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium">Timezone</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <Select defaultValue="Australia/Sydney">
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Australia/Sydney">Australia/Sydney</SelectItem>
+                      <SelectItem value="America/New_York">America/New_York</SelectItem>
+                      <SelectItem value="Europe/London">Europe/London</SelectItem>
+                      <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+              
+              {/* Event types filter */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium">Event Types</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="space-y-2">
+                    {Object.entries(eventColors).map(([type, color]) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`type-${type}`}
+                          defaultChecked
+                        />
+                        <label 
+                          htmlFor={`type-${type}`}
+                          className="text-sm flex items-center"
+                        >
+                          <span 
+                            className="w-3 h-3 rounded-full mr-2"
+                            style={{ backgroundColor: color }}
+                          ></span>
+                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Photographers filter */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <Users className="h-4 w-4 mr-1.5" />
+                    Photographers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="space-y-2">
+                    {photographers.map((photographer) => (
+                      <div key={photographer.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`photographer-${photographer.id}`}
+                          checked={selectedPhotographers.includes(photographer.id)}
+                          onCheckedChange={() => togglePhotographer(photographer.id)}
+                        />
+                        <label 
+                          htmlFor={`photographer-${photographer.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
+                        >
+                          <span 
+                            className="w-3 h-3 rounded-full mr-2" 
+                            style={{ backgroundColor: photographer.color }}
+                          ></span>
+                          {photographer.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Main calendar area */}
+            <div className="col-span-12 md:col-span-9">
+              <TabsContent value="week" className="mt-0">
+                {renderWeekView()}
+              </TabsContent>
+              
+              <TabsContent value="day" className="mt-0">
+                {/* Day view implementation would go here */}
+                <div className="flex justify-center items-center h-[75vh] border rounded-lg">
+                  <p>Day view calendar would be displayed here</p>
                 </div>
-              </CardContent>
-            </Card>
+              </TabsContent>
+              
+              <TabsContent value="month" className="mt-0">
+                {/* Month view implementation would go here */}
+                <div className="flex justify-center items-center h-[75vh] border rounded-lg">
+                  <p>Month view calendar would be displayed here</p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="list" className="mt-0">
+                {/* List view implementation would go here */}
+                <div className="flex justify-center items-center h-[75vh] border rounded-lg">
+                  <p>List view would be displayed here</p>
+                </div>
+              </TabsContent>
+            </div>
           </div>
         </div>
       </PageTransition>
