@@ -1,8 +1,7 @@
 
 import React, { useMemo, memo } from 'react';
 import { Calendar } from "@/components/ui/calendar";
-import { isSameDay } from "date-fns";
-import { format } from "date-fns";
+import { isSameDay, format } from "date-fns";
 import { DayContentProps } from "react-day-picker";
 import { useToast } from "@/components/ui/use-toast";
 import { Order } from '@/hooks/useSampleOrders';

@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { JobCalendarWithErrorBoundary } from "@/components/dashboard/JobCalendar";
-import { Bell, Plus, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CalendarSkeleton } from "@/components/dashboard/calendar/CalendarSkeleton";
