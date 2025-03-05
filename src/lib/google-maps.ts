@@ -5,11 +5,21 @@ interface GoogleMapsScriptOptions {
   apiKey: string;
   libraries?: string[];
   callback?: string;
+  region?: string;
 }
 
 let isLoaded = false;
 let isLoading = false;
 let callbacks: Array<() => void> = [];
+let defaultRegion = 'au'; // Default to Australia
+
+export const setDefaultRegion = (region: string) => {
+  defaultRegion = region;
+};
+
+export const getDefaultRegion = () => {
+  return defaultRegion;
+};
 
 export const loadGoogleMapsScript = (options: GoogleMapsScriptOptions): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -33,7 +43,9 @@ export const loadGoogleMapsScript = (options: GoogleMapsScriptOptions): Promise<
     script.id = 'google-maps-script';
     script.src = `https://maps.googleapis.com/maps/api/js?key=${options.apiKey}&libraries=${
       options.libraries?.join(',') || 'places'
-    }${options.callback ? `&callback=${options.callback}` : ''}`;
+    }${options.callback ? `&callback=${options.callback}` : ''}${
+      options.region ? `&region=${options.region}` : `&region=${defaultRegion}`
+    }`;
     script.async = true;
     script.defer = true;
     
@@ -66,10 +78,50 @@ declare global {
     google: {
       maps: {
         places: {
-          Autocomplete: typeof google.maps.places.Autocomplete;
+          Autocomplete: new (
+            element: HTMLInputElement,
+            options?: google.maps.places.AutocompleteOptions
+          ) => google.maps.places.Autocomplete;
         };
-        event: typeof google.maps.event;
+        Map: any;
+        Marker: any;
+        event: any;
       };
     };
+  }
+}
+
+// Add the google namespace declaration to fix the typing issues
+declare namespace google.maps {
+  namespace places {
+    interface AutocompleteOptions {
+      types?: string[];
+      componentRestrictions?: {
+        country: string | string[];
+      };
+      fields?: string[];
+    }
+    
+    interface Autocomplete {
+      addListener(event: string, handler: () => void): void;
+      getPlace(): {
+        address_components?: Array<{
+          long_name: string;
+          short_name: string;
+          types: string[];
+        }>;
+        formatted_address?: string;
+        geometry?: {
+          location: {
+            lat(): number;
+            lng(): number;
+          };
+        };
+      };
+    }
+  }
+  
+  namespace event {
+    function clearInstanceListeners(instance: any): void;
   }
 }

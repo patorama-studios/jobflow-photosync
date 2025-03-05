@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProductionUpload from './pages/ProductionUpload';
 import Orders from './pages/Orders';
-import CalendarPage from './pages/CalendarPage';
-import { Toast } from "@/components/ui/use-toast"
+import { CalendarPage } from './pages/CalendarPage';
+import { Toaster } from "@/components/ui/toaster";
 import { GoogleMapsProvider } from './contexts/GoogleMapsContext';
 
 function App() {
@@ -19,7 +20,7 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/calendar" element={<CalendarPage />} />
         </Routes>
-        <Toast />
+        <Toaster />
       </Router>
     </GoogleMapsProvider>
   );

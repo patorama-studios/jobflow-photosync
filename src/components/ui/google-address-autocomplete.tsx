@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { getDefaultRegion } from '@/lib/google-maps';
 
 interface GoogleAddressAutocompleteProps {
   onAddressSelect: (address: {
@@ -18,6 +19,7 @@ interface GoogleAddressAutocompleteProps {
   defaultValue?: string;
   className?: string;
   required?: boolean;
+  region?: string;
 }
 
 export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps> = ({
@@ -25,7 +27,8 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
   placeholder = "Search an address...",
   defaultValue = "",
   className = "",
-  required = false
+  required = false,
+  region
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -34,10 +37,14 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
   useEffect(() => {
     if (!window.google || !inputRef.current) return;
     
-    // Initialize Google Autocomplete
+    // Get the default region (Australia) or use provided region
+    const preferredRegion = region || getDefaultRegion();
+    
+    // Initialize Google Autocomplete with region preference
     autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
       types: ['address'],
-      fields: ['address_components', 'formatted_address', 'geometry']
+      fields: ['address_components', 'formatted_address', 'geometry'],
+      componentRestrictions: { country: preferredRegion }
     });
     
     // Add listener for place selection
@@ -101,7 +108,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
         window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
-  }, [onAddressSelect]);
+  }, [onAddressSelect, region]);
   
   return (
     <div className="relative w-full">
