@@ -15,7 +15,7 @@ import {
   subMonths,
   isPast
 } from 'date-fns';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { timeSlots, eventColors } from '@/components/calendar/CalendarUtils';
@@ -213,6 +213,12 @@ const Calendar: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
             {/* Calendar Views */}
             <Tabs value={viewMode} className="w-full">
+              <TabsList className="hidden">
+                <TabsTrigger value="day">Day</TabsTrigger>
+                <TabsTrigger value="week">Week</TabsTrigger>
+                <TabsTrigger value="month">Month</TabsTrigger>
+                <TabsTrigger value="list">List</TabsTrigger>
+              </TabsList>
               <TabsContent value="day" className="m-0">
                 <CalendarViews 
                   viewMode="day"
