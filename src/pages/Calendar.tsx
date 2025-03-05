@@ -11,68 +11,19 @@ import {
   addWeeks, 
   subWeeks, 
   isSameDay,
-  eachDayOfInterval,
-  parseISO,
   addMonths,
   subMonths,
-  isToday,
-  isFuture,
-  isPast,
-  startOfMonth,
-  endOfMonth,
-  getDay,
-  getDate
+  isPast
 } from 'date-fns';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon,
-  ArrowLeft,
-  ListFilter,
-  Plus,
-  Users,
-  Clock,
-  ExternalLink,
-  Info,
-  MapPin,
-  Phone,
-  Mail,
-  FileText,
-  Edit,
-  X,
-  CalendarDays
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { timeSlots, eventColors } from '@/components/calendar/CalendarUtils';
+import { CalendarHeader } from '@/components/calendar/CalendarHeader';
+import { CalendarViews } from '@/components/calendar/CalendarViews';
+import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
 
 type ViewMode = 'day' | 'week' | 'month' | 'list';
-
-const timeSlots = [
-  "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", 
-  "10:00", "10:30", "11:00", "11:30", "12:00", "12:30",
-  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30",
-  "19:00", "19:30", "20:00", "20:30", "21:00"
-];
-
-// Sample colors for different event types
-const eventColors = {
-  "residential": "#e57373", // Red
-  "commercial": "#64b5f6", // Blue
-  "drone": "#ffb74d", // Orange
-  "floorplan": "#81c784", // Green
-  "video": "#9575cd", // Purple
-  "training": "#4db6ac", // Teal
-  "meeting": "#f06292", // Pink
-  "drive": "#ffd54f"  // Amber
-};
 
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -236,631 +187,70 @@ const Calendar: React.FC = () => {
     setShowEventDetails(true);
   };
 
-  // Render mobile list view
-  const renderMobileListView = () => {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes since midnight
-    
-    // Group events by day
-    const eventsByDay = filteredEvents.reduce((acc: Record<string, any[]>, event) => {
-      const dateKey = format(event.start, 'yyyy-MM-dd');
-      if (!acc[dateKey]) {
-        acc[dateKey] = [];
-      }
-      acc[dateKey].push(event);
-      return acc;
-    }, {});
-    
-    // Sort events for each day
-    Object.keys(eventsByDay).forEach(dateKey => {
-      eventsByDay[dateKey].sort((a, b) => a.start.getTime() - b.start.getTime());
-    });
-    
-    // Separate today's events and future events
-    const todayKey = format(now, 'yyyy-MM-dd');
-    const todayEvents = eventsByDay[todayKey] || [];
-    
-    // Get all future dates (excluding today) and sort them
-    const futureDates = Object.keys(eventsByDay)
-      .filter(dateKey => dateKey > todayKey)
-      .sort();
-    
-    return (
-      <div className="space-y-6">
-        {/* Today's Events */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Today</h3>
-          {todayEvents.length > 0 ? (
-            <div className="space-y-3 relative">
-              {/* Time indicator line */}
-              <div 
-                className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 z-0"
-                style={{ 
-                  height: `${todayEvents.length * 96}px` 
-                }}
-              />
-              
-              {/* Current time indicator */}
-              <div 
-                className="absolute left-0 right-0 flex items-center z-10"
-                style={{ 
-                  top: `${calculateTimePosition(currentTime, todayEvents)}px` 
-                }}
-              >
-                <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center -ml-4">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div className="h-0.5 bg-red-500 w-full" />
-              </div>
-              
-              {todayEvents.map((event, index) => (
-                <EventCard 
-                  key={event.id} 
-                  event={event} 
-                  showDate={false}
-                  isPast={isPast(event.end)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">No events scheduled for today</p>
-          )}
-        </div>
-        
-        {/* Future Events */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Upcoming</h3>
-          <div className="space-y-6">
-            {futureDates.length > 0 ? (
-              futureDates.map(dateKey => (
-                <div key={dateKey} className="space-y-3">
-                  <h4 className="font-medium text-muted-foreground">{format(new Date(dateKey), 'EEEE, MMMM d')}</h4>
-                  {eventsByDay[dateKey].map((event) => (
-                    <EventCard 
-                      key={event.id} 
-                      event={event} 
-                      showDate={false} 
-                      isPast={false}
-                    />
-                  ))}
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground text-sm">No upcoming events scheduled</p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  // Helper function to calculate position for current time indicator
-  const calculateTimePosition = (currentTimeMinutes: number, events: any[]) => {
-    // If no events, return 0
-    if (events.length === 0) return 0;
-    
-    // Get first and last event times
-    const firstEventTime = events[0].start.getHours() * 60 + events[0].start.getMinutes();
-    const lastEventEnd = events[events.length - 1].end.getHours() * 60 + events[events.length - 1].end.getMinutes();
-    
-    // Calculate total time span in minutes
-    const timeSpan = lastEventEnd - firstEventTime;
-    if (timeSpan <= 0) return 0;
-    
-    // Calculate position
-    const totalHeight = events.length * 96; // 96px per event
-    const position = ((currentTimeMinutes - firstEventTime) / timeSpan) * totalHeight;
-    
-    // Constrain position to be within the view
-    return Math.max(0, Math.min(position, totalHeight));
-  };
-  
-  // Event card component for mobile view
-  const EventCard = ({ event, showDate = true, isPast = false }) => {
-    return (
-      <Card className={`${isPast ? 'opacity-60' : ''}`}>
-        <CardContent className="p-3">
-          <div className="flex items-start space-x-3">
-            <div 
-              className="w-2 self-stretch rounded-full" 
-              style={{ backgroundColor: event.color }}
-            />
-            <div className="flex-1">
-              <div className="flex justify-between items-start">
-                <h4 className="font-medium text-sm">{event.title}</h4>
-                {isPast && (
-                  <span className="text-xs bg-gray-200 rounded-full px-2 py-0.5">Completed</span>
-                )}
-              </div>
-              
-              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                <Clock className="h-3 w-3 mr-1" />
-                <span>
-                  {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
-                </span>
-              </div>
-              
-              {showDate && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  {format(event.start, 'EEEE, MMMM d')}
-                </div>
-              )}
-              
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-xs bg-accent px-2 py-0.5 rounded-full">
-                  {event.photographer}
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-  
-  // Render month view calendar
-  const renderMonthView = () => {
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    
-    // Get the first day of the month
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Start on Monday
-    
-    // Get the last day of the month
-    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 }); // End on Sunday
-    
-    // Get all days in the month view
-    const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
-    
-    // Group the days into weeks
-    const weeks = [];
-    let week = [];
-    
-    dateRange.forEach((day) => {
-      week.push(day);
-      if (week.length === 7) {
-        weeks.push(week);
-        week = [];
-      }
-    });
-    
-    if (week.length > 0) {
-      weeks.push(week);
-    }
-    
-    return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        {/* Header with day names */}
-        <div className="grid grid-cols-7 bg-muted">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-            <div key={index} className="p-2 text-center text-sm font-medium">
-              {day}
-            </div>
-          ))}
-        </div>
-        
-        {/* Calendar grid */}
-        <div className="grid grid-cols-1 divide-y divide-border">
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="grid grid-cols-7 divide-x divide-border">
-              {week.map((day, dayIndex) => {
-                const eventsForDay = getEventsForDay(day);
-                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-                
-                return (
-                  <div 
-                    key={dayIndex} 
-                    className={`min-h-[120px] p-1 ${
-                      isCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground'
-                    } ${isToday(day) ? 'bg-primary/5' : ''}`}
-                  >
-                    <div className={`text-right p-1 ${isToday(day) ? 'font-bold text-primary' : ''}`}>
-                      {format(day, 'd')}
-                    </div>
-                    
-                    <div className="overflow-y-auto max-h-[90px]">
-                      {eventsForDay.slice(0, 3).map((event, eventIndex) => (
-                        <div 
-                          key={eventIndex}
-                          className="text-[10px] mb-1 p-1 rounded truncate cursor-pointer"
-                          style={{ backgroundColor: event.color, color: '#fff' }}
-                          onClick={() => handleEventClick(event)}
-                        >
-                          {format(event.start, 'h:mm a')} {event.title}
-                        </div>
-                      ))}
-                      
-                      {eventsForDay.length > 3 && (
-                        <div className="text-[10px] text-center text-muted-foreground">
-                          +{eventsForDay.length - 3} more
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Render week view calendar
-  const renderWeekView = () => {
-    // Get the days of the week starting from Monday
-    const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
-    const endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
-    const daysOfWeek = eachDayOfInterval({ start: startDate, end: endDate });
-    
-    return (
-      <div className="flex flex-col h-[75vh] overflow-hidden rounded-lg border border-border">
-        {/* Header with days of the week */}
-        <div className="grid grid-cols-8 bg-background border-b">
-          {/* Empty cell for the time column */}
-          <div className="p-2 font-medium text-sm text-center border-r">Time</div>
-          
-          {/* Days of the week */}
-          {daysOfWeek.map((day, index) => (
-            <div 
-              key={index} 
-              className={`p-2 text-center border-r ${
-                isSameDay(day, new Date()) ? 'bg-primary/10 font-bold' : ''
-              }`}
-            >
-              <div className="font-medium">{format(day, 'EEE')}</div>
-              <div className="text-xs text-muted-foreground">{format(day, 'MMM d')}</div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Time slots */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-8">
-            {/* Time column */}
-            <div className="border-r">
-              {timeSlots.map((timeSlot, index) => (
-                <div 
-                  key={index}
-                  className="h-14 border-b px-2 text-xs text-muted-foreground flex items-center justify-end pr-2"
-                >
-                  {timeSlot}
-                </div>
-              ))}
-            </div>
-            
-            {/* Days columns */}
-            {daysOfWeek.map((day, dayIndex) => (
-              <div key={dayIndex} className="border-r relative">
-                {timeSlots.map((timeSlot, timeIndex) => {
-                  const eventsForSlot = getEventsForTimeSlot(day, timeSlot);
-                  
-                  return (
-                    <div key={timeIndex} className="h-14 border-b hover:bg-muted/30 relative">
-                      {eventsForSlot.map((event, eventIndex) => {
-                        // Calculate position and height based on event timing
-                        const eventStartTime = event.start;
-                        const eventEndTime = event.end;
-                        
-                        // Check if this is the starting slot for the event
-                        const isStartingSlot = eventStartTime.getHours() === parseInt(timeSlot.split(':')[0]) && 
-                                             Math.floor(eventStartTime.getMinutes() / 30) * 30 === parseInt(timeSlot.split(':')[1]);
-                        
-                        if (!isStartingSlot) return null;
-                        
-                        // Calculate duration in 30 min slots
-                        const durationMs = eventEndTime.getTime() - eventStartTime.getTime();
-                        const durationSlots = Math.ceil(durationMs / (30 * 60 * 1000));
-                        
-                        return (
-                          <div
-                            key={eventIndex}
-                            className="absolute left-0 right-0 mx-1 rounded-md p-1 text-xs overflow-hidden shadow-md z-10 cursor-pointer"
-                            style={{
-                              top: '2px',
-                              height: `${durationSlots * 3.5}rem - 4px`,
-                              backgroundColor: event.color,
-                              color: '#fff',
-                              zIndex: 10
-                            }}
-                            onClick={() => handleEventClick(event)}
-                          >
-                            <div className="font-medium">
-                              {event.title}
-                            </div>
-                            <div className="text-white/80 text-[10px]">
-                              {format(eventStartTime, 'h:mm a')} - {format(eventEndTime, 'h:mm a')}
-                            </div>
-                            <div className="text-white/80 text-[10px] truncate">
-                              {event.photographer}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  // Render day view
-  const renderDayView = () => {
-    const eventsForDay = getEventsForDay(currentDate);
-    
-    return (
-      <div className="grid grid-cols-1 divide-y divide-border border border-border rounded-lg overflow-hidden">
-        <div className="p-4 bg-muted">
-          <h2 className="text-lg font-semibold">{format(currentDate, 'EEEE, MMMM d, yyyy')}</h2>
-        </div>
-        
-        <div className="divide-y divide-border">
-          {timeSlots.map((timeSlot, index) => {
-            const eventsForTimeSlot = getEventsForTimeSlot(currentDate, timeSlot);
-            const isCurrentTime = isTimeNearCurrent(timeSlot);
-            
-            return (
-              <div 
-                key={index} 
-                className={`grid grid-cols-6 ${isCurrentTime ? 'bg-primary/5' : ''}`}
-              >
-                <div className="col-span-1 p-2 border-r border-border">
-                  <div className="text-sm text-muted-foreground">
-                    {timeSlot}
-                  </div>
-                </div>
-                
-                <div className="col-span-5 p-2 min-h-[4rem] relative">
-                  {eventsForTimeSlot.map((event, eventIndex) => {
-                    const eventStartTime = event.start;
-                    const isStartingSlot = eventStartTime.getHours() === parseInt(timeSlot.split(':')[0]) && 
-                                         Math.floor(eventStartTime.getMinutes() / 30) * 30 === parseInt(timeSlot.split(':')[1]);
-                    
-                    if (!isStartingSlot) return null;
-                    
-                    return (
-                      <div 
-                        key={eventIndex}
-                        className="mb-2 p-2 rounded shadow-sm cursor-pointer"
-                        style={{ backgroundColor: event.color, color: '#fff' }}
-                        onClick={() => handleEventClick(event)}
-                      >
-                        <div className="font-medium">{event.title}</div>
-                        <div className="text-sm">
-                          {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
-                        </div>
-                        <div className="text-sm">{event.photographer}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-  
-  // Check if a time slot is near the current time
-  const isTimeNearCurrent = (timeSlot: string) => {
-    const now = new Date();
-    const [hours, minutes] = timeSlot.split(':').map(Number);
-    
-    return now.getHours() === hours && 
-           Math.abs(now.getMinutes() - minutes) < 30;
-  };
-  
-  // Updated Event Details Dialog
-  const EventDetailsDialog = () => {
-    if (!selectedEvent) return null;
-    
-    return (
-      <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              Order #{selectedEvent.orderNumber} - {selectedEvent.client}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedEvent.address}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* Map Hero Section */}
-          <div className="w-full h-48 bg-muted rounded-lg mb-4 relative flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
-            <MapPin className="h-12 w-12 text-primary opacity-50" />
-            <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded-lg text-sm">
-              {selectedEvent.address}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Customer Details */}
-            <div>
-              <h3 className="font-semibold mb-3">Customer Details</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span>{selectedEvent.client}</span>
-                </div>
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span>{selectedEvent.phone}</span>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span>{selectedEvent.email}</span>
-                </div>
-                <div>
-                  <div className="flex items-center mb-1">
-                    <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="font-medium">Notes:</span>
-                  </div>
-                  <p className="text-muted-foreground pl-6">{selectedEvent.notes}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Order Summary */}
-            <div>
-              <h3 className="font-semibold mb-3">Order Summary</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <div className="font-medium mb-1">Items Ordered:</div>
-                  <ul className="list-disc pl-5 text-muted-foreground">
-                    {selectedEvent.items.map((item: string, idx: number) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-medium mb-1">Appointment:</div>
-                  <div className="text-muted-foreground pl-3 space-y-1">
-                    <div className="flex items-center">
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      <span>{format(selectedEvent.start, 'EEEE, MMMM d, yyyy')}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>{format(selectedEvent.start, 'h:mm a')} - {format(selectedEvent.end, 'h:mm a')}</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div className="font-medium mb-1">Photographer:</div>
-                  <div className="flex items-center text-muted-foreground pl-3">
-                    <Users className="h-4 w-4 mr-2" />
-                    <span>{selectedEvent.photographer}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="flex-wrap gap-2 mt-4">
-            <Button variant="outline" className="flex items-center">
-              <X className="h-4 w-4 mr-1" />
-              Cancel Order
-            </Button>
-            <Button variant="outline" className="flex items-center">
-              <CalendarDays className="h-4 w-4 mr-1" />
-              Postpone
-            </Button>
-            <Button variant="outline" className="flex items-center">
-              <Edit className="h-4 w-4 mr-1" />
-              Edit Appointment
-            </Button>
-            <Button className="flex items-center">
-              <ExternalLink className="h-4 w-4 mr-1" />
-              View Full Order
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
   return (
     <SidebarLayout showCalendarSubmenu={true}>
       <PageTransition>
         <div className="space-y-4 max-w-full px-0">
           {/* Top navigation area */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setShowCalendarSubmenu(!showCalendarSubmenu)}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <h1 className="text-2xl font-semibold">Calendar</h1>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8"
-                onClick={handleToday}
-              >
-                Today
-              </Button>
-              
-              <div className="flex items-center rounded-md border border-input">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-r-none border-r"
-                  onClick={handlePrevious}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="px-3 text-sm">
-                  {getDateRangeTitle()}
-                </span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 rounded-l-none border-l"
-                  onClick={handleNext}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <Tabs 
-                value={viewMode} 
-                onValueChange={(v) => setViewMode(v as ViewMode)}
-                className="h-8"
-              >
-                <TabsList className="h-8">
-                  <TabsTrigger 
-                    value="day" 
-                    className="text-xs px-2 h-7"
-                  >
-                    Day
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="week" 
-                    className="text-xs px-2 h-7"
-                  >
-                    Week
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="month" 
-                    className="text-xs px-2 h-7"
-                  >
-                    Month
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="list" 
-                    className="text-xs px-2 h-7"
-                  >
-                    List
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </div>
+          <CalendarHeader 
+            currentDate={currentDate}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            handlePrevious={handlePrevious}
+            handleNext={handleNext}
+            handleToday={handleToday}
+            getDateRangeTitle={getDateRangeTitle}
+            showCalendarSubmenu={showCalendarSubmenu}
+            setShowCalendarSubmenu={setShowCalendarSubmenu}
+          />
           
           {/* Main content area */}
           <div className="grid grid-cols-1 gap-4">
             {/* Calendar Views */}
             <Tabs value={viewMode} className="w-full">
               <TabsContent value="day" className="m-0">
-                {renderDayView()}
+                <CalendarViews 
+                  viewMode="day"
+                  currentDate={currentDate}
+                  getEventsForDay={getEventsForDay}
+                  getEventsForTimeSlot={getEventsForTimeSlot}
+                  handleEventClick={handleEventClick}
+                  filteredEvents={filteredEvents}
+                  timeSlots={timeSlots}
+                />
               </TabsContent>
               <TabsContent value="week" className="m-0">
-                {renderWeekView()}
+                <CalendarViews 
+                  viewMode="week"
+                  currentDate={currentDate}
+                  getEventsForDay={getEventsForDay}
+                  getEventsForTimeSlot={getEventsForTimeSlot}
+                  handleEventClick={handleEventClick}
+                  filteredEvents={filteredEvents}
+                  timeSlots={timeSlots}
+                />
               </TabsContent>
               <TabsContent value="month" className="m-0">
-                {renderMonthView()}
+                <CalendarViews 
+                  viewMode="month"
+                  currentDate={currentDate}
+                  getEventsForDay={getEventsForDay}
+                  getEventsForTimeSlot={getEventsForTimeSlot}
+                  handleEventClick={handleEventClick}
+                  filteredEvents={filteredEvents}
+                  timeSlots={timeSlots}
+                />
               </TabsContent>
               <TabsContent value="list" className="m-0">
-                {renderMobileListView()}
+                <CalendarViews 
+                  viewMode="list"
+                  currentDate={currentDate}
+                  getEventsForDay={getEventsForDay}
+                  getEventsForTimeSlot={getEventsForTimeSlot}
+                  handleEventClick={handleEventClick}
+                  filteredEvents={filteredEvents}
+                  timeSlots={timeSlots}
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -868,7 +258,11 @@ const Calendar: React.FC = () => {
       </PageTransition>
       
       {/* Event Details Dialog */}
-      <EventDetailsDialog />
+      <EventDetailsDialog 
+        selectedEvent={selectedEvent}
+        showEventDetails={showEventDetails}
+        setShowEventDetails={setShowEventDetails}
+      />
     </SidebarLayout>
   );
 };
