@@ -37,3 +37,6 @@ export function SettingsPage() {
     </SidebarLayout>
   );
 }
+
+// Default export for simpler imports
+export default SettingsPage;

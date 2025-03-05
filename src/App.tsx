@@ -7,7 +7,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleMapsProvider } from './contexts/GoogleMapsContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { SettingsPage } from './pages/Settings';
+import SettingsPage from './pages/Settings';
 
 function App() {
   // Google Maps API key - in a real application, this would be stored securely
