@@ -21,6 +21,7 @@ import { HeaderSettingsProvider } from './hooks/useHeaderSettings'
 // Import the new components and context
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import NotificationsCenter from './pages/NotificationsCenter';
+import MainLayout from './components/layout/MainLayout'
 
 function App() {
   const queryClient = new QueryClient()
@@ -35,16 +36,16 @@ function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/login" element={<Login />} />
-                  <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/orders/*" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-                  <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-                  <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-                  <Route path="/settings/*" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/production" element={<ProtectedRoute><Production /></ProtectedRoute>} />
-                  <Route path="/learning" element={<ProtectedRoute><Learning /></ProtectedRoute>} />
-                  <Route path="/apps" element={<ProtectedRoute><Apps /></ProtectedRoute>} />
-                  <Route path="/notifications" element={<ProtectedRoute><NotificationsCenter /></ProtectedRoute>} />
+                  <Route path="/" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
+                  <Route path="/dashboard" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
+                  <Route path="/orders/*" element={<MainLayout><ProtectedRoute><OrdersPage /></ProtectedRoute></MainLayout>} />
+                  <Route path="/customers" element={<MainLayout><ProtectedRoute><Customers /></ProtectedRoute></MainLayout>} />
+                  <Route path="/calendar" element={<MainLayout><ProtectedRoute><Calendar /></ProtectedRoute></MainLayout>} />
+                  <Route path="/settings/*" element={<MainLayout><ProtectedRoute><Settings /></ProtectedRoute></MainLayout>} />
+                  <Route path="/production" element={<MainLayout><ProtectedRoute><Production /></ProtectedRoute></MainLayout>} />
+                  <Route path="/learning" element={<MainLayout><ProtectedRoute><Learning /></ProtectedRoute></MainLayout>} />
+                  <Route path="/apps" element={<MainLayout><ProtectedRoute><Apps /></ProtectedRoute></MainLayout>} />
+                  <Route path="/notifications" element={<MainLayout><ProtectedRoute><NotificationsCenter /></ProtectedRoute></MainLayout>} />
                 </Routes>
               </HeaderSettingsProvider>
             </AuthProvider>
