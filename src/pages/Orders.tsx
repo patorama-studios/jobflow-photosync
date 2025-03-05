@@ -19,7 +19,7 @@ const Orders: React.FC = () => {
           </PageTransition>
         </SidebarLayout>
       } />
-      <Route path="/:orderId" element={<OrderDetails />} />
+      <Route path=":orderId" element={<OrderDetails />} />
     </Routes>
   );
 };

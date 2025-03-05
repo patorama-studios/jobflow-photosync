@@ -32,7 +32,7 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/production/:orderId" element={<ProductionUpload />} />
-              <Route path="/orders" element={<Orders />} />
+              <Route path="/orders/*" element={<Orders />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               {/* Add a default route to redirect to calendar */}
