@@ -1,7 +1,5 @@
 
-import React, { memo } from 'react';
-import { format } from 'date-fns';
-import { Order } from '@/types/orders';
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -11,88 +9,99 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { OrderActions } from './OrderActions';
+import { Button } from "@/components/ui/button";
+import { Eye, MoreHorizontal } from "lucide-react";
+import { formatDate } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate } from 'react-router-dom';
 
-interface OrdersTableProps {
-  orders: Order[];
-  isLoading?: boolean;
-}
+const statusColorMap: Record<string, string> = {
+  new: "bg-blue-500/20 text-blue-500 hover:bg-blue-500/30",
+  in_progress: "bg-orange-500/20 text-orange-500 hover:bg-orange-500/30",
+  completed: "bg-green-500/20 text-green-500 hover:bg-green-500/30",
+  cancelled: "bg-red-500/20 text-red-500 hover:bg-red-500/30",
+  late: "bg-purple-500/20 text-purple-500 hover:bg-purple-500/30",
+  paid: "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30",
+};
 
-export const OrderTable: React.FC<OrdersTableProps> = memo(({ orders, isLoading = false }) => {
+export const OrderTable = ({ orders = [] }: { orders: any[] }) => {
   const navigate = useNavigate();
-  
-  const handleRowClick = (orderId: string | number) => {
+
+  const handleViewOrder = (orderId: string) => {
     navigate(`/orders/${orderId}`);
   };
-  
-  // Helper function to get status badge
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">Pending</Badge>;
-      case 'scheduled':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Scheduled</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Completed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+
+  const convertToString = (value: string | number): string => {
+    return value?.toString() || '';
   };
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-pulse text-muted-foreground">Loading orders...</div>
-      </div>
-    );
-  }
-  
-  if (orders.length === 0) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-muted-foreground">No orders found</p>
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Order #</TableHead>
-            <TableHead>Client</TableHead>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Customer</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Address</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Address</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow 
-              key={order.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleRowClick(order.id)}
-            >
-              <TableCell className="font-medium">{order.orderNumber}</TableCell>
-              <TableCell>{order.client}</TableCell>
-              <TableCell>
-                {order.scheduledDate && 
-                  format(new Date(order.scheduledDate), 'MMM d, yyyy')}
-              </TableCell>
-              <TableCell className="max-w-[200px] truncate">{order.address}</TableCell>
-              <TableCell>{getStatusBadge(order.status)}</TableCell>
-              <TableCell className="text-right">
-                <OrderActions orderId={order.id} />
+          {orders.length > 0 ? (
+            orders.map((order) => (
+              <TableRow key={convertToString(order.id)}>
+                <TableCell className="font-medium">{convertToString(order.id)}</TableCell>
+                <TableCell>{order.customerName}</TableCell>
+                <TableCell>{formatDate(order.orderDate)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={statusColorMap[order.status || "new"]}>
+                    {order.status?.replace("_", " ") || "New"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="max-w-[240px] truncate">
+                  {order.propertyAddress}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleViewOrder(convertToString(order.id))}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Edit Order</DropdownMenuItem>
+                        <DropdownMenuItem>Change Status</DropdownMenuItem>
+                        <DropdownMenuItem>Download Details</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                No orders found
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </div>
   );
-});
-
-OrderTable.displayName = 'OrderTable';
+};
