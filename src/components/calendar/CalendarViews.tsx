@@ -22,6 +22,8 @@ interface CalendarViewsProps {
   handleEventClick: (event: any) => void;
   filteredEvents: any[];
   timeSlots: string[];
+  onDayClick?: (day: Date) => void;
+  onTimeSlotClick?: (day: Date, timeSlot: string) => void;
 }
 
 // Helper function to calculate position for current time indicator
@@ -56,7 +58,9 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
   getEventsForTimeSlot,
   handleEventClick,
   filteredEvents,
-  timeSlots
+  timeSlots,
+  onDayClick,
+  onTimeSlotClick
 }) => {
   // Mobile list view
   const renderMobileListView = () => {
@@ -210,7 +214,8 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
                     key={dayIndex} 
                     className={`min-h-[120px] p-1 ${
                       isCurrentMonth ? 'bg-background' : 'bg-muted/30 text-muted-foreground'
-                    } ${isToday(day) ? 'bg-primary/5' : ''}`}
+                    } ${isToday(day) ? 'bg-primary/5' : ''} cursor-pointer hover:bg-muted/20`}
+                    onClick={() => onDayClick && onDayClick(day)}
                   >
                     <div className={`text-right p-1 ${isToday(day) ? 'font-bold text-primary' : ''}`}>
                       {format(day, 'd')}
@@ -222,7 +227,10 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
                           key={eventIndex}
                           className="text-[10px] mb-1 p-1 rounded truncate cursor-pointer"
                           style={{ backgroundColor: event.color, color: '#fff' }}
-                          onClick={() => handleEventClick(event)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event);
+                          }}
                         >
                           {format(event.start, 'h:mm a')} {event.title}
                         </div>
@@ -262,9 +270,10 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
           {daysOfWeek.map((day, index) => (
             <div 
               key={index} 
-              className={`p-2 text-center border-r ${
+              className={`p-2 text-center border-r cursor-pointer hover:bg-muted/10 ${
                 isSameDay(day, new Date()) ? 'bg-primary/10 font-bold' : ''
               }`}
+              onClick={() => onDayClick && onDayClick(day)}
             >
               <div className="font-medium">{format(day, 'EEE')}</div>
               <div className="text-xs text-muted-foreground">{format(day, 'MMM d')}</div>
@@ -294,7 +303,11 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
                   const eventsForSlot = getEventsForTimeSlot(day, timeSlot);
                   
                   return (
-                    <div key={timeIndex} className="h-14 border-b hover:bg-muted/30 relative">
+                    <div 
+                      key={timeIndex} 
+                      className="h-14 border-b hover:bg-muted/30 relative cursor-pointer"
+                      onClick={() => onTimeSlotClick && onTimeSlotClick(day, timeSlot)}
+                    >
                       {eventsForSlot.map((event, eventIndex) => {
                         // Calculate position and height based on event timing
                         const eventStartTime = event.start;
@@ -321,7 +334,10 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
                               color: '#fff',
                               zIndex: 10
                             }}
-                            onClick={() => handleEventClick(event)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEventClick(event);
+                            }}
                           >
                             <div className="font-medium">
                               {event.title}
@@ -372,7 +388,10 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
                   </div>
                 </div>
                 
-                <div className="col-span-5 p-2 min-h-[4rem] relative">
+                <div 
+                  className="col-span-5 p-2 min-h-[4rem] relative cursor-pointer hover:bg-muted/10"
+                  onClick={() => onTimeSlotClick && onTimeSlotClick(currentDate, timeSlot)}
+                >
                   {eventsForTimeSlot.map((event, eventIndex) => {
                     const eventStartTime = event.start;
                     const isStartingSlot = eventStartTime.getHours() === parseInt(timeSlot.split(':')[0]) && 
@@ -385,7 +404,10 @@ export const CalendarViews: React.FC<CalendarViewsProps> = ({
                         key={eventIndex}
                         className="mb-2 p-2 rounded shadow-sm cursor-pointer"
                         style={{ backgroundColor: event.color, color: '#fff' }}
-                        onClick={() => handleEventClick(event)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEventClick(event);
+                        }}
                       >
                         <div className="font-medium">{event.title}</div>
                         <div className="text-sm">

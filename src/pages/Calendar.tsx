@@ -22,6 +22,7 @@ import { timeSlots, eventColors } from '@/components/calendar/CalendarUtils';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarViews } from '@/components/calendar/CalendarViews';
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
+import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
 
 type ViewMode = 'day' | 'week' | 'month' | 'list';
 
@@ -34,6 +35,11 @@ const Calendar: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [showCalendarSubmenu, setShowCalendarSubmenu] = useState(true);
+  
+  // New state variables for appointment creation
+  const [showCreateAppointment, setShowCreateAppointment] = useState(false);
+  const [selectedDateForAppointment, setSelectedDateForAppointment] = useState<Date>(new Date());
+  const [selectedTimeForAppointment, setSelectedTimeForAppointment] = useState<string | undefined>(undefined);
   
   useEffect(() => {
     // On mobile devices, default to the 'list' view
@@ -192,8 +198,21 @@ const Calendar: React.FC = () => {
     setViewMode(mode as ViewMode);
   };
 
+  // New handlers for opening the create appointment dialog
+  const handleDayClick = (day: Date) => {
+    setSelectedDateForAppointment(day);
+    setSelectedTimeForAppointment(undefined);
+    setShowCreateAppointment(true);
+  };
+
+  const handleTimeSlotClick = (day: Date, timeSlot: string) => {
+    setSelectedDateForAppointment(day);
+    setSelectedTimeForAppointment(timeSlot);
+    setShowCreateAppointment(true);
+  };
+
   return (
-    <SidebarLayout showCalendarSubmenu={true}>
+    <SidebarLayout showCalendarSubmenu={true} showBackButton={true}>
       <PageTransition>
         <div className="space-y-4 max-w-full px-0">
           {/* Top navigation area */}
@@ -228,6 +247,8 @@ const Calendar: React.FC = () => {
                   handleEventClick={handleEventClick}
                   filteredEvents={filteredEvents}
                   timeSlots={timeSlots}
+                  onDayClick={handleDayClick}
+                  onTimeSlotClick={handleTimeSlotClick}
                 />
               </TabsContent>
               <TabsContent value="week" className="m-0">
@@ -239,6 +260,8 @@ const Calendar: React.FC = () => {
                   handleEventClick={handleEventClick}
                   filteredEvents={filteredEvents}
                   timeSlots={timeSlots}
+                  onDayClick={handleDayClick}
+                  onTimeSlotClick={handleTimeSlotClick}
                 />
               </TabsContent>
               <TabsContent value="month" className="m-0">
@@ -250,6 +273,8 @@ const Calendar: React.FC = () => {
                   handleEventClick={handleEventClick}
                   filteredEvents={filteredEvents}
                   timeSlots={timeSlots}
+                  onDayClick={handleDayClick}
+                  onTimeSlotClick={handleTimeSlotClick}
                 />
               </TabsContent>
               <TabsContent value="list" className="m-0">
@@ -261,6 +286,8 @@ const Calendar: React.FC = () => {
                   handleEventClick={handleEventClick}
                   filteredEvents={filteredEvents}
                   timeSlots={timeSlots}
+                  onDayClick={handleDayClick}
+                  onTimeSlotClick={handleTimeSlotClick}
                 />
               </TabsContent>
             </Tabs>
@@ -273,6 +300,14 @@ const Calendar: React.FC = () => {
         selectedEvent={selectedEvent}
         showEventDetails={showEventDetails}
         setShowEventDetails={setShowEventDetails}
+      />
+
+      {/* Create Appointment Dialog */}
+      <CreateAppointmentDialog
+        isOpen={showCreateAppointment}
+        onClose={() => setShowCreateAppointment(false)}
+        selectedDate={selectedDateForAppointment}
+        selectedTime={selectedTimeForAppointment}
       />
     </SidebarLayout>
   );
