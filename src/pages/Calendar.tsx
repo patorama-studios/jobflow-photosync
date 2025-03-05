@@ -187,6 +187,11 @@ const Calendar: React.FC = () => {
     setShowEventDetails(true);
   };
 
+  // Create a function to set the view mode that accepts ViewMode
+  const handleSetViewMode = (mode: string) => {
+    setViewMode(mode as ViewMode);
+  };
+
   return (
     <SidebarLayout showCalendarSubmenu={true}>
       <PageTransition>
@@ -195,7 +200,7 @@ const Calendar: React.FC = () => {
           <CalendarHeader 
             currentDate={currentDate}
             viewMode={viewMode}
-            setViewMode={setViewMode}
+            setViewMode={handleSetViewMode}
             handlePrevious={handlePrevious}
             handleNext={handleNext}
             handleToday={handleToday}
