@@ -26,6 +26,7 @@ type DesktopSidebarProps = {
   }>;
   selectedPhotographers: number[];
   togglePhotographer: (id: number) => void;
+  hideLogo?: boolean;
 };
 
 export function DesktopSidebar({
@@ -39,7 +40,8 @@ export function DesktopSidebar({
   isActiveLink,
   photographers,
   selectedPhotographers,
-  togglePhotographer
+  togglePhotographer,
+  hideLogo = false
 }: DesktopSidebarProps) {
   return (
     <div 
@@ -48,7 +50,7 @@ export function DesktopSidebar({
         collapsed ? "w-[70px]" : "w-[240px]"
       )}
     >
-      <SidebarLogo collapsed={collapsed} />
+      <SidebarLogo collapsed={collapsed} hide={hideLogo} />
 
       <div className="flex-1 overflow-y-auto py-6 px-3">
         {showCalendarSubmenu ? (

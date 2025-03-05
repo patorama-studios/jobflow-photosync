@@ -26,6 +26,7 @@ type MobileSidebarProps = {
   }>;
   selectedPhotographers: number[];
   togglePhotographer: (id: number) => void;
+  hideLogo?: boolean;
 };
 
 export function MobileSidebar({
@@ -39,7 +40,8 @@ export function MobileSidebar({
   isActiveLink,
   photographers,
   selectedPhotographers,
-  togglePhotographer
+  togglePhotographer,
+  hideLogo = false
 }: MobileSidebarProps) {
   return (
     <>
@@ -69,7 +71,7 @@ export function MobileSidebar({
           </Button>
 
           <div className="flex h-16 items-center px-4 border-b border-sidebar-border mt-2">
-            <SidebarLogo />
+            <SidebarLogo hide={hideLogo} />
           </div>
 
           <div className="flex-1 overflow-y-auto py-6 px-3">

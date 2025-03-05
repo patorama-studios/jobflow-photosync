@@ -40,8 +40,8 @@ function App() {
             <DynamicCSS />
             <Header />
             <div style={{ paddingTop: 'var(--header-height, 65px)' }}> 
-              <Suspense fallback={<PageLoader />}>
-                <SidebarLayout>
+              <SidebarLayout>
+                <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/production/:orderId" element={<ProductionUpload />} />
                     <Route path="/orders/*" element={<Orders />} />
@@ -54,8 +54,8 @@ function App() {
                     {/* Add a default route to redirect to dashboard */}
                     <Route path="/" element={<Dashboard />} />
                   </Routes>
-                </SidebarLayout>
-              </Suspense>
+                </Suspense>
+              </SidebarLayout>
             </div>
           </ErrorBoundary>
           <Toaster />

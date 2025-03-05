@@ -26,12 +26,31 @@ import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { SidebarLinks } from './sidebar/SidebarLinks';
+import { LayoutDashboard, Calendar, Users, Settings, ShoppingCart, Kanban, GraduationCap, Puzzle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 export const Header: React.FC = () => {
   const { toast } = useToast();
   const { settings } = useHeaderSettings();
   const [showSearch, setShowSearch] = useState(false);
   const isMobile = useIsMobile();
+  const location = useLocation();
+
+  const sidebarLinks = [
+    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+    { name: "Calendar", icon: Calendar, path: "/calendar" },
+    { name: "Orders", icon: ShoppingCart, path: "/orders" },
+    { name: "Customers", icon: Users, path: "/customers" },
+    { name: "Production Board", icon: Kanban, path: "/production" },
+    { name: "Apps", icon: Puzzle, path: "/apps" },
+    { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
+    { name: "Settings", icon: Settings, path: "/settings" }
+  ];
+
+  // Helper function to determine if a link is active
+  const isActiveLink = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
 
   // Determine if we need light text based on background color
   const isTextLight = settings.color === '#000000' || settings.color.toLowerCase() === 'black';
@@ -59,7 +78,10 @@ export const Header: React.FC = () => {
             </SheetTrigger>
             <SheetContent side="left" className="p-0">
               <div className="py-4 px-2">
-                <SidebarLinks />
+                <SidebarLinks 
+                  links={sidebarLinks} 
+                  isActiveLink={isActiveLink}
+                />
               </div>
             </SheetContent>
           </Sheet>
@@ -152,4 +174,4 @@ export const Header: React.FC = () => {
       </div>
     </header>
   );
-};
+}
