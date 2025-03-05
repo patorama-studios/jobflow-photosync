@@ -1,4 +1,4 @@
-<lov-codelov-code>
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -13,7 +13,6 @@ import {
   ShoppingCart,
   Kanban,
   GraduationCap,
-  AppWindow,
   Puzzle,
   ArrowLeft,
 } from "lucide-react";
@@ -350,4 +349,3 @@ export function SidebarLayout({ children, showCalendarSubmenu = false, showBackB
     </div>
   );
 }
-</lov-code>
