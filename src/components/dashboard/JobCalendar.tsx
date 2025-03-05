@@ -8,7 +8,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CalendarView } from './calendar/CalendarView';
 import { JobList } from './calendar/JobList';
 import { CalendarSkeleton } from './calendar/CalendarSkeleton';
-import { isSameDay } from 'date-fns';
+import { isSameDay, format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 
 // Define the interface for the JobCountBadge component props
 interface JobCountBadgeProps {
@@ -38,14 +38,36 @@ const JobCountBadge = memo(({ selectedDate, orders }: JobCountBadgeProps) => {
 // Ensure the display name is set for React DevTools
 JobCountBadge.displayName = 'JobCountBadge';
 
-export function JobCalendar() {
+interface JobCalendarProps {
+  calendarView?: "month" | "week" | "day";
+}
+
+export function JobCalendar({ calendarView = "month" }: JobCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
   const { orders } = useSampleOrders();
   const { toast } = useToast();
+  
+  const [viewDates, setViewDates] = useState<Date[]>([]);
+  
+  // Update view dates when calendarView or selectedDate changes
+  useEffect(() => {
+    if (!selectedDate) return;
+    
+    if (calendarView === "week") {
+      const start = startOfWeek(selectedDate);
+      const end = endOfWeek(selectedDate);
+      setViewDates(eachDayOfInterval({ start, end }));
+    } else if (calendarView === "day") {
+      setViewDates([selectedDate]);
+    } else {
+      // For month view, handled by the calendar component
+      setViewDates([]);
+    }
+  }, [calendarView, selectedDate]);
 
   useEffect(() => {
-    console.log("JobCalendar component mounted");
+    console.log("JobCalendar component mounted with view:", calendarView);
     
     // Use requestAnimationFrame for smoother loading transition
     const timer = requestAnimationFrame(() => {
@@ -56,12 +78,13 @@ export function JobCalendar() {
       console.log("JobCalendar component unmounted");
       cancelAnimationFrame(timer);
     };
-  }, []);
+  }, [calendarView]);
 
   // Handle date change with error handling
   const handleDateSelect = useCallback((date: Date | undefined) => {
     try {
       setSelectedDate(date);
+      console.log("Selected date:", date ? format(date, 'yyyy-MM-dd') : 'none');
     } catch (error) {
       console.error("Error selecting date:", error);
       toast({
@@ -80,23 +103,33 @@ export function JobCalendar() {
     <Card className="bg-card rounded-lg shadow">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span>Calendar</span>
+          <span>
+            {calendarView === "month" 
+              ? "Monthly Calendar" 
+              : calendarView === "week" 
+                ? "Weekly Schedule" 
+                : "Daily Schedule"}
+          </span>
           <JobCountBadge selectedDate={selectedDate} orders={orders} />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className={`grid gap-8 ${calendarView === "month" ? "md:grid-cols-2" : "grid-cols-1"}`}>
           <CalendarView 
             orders={orders}
             selectedDate={selectedDate}
             onSelectDate={handleDateSelect}
             onDateSelected={handleDateSelect}
+            view={calendarView}
+            viewDates={viewDates}
           />
           
-          <JobList
-            selectedDate={selectedDate}
-            orders={orders}
-          />
+          {(calendarView === "month" || !selectedDate) && (
+            <JobList
+              selectedDate={selectedDate}
+              orders={orders}
+            />
+          )}
         </div>
       </CardContent>
     </Card>
@@ -104,7 +137,7 @@ export function JobCalendar() {
 }
 
 // Wrap the JobCalendar component with ErrorBoundary for better error handling
-export function JobCalendarWithErrorBoundary() {
+export function JobCalendarWithErrorBoundary({ calendarView }: JobCalendarProps) {
   return (
     <ErrorBoundary fallback={
       <Card className="bg-card rounded-lg shadow">
@@ -116,7 +149,7 @@ export function JobCalendarWithErrorBoundary() {
         </CardContent>
       </Card>
     }>
-      <JobCalendar />
+      <JobCalendar calendarView={calendarView} />
     </ErrorBoundary>
   );
 }

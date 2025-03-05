@@ -3,7 +3,7 @@ import React, { useMemo, memo, useCallback } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { format, isSameDay } from "date-fns";
 import { Order } from '@/hooks/useSampleOrders';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, MapPin, Timer } from 'lucide-react';
 
 interface JobCardProps {
   job: Order;
@@ -28,7 +28,17 @@ const JobCard = memo(({ job, onClick }: JobCardProps) => {
           {job.scheduledTime}
         </span>
       </div>
-      <p className="text-sm text-muted-foreground">{job.address}</p>
+      <p className="text-sm text-muted-foreground flex items-center">
+        <MapPin className="h-3.5 w-3.5 mr-1" />
+        {job.address}
+      </p>
+      {job.drivingTimeMin && (
+        <p className="text-sm text-muted-foreground flex items-center">
+          <Timer className="h-3.5 w-3.5 mr-1" />
+          {Math.floor(job.drivingTimeMin / 60)}h {job.drivingTimeMin % 60}m
+          {job.previousLocation && <span className="ml-1">from {job.previousLocation}</span>}
+        </p>
+      )}
       <div className="flex items-center mt-2">
         <div className="flex-1">
           <p className="text-sm">{job.client}</p>
