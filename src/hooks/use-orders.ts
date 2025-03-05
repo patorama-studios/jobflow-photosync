@@ -1,31 +1,92 @@
 
-import { useState } from "react";
-import { useSampleOrders, Order } from "@/hooks/useSampleOrders";
-
-export interface OrderFilters {
-  query: string;
-  setQuery: (query: string) => void;
-  status: string;
-  setStatus: (status: string) => void;
-  dateRange: {
-    from?: Date;
-    to?: Date;
-  };
-  setDateRange: (dateRange: { from?: Date; to?: Date }) => void;
-  sortDirection: "asc" | "desc";
-  setSortDirection: (direction: "asc" | "desc") => void;
-  resetFilters: () => void;
-}
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Order, OrderFilters } from "@/types/orders";
+import { useToast } from "@/hooks/use-toast";
 
 export function useOrders() {
-  const sampleOrdersResult = useSampleOrders();
-  const { orders } = sampleOrdersResult;
-  const isLoading = false; // Set a default value for isLoading
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        setIsLoading(true);
+        
+        // Fetch orders from Supabase
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('scheduled_date', { ascending: sortDirection === 'asc' });
+        
+        if (ordersError) throw ordersError;
+
+        // Fetch additional appointments for all orders
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .from('additional_appointments')
+          .select('*');
+          
+        if (appointmentsError) throw appointmentsError;
+
+        // Fetch custom fields for all orders
+        const { data: customFieldsData, error: customFieldsError } = await supabase
+          .from('custom_fields')
+          .select('*');
+          
+        if (customFieldsError) throw customFieldsError;
+
+        // Map and combine the data
+        const enhancedOrders = ordersData.map((order) => {
+          // Find additional appointments for this order
+          const orderAppointments = appointmentsData?.filter(
+            (app) => app.order_id === order.id
+          ) || [];
+          
+          // Find custom fields for this order
+          const orderFields = customFieldsData?.filter(
+            (field) => field.order_id === order.id
+          ) || [];
+          
+          // Convert custom fields array to object format
+          const customFieldsObject: Record<string, string> = {};
+          orderFields.forEach((field) => {
+            customFieldsObject[field.field_key] = field.field_value;
+          });
+
+          // Return enhanced order with additional data
+          return {
+            ...order,
+            additionalAppointments: orderAppointments.map(app => ({
+              id: app.id,
+              date: app.date,
+              time: app.time,
+              description: app.description
+            })),
+            customFields: customFieldsObject
+          } as Order;
+        });
+
+        setOrders(enhancedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        toast({
+          title: "Error fetching orders",
+          description: "Please try again later",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchOrders();
+  }, [toast, sortDirection]);
 
   const resetFilters = () => {
     setQuery("");

@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { 
   Card, 
@@ -17,7 +18,7 @@ import {
   isSameWeek
 } from 'date-fns';
 import { DollarSign, TrendingUp, CalendarRange, BarChart3 } from 'lucide-react';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/orders';
 
 interface OrderStatsProps {
   orders: Order[];
@@ -38,25 +39,25 @@ export const OrderStats: React.FC<OrderStatsProps> = ({ orders }) => {
     
     // This week's orders
     const thisWeekOrders = relevantOrders.filter(order => 
-      isThisWeek(parseISO(order.scheduledDate))
+      isThisWeek(parseISO(order.scheduled_date))
     );
-    const thisWeekTotal = thisWeekOrders.reduce((sum, order) => sum + order.price, 0);
+    const thisWeekTotal = thisWeekOrders.reduce((sum, order) => sum + Number(order.price), 0);
     
     // Next week's orders
     const nextWeekOrders = relevantOrders.filter(order => 
-      isNextWeek(parseISO(order.scheduledDate))
+      isNextWeek(parseISO(order.scheduled_date))
     );
-    const nextWeekTotal = nextWeekOrders.reduce((sum, order) => sum + order.price, 0);
+    const nextWeekTotal = nextWeekOrders.reduce((sum, order) => sum + Number(order.price), 0);
     
     // This month's orders
     const thisMonthOrders = relevantOrders.filter(order => 
-      isThisMonth(parseISO(order.scheduledDate))
+      isThisMonth(parseISO(order.scheduled_date))
     );
-    const monthlyTotal = thisMonthOrders.reduce((sum, order) => sum + order.price, 0);
+    const monthlyTotal = thisMonthOrders.reduce((sum, order) => sum + Number(order.price), 0);
     
     // Average order value
     const averageOrderValue = relevantOrders.length > 0 
-      ? relevantOrders.reduce((sum, order) => sum + order.price, 0) / relevantOrders.length 
+      ? relevantOrders.reduce((sum, order) => sum + Number(order.price), 0) / relevantOrders.length 
       : 0;
     
     // Current month range for display

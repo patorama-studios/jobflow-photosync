@@ -9,6 +9,151 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      additional_appointments: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          order_id: string
+          time: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          order_id: string
+          time: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          order_id?: string
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "additional_appointments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_fields: {
+        Row: {
+          created_at: string
+          field_key: string
+          field_value: string | null
+          id: string
+          order_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          field_value?: string | null
+          id?: string
+          order_id: string
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          field_value?: string | null
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_fields_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string
+          city: string
+          client: string
+          client_email: string
+          client_phone: string | null
+          created_at: string
+          customer_notes: string | null
+          id: string
+          internal_notes: string | null
+          notes: string | null
+          order_number: string
+          package: string
+          photographer: string | null
+          photographer_payout_rate: number | null
+          price: number
+          property_type: string
+          scheduled_date: string
+          scheduled_time: string
+          square_feet: number
+          state: string
+          status: string
+          updated_at: string
+          zip: string
+        }
+        Insert: {
+          address: string
+          city: string
+          client: string
+          client_email: string
+          client_phone?: string | null
+          created_at?: string
+          customer_notes?: string | null
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          order_number: string
+          package: string
+          photographer?: string | null
+          photographer_payout_rate?: number | null
+          price: number
+          property_type: string
+          scheduled_date: string
+          scheduled_time: string
+          square_feet: number
+          state: string
+          status: string
+          updated_at?: string
+          zip: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          client?: string
+          client_email?: string
+          client_phone?: string | null
+          created_at?: string
+          customer_notes?: string | null
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          order_number?: string
+          package?: string
+          photographer?: string | null
+          photographer_payout_rate?: number | null
+          price?: number
+          property_type?: string
+          scheduled_date?: string
+          scheduled_time?: string
+          square_feet?: number
+          state?: string
+          status?: string
+          updated_at?: string
+          zip?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -51,6 +196,10 @@ export type Database = {
           updated_at: string | null
           username: string | null
         }[]
+      }
+      migrate_sample_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

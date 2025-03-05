@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/orders';
 import { Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -78,7 +78,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
               <TableBody>
                 {orders.map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                    <TableCell className="font-medium">{order.order_number}</TableCell>
                     <TableCell>{order.address}</TableCell>
                     <TableCell>{order.client}</TableCell>
                     <TableCell>
@@ -91,7 +91,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{format(new Date(order.scheduledDate), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{format(new Date(order.scheduled_date), 'MMM d, yyyy')}</TableCell>
                     <TableCell className="text-right">
                       <Button 
                         size="icon" 

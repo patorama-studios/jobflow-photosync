@@ -28,7 +28,7 @@ export function OrdersView() {
     const query = filters.query.toLowerCase();
     const matchesQuery = 
       order.client.toLowerCase().includes(query) ||
-      order.orderNumber.toLowerCase().includes(query);
+      order.order_number.toLowerCase().includes(query);
 
     const matchesStatus = 
       !filters.status || filters.status === "all" || order.status === filters.status;
@@ -36,13 +36,13 @@ export function OrdersView() {
     const matchesDateRange = 
       !filters.dateRange ||
       (filters.dateRange.from && filters.dateRange.to && 
-       new Date(order.scheduledDate) >= filters.dateRange.from && 
-       new Date(order.scheduledDate) <= filters.dateRange.to);
+       new Date(order.scheduled_date) >= filters.dateRange.from && 
+       new Date(order.scheduled_date) <= filters.dateRange.to);
 
     return matchesQuery && matchesStatus && matchesDateRange;
   }).sort((a, b) => {
-    const dateA = new Date(a.scheduledDate).getTime();
-    const dateB = new Date(b.scheduledDate).getTime();
+    const dateA = new Date(a.scheduled_date).getTime();
+    const dateB = new Date(b.scheduled_date).getTime();
 
     return filters.sortDirection === "asc" ? dateA - dateB : dateB - dateA;
   });
@@ -50,6 +50,26 @@ export function OrdersView() {
   const handleStatusChange = (newStatus: string) => {
     filters.setStatus(newStatus);
   };
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+          <div className="h-10 w-32 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+        <div className="space-y-4">
+          <div className="h-12 bg-gray-200 animate-pulse rounded"></div>
+          <div className="grid grid-cols-4 gap-4">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 animate-pulse rounded"></div>
+            ))}
+          </div>
+          <div className="h-64 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -92,17 +112,17 @@ export function OrdersView() {
       <OrdersContent 
         orders={filteredOrders}
         todayOrders={filteredOrders.filter(order => 
-          new Date(order.scheduledDate).toDateString() === new Date().toDateString()
+          new Date(order.scheduled_date).toDateString() === new Date().toDateString()
         )}
         thisWeekOrders={filteredOrders.filter(order => {
-          const orderDate = new Date(order.scheduledDate);
+          const orderDate = new Date(order.scheduled_date);
           const today = new Date();
           const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
           const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
           return orderDate >= weekStart && orderDate <= weekEnd;
         })}
         filteredRemainingOrders={filteredOrders.filter(order => {
-          const orderDate = new Date(order.scheduledDate);
+          const orderDate = new Date(order.scheduled_date);
           const today = new Date();
           const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
           return orderDate < weekStart;
