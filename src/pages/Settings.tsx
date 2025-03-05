@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 
@@ -20,7 +19,7 @@ export function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");
   
   return (
-    <SidebarLayout showBackButton={true}>
+    <div className="w-full">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold">Settings</h1>
         <p className="text-muted-foreground mt-1">
@@ -35,7 +34,7 @@ export function SettingsPage() {
         />
         <SettingsPanel activeCategory={activeCategory} />
       </div>
-    </SidebarLayout>
+    </div>
   );
 }
 
