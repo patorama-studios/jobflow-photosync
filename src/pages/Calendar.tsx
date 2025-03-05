@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -848,4 +849,58 @@ const Calendar: React.FC = () => {
                       {photographers.map((photographer) => (
                         <div key={photographer.id} className="flex items-center space-x-2">
                           <Checkbox 
-                            id={`photographer-${photographer
+                            id={`photographer-${photographer.id}`}
+                            checked={selectedPhotographers.includes(photographer.id)}
+                            onCheckedChange={() => togglePhotographer(photographer.id)}
+                          />
+                          <label 
+                            htmlFor={`photographer-${photographer.id}`}
+                            className="text-sm flex items-center"
+                          >
+                            <span 
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: photographer.color }}
+                            ></span>
+                            {photographer.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
+            {/* Main area */}
+            <div className={`col-span-12 ${!isMobile ? 'md:col-span-9' : ''}`}>
+              <Tabs 
+                defaultValue={viewMode}
+                value={viewMode}
+                onValueChange={(v) => setViewMode(v as ViewMode)}
+                className="w-full"
+              >
+                <TabsContent value="day" className="mt-0">
+                  {renderDayView()}
+                </TabsContent>
+                <TabsContent value="week" className="mt-0">
+                  {renderWeekView()}
+                </TabsContent>
+                <TabsContent value="month" className="mt-0">
+                  {renderMonthView()}
+                </TabsContent>
+                <TabsContent value="list" className="mt-0">
+                  {renderMobileListView()}
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+          
+          {/* Event details dialog */}
+          <EventDetailsDialog />
+        </div>
+      </PageTransition>
+    </SidebarLayout>
+  );
+};
+
+export default Calendar;
