@@ -2,33 +2,24 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { OrderExport } from './OrderExport';
-import { Order } from '@/hooks/useSampleOrders';
 
 interface OrdersHeaderProps {
-  orders: Order[];
-  filteredOrders: Order[];
-  isFiltered: boolean;
-  onNewOrder: () => void;
+  view: "list" | "grid";
+  onChangeView: (view: "list" | "grid") => void;
+  onOpenCreateOrder: () => void;
 }
 
 export const OrdersHeader: React.FC<OrdersHeaderProps> = ({ 
-  orders, 
-  filteredOrders, 
-  isFiltered, 
-  onNewOrder 
+  view, 
+  onChangeView, 
+  onOpenCreateOrder 
 }) => {
   return (
     <div className="flex justify-between items-center">
       <h2 className="text-2xl font-semibold">Orders</h2>
       <div className="flex items-center gap-2">
-        <OrderExport 
-          orders={filteredOrders} 
-          allOrders={orders}
-          isFiltered={isFiltered}
-        />
         <Button 
-          onClick={onNewOrder} 
+          onClick={onOpenCreateOrder} 
           className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />

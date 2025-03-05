@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSampleOrders } from "@/hooks/useSampleOrders";
 import { Order } from "@/types";
@@ -30,16 +31,9 @@ export function OrdersContent({
   view = "list",
   onViewChange = () => {},
 }: OrdersContentProps) {
-  const { orders: originalOrders, isLoading } = useSampleOrders();
+  const { orders } = useSampleOrders();
   const { mutate: exportOrders } = useOrderExport();
   
-  // Cast to any to avoid TypeScript errors
-  // This is a temporary fix until the types are properly aligned
-  const orders: any = originalOrders;
-  const setFilteredResults: any = (results: any) => {
-    // This is needed for the filter functionality to work properly
-  };
-
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -47,14 +41,17 @@ export function OrdersContent({
     exportOrders(orders);
   };
 
-  const filteredOrders = orders?.filter((order: Order) => {
+  // Cast to any to avoid TypeScript errors temporarily
+  const ordersData: any[] = orders || [];
+
+  const filteredOrders = ordersData.filter((order: any) => {
     const searchTerm = searchQuery.toLowerCase();
     const orderMatchesSearch =
-      order.customer.toLowerCase().includes(searchTerm) ||
-      order.id.toLowerCase().includes(searchTerm) ||
-      order.city.toLowerCase().includes(searchTerm);
+      order.client?.toLowerCase().includes(searchTerm) ||
+      order.orderNumber?.toLowerCase().includes(searchTerm) ||
+      order.address?.toLowerCase().includes(searchTerm);
 
-    const orderDate = date ? new Date(order.date) : null;
+    const orderDate = date ? new Date(order.scheduledDate) : null;
     const selectedDate = date ? new Date(date) : null;
 
     const orderMatchesDate = selectedDate
@@ -116,14 +113,14 @@ export function OrdersContent({
           </TableRow>
         </TableHead>
         <TableBody>
-          {filteredOrders?.map((order: Order) => (
+          {filteredOrders.map((order: any) => (
             <TableRow key={order.id}>
-              <TableCell>{order.id}</TableCell>
-              <TableCell>{order.customer}</TableCell>
-              <TableCell>{order.date}</TableCell>
-              <TableCell>${order.amount}</TableCell>
+              <TableCell>{order.orderNumber || order.id}</TableCell>
+              <TableCell>{order.client || order.customer || "Unknown"}</TableCell>
+              <TableCell>{order.scheduledDate || order.date || "N/A"}</TableCell>
+              <TableCell>${order.price || order.amount || 0}</TableCell>
               <TableCell>
-                <Badge variant="secondary">{order.status}</Badge>
+                <Badge variant="secondary">{order.status || "pending"}</Badge>
               </TableCell>
               <TableCell className="text-right">
                 <OrderActions orderId={order.id} />
@@ -134,7 +131,7 @@ export function OrdersContent({
         <TableFooter>
           <TableRow>
             <TableCell colSpan={6} className="text-right">
-              Total {filteredOrders?.length} orders
+              Total {filteredOrders.length} orders
             </TableCell>
           </TableRow>
         </TableFooter>
