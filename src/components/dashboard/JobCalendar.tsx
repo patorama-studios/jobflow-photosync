@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { Order } from '@/hooks/useSampleOrders';
 import { DayContentProps } from "react-day-picker";
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export function JobCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -82,19 +83,24 @@ export function JobCalendar() {
 
   // Custom day renderer that adds indicators for days with jobs
   const customDayContent = (dayProps: DayContentProps) => {
-    // Extract the date from props
-    const date = dayProps.date;
-    const dateStr = date.toISOString().split('T')[0];
-    const hasJobs = daysWithJobs.has(dateStr);
-    
-    return (
-      <div className="relative">
-        <span>{date.getDate()}</span>
-        {hasJobs && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-        )}
-      </div>
-    );
+    try {
+      // Extract the date from props
+      const date = dayProps.date;
+      const dateStr = date.toISOString().split('T')[0];
+      const hasJobs = daysWithJobs.has(dateStr);
+      
+      return (
+        <div className="relative">
+          <span>{date.getDate()}</span>
+          {hasJobs && (
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+          )}
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering calendar day:", error);
+      return <div>{dayProps.date.getDate()}</div>;
+    }
   };
 
   if (isLoading) {
@@ -174,5 +180,23 @@ export function JobCalendar() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Wrap the JobCalendar component with ErrorBoundary for better error handling
+export function JobCalendarWithErrorBoundary() {
+  return (
+    <ErrorBoundary fallback={
+      <Card className="bg-card rounded-lg shadow">
+        <CardHeader>
+          <CardTitle className="text-red-500">Calendar Error</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>There was a problem loading the calendar. Please try refreshing the page.</p>
+        </CardContent>
+      </Card>
+    }>
+      <JobCalendar />
+    </ErrorBoundary>
   );
 }
