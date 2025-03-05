@@ -3,7 +3,8 @@ import React from 'react';
 import { OrderTable } from './OrderTable';
 import { OrderFilter } from './OrderFilter';
 import { OrderSearch } from './OrderSearch';
-import { OrderFilters, OrderFiltersState } from './OrderFilters';
+import { OrderFilters } from './OrderFilters'; 
+import { OrderFiltersState } from './filters/types';
 import { Order } from '@/hooks/useSampleOrders';
 
 interface OrdersContentProps {
