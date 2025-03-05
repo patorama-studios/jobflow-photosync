@@ -6,7 +6,7 @@ import {
   Box, 
   Calendar as CalendarIcon, 
   Mail, 
-  Plugs, 
+  Plug, 
   BarChart, 
   Megaphone
 } from 'lucide-react';
@@ -53,7 +53,7 @@ export function AppsOverview() {
       id: 'zapier',
       name: 'Zapier',
       description: 'Connect with thousands of apps',
-      icon: Plugs,
+      icon: Plug,
       connected: true,
       status: 'active',
       lastSynced: '1 day ago'
