@@ -94,13 +94,12 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                     <TableCell>{format(new Date(order.scheduledDate), 'MMM d, yyyy')}</TableCell>
                     <TableCell className="text-right">
                       <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex items-center gap-1"
+                        size="icon" 
+                        variant="ghost"
                         onClick={() => navigate(`/orders/${order.id}`)}
+                        title="View details"
                       >
                         <Eye className="h-4 w-4" />
-                        View
                       </Button>
                     </TableCell>
                   </TableRow>

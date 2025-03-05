@@ -10,7 +10,7 @@ import {
   UserPlus, 
   Calendar, 
   DollarSign,
-  MessageSquare 
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,15 +130,11 @@ export function CustomersView() {
                       <span className="text-sm">{customer.createdDate}</span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/customers/${customer.id}`}>View</Link>
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Interview
-                        </Button>
-                      </div>
+                      <Button variant="ghost" size="icon" asChild title="View details">
+                        <Link to={`/customers/${customer.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
