@@ -1,7 +1,7 @@
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface HeaderSettings {
+export interface HeaderSettings {
   color: string;
   height: number;
   logoUrl: string;
@@ -10,43 +10,39 @@ interface HeaderSettings {
 
 interface HeaderSettingsContextType {
   settings: HeaderSettings;
-  updateSettings: (newSettings: HeaderSettings) => void;
+  updateSettings: (settings: Partial<HeaderSettings>) => void;
 }
 
-// Create context
-const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
-  settings: {
-    color: '#000000',
-    height: 65,
-    logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png',
-    showCompanyName: false
-  },
-  updateSettings: () => {}
-});
-
-// Default settings
 const defaultSettings: HeaderSettings = {
-  color: '#000000',
+  color: '#ffffff',
   height: 65,
-  logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png',
+  logoUrl: '',
   showCompanyName: false
 };
 
-// Provider component
-export const HeaderSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<HeaderSettings>(() => {
-    // Try to load settings from localStorage
+const HeaderSettingsContext = createContext<HeaderSettingsContextType | undefined>(undefined);
+
+export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
+
+  // Load settings from localStorage on first render
+  useEffect(() => {
     const savedSettings = localStorage.getItem('headerSettings');
-    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
-  });
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
+  }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('headerSettings', JSON.stringify(settings));
   }, [settings]);
 
-  const updateSettings = (newSettings: HeaderSettings) => {
-    setSettings(newSettings);
+  const updateSettings = (newSettings: Partial<HeaderSettings>) => {
+    setSettings(prev => ({
+      ...prev,
+      ...newSettings
+    }));
   };
 
   return (
@@ -56,7 +52,6 @@ export const HeaderSettingsProvider: React.FC<{ children: React.ReactNode }> = (
   );
 };
 
-// Hook to use the settings
 export const useHeaderSettings = () => {
   const context = useContext(HeaderSettingsContext);
   if (!context) {

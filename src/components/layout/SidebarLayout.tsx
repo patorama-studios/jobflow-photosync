@@ -105,6 +105,7 @@ export function SidebarLayout({
         photographers={photographers}
         selectedPhotographers={selectedPhotographers}
         togglePhotographer={togglePhotographer}
+        hideLogo={true}
       />
 
       {/* Mobile Sidebar */}
@@ -121,6 +122,7 @@ export function SidebarLayout({
           photographers={photographers}
           selectedPhotographers={selectedPhotographers}
           togglePhotographer={togglePhotographer}
+          hideLogo={true}
         />
       )}
 
