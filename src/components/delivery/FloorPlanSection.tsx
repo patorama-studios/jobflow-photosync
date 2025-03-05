@@ -1,5 +1,5 @@
 
-import { Download, Lock, FileText, FilePdf } from "lucide-react";
+import { Download, Lock, FileText, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -87,7 +87,7 @@ export function FloorPlanSection({ floorPlans, isDownloadAllowed, contentLocked 
                       onClick={() => handleDownload(floorPlan, 'pdf')}
                       disabled={contentLocked}
                     >
-                      <FilePdf className="h-4 w-4 mr-2" />
+                      <File className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
                     <Button 

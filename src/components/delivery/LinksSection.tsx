@@ -1,5 +1,5 @@
 
-import { ExternalLink, Lock, LinkIcon, FilePdf, FileText } from "lucide-react";
+import { ExternalLink, Lock, LinkIcon, File, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ export function LinksSection({ links, isDownloadAllowed, contentLocked }: LinksS
   const getLinkIcon = (type: string) => {
     switch (type) {
       case 'pdf':
-        return <FilePdf className="h-5 w-5" />;
+        return <File className="h-5 w-5" />;
       case 'virtual-tour':
         return <LinkIcon className="h-5 w-5" />;
       default:

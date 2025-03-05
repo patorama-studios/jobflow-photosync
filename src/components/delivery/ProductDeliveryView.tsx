@@ -17,7 +17,8 @@ import {
   Camera,
   FileImage,
   FileVideo,
-  FilePdf
+  File,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +35,15 @@ import { PaymentSection } from "@/components/delivery/PaymentSection";
 
 interface ProductDeliveryViewProps {
   orderId?: string;
+}
+
+// Define more specific video orientation type
+interface VideoItem {
+  id: string;
+  url: string;
+  thumbnail: string;
+  title: string;
+  orientation: "horizontal" | "vertical";
 }
 
 export function ProductDeliveryView({ orderId }: ProductDeliveryViewProps) {
@@ -66,8 +76,8 @@ export function ProductDeliveryView({ orderId }: ProductDeliveryViewProps) {
       { id: "photo5", url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80", title: "Exterior Front" },
     ],
     videos: [
-      { id: "video1", url: "https://example.com/video1.mp4", thumbnail: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1073&q=80", title: "Property Tour", orientation: "horizontal" },
-      { id: "video2", url: "https://example.com/video2.mp4", thumbnail: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80", title: "Kitchen Showcase", orientation: "vertical" },
+      { id: "video1", url: "https://example.com/video1.mp4", thumbnail: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1073&q=80", title: "Property Tour", orientation: "horizontal" as "horizontal" | "vertical" },
+      { id: "video2", url: "https://example.com/video2.mp4", thumbnail: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80", title: "Kitchen Showcase", orientation: "vertical" as "horizontal" | "vertical" },
     ],
     floorPlans: [
       { id: "fp1", imageUrl: "https://images.unsplash.com/photo-1628624747186-a941c476b7ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80", pdfUrl: "https://example.com/floorplan.pdf", title: "Main Floor" },

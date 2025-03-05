@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
