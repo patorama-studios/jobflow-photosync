@@ -72,7 +72,7 @@ export const loadGoogleMapsScript = (options: GoogleMapsScriptOptions): Promise<
   });
 };
 
-// Declare global Google Maps types
+// Define global Google Maps types
 declare global {
   interface Window {
     google: {
@@ -80,48 +80,48 @@ declare global {
         places: {
           Autocomplete: new (
             element: HTMLInputElement,
-            options?: google.maps.places.AutocompleteOptions
-          ) => google.maps.places.Autocomplete;
+            options?: AutocompleteOptions
+          ) => Autocomplete;
         };
         Map: any;
         Marker: any;
-        event: any;
+        event: {
+          clearInstanceListeners(instance: any): void;
+        };
       };
     };
   }
 }
 
-// Add the google namespace declaration
-declare namespace google.maps {
-  namespace places {
-    interface AutocompleteOptions {
-      types?: string[];
-      componentRestrictions?: {
-        country: string | string[];
-      };
-      fields?: string[];
-    }
-    
-    interface Autocomplete {
-      addListener(event: string, handler: () => void): void;
-      getPlace(): {
-        address_components?: Array<{
-          long_name: string;
-          short_name: string;
-          types: string[];
-        }>;
-        formatted_address?: string;
-        geometry?: {
-          location: {
-            lat(): number;
-            lng(): number;
-          };
-        };
-      };
-    }
+// Define types within a namespace
+export namespace GoogleMapsTypes {
+  export interface AutocompleteOptions {
+    types?: string[];
+    componentRestrictions?: {
+      country: string | string[];
+    };
+    fields?: string[];
   }
   
-  namespace event {
-    function clearInstanceListeners(instance: any): void;
+  export interface Autocomplete {
+    addListener(event: string, handler: () => void): void;
+    getPlace(): {
+      address_components?: Array<{
+        long_name: string;
+        short_name: string;
+        types: string[];
+      }>;
+      formatted_address?: string;
+      geometry?: {
+        location: {
+          lat(): number;
+          lng(): number;
+        };
+      };
+    };
   }
 }
+
+// We need to maintain the global namespace for compatibility
+type AutocompleteOptions = GoogleMapsTypes.AutocompleteOptions;
+type Autocomplete = GoogleMapsTypes.Autocomplete;

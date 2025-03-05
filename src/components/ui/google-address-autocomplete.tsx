@@ -2,26 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { getDefaultRegion } from '@/lib/google-maps';
-
-// Make sure we have the right type definition
-declare global {
-  interface Window {
-    google: {
-      maps: {
-        places: {
-          Autocomplete: new (
-            element: HTMLInputElement,
-            options?: google.maps.places.AutocompleteOptions
-          ) => google.maps.places.Autocomplete;
-        };
-        Map: any;
-        Marker: any;
-        event: any;
-      };
-    };
-  }
-}
+import { getDefaultRegion, GoogleMapsTypes } from '@/lib/google-maps';
 
 interface GoogleAddressAutocompleteProps {
   onAddressSelect: (address: {
@@ -50,7 +31,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
   region
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<GoogleMapsTypes.Autocomplete | null>(null);
   const [inputValue, setInputValue] = useState(defaultValue);
   
   useEffect(() => {
