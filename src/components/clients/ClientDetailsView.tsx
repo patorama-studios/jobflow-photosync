@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { 
@@ -92,7 +91,7 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{client.name}</h1>
-                <Badge variant={downloadSettings.contentLocked ? "destructive" : "success"} className="ml-2">
+                <Badge variant={downloadSettings.contentLocked ? "destructive" : "outline"} className={downloadSettings.contentLocked ? "" : "bg-green-100 text-green-700"}>
                   {downloadSettings.contentLocked ? (
                     <>
                       <Lock className="h-3 w-3 mr-1" />

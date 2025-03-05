@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -229,8 +228,8 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
           Order {order.orderNumber}
         </h1>
         <Badge 
-          variant={contentLocked ? "destructive" : "success"}
-          className="ml-auto"
+          variant={contentLocked ? "destructive" : "outline"}
+          className={contentLocked ? "" : "bg-green-100 text-green-700"}
         >
           {contentLocked ? (
             <>
@@ -431,7 +430,8 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Content Lock Status:</span>
                         <Badge 
-                          variant={contentLocked ? "destructive" : "success"}
+                          variant={contentLocked ? "destructive" : "outline"}
+                          className={contentLocked ? "" : "bg-green-100 text-green-700"}
                         >
                           {contentLocked ? (
                             <>

@@ -47,6 +47,21 @@ export interface Company {
   totalJobs: number;
   outstandingAmount: number;
   totalRevenue: number;
+  // Adding missing properties
+  phone?: string;
+  email?: string;
+  website?: string;
+  location?: string;
+  description?: string;
+  social?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  activeOrders?: number;
+  totalOrders?: number;
+  invoiceCount?: number;
 }
 
 export const mockCompanies: Company[] = [
@@ -58,7 +73,21 @@ export const mockCompanies: Company[] = [
     openJobs: 3,
     totalJobs: 15,
     outstandingAmount: 2450,
-    totalRevenue: 18750
+    totalRevenue: 18750,
+    phone: '(555) 123-4567',
+    email: 'info@urbanliving.com',
+    website: 'www.urbanliving.com',
+    location: 'San Francisco, CA',
+    description: 'Urban Living Properties specializes in high-end residential and commercial properties in metropolitan areas.',
+    social: {
+      facebook: 'https://facebook.com/urbanlivingproperties',
+      twitter: 'https://twitter.com/urbanlivingprop',
+      instagram: 'https://instagram.com/urbanlivingproperties',
+      linkedin: 'https://linkedin.com/company/urbanlivingproperties'
+    },
+    activeOrders: 3,
+    totalOrders: 15,
+    invoiceCount: 12
   },
   {
     id: 'comp-2',
@@ -68,7 +97,21 @@ export const mockCompanies: Company[] = [
     openJobs: 5,
     totalJobs: 22,
     outstandingAmount: 3750,
-    totalRevenue: 27800
+    totalRevenue: 27800,
+    phone: '(555) 987-6543',
+    email: 'contact@oceanview.com',
+    website: 'www.oceanviewrealty.com',
+    location: 'Miami, FL',
+    description: 'Ocean View Realty focuses on luxury beachfront properties and vacation rentals.',
+    social: {
+      facebook: 'https://facebook.com/oceanviewrealty',
+      twitter: 'https://twitter.com/oceanviewr',
+      instagram: 'https://instagram.com/oceanviewrealty',
+      linkedin: 'https://linkedin.com/company/oceanviewrealty'
+    },
+    activeOrders: 5,
+    totalOrders: 22,
+    invoiceCount: 18
   },
   {
     id: 'comp-3',
@@ -78,7 +121,21 @@ export const mockCompanies: Company[] = [
     openJobs: 2,
     totalJobs: 8,
     outstandingAmount: 1200,
-    totalRevenue: 7200
+    totalRevenue: 7200,
+    phone: '(555) 234-5678',
+    email: 'info@hometown.com',
+    website: 'www.hometownrealty.com',
+    location: 'Chicago, IL',
+    description: 'Hometown Realty specializes in residential properties in suburban areas.',
+    social: {
+      facebook: 'https://facebook.com/hometownrealty',
+      twitter: 'https://twitter.com/hometownr',
+      instagram: 'https://instagram.com/hometownrealty',
+      linkedin: 'https://linkedin.com/company/hometownrealty'
+    },
+    activeOrders: 2,
+    totalOrders: 8,
+    invoiceCount: 7
   },
   {
     id: 'comp-4',
@@ -88,7 +145,21 @@ export const mockCompanies: Company[] = [
     openJobs: 0,
     totalJobs: 18,
     outstandingAmount: 0,
-    totalRevenue: 22500
+    totalRevenue: 22500,
+    phone: '(555) 876-5432',
+    email: 'info@metropolitan.com',
+    website: 'www.metropolitanhousing.com',
+    location: 'New York, NY',
+    description: 'Metropolitan Housing manages high-end luxury condos and apartments in urban centers.',
+    social: {
+      facebook: 'https://facebook.com/metropolitanhousing',
+      twitter: 'https://twitter.com/metrohousing',
+      instagram: 'https://instagram.com/metropolitanhousing',
+      linkedin: 'https://linkedin.com/company/metropolitanhousing'
+    },
+    activeOrders: 0,
+    totalOrders: 18,
+    invoiceCount: 15
   },
   {
     id: 'comp-5',
@@ -98,7 +169,21 @@ export const mockCompanies: Company[] = [
     openJobs: 1,
     totalJobs: 10,
     outstandingAmount: 850,
-    totalRevenue: 12650
+    totalRevenue: 12650,
+    phone: '(555) 345-6789',
+    email: 'info@sunlight.com',
+    website: 'www.sunlightproperties.com',
+    location: 'Los Angeles, CA',
+    description: 'Sunlight Properties focuses on properties with natural lighting and modern design.',
+    social: {
+      facebook: 'https://facebook.com/sunlightproperties',
+      twitter: 'https://twitter.com/sunlightprop',
+      instagram: 'https://instagram.com/sunlightproperties',
+      linkedin: 'https://linkedin.com/company/sunlightproperties'
+    },
+    activeOrders: 1,
+    totalOrders: 10,
+    invoiceCount: 9
   },
   {
     id: 'comp-6',
@@ -108,7 +193,21 @@ export const mockCompanies: Company[] = [
     openJobs: 7,
     totalJobs: 25,
     outstandingAmount: 5200,
-    totalRevenue: 37500
+    totalRevenue: 37500,
+    phone: '(555) 456-7890',
+    email: 'info@skyline.com',
+    website: 'www.skylinedevelopers.com',
+    location: 'Austin, TX',
+    description: 'Skyline Developers specializes in constructing high-rise buildings and modern architectural designs.',
+    social: {
+      facebook: 'https://facebook.com/skylinedevelopers',
+      twitter: 'https://twitter.com/skylinedev',
+      instagram: 'https://instagram.com/skylinedevelopers',
+      linkedin: 'https://linkedin.com/company/skylinedevelopers'
+    },
+    activeOrders: 7,
+    totalOrders: 25,
+    invoiceCount: 20
   }
 ];
 
