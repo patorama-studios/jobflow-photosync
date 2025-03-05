@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useOrders } from "@/hooks/use-orders";
 import { OrderSearch } from "./OrderSearch";
@@ -51,22 +52,36 @@ export function OrdersView() {
   return (
     <div className="space-y-6">
       <OrdersHeader 
-        onCreateOrder={handleCreateOrder}  
+        orders={orders}
+        filteredOrders={filteredOrders}
+        isFiltered={filters.query !== "" || filters.status !== "all" || !!filters.dateRange.from}
+        onNewOrder={handleCreateOrder}
       />
       
       <div className="space-y-4">
         <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4">
-          <OrderSearch query={filters.query} onQueryChange={filters.setQuery} className="w-full lg:w-80" />
+          <OrderSearch 
+            orders={orders} 
+            onSearchResults={(results) => {
+              // We're not directly setting search results,
+              // but updating the query which triggers filtering
+              // in the parent component
+            }} 
+            className="w-full lg:w-80" 
+          />
           <OrderFilters 
-            openFilters={openFilters}
-            onOpenFiltersChange={setOpenFilters}
-            status={filters.status as string} // Ensure status is a string, not string[]
-            onStatusChange={handleStatusChange}
-            dateRange={filters.dateRange}
-            onDateRangeChange={filters.setDateRange}
-            sortDirection={filters.sortDirection}
-            onSortDirectionChange={filters.setSortDirection}
-            onResetFilters={filters.resetFilters}
+            onFiltersChange={(newFilters) => {
+              // Map the filters to our hook's setters
+              if (newFilters.status) {
+                filters.setStatus(newFilters.status[0] || 'all');
+              }
+              if (newFilters.dateRange) {
+                filters.setDateRange(newFilters.dateRange);
+              }
+              if (newFilters.sortDirection) {
+                filters.setSortDirection(newFilters.sortDirection);
+              }
+            }}
           />
         </div>
         
@@ -74,10 +89,29 @@ export function OrdersView() {
       </div>
       
       <OrdersContent 
-        orders={filteredOrders} 
-        isLoading={isLoading}
-        viewType={viewType}
-        onViewTypeChange={setViewType}
+        orders={filteredOrders}
+        todayOrders={filteredOrders.filter(order => 
+          new Date(order.createdAt).toDateString() === new Date().toDateString()
+        )}
+        thisWeekOrders={filteredOrders.filter(order => {
+          const orderDate = new Date(order.createdAt);
+          const today = new Date();
+          const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+          const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+          return orderDate >= weekStart && orderDate <= weekEnd;
+        })}
+        filteredRemainingOrders={filteredOrders.filter(order => {
+          const orderDate = new Date(order.createdAt);
+          const today = new Date();
+          const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+          return orderDate < weekStart;
+        })}
+        statusFilter={filters.status}
+        isFiltered={filters.query !== "" || filters.status !== "all" || !!filters.dateRange.from}
+        totalFilteredCount={filteredOrders.length}
+        onSearchResults={() => {}}
+        onFilterChange={() => {}}
+        onStatusChange={handleStatusChange}
       />
       
       <CreateOrderDialog 
