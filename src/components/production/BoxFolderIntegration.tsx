@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, FolderOpen, RefreshCw, Lock, Copy, Check } from 'lucide-react';
+import { ExternalLink, FolderOpen, RefreshCw, Lock, Copy, Check, Key } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -22,6 +22,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 interface BoxFolderIntegrationProps {
   orderNumber: string;
@@ -43,11 +49,15 @@ export function BoxFolderIntegration({
   const [selectedProductType, setSelectedProductType] = useState<ProductType | ''>('');
   const [folderPath, setFolderPath] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [accessToken, setAccessToken] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+  const [authTab, setAuthTab] = useState('token');
   
   const { toast } = useToast();
   
-  // Initialize Box integration
-  const boxIntegration = createBoxIntegration();
+  // Box integration instance
+  const [boxIntegration, setBoxIntegration] = useState<BoxIntegration | null>(null);
   
   // Enable Box integration
   const handleConnectBox = () => {
@@ -60,39 +70,74 @@ export function BoxFolderIntegration({
       return;
     }
     
-    // Set the master folder
-    boxIntegration.setMasterFolder(masterFolderId);
+    if (authTab === 'token' && !accessToken) {
+      toast({
+        title: "Access Token Required",
+        description: "Please enter a Box access token to connect.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Initialize the auto folder
-    boxIntegration.initializeAutoFolder()
-      .then(autoFolderId => {
-        if (autoFolderId) {
-          setIsConnected(true);
+    if (authTab === 'oauth' && (!clientId || !clientSecret)) {
+      toast({
+        title: "Client Credentials Required",
+        description: "Please enter Box client ID and secret to connect.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Create Box integration instance with provided credentials
+      const credentials = authTab === 'token' 
+        ? { accessToken } 
+        : { clientId, clientSecret };
+        
+      const newBoxIntegration = createBoxIntegration(credentials);
+      
+      // Set the master folder
+      newBoxIntegration.setMasterFolder(masterFolderId);
+      
+      // Initialize the auto folder
+      newBoxIntegration.initializeAutoFolder()
+        .then(autoFolderId => {
+          if (autoFolderId) {
+            setBoxIntegration(newBoxIntegration);
+            setIsConnected(true);
+            toast({
+              title: "Box Connected",
+              description: "Successfully connected to Box and initialized auto folder.",
+            });
+          } else {
+            toast({
+              title: "Connection Failed",
+              description: "Unable to initialize auto folder in Box.",
+              variant: "destructive",
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Box connection error:', error);
           toast({
-            title: "Box Connected",
-            description: "Successfully connected to Box and initialized auto folder.",
-          });
-        } else {
-          toast({
-            title: "Connection Failed",
-            description: "Unable to initialize auto folder in Box.",
+            title: "Connection Error",
+            description: "Failed to connect to Box API. Please check your credentials.",
             variant: "destructive",
           });
-        }
-      })
-      .catch(error => {
-        console.error('Box connection error:', error);
-        toast({
-          title: "Connection Error",
-          description: "An error occurred while connecting to Box.",
-          variant: "destructive",
         });
+    } catch (error) {
+      console.error('Box connection setup error:', error);
+      toast({
+        title: "Setup Error",
+        description: "An error occurred while setting up Box connection.",
+        variant: "destructive",
       });
+    }
   };
   
   // Create order folder and subfolders
   const handleCreateOrderFolder = () => {
-    if (!isConnected) {
+    if (!isConnected || !boxIntegration) {
       toast({
         title: "Not Connected",
         description: "Please connect to Box first.",
@@ -176,7 +221,7 @@ export function BoxFolderIntegration({
   
   // Get specific product type folder
   const handleGetProductTypeFolder = () => {
-    if (!orderFolderId || !selectedProductType) {
+    if (!orderFolderId || !selectedProductType || !boxIntegration) {
       toast({
         title: "Selection Required",
         description: "Please select a product type.",
@@ -249,6 +294,57 @@ export function BoxFolderIntegration({
       <CardContent>
         {!isConnected ? (
           <div className="space-y-4">
+            <Tabs defaultValue="token" value={authTab} onValueChange={setAuthTab}>
+              <TabsList className="mb-4 w-full">
+                <TabsTrigger value="token" className="flex-1">Access Token</TabsTrigger>
+                <TabsTrigger value="oauth" className="flex-1">OAuth Client</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="token" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="access-token">Box Access Token</Label>
+                  <Input
+                    id="access-token"
+                    type="password"
+                    placeholder="Enter your Box developer token"
+                    value={accessToken}
+                    onChange={(e) => setAccessToken(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You can generate a developer token in your Box Developer Console
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="oauth" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="client-id">Client ID</Label>
+                  <Input
+                    id="client-id"
+                    placeholder="Enter your Box client ID"
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="client-secret">Client Secret</Label>
+                  <Input
+                    id="client-secret"
+                    type="password"
+                    placeholder="Enter your Box client secret"
+                    value={clientSecret}
+                    onChange={(e) => setClientSecret(e.target.value)}
+                  />
+                </div>
+                
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <Key className="h-3.5 w-3.5" />
+                  OAuth flow is not fully implemented yet. Use access token instead.
+                </p>
+              </TabsContent>
+            </Tabs>
+            
             <div className="space-y-2">
               <Label htmlFor="master-folder">Master Folder ID</Label>
               <Input
@@ -265,10 +361,20 @@ export function BoxFolderIntegration({
             <Button 
               className="w-full" 
               onClick={handleConnectBox}
-              disabled={!masterFolderId}
+              disabled={!masterFolderId || (authTab === 'token' && !accessToken) || (authTab === 'oauth' && (!clientId || !clientSecret))}
             >
               Connect to Box
             </Button>
+            
+            <div className="rounded-md bg-muted p-3 text-sm">
+              <p className="font-medium mb-1">How to get started with Box:</p>
+              <ol className="list-decimal ml-4 space-y-1 text-muted-foreground">
+                <li>Create a <a href="https://developer.box.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Box Developer account</a></li>
+                <li>Create a new application or use an existing one</li>
+                <li>Generate a developer token for quick testing</li>
+                <li>Find your folder ID by navigating to it in Box and checking the URL</li>
+              </ol>
+            </div>
           </div>
         ) : (
           <>

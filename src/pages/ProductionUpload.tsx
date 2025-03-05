@@ -5,6 +5,8 @@ import { UploadFormView } from "@/components/production/UploadFormView";
 import { BoxFolderIntegration } from "@/components/production/BoxFolderIntegration";
 import { useParams, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const ProductionUpload = () => {
   const { orderId } = useParams();
@@ -54,6 +56,14 @@ const ProductionUpload = () => {
                 </div>
               </CardContent>
             </Card>
+            
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Box Integration</AlertTitle>
+              <AlertDescription>
+                Connect to Box and create a structured folder system for this order's content.
+              </AlertDescription>
+            </Alert>
             
             <BoxFolderIntegration 
               orderNumber={orderData.orderNumber}
