@@ -1,16 +1,31 @@
 
-import { useState } from "react";
-import { ArrowLeft, Building, Users, Briefcase, Phone, Mail, MapPin, Globe, Twitter, Linkedin, Facebook } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { 
+  ChevronLeft, 
+  Building, 
+  Users, 
+  CreditCard, 
+  Package, 
+  Settings, 
+  Phone,
+  Mail,
+  Globe,
+  MapPin,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  FileText,
+  Pencil,
+  User
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { mockCompanies, mockCustomers } from "@/components/clients/mock-data";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { mockCompanies } from "@/components/clients/mock-data";
+import { ContentDownloadSettings } from "@/components/clients/ContentDownloadSettings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface CompanyDetailsViewProps {
   companyId?: string;
@@ -19,375 +34,295 @@ interface CompanyDetailsViewProps {
 export function CompanyDetailsView({ companyId }: CompanyDetailsViewProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
-  
-  const company = companyId 
-    ? mockCompanies.find(c => c.id === companyId) 
-    : {
-        id: 'new',
-        name: '',
-        industry: '',
-        logoUrl: '',
-        openJobs: 0,
-        totalJobs: 0,
-        outstandingAmount: 0,
-        totalRevenue: 0
-      };
-  
-  const form = useForm({
-    defaultValues: {
-      name: company?.name || '',
-      industry: company?.industry || '',
-      phone: '(555) 123-4567', // Mock data
-      email: 'contact@company.com', // Mock data
-      address: '123 Business St, City, State', // Mock data
-      website: 'https://company.com', // Mock data
-      twitter: '@company', // Mock data
-      linkedin: 'company', // Mock data
-      facebook: 'company', // Mock data
+  const [company, setCompany] = useState(mockCompanies[0]);
+
+  useEffect(() => {
+    if (companyId) {
+      const foundCompany = mockCompanies.find(c => c.id === companyId);
+      if (foundCompany) {
+        setCompany(foundCompany);
+      } else {
+        navigate("/clients");
+      }
     }
-  });
+  }, [companyId, navigate]);
 
-  // Find clients associated with this company
-  const associatedClients = mockCustomers.filter(client => 
-    client.company === company?.name
-  );
-
-  // Mock team members (would come from API in real application)
-  const teamMembers = [
-    {
-      id: 't1',
-      name: 'John Doe',
-      email: 'john@company.com',
-      photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-      role: 'Leader'
-    },
-    {
-      id: 't2',
-      name: 'Jane Smith',
-      email: 'jane@company.com',
-      photoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
-      role: 'Admin'
-    },
-    {
-      id: 't3',
-      name: 'Robert Johnson',
-      email: 'robert@company.com',
-      photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-      role: 'Finance'
-    }
-  ];
-
-  const onSubmit = (data: any) => {
-    console.log("Form submitted:", data);
-    // Here you would update the company data
-    navigate("/companies");
+  const handleSaveDownloadSettings = (values: any) => {
+    console.log("Saving company download settings:", values);
+    // Here you would update the company settings in your data store
   };
-
-  if (!company) {
-    return (
-      <div className="p-6">
-        <h2 className="text-2xl font-bold">Company not found</h2>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/companies")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Companies
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => navigate("/clients")}>
-            <ArrowLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{company.id === 'new' ? 'New Company' : company.name}</h1>
-            {company.id !== 'new' && (
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={company.logoUrl} alt={company.name} />
+              <AvatarFallback className="bg-primary/10">
+                <Building className="h-8 w-8 text-primary" />
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-2xl font-bold">{company.name}</h1>
               <p className="text-muted-foreground">{company.industry}</p>
-            )}
+            </div>
           </div>
         </div>
-        {company.id !== 'new' && (
-          <div className="flex space-x-2">
-            <Button variant="outline">
-              <Briefcase className="mr-2 h-4 w-4" />
-              Add Job
-            </Button>
-            <Button>
-              <Users className="mr-2 h-4 w-4" />
-              Add Team Member
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm">
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Details
+          </Button>
+        </div>
       </div>
 
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex items-center gap-4">
+              <Phone className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Phone</p>
+                <p className="text-sm text-muted-foreground">{company.phone}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Email</p>
+                <p className="text-sm text-muted-foreground">{company.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Globe className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Website</p>
+                <p className="text-sm text-muted-foreground">{company.website || "N/A"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Location</p>
+                <p className="text-sm text-muted-foreground">{company.location}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Building className="h-4 w-4" />
-            <span>Overview</span>
+            <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          {company.id !== 'new' && (
-            <>
-              <TabsTrigger value="clients" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>Clients</span>
-              </TabsTrigger>
-              <TabsTrigger value="team" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>Team</span>
-              </TabsTrigger>
-            </>
-          )}
+          <TabsTrigger value="clients" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Clients</span>
+          </TabsTrigger>
+          <TabsTrigger value="teams" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Teams</span>
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Billing</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter company name" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="industry"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Industry</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter industry" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter phone number" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter email address" type="email" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter address" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="website"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Website</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter website URL" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Company Overview</CardTitle>
+                <CardDescription>Key information about {company.name}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Social Media</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="twitter"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Twitter</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Twitter handle" />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="linkedin"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LinkedIn</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="LinkedIn profile" />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="facebook"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Facebook</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Facebook page" />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                    <h3 className="font-medium">About</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {company.description || "No company description available."}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Industry</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{company.industry}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Social Media</h3>
+                    <div className="flex gap-2 mt-2">
+                      {company.social?.facebook && (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={company.social.facebook} target="_blank" rel="noopener noreferrer">
+                            <Facebook className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {company.social?.twitter && (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={company.social.twitter} target="_blank" rel="noopener noreferrer">
+                            <Twitter className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {company.social?.instagram && (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={company.social.instagram} target="_blank" rel="noopener noreferrer">
+                            <Instagram className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {company.social?.linkedin && (
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={company.social.linkedin} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" type="button" onClick={() => navigate("/clients")}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      {company.id === 'new' ? 'Create Company' : 'Update Company'}
-                    </Button>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Business Metrics</CardTitle>
+                <CardDescription>Performance summary</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="border rounded-md p-4">
+                      <p className="text-sm text-muted-foreground">Active Orders</p>
+                      <p className="text-2xl font-bold mt-1">{company.activeOrders || 0}</p>
+                    </div>
+                    <div className="border rounded-md p-4">
+                      <p className="text-sm text-muted-foreground">Total Orders</p>
+                      <p className="text-2xl font-bold mt-1">{company.totalOrders || 0}</p>
+                    </div>
+                    <div className="border rounded-md p-4">
+                      <p className="text-sm text-muted-foreground">Outstanding</p>
+                      <p className="text-2xl font-bold mt-1 text-amber-600">${company.outstandingAmount || 0}</p>
+                    </div>
+                    <div className="border rounded-md p-4">
+                      <p className="text-sm text-muted-foreground">Total Revenue</p>
+                      <p className="text-2xl font-bold mt-1 text-green-600">${company.totalRevenue || 0}</p>
+                    </div>
                   </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         <TabsContent value="clients">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle>Associated Clients</CardTitle>
-              <Button size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Add Client
-              </Button>
+              <CardDescription>Clients associated with this company</CardDescription>
             </CardHeader>
             <CardContent>
-              {associatedClients.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[80px]">Photo</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {associatedClients.map(client => (
-                      <TableRow key={client.id}>
-                        <TableCell>
-                          <Avatar>
-                            <AvatarImage src={client.photoUrl} alt={client.name} />
-                            <AvatarFallback>{client.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                        </TableCell>
-                        <TableCell>
-                          <p className="font-medium">{client.name}</p>
-                        </TableCell>
-                        <TableCell>{client.email}</TableCell>
-                        <TableCell>{client.phone}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/clients/${client.id}`}>
-                              View Details
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-6">
-                  <Building className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <h3 className="mt-2 text-lg font-medium">No Clients Associated</h3>
-                  <p className="text-muted-foreground">This company doesn't have any clients associated with it yet.</p>
-                  <Button className="mt-4">
-                    <Users className="h-4 w-4 mr-2" />
-                    Add Client
-                  </Button>
-                </div>
-              )}
+              {/* Client list would go here */}
+              <p className="text-muted-foreground text-center py-6">Client listing component to be implemented</p>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="team">
+        <TabsContent value="teams">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Team Members</CardTitle>
-              <Button size="sm">
-                <Users className="h-4 w-4 mr-2" />
-                Add Team Member
-              </Button>
+            <CardHeader>
+              <CardTitle>Company Teams</CardTitle>
+              <CardDescription>Manage teams within this company</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px]">Photo</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teamMembers.map(member => (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <Avatar>
-                          <AvatarImage src={member.photoUrl} alt={member.name} />
-                          <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <p className="font-medium">{member.name}</p>
-                      </TableCell>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell>{member.role}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              {/* Teams management would go here */}
+              <p className="text-muted-foreground text-center py-6">Teams management component to be implemented</p>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="billing">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Financial Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="border rounded-md p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <span className="font-medium">Invoices (YTD)</span>
+                    </div>
+                    <p className="text-2xl font-bold">{company.invoiceCount || 0}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Total invoices issued</p>
+                  </div>
+                  <div className="border rounded-md p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="h-5 w-5 text-muted-foreground" />
+                      <span className="font-medium">Outstanding</span>
+                    </div>
+                    <p className="text-2xl font-bold text-amber-600">${company.outstandingAmount || 0}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Payment pending</p>
+                  </div>
+                  <div className="border rounded-md p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-5 w-5 text-muted-foreground" />
+                      <span className="font-medium">Completed Orders</span>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">{(company.totalOrders || 0) - (company.activeOrders || 0)}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Orders delivered</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <ContentDownloadSettings 
+              entityType="company" 
+              initialValues={{
+                contentLocked: true,
+                enableCreditLimit: true,
+                creditLimit: "5000",
+                paymentTerms: "30days"
+              }}
+              onSave={handleSaveDownloadSettings}
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Company Settings</CardTitle>
+                <CardDescription>Manage company preferences and settings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">General settings form would go here</p>
+              </CardContent>
+            </Card>
+            
+            <ContentDownloadSettings 
+              entityType="company" 
+              initialValues={{
+                contentLocked: true,
+                enableCreditLimit: true,
+                creditLimit: "5000",
+                paymentTerms: "30days"
+              }}
+              onSave={handleSaveDownloadSettings}
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
