@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, User, ShoppingCart, CalendarDays, Settings, Building } from 'lucide-react';
@@ -49,11 +48,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onClose }) => {
       if (
         order.address.toLowerCase().includes(searchTerm) ||
         order.client.toLowerCase().includes(searchTerm) ||
-        order.order_number.toLowerCase().includes(searchTerm)
+        order.orderNumber.toLowerCase().includes(searchTerm)
       ) {
         searchResults.push({
           id: `order-${order.id}`,
-          title: `Order #${order.order_number} - ${order.client}`,
+          title: `Order #${order.orderNumber} - ${order.client}`,
           category: 'orders',
           url: `/orders/${order.id}`,
           icon: <ShoppingCart className="w-4 h-4" />,

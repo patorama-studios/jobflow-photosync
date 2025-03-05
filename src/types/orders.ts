@@ -1,22 +1,22 @@
 
 export interface Order {
   id: string | number;
-  orderNumber?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  client?: string;
-  clientEmail?: string;
+  orderNumber: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  client: string;
+  clientEmail: string;
   clientPhone?: string;
   photographer?: string;
   photographerPayoutRate?: number;
-  price?: number;
-  propertyType?: string;
-  scheduledDate?: string;
-  scheduledTime?: string;
-  squareFeet?: number;
-  status?: 'pending' | 'scheduled' | 'completed';
+  price: number;
+  propertyType: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  squareFeet: number;
+  status: 'pending' | 'scheduled' | 'completed';
   additionalAppointments?: Array<{
     id: string | number;
     date: string;
@@ -26,7 +26,7 @@ export interface Order {
   customFields?: Record<string, any>;
   customerNotes?: string;
   internalNotes?: string;
-  package?: string;
+  package: string;
   drivingTimeMin?: number;
   previousLocation?: string;
 }

@@ -1,25 +1,52 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Order } from "@/types/orders";
 import { useToast } from "@/hooks/use-toast";
+
+// Helper function to convert our frontend Order type to the Supabase schema format
+const convertOrderToSupabaseFormat = (orderData: Partial<Order>) => {
+  return {
+    address: orderData.address,
+    city: orderData.city,
+    client: orderData.client,
+    client_email: orderData.clientEmail,
+    client_phone: orderData.clientPhone,
+    customer_notes: orderData.customerNotes,
+    internal_notes: orderData.internalNotes,
+    order_number: orderData.orderNumber,
+    package: orderData.package,
+    photographer: orderData.photographer,
+    photographer_payout_rate: orderData.photographerPayoutRate,
+    price: orderData.price,
+    property_type: orderData.propertyType,
+    scheduled_date: orderData.scheduledDate,
+    scheduled_time: orderData.scheduledTime,
+    square_feet: orderData.squareFeet,
+    state: orderData.state,
+    status: orderData.status,
+    zip: orderData.zip
+  };
+};
 
 export function useOrderMutations() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   // Function to create a new order
-  const createOrder = async (orderData: Omit<Order, 'id' | 'created_at' | 'updated_at'>) => {
+  const createOrder = async (orderData: Omit<Order, 'id'>) => {
     try {
       setIsSubmitting(true);
       
       // Extract additional appointments and custom fields
       const { additionalAppointments, customFields, ...mainOrderData } = orderData;
       
+      // Convert to Supabase format
+      const supabaseOrderData = convertOrderToSupabaseFormat(mainOrderData);
+      
       // Insert the main order data
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
-        .insert([mainOrderData])
+        .insert([supabaseOrderData])
         .select()
         .single();
       
@@ -85,10 +112,13 @@ export function useOrderMutations() {
       // Extract additional appointments and custom fields
       const { additionalAppointments, customFields, ...mainOrderData } = orderData;
       
+      // Convert to Supabase format
+      const supabaseOrderData = convertOrderToSupabaseFormat(mainOrderData);
+      
       // Update the main order data
       const { error: orderError } = await supabase
         .from('orders')
-        .update(mainOrderData)
+        .update(supabaseOrderData)
         .eq('id', orderId);
       
       if (orderError) throw orderError;

@@ -2,11 +2,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback } from "react";
+import { Order } from "@/types/orders";
 
 export function useOrderExport() {
   const { toast } = useToast();
   
-  const exportOrder = useCallback(async (orders: any[]) => {
+  const exportOrder = useCallback(async (orders: Order[]) => {
     console.log("Exporting orders:", orders);
     
     // Simulate a delay to mimic API call
