@@ -19,6 +19,8 @@ function App() {
           <Route path="/production/:orderId" element={<ProductionUpload />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          {/* Add a default route to redirect to calendar */}
+          <Route path="/" element={<CalendarPage />} />
         </Routes>
         <Toaster />
       </Router>
