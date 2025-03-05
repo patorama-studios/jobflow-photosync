@@ -9,14 +9,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bell, Search, LogOut, User, Settings } from 'lucide-react';
+import { Bell, LogOut, User, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 import { GlobalSearch } from './GlobalSearch';
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
-  const { title, showBackButton, onBackButtonClick } = useHeaderSettings();
+  const { 
+    title, 
+    showBackButton, 
+    onBackButtonClick,
+    settings 
+  } = useHeaderSettings();
 
   const getInitials = () => {
     if (profile?.full_name) {
@@ -28,14 +33,32 @@ export function Header() {
     return 'PS';
   };
 
+  const headerStyle = {
+    backgroundColor: settings.color || 'hsl(var(--background))',
+    height: `${settings.height}px` || '64px'
+  };
+
   return (
-    <header className="bg-background border-b border-border h-16 fixed top-0 left-0 right-0 z-10">
+    <header 
+      className="bg-background border-b border-border fixed top-0 left-0 right-0 z-10"
+      style={headerStyle}
+    >
       <div className="flex h-full items-center justify-between px-4">
         {/* Logo and title section */}
         <div className="flex items-center space-x-4">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="bg-primary text-white px-2 py-1 rounded">PS</span>
-            <span className="font-semibold hidden md:inline-block">Patorama Studios</span>
+            {settings.logoUrl ? (
+              <img 
+                src={settings.logoUrl} 
+                alt="Logo" 
+                className="h-8 w-auto" 
+              />
+            ) : (
+              <span className="bg-primary text-white px-2 py-1 rounded">PS</span>
+            )}
+            {settings.showCompanyName && (
+              <span className="font-semibold hidden md:inline-block">Patorama Studios</span>
+            )}
           </Link>
           {title && (
             <div className="hidden md:flex items-center">

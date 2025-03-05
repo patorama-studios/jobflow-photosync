@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface HeaderSettings {
   color: string;
@@ -11,6 +12,12 @@ export interface HeaderSettings {
 interface HeaderSettingsContextType {
   settings: HeaderSettings;
   updateSettings: (settings: Partial<HeaderSettings>) => void;
+  title: string | null;
+  showBackButton: boolean;
+  onBackButtonClick: () => void;
+  setTitle: (title: string | null) => void;
+  setShowBackButton: (show: boolean) => void;
+  setBackButtonAction: (action: () => void) => void;
 }
 
 const defaultSettings: HeaderSettings = {
@@ -24,6 +31,10 @@ const HeaderSettingsContext = createContext<HeaderSettingsContextType | undefine
 
 export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
+  const [title, setTitle] = useState<string | null>(null);
+  const [showBackButton, setShowBackButton] = useState(false);
+  const navigate = useNavigate();
+  const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => navigate(-1));
 
   // Load settings from localStorage on first render
   useEffect(() => {
@@ -45,8 +56,23 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
     }));
   };
 
+  const onBackButtonClick = () => {
+    backButtonAction();
+  };
+
   return (
-    <HeaderSettingsContext.Provider value={{ settings, updateSettings }}>
+    <HeaderSettingsContext.Provider 
+      value={{ 
+        settings, 
+        updateSettings, 
+        title, 
+        showBackButton, 
+        onBackButtonClick,
+        setTitle,
+        setShowBackButton,
+        setBackButtonAction
+      }}
+    >
       {children}
     </HeaderSettingsContext.Provider>
   );
