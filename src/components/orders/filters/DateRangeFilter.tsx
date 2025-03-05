@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 interface DateRangeFilterProps {
   label: string;
   dateRange?: {
-    from?: Date | undefined;
-    to?: Date | undefined;
+    from: Date | undefined;
+    to: Date | undefined;
   };
   onDateRangeChange: (dateRange: { from?: Date; to?: Date } | undefined) => void;
 }

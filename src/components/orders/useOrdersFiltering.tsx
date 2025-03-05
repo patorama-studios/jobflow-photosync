@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { isToday, isThisWeek, parseISO } from 'date-fns';
 import { Order } from '@/hooks/useSampleOrders';
-import { OrderFiltersState } from './filters/types';
+import { OrderFiltersState } from './OrderFilters';
 
 export const useOrdersFiltering = (orders: Order[]) => {
   const [statusFilter, setStatusFilter] = useState('all');
