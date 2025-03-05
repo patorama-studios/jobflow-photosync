@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { Order } from '@/hooks/useSampleOrders';
 import { OrderFiltersState } from './OrderFilters';
@@ -20,7 +19,7 @@ export function useOrdersFiltering(orders: Order[]) {
     // Apply date range filter if set
     if (filters.dateRange.from || filters.dateRange.to) {
       result = result.filter(order => {
-        const orderDate = parseISO(order.date);
+        const orderDate = parseISO(order.scheduledDate);
         
         if (filters.dateRange.from && filters.dateRange.to) {
           return (
@@ -51,9 +50,9 @@ export function useOrdersFiltering(orders: Order[]) {
     // Apply sort direction
     result.sort((a, b) => {
       if (filters.sortDirection === 'asc') {
-        return a.date.localeCompare(b.date);
+        return a.scheduledDate.localeCompare(b.scheduledDate);
       } else {
-        return b.date.localeCompare(a.date);
+        return b.scheduledDate.localeCompare(a.scheduledDate);
       }
     });
 
@@ -73,7 +72,7 @@ export function useOrdersFiltering(orders: Order[]) {
   // Group orders by date categories
   const todayOrders = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    return finalFilteredOrders.filter(order => order.date.startsWith(today));
+    return finalFilteredOrders.filter(order => order.scheduledDate.startsWith(today));
   }, [finalFilteredOrders]);
 
   const thisWeekOrders = useMemo(() => {
@@ -82,8 +81,8 @@ export function useOrdersFiltering(orders: Order[]) {
     const todayStr = format(today, 'yyyy-MM-dd');
     
     return finalFilteredOrders.filter(order => {
-      const orderDate = parseISO(order.date);
-      return !order.date.startsWith(todayStr) && 
+      const orderDate = parseISO(order.scheduledDate);
+      return !order.scheduledDate.startsWith(todayStr) && 
              (isAfter(orderDate, today) && isBefore(orderDate, weekEnd));
     });
   }, [finalFilteredOrders]);
@@ -93,7 +92,7 @@ export function useOrdersFiltering(orders: Order[]) {
     const weekEnd = addDays(today, 7);
     
     return finalFilteredOrders.filter(order => {
-      const orderDate = parseISO(order.date);
+      const orderDate = parseISO(order.scheduledDate);
       return isAfter(orderDate, weekEnd) || isBefore(orderDate, today);
     });
   }, [finalFilteredOrders]);

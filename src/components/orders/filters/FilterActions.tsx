@@ -6,9 +6,16 @@ import { Separator } from '@/components/ui/separator';
 interface FilterActionsProps {
   onReset: () => void;
   onApply: () => void;
+  hideApply?: boolean;
+  applyText?: string;
 }
 
-export const FilterActions: React.FC<FilterActionsProps> = ({ onReset, onApply }) => {
+export const FilterActions: React.FC<FilterActionsProps> = ({ 
+  onReset, 
+  onApply, 
+  hideApply = false,
+  applyText = "Apply Filters" 
+}) => {
   return (
     <>
       <Separator />
@@ -16,9 +23,11 @@ export const FilterActions: React.FC<FilterActionsProps> = ({ onReset, onApply }
         <Button variant="outline" size="sm" onClick={onReset}>
           Reset Filters
         </Button>
-        <Button size="sm" onClick={onApply}>
-          Apply Filters
-        </Button>
+        {!hideApply && (
+          <Button size="sm" onClick={onApply}>
+            {applyText}
+          </Button>
+        )}
       </div>
     </>
   );

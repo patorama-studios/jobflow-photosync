@@ -25,6 +25,11 @@ export const OrdersView: React.FC = () => {
     handleFilterChange
   } = useOrdersFiltering(orders);
 
+  // Handle status filter changes properly
+  const handleStatusChange = (newStatus: string[]) => {
+    setStatusFilter(newStatus);
+  };
+
   if (showCreateForm) {
     return (
       <div className="space-y-6">
@@ -63,7 +68,7 @@ export const OrdersView: React.FC = () => {
         totalFilteredCount={totalFilteredCount}
         onSearchResults={handleSearchResults}
         onFilterChange={handleFilterChange}
-        onStatusChange={setStatusFilter}
+        onStatusChange={handleStatusChange}
       />
     </div>
   );
