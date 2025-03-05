@@ -1,13 +1,25 @@
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ProductionUpload from './pages/ProductionUpload';
-import Orders from './pages/Orders';
-import { CalendarPage } from './pages/CalendarPage';
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleMapsProvider } from './contexts/GoogleMapsContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import SettingsPage from './pages/Settings';
+import { CalendarSkeleton } from './components/dashboard/calendar/CalendarSkeleton';
+
+// Lazy load pages for better performance
+const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
+const Orders = lazy(() => import('./pages/Orders'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="space-y-4 w-full max-w-md">
+      <CalendarSkeleton />
+    </div>
+  </div>
+);
 
 function App() {
   // Google Maps API key - in a real application, this would be stored securely
@@ -18,14 +30,16 @@ function App() {
     <GoogleMapsProvider apiKey={googleMapsApiKey}>
       <Router>
         <ErrorBoundary>
-          <Routes>
-            <Route path="/production/:orderId" element={<ProductionUpload />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            {/* Add a default route to redirect to calendar */}
-            <Route path="/" element={<CalendarPage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/production/:orderId" element={<ProductionUpload />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              {/* Add a default route to redirect to calendar */}
+              <Route path="/" element={<CalendarPage />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
         <Toaster />
       </Router>

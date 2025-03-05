@@ -15,4 +15,18 @@ if (savedTheme === 'dark') {
   document.documentElement.classList.toggle('dark', prefersDark);
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Use requestIdleCallback to defer non-critical initialization
+const mountApp = () => {
+  const rootElement = document.getElementById("root");
+  if (rootElement) {
+    const root = createRoot(rootElement);
+    root.render(<App />);
+  }
+};
+
+// Use requestIdleCallback if available, otherwise use setTimeout
+if (typeof window.requestIdleCallback === 'function') {
+  window.requestIdleCallback(mountApp);
+} else {
+  setTimeout(mountApp, 1);
+}

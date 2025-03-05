@@ -1,22 +1,24 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { JobCalendarWithErrorBoundary } from "@/components/dashboard/JobCalendar";
 import { Bell, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { CalendarSkeleton } from "@/components/dashboard/calendar/CalendarSkeleton";
 
+// Using an optimized version that won't block rendering
 export function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     console.log("CalendarPage component mounted");
     
-    // Use a short timeout to allow all resources to load
+    // Shorter timeout to improve perceived performance
     const timer = setTimeout(() => {
       setIsLoading(false);
       console.log("CalendarPage finished loading");
-    }, 100);
+    }, 50);
     
     return () => {
       console.log("CalendarPage component unmounted");
@@ -46,8 +48,13 @@ export function CalendarPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <JobCalendarWithErrorBoundary />
+        <Suspense fallback={<CalendarSkeleton />}>
+          <JobCalendarWithErrorBoundary />
+        </Suspense>
       </div>
     </SidebarLayout>
   );
 }
+
+// Adding default export for lazy loading
+export default CalendarPage;

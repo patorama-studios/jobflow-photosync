@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { Calendar } from "@/components/ui/calendar";
 import { isSameDay } from "date-fns";
 import { format } from "date-fns";
@@ -13,6 +13,21 @@ interface CalendarViewProps {
   onSelectDate: (date: Date | undefined) => void;
   onDateSelected: (date: Date | undefined) => void;
 }
+
+// Memoized day content component for better performance
+const CustomDayContent = memo(({ date, daysWithJobs }: { date: Date, daysWithJobs: Set<string> }) => {
+  const dateStr = date.toISOString().split('T')[0];
+  const hasJobs = daysWithJobs.has(dateStr);
+  
+  return (
+    <div className="relative">
+      <span>{date.getDate()}</span>
+      {hasJobs && (
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+      )}
+    </div>
+  );
+});
 
 export function CalendarView({ 
   orders, 
@@ -59,22 +74,10 @@ export function CalendarView({
     }
   };
 
-  // Custom day renderer that adds indicators for days with jobs
+  // Optimized custom day renderer
   const customDayContent = (dayProps: DayContentProps) => {
     try {
-      // Extract the date from props
-      const date = dayProps.date;
-      const dateStr = date.toISOString().split('T')[0];
-      const hasJobs = daysWithJobs.has(dateStr);
-      
-      return (
-        <div className="relative">
-          <span>{date.getDate()}</span>
-          {hasJobs && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-          )}
-        </div>
-      );
+      return <CustomDayContent date={dayProps.date} daysWithJobs={daysWithJobs} />;
     } catch (error) {
       console.error("Error rendering calendar day:", error);
       return <div>{dayProps.date.getDate()}</div>;

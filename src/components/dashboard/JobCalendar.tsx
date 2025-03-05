@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,6 +10,23 @@ import { JobList } from './calendar/JobList';
 import { CalendarSkeleton } from './calendar/CalendarSkeleton';
 import { isSameDay } from 'date-fns';
 
+// Use memo to avoid re-renders
+const JobCountBadge = memo(({ selectedDate, orders }) => {
+  const jobsForSelectedDay = useMemo(() => {
+    return orders.filter(order => 
+      order.scheduledDate && isSameDay(new Date(order.scheduledDate), selectedDate)
+    );
+  }, [orders, selectedDate]);
+  
+  if (jobsForSelectedDay.length === 0) return null;
+  
+  return (
+    <Badge variant="secondary">
+      {jobsForSelectedDay.length} job{jobsForSelectedDay.length !== 1 ? 's' : ''}
+    </Badge>
+  );
+});
+
 export function JobCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
@@ -19,10 +36,10 @@ export function JobCalendar() {
   useEffect(() => {
     console.log("JobCalendar component mounted");
     
-    // Simulate loading delay to better see the loading state
+    // Reduced loading time for better performance
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 100);
     
     return () => {
       console.log("JobCalendar component unmounted");
@@ -74,21 +91,6 @@ export function JobCalendar() {
     </Card>
   );
 }
-
-// Simple component to show job count for selected date
-const JobCountBadge = ({ selectedDate, orders }) => {
-  const jobsForSelectedDay = orders.filter(order => 
-    order.scheduledDate && isSameDay(new Date(order.scheduledDate), selectedDate)
-  );
-  
-  if (jobsForSelectedDay.length === 0) return null;
-  
-  return (
-    <Badge variant="secondary">
-      {jobsForSelectedDay.length} job{jobsForSelectedDay.length !== 1 ? 's' : ''}
-    </Badge>
-  );
-};
 
 // Wrap the JobCalendar component with ErrorBoundary for better error handling
 export function JobCalendarWithErrorBoundary() {
