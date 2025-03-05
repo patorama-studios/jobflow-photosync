@@ -8,6 +8,7 @@ import { NotificationEditor } from "./sections/NotificationEditor";
 import { DownloadSettings } from "./sections/DownloadSettings";
 import { PaymentSettings } from "./sections/PaymentSettings";
 import { PresentationSettings } from "./sections/PresentationSettings";
+import { HeaderSettings } from "./sections/HeaderSettings";
 import { LegalSettings } from "./sections/LegalSettings";
 import { Card } from "@/components/ui/card";
 
@@ -25,6 +26,7 @@ export function SettingsPanel({ activeCategory }: SettingsPanelProps) {
       {activeCategory === "downloads" && <DownloadSettings />}
       {activeCategory === "payments" && <PaymentSettings />}
       {activeCategory === "presentation" && <PresentationSettings />}
+      {activeCategory === "header" && <HeaderSettings />}
       {activeCategory === "legal" && <LegalSettings />}
     </Card>
   );

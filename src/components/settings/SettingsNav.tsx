@@ -2,7 +2,7 @@
 import React from "react";
 import { 
   User, Bell, Building2, PenLine, Download, 
-  CreditCard, LayoutGrid, FileText 
+  CreditCard, LayoutGrid, FileText, Layout
 } from "lucide-react";
 import { SettingsCategory } from "@/pages/Settings";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
     { id: "downloads", label: "Download Settings", icon: <Download className="h-5 w-5" /> },
     { id: "payments", label: "Payments & Orders", icon: <CreditCard className="h-5 w-5" /> },
     { id: "presentation", label: "Order Presentation", icon: <LayoutGrid className="h-5 w-5" /> },
+    { id: "header", label: "Header Settings", icon: <Layout className="h-5 w-5" /> },
     { id: "legal", label: "Legal Settings", icon: <FileText className="h-5 w-5" /> },
   ];
   

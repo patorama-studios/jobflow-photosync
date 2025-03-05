@@ -13,6 +13,7 @@ export type SettingsCategory =
   | "downloads"
   | "payments"
   | "presentation"
+  | "header"
   | "legal";
 
 export function SettingsPage() {

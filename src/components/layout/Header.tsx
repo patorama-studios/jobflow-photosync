@@ -6,8 +6,7 @@ import {
   Search, 
   User, 
   X,
-  Settings,
-  Check
+  Settings
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { HeaderSettings } from './HeaderSettings';
 import { GlobalSearch } from './GlobalSearch';
 import { Notifications } from './Notifications';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
@@ -83,9 +81,6 @@ export const Header: React.FC = () => {
             
             {/* Notifications */}
             <Notifications />
-            
-            {/* Settings */}
-            <HeaderSettings />
             
             {/* User Profile */}
             <DropdownMenu>
