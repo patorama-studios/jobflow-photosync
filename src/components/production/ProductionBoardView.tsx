@@ -9,9 +9,11 @@ import {
 import { KanbanBoard } from "./KanbanBoard";
 import { Button } from "@/components/ui/button";
 import { Plus, Filter, RefreshCw } from "lucide-react";
+import { ProductionTable } from "./ProductionTable";
 
 export function ProductionBoardView() {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeStatusFilter, setActiveStatusFilter] = useState("all");
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -48,24 +50,32 @@ export function ProductionBoardView() {
         </div>
       </div>
 
-      <Tabs defaultValue="kanban" className="w-full">
+      <Tabs defaultValue="table" className="w-full">
         <TabsList className="mb-4">
+          <TabsTrigger value="table">Table View</TabsTrigger>
           <TabsTrigger value="kanban">Kanban Board</TabsTrigger>
-          <TabsTrigger value="list">List View</TabsTrigger>
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="kanban">
-          <KanbanBoard />
+        <TabsContent value="table">
+          <div className="space-y-4">
+            <Tabs defaultValue="all" onValueChange={setActiveStatusFilter}>
+              <TabsList>
+                <TabsTrigger value="all">All Orders</TabsTrigger>
+                <TabsTrigger value="waiting-uploads">Waiting Uploads</TabsTrigger>
+                <TabsTrigger value="in-production">In Production</TabsTrigger>
+                <TabsTrigger value="change-request">Change Request</TabsTrigger>
+                <TabsTrigger value="delivered">Delivered</TabsTrigger>
+                <TabsTrigger value="overdue" className="text-red-500">Overdue</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <ProductionTable statusFilter={activeStatusFilter} />
+          </div>
         </TabsContent>
         
-        <TabsContent value="list">
-          <div className="bg-white/70 rounded-lg p-6 shadow-sm border border-border/40">
-            <div className="text-center text-muted-foreground">
-              <p>List view coming soon</p>
-            </div>
-          </div>
+        <TabsContent value="kanban">
+          <KanbanBoard />
         </TabsContent>
         
         <TabsContent value="calendar">
