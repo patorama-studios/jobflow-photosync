@@ -1,25 +1,175 @@
 
-// This is a new file I'm creating to check the current implementation
-// Add console logs to debug the mounting/rendering of the component
-
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { format, isSameDay } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
+import { useSampleOrders } from '@/hooks/useSampleOrders';
+import { Order } from '@/hooks/useSampleOrders';
 
 export function JobCalendar() {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isLoading, setIsLoading] = useState(true);
+  const { orders } = useSampleOrders();
+  const { toast } = useToast();
+
   useEffect(() => {
     console.log("JobCalendar component mounted");
     
+    // Simulate loading delay to better see the loading state
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    
     return () => {
       console.log("JobCalendar component unmounted");
+      clearTimeout(timer);
     };
   }, []);
 
-  console.log("Rendering JobCalendar component");
-  
+  // Memoize the calendar days with job indicators to avoid recalculating on every render
+  const daysWithJobs = useMemo(() => {
+    const days = new Set<string>();
+    
+    orders.forEach(order => {
+      if (order.scheduledDate) {
+        const dateStr = new Date(order.scheduledDate).toISOString().split('T')[0];
+        days.add(dateStr);
+      }
+    });
+    
+    console.log(`Found ${days.size} days with jobs`);
+    return days;
+  }, [orders]);
+
+  // Memoize the jobs for the selected date to avoid filtering on every render
+  const jobsForSelectedDay = useMemo(() => {
+    if (!selectedDate) return [];
+    
+    return orders.filter(order => 
+      order.scheduledDate && isSameDay(new Date(order.scheduledDate), selectedDate)
+    );
+  }, [orders, selectedDate]);
+
+  // Handle date change with error handling
+  const handleDateSelect = (date: Date | undefined) => {
+    try {
+      setSelectedDate(date);
+      
+      if (date) {
+        const jobCount = orders.filter(order => 
+          order.scheduledDate && isSameDay(new Date(order.scheduledDate), date)
+        ).length;
+        
+        if (jobCount > 0) {
+          toast({
+            title: `${jobCount} jobs on ${format(date, 'MMMM d, yyyy')}`,
+            description: "Click on a job to view details",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error selecting date:", error);
+      toast({
+        title: "Error selecting date",
+        description: "There was a problem loading jobs for this date",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Custom day render function to show indicators for days with jobs
+  const renderDay = (day: Date) => {
+    const dayStr = day.toISOString().split('T')[0];
+    const hasJobs = daysWithJobs.has(dayStr);
+    
+    return (
+      <div className="relative">
+        <span>{day.getDate()}</span>
+        {hasJobs && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+        )}
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="bg-card rounded-lg shadow">
+        <CardHeader>
+          <CardTitle className="flex justify-between items-center">
+            <span>Calendar</span>
+            <Badge variant="outline" className="animate-pulse">Loading...</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="min-h-[400px] flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-32 w-32 bg-muted rounded-lg"></div>
+            <div className="mt-4 h-4 w-48 bg-muted rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="bg-card rounded-lg shadow p-4">
-      <div className="text-lg font-medium mb-4">Calendar (Debug Version)</div>
-      <p>This is a debug version of the calendar to troubleshoot loading issues.</p>
-      <p>If you see this message, the calendar component is mounting correctly.</p>
-    </div>
+    <Card className="bg-card rounded-lg shadow">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>Calendar</span>
+          {selectedDate && jobsForSelectedDay.length > 0 && (
+            <Badge variant="secondary">
+              {jobsForSelectedDay.length} job{jobsForSelectedDay.length !== 1 ? 's' : ''}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-8 md:grid-cols-2">
+          <div>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              className="rounded-md border"
+              components={{
+                DayContent: ({ day }) => renderDay(day),
+              }}
+            />
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium mb-4">
+              {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'No date selected'}
+            </h3>
+            
+            {selectedDate && jobsForSelectedDay.length === 0 ? (
+              <p className="text-muted-foreground">No appointments scheduled for this day.</p>
+            ) : (
+              <div className="space-y-4">
+                {jobsForSelectedDay.map((job: Order) => (
+                  <div key={job.id} className="p-3 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors">
+                    <div className="flex justify-between">
+                      <p className="font-medium">{job.orderNumber}</p>
+                      <span className="text-sm text-muted-foreground">{job.scheduledTime}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{job.address}</p>
+                    <div className="flex items-center mt-2">
+                      <div className="flex-1">
+                        <p className="text-sm">{job.client}</p>
+                      </div>
+                      <Badge variant={job.status === 'completed' ? 'success' : 'default'}>
+                        {job.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { JobCalendar } from "@/components/dashboard/JobCalendar";
@@ -6,10 +7,25 @@ import { Bell, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function CalendarPage() {
-  console.log("Rendering CalendarPage component");
+  const [isLoading, setIsLoading] = useState(true);
   
+  useEffect(() => {
+    console.log("CalendarPage component mounted");
+    
+    // Use a short timeout to allow all resources to load
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      console.log("CalendarPage finished loading");
+    }, 100);
+    
+    return () => {
+      console.log("CalendarPage component unmounted");
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
-    <SidebarLayout>
+    <SidebarLayout showCalendarSubmenu={true} showBackButton={true}>
       <PageTransition>
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
