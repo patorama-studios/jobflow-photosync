@@ -1,26 +1,20 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Calendar, 
   Users, 
-  Settings, 
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-  X,
+  Settings,
   ShoppingCart,
   Kanban,
   GraduationCap,
   Puzzle,
-  ArrowLeft,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useSampleOrders } from "@/hooks/useSampleOrders";
+import { DesktopSidebar } from "./sidebar/DesktopSidebar";
+import { MobileSidebar } from "./sidebar/MobileSidebar";
 
 type SidebarProps = {
   children: React.ReactNode;
@@ -28,7 +22,11 @@ type SidebarProps = {
   showBackButton?: boolean;
 };
 
-export function SidebarLayout({ children, showCalendarSubmenu = false, showBackButton = false }: SidebarProps) {
+export function SidebarLayout({ 
+  children, 
+  showCalendarSubmenu = false, 
+  showBackButton = false 
+}: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showMainMenu, setShowMainMenu] = useState(!showCalendarSubmenu);
@@ -94,250 +92,36 @@ export function SidebarLayout({ children, showCalendarSubmenu = false, showBackB
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Mobile Menu Toggle */}
+      {/* Desktop Sidebar */}
+      <DesktopSidebar
+        collapsed={collapsed}
+        toggleSidebar={toggleSidebar}
+        showCalendarSubmenu={showCalendarSubmenu}
+        showBackButton={showBackButton}
+        showMainMenu={showMainMenu}
+        toggleMainMenu={toggleMainMenu}
+        sidebarLinks={sidebarLinks}
+        isActiveLink={isActiveLink}
+        photographers={photographers}
+        selectedPhotographers={selectedPhotographers}
+        togglePhotographer={togglePhotographer}
+      />
+
+      {/* Mobile Sidebar */}
       {isMobile && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="fixed top-4 left-4 z-50 md:hidden"
-          onClick={toggleMobileSidebar}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      )}
-
-      {/* Sidebar for desktop */}
-      <div 
-        className={cn(
-          "hidden md:flex h-full bg-sidebar transition-all duration-300 ease-in-out flex-col border-r border-sidebar-border",
-          collapsed ? "w-[70px]" : "w-[240px]"
-        )}
-      >
-        {/* Logo area */}
-        <div className="flex h-16 items-center px-4 border-b border-sidebar-border">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="bg-primary text-white px-2 py-1 rounded font-bold">PS</span>
-            {!collapsed && <span className="font-semibold">Patorama Studios</span>}
-          </Link>
-        </div>
-
-        {/* Navigation Links or Calendar Submenu */}
-        <div className="flex-1 overflow-y-auto py-6 px-3">
-          {showCalendarSubmenu ? (
-            <div className="space-y-4">
-              {showBackButton && (
-                <Button 
-                  variant="ghost" 
-                  className="flex items-center w-full mb-4 justify-start"
-                  onClick={toggleMainMenu}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  <span>Main Menu</span>
-                </Button>
-              )}
-              
-              {showMainMenu ? (
-                <nav className="space-y-2">
-                  {sidebarLinks.map((link) => (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      className={cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        isActiveLink(link.path) 
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                          : "text-sidebar-foreground"
-                      )}
-                    >
-                      <link.icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
-                      {!collapsed && <span>{link.name}</span>}
-                    </Link>
-                  ))}
-                </nav>
-              ) : (
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium mb-3 px-3">Photographers</h3>
-                  <div className="space-y-2">
-                    {photographers.map((photographer) => (
-                      <div key={photographer.id} className="flex items-center space-x-2 px-3 py-1">
-                        <Checkbox 
-                          id={`photographer-${photographer.id}`}
-                          checked={selectedPhotographers.includes(photographer.id)}
-                          onCheckedChange={() => togglePhotographer(photographer.id)}
-                        />
-                        <label 
-                          htmlFor={`photographer-${photographer.id}`}
-                          className="text-sm flex items-center cursor-pointer"
-                        >
-                          <span 
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: photographer.color }}
-                          ></span>
-                          {photographer.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <nav className="space-y-2">
-              {sidebarLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={cn(
-                    "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    isActiveLink(link.path) 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                      : "text-sidebar-foreground"
-                  )}
-                >
-                  <link.icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
-                  {!collapsed && <span>{link.name}</span>}
-                </Link>
-              ))}
-            </nav>
-          )}
-        </div>
-
-        {/* Collapse toggle */}
-        {!showCalendarSubmenu && (
-          <div className="p-3 border-t border-sidebar-border">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full flex justify-center"
-              onClick={toggleSidebar}
-            >
-              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile sidebar */}
-      {isMobile && (
-        <div 
-          className={cn(
-            "fixed inset-0 z-40 transform transition-transform ease-in-out duration-300 md:hidden",
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <div className="relative flex h-full w-[240px] flex-col bg-sidebar border-r border-sidebar-border">
-            {/* Close button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute top-4 right-4"
-              onClick={toggleMobileSidebar}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-
-            {/* Logo area */}
-            <div className="flex h-16 items-center px-4 border-b border-sidebar-border mt-2">
-              <Link to="/" className="flex items-center space-x-2">
-                <span className="bg-primary text-white px-2 py-1 rounded font-bold">PS</span>
-                <span className="font-semibold">Patorama Studios</span>
-              </Link>
-            </div>
-
-            {/* Navigation Links or Calendar Submenu */}
-            <div className="flex-1 overflow-y-auto py-6 px-3">
-              {showCalendarSubmenu ? (
-                <div className="space-y-4">
-                  {showBackButton && (
-                    <Button 
-                      variant="ghost" 
-                      className="flex items-center w-full mb-4 justify-start"
-                      onClick={toggleMainMenu}
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      <span>Main Menu</span>
-                    </Button>
-                  )}
-                  
-                  {showMainMenu ? (
-                    <nav className="space-y-2">
-                      {sidebarLinks.map((link) => (
-                        <Link
-                          key={link.path}
-                          to={link.path}
-                          className={cn(
-                            "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                            isActiveLink(link.path) 
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                              : "text-sidebar-foreground"
-                          )}
-                          onClick={toggleMobileSidebar}
-                        >
-                          <link.icon className="h-5 w-5 mr-3" />
-                          <span>{link.name}</span>
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : (
-                    <div className="mb-4">
-                      <h3 className="text-sm font-medium mb-3">Photographers</h3>
-                      <div className="space-y-2">
-                        {photographers.map((photographer) => (
-                          <div key={photographer.id} className="flex items-center space-x-2 py-1">
-                            <Checkbox 
-                              id={`mobile-photographer-${photographer.id}`}
-                              checked={selectedPhotographers.includes(photographer.id)}
-                              onCheckedChange={() => togglePhotographer(photographer.id)}
-                            />
-                            <label 
-                              htmlFor={`mobile-photographer-${photographer.id}`}
-                              className="text-sm flex items-center cursor-pointer"
-                            >
-                              <span 
-                                className="w-3 h-3 rounded-full mr-2"
-                                style={{ backgroundColor: photographer.color }}
-                              ></span>
-                              {photographer.name}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <nav className="space-y-2">
-                  {sidebarLinks.map((link) => (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      className={cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        isActiveLink(link.path) 
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                          : "text-sidebar-foreground"
-                      )}
-                      onClick={toggleMobileSidebar}
-                    >
-                      <link.icon className="h-5 w-5 mr-3" />
-                      <span>{link.name}</span>
-                    </Link>
-                  ))}
-                </nav>
-              )}
-            </div>
-          </div>
-          
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 -z-10"
-            onClick={toggleMobileSidebar}
-          />
-        </div>
+        <MobileSidebar
+          mobileOpen={mobileOpen}
+          toggleMobileSidebar={toggleMobileSidebar}
+          showCalendarSubmenu={showCalendarSubmenu}
+          showBackButton={showBackButton}
+          showMainMenu={showMainMenu}
+          toggleMainMenu={toggleMainMenu}
+          sidebarLinks={sidebarLinks}
+          isActiveLink={isActiveLink}
+          photographers={photographers}
+          selectedPhotographers={selectedPhotographers}
+          togglePhotographer={togglePhotographer}
+        />
       )}
 
       {/* Main content */}
