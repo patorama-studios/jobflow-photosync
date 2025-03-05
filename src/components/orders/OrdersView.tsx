@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback, memo } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,40 +15,42 @@ import { useSampleOrders } from "@/hooks/useSampleOrders";
 import { OrdersHeader } from "./OrdersHeader";
 import { OrdersContent } from "./OrdersContent";
 import { OrderCreateForm } from "./OrderCreateForm";
-import { Order } from "@/types";
 
-export function OrdersView() {
+export const OrdersView = memo(function OrdersView() {
   const { orders } = useSampleOrders();
   
   const [view, setView] = useState<"list" | "grid">("list");
   const [openCreateOrder, setOpenCreateOrder] = useState(false);
   
-  function openCreateOrderDialog() {
+  const handleViewChange = useCallback((newView: "list" | "grid") => {
+    setView(newView);
+  }, []);
+  
+  const openCreateOrderDialog = useCallback(() => {
     setOpenCreateOrder(true);
-  }
+  }, []);
+
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    setOpenCreateOrder(open);
+  }, []);
 
   return (
     <div className="space-y-8">
       <OrdersHeader
         view={view}
-        onChangeView={setView}
+        onChangeView={handleViewChange}
         onOpenCreateOrder={openCreateOrderDialog}
+        orders={orders}
       />
       
       <div className="space-y-4">
         <OrdersContent 
           view={view} 
-          onViewChange={setView}
+          onViewChange={handleViewChange}
         />
       </div>
       
-      <Dialog open={openCreateOrder} onOpenChange={setOpenCreateOrder}>
-        <DialogTrigger asChild>
-          <Button variant="outline" onClick={openCreateOrderDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Order
-          </Button>
-        </DialogTrigger>
+      <Dialog open={openCreateOrder} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Create Order</DialogTitle>
@@ -61,4 +63,4 @@ export function OrdersView() {
       </Dialog>
     </div>
   );
-}
+});

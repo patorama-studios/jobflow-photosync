@@ -1,50 +1,48 @@
 
-export type Order = {
-  id: string;
-  order_number: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  client: string;
-  client_email: string;
-  client_phone?: string;
+export interface Order {
+  id: string | number;
+  orderNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  client?: string;
+  clientEmail?: string;
+  clientPhone?: string;
   photographer?: string;
-  photographer_payout_rate?: number;
-  price: number;
-  property_type: string;
-  scheduled_date: string;
-  scheduled_time: string;
-  square_feet: number;
-  status: 'pending' | 'scheduled' | 'completed';
-  notes?: string;
-  customer_notes?: string;
-  internal_notes?: string;
-  package: string;
-  created_at: string;
-  updated_at: string;
-  
-  // Computed fields
+  photographerPayoutRate?: number;
+  price?: number;
+  propertyType?: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  squareFeet?: number;
+  status?: 'pending' | 'scheduled' | 'completed';
   additionalAppointments?: Array<{
-    id: string;
+    id: string | number;
     date: string;
     time: string;
-    description?: string;
+    description: string;
   }>;
-  customFields?: Record<string, string>;
+  customFields?: Record<string, any>;
+  customerNotes?: string;
+  internalNotes?: string;
+  package?: string;
+  drivingTimeMin?: number;
+  previousLocation?: string;
 }
 
-export type OrderFilters = {
+export interface OrderFilters {
   query: string;
   setQuery: (query: string) => void;
   status: string;
   setStatus: (status: string) => void;
-  dateRange: {
-    from?: Date;
-    to?: Date;
-  };
+  dateRange: { from?: Date; to?: Date };
   setDateRange: (dateRange: { from?: Date; to?: Date }) => void;
   sortDirection: "asc" | "desc";
   setSortDirection: (direction: "asc" | "desc") => void;
   resetFilters: () => void;
+}
+
+export interface OrderActionsProps {
+  orderId: string | number;
 }

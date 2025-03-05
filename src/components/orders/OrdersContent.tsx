@@ -1,8 +1,6 @@
 
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useSampleOrders } from "@/hooks/useSampleOrders";
-import { Order } from "@/types";
-import { useOrderExport } from "@/hooks/useOrderExport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,39 +25,44 @@ type OrdersContentProps = {
   onViewChange?: (view: "list" | "grid") => void;
 };
 
-export function OrdersContent({ 
+export const OrdersContent = memo(({ 
   view = "list",
   onViewChange = () => {},
-}: OrdersContentProps) {
+}: OrdersContentProps) => {
   const { orders } = useSampleOrders();
-  const { mutate: exportOrders } = useOrderExport();
   
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleExport = () => {
-    exportOrders(orders);
-  };
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
 
-  // Cast to any to avoid TypeScript errors temporarily
-  const ordersData: any[] = orders || [];
+  const handleDateSelect = useCallback((newDate: Date | undefined) => {
+    setDate(newDate);
+  }, []);
 
-  const filteredOrders = ordersData.filter((order: any) => {
-    const searchTerm = searchQuery.toLowerCase();
-    const orderMatchesSearch =
-      order.client?.toLowerCase().includes(searchTerm) ||
-      order.orderNumber?.toLowerCase().includes(searchTerm) ||
-      order.address?.toLowerCase().includes(searchTerm);
+  // Memoize filtered orders to avoid recalculation on every render
+  const filteredOrders = useMemo(() => {
+    const ordersData: any[] = orders || [];
+    
+    return ordersData.filter((order: any) => {
+      const searchTerm = searchQuery.toLowerCase();
+      const orderMatchesSearch =
+        (order.client?.toLowerCase().includes(searchTerm) || false) ||
+        (order.orderNumber?.toLowerCase().includes(searchTerm) || false) ||
+        (order.address?.toLowerCase().includes(searchTerm) || false);
 
-    const orderDate = date ? new Date(order.scheduledDate) : null;
-    const selectedDate = date ? new Date(date) : null;
+      const orderDate = order.scheduledDate ? new Date(order.scheduledDate) : null;
+      const selectedDate = date ? new Date(date) : null;
 
-    const orderMatchesDate = selectedDate
-      ? orderDate?.toDateString() === selectedDate?.toDateString()
-      : true;
+      const orderMatchesDate = selectedDate && orderDate
+        ? orderDate.toDateString() === selectedDate.toDateString()
+        : true;
 
-    return orderMatchesSearch && orderMatchesDate;
-  });
+      return orderMatchesSearch && orderMatchesDate;
+    });
+  }, [orders, searchQuery, date]);
 
   return (
     <div>
@@ -69,7 +72,8 @@ export function OrdersContent({
             type="text"
             placeholder="Search orders..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
+            className="max-w-[250px]"
           />
           <Popover>
             <PopoverTrigger asChild>
@@ -88,7 +92,7 @@ export function OrdersContent({
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={setDate}
+                onSelect={handleDateSelect}
                 disabled={(date) =>
                   date > new Date() || date < new Date("2023-01-01")
                 }
@@ -97,7 +101,6 @@ export function OrdersContent({
             </PopoverContent>
           </Popover>
         </div>
-        <Button onClick={handleExport}>Export Orders</Button>
       </div>
 
       <Table>
@@ -113,20 +116,28 @@ export function OrdersContent({
           </TableRow>
         </TableHead>
         <TableBody>
-          {filteredOrders.map((order: any) => (
-            <TableRow key={order.id}>
-              <TableCell>{order.orderNumber || order.id}</TableCell>
-              <TableCell>{order.client || order.customer || "Unknown"}</TableCell>
-              <TableCell>{order.scheduledDate || order.date || "N/A"}</TableCell>
-              <TableCell>${order.price || order.amount || 0}</TableCell>
-              <TableCell>
-                <Badge variant="secondary">{order.status || "pending"}</Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <OrderActions orderId={order.id} />
+          {filteredOrders.length > 0 ? (
+            filteredOrders.map((order: any) => (
+              <TableRow key={order.id}>
+                <TableCell>{order.orderNumber || order.id}</TableCell>
+                <TableCell>{order.client || order.customer || "Unknown"}</TableCell>
+                <TableCell>{order.scheduledDate || order.date || "N/A"}</TableCell>
+                <TableCell>${order.price || order.amount || 0}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{order.status || "pending"}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <OrderActions orderId={order.id} />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-6">
+                No orders found
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
         <TableFooter>
           <TableRow>
@@ -138,4 +149,6 @@ export function OrdersContent({
       </Table>
     </div>
   );
-}
+});
+
+OrdersContent.displayName = 'OrdersContent';

@@ -1,20 +1,20 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useCallback } from "react";
 
 export function useOrderExport() {
   const { toast } = useToast();
   
-  const exportOrder = async (orders: any[]) => {
-    // This would typically be an API call to export orders
+  const exportOrder = useCallback(async (orders: any[]) => {
     console.log("Exporting orders:", orders);
     
     // Simulate a delay to mimic API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // Return a mock file URL
     return { fileUrl: "https://example.com/orders-export.csv" };
-  };
+  }, []);
   
   return useMutation({
     mutationFn: exportOrder,
@@ -25,7 +25,7 @@ export function useOrderExport() {
         variant: "default",
       });
       
-      // In a real app, you might trigger a download here
+      // In a real app, trigger a download here
       console.log("Download URL:", data.fileUrl);
     },
     onError: (error) => {
