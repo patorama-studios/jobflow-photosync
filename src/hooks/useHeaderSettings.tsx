@@ -15,18 +15,18 @@ interface HeaderSettingsContextType {
 // Create context
 const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
   settings: {
-    color: 'hsl(var(--background))',
+    color: '#000000',
     height: 56,
-    logoUrl: ''
+    logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png'
   },
   updateSettings: () => {}
 });
 
 // Default settings
 const defaultSettings: HeaderSettings = {
-  color: 'hsl(var(--background))',
+  color: '#000000',
   height: 56,
-  logoUrl: ''
+  logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png'
 };
 
 // Provider component

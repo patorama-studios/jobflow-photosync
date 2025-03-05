@@ -1,203 +1,93 @@
 
 import React, { useState } from 'react';
-import { Bell, Check, FileText, ShoppingCart, Calendar, X } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  type: 'order' | 'calendar' | 'file' | 'system';
+interface NotificationsProps {
+  isTextLight?: boolean;
 }
 
-export const Notifications: React.FC = () => {
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'New Order Created',
-      message: 'Order #1234 has been created for John Doe',
-      time: '10 minutes ago',
-      read: false,
-      type: 'order'
-    },
-    {
-      id: '2',
-      title: 'Calendar Appointment',
-      message: 'You have a new appointment scheduled for tomorrow at 2:00 PM',
-      time: '1 hour ago',
-      read: false,
-      type: 'calendar'
-    },
-    {
-      id: '3',
-      title: 'Files Ready',
-      message: 'Order #1089 files are ready for download',
-      time: '3 hours ago',
-      read: true,
-      type: 'file'
-    },
-    {
-      id: '4',
-      title: 'System Update',
-      message: 'The system has been updated to version 2.0',
-      time: '1 day ago',
-      read: true,
-      type: 'system'
-    }
+export const Notifications: React.FC<NotificationsProps> = ({ isTextLight }) => {
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: 'New order received', read: false, time: '2 min ago' },
+    { id: 2, text: 'Delivery completed for Order #1234', read: false, time: '1 hour ago' },
+    { id: 3, text: 'Payment received from Client ABC', read: true, time: 'Yesterday' },
   ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  const markAsRead = (id: number) => {
+    setNotifications(notifications.map(n => 
+      n.id === id ? { ...n, read: true } : n
+    ));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    toast({
-      title: "All notifications marked as read",
-      description: "You have no new notifications",
-    });
-  };
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => 
-      prev.filter(notification => notification.id !== id)
-    );
-  };
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'order':
-        return <ShoppingCart className="h-4 w-4" />;
-      case 'calendar':
-        return <Calendar className="h-4 w-4" />;
-      case 'file':
-        return <FileText className="h-4 w-4" />;
-      default:
-        return <Bell className="h-4 w-4" />;
-    }
+    setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className={isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}
+        >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center"
-            >
+            <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center rounded-full">
               {unreadCount}
-            </Badge>
+            </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between px-4 py-2 bg-muted/50">
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="p-4 border-b flex items-center justify-between">
           <h3 className="font-medium">Notifications</h3>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={markAllAsRead}
-              className="h-8 px-2 text-xs"
+              className="text-xs h-auto py-1"
             >
-              <Check className="h-3 w-3 mr-1" />
               Mark all as read
             </Button>
           )}
         </div>
-        <Separator />
-        <ScrollArea className="h-80">
-          {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full py-6 text-center text-muted-foreground">
-              <Bell className="h-8 w-8 mb-2 opacity-20" />
-              <p>No notifications</p>
-            </div>
-          ) : (
+        <div className="max-h-[300px] overflow-y-auto">
+          {notifications.length > 0 ? (
             <div className="divide-y">
-              {notifications.map(notification => (
+              {notifications.map((notification) => (
                 <div 
-                  key={notification.id} 
-                  className={cn(
-                    "p-4 relative",
-                    !notification.read && "bg-muted/30"
-                  )}
+                  key={notification.id}
+                  className={`p-3 hover:bg-muted/50 ${notification.read ? 'opacity-70' : 'bg-muted/20'}`}
+                  onClick={() => markAsRead(notification.id)}
                 >
-                  <div className="flex gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center",
-                      notification.type === 'order' && "bg-blue-100 text-blue-600",
-                      notification.type === 'calendar' && "bg-green-100 text-green-600",
-                      notification.type === 'file' && "bg-amber-100 text-amber-600",
-                      notification.type === 'system' && "bg-slate-100 text-slate-600",
-                    )}>
-                      {getIcon(notification.type)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <h4 className="text-sm font-medium">{notification.title}</h4>
-                        <button 
-                          onClick={() => removeNotification(notification.id)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-xs text-muted-foreground">{notification.time}</span>
-                        {!notification.read && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => markAsRead(notification.id)}
-                            className="h-6 px-2 text-xs"
-                          >
-                            Mark as read
-                          </Button>
-                        )}
-                      </div>
-                    </div>
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-sm font-medium">{notification.text}</p>
+                    {!notification.read && (
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    )}
                   </div>
+                  <p className="text-xs text-muted-foreground">{notification.time}</p>
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="p-4 text-center text-muted-foreground">
+              No notifications
+            </div>
           )}
-        </ScrollArea>
-        <Separator />
-        <div className="p-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full" 
-            onClick={() => {
-              setOpen(false);
-              // Navigate to all notifications page
-              toast({
-                title: "Coming Soon",
-                description: "View all notifications page is coming soon",
-              });
-            }}
-          >
+        </div>
+        <div className="p-2 border-t text-center">
+          <Button variant="ghost" size="sm" className="text-xs w-full">
             View all notifications
           </Button>
         </div>

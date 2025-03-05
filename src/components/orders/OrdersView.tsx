@@ -1,75 +1,89 @@
+import React, { useState } from "react";
+import { useOrders } from "@/hooks/use-orders";
+import { OrderSearch } from "./OrderSearch";
+import { OrderFilters } from "./OrderFilters";
+import { OrderStats } from "./OrderStats";
+import { OrdersContent } from "./OrdersContent";
+import { OrdersHeader } from "./OrdersHeader";
+import { CreateOrderDialog } from "./CreateOrderDialog";
+import { useToast } from "@/hooks/use-toast";
 
-import React, { useState } from 'react';
-import { useSampleOrders } from '@/hooks/useSampleOrders';
-import { Button } from '@/components/ui/button';
-import { CreateOrderForm } from './CreateOrderForm';
-import { OrderStats } from './OrderStats';
-import { OrdersHeader } from './OrdersHeader';
-import { OrdersContent } from './OrdersContent';
-import { useOrdersFiltering } from './useOrdersFiltering';
+export function OrdersView() {
+  const { 
+    orders, 
+    isLoading, 
+    filters,
+  } = useOrders();
+  const [openFilters, setOpenFilters] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [viewType, setViewType] = useState<"grid" | "list">("grid");
+  const { toast } = useToast();
 
-export const OrdersView: React.FC = () => {
-  const { orders } = useSampleOrders();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  
-  const {
-    statusFilter,
-    setStatusFilter,
-    todayOrders,
-    thisWeekOrders,
-    filteredRemainingOrders,
-    totalFilteredCount,
-    allFilteredOrders,
-    isFiltered,
-    handleSearchResults,
-    handleFilterChange
-  } = useOrdersFiltering(orders);
-
-  // Handle status filter changes properly
-  const handleStatusChange = (newStatus: string[]) => {
-    setStatusFilter(newStatus);
+  const handleCreateOrder = () => {
+    setIsCreateDialogOpen(true);
   };
 
-  if (showCreateForm) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Create New Order</h2>
-          <Button variant="outline" onClick={() => setShowCreateForm(false)}>
-            Back to Orders
-          </Button>
-        </div>
-        <CreateOrderForm onComplete={() => setShowCreateForm(false)} />
-      </div>
-    );
-  }
+  const filteredOrders = orders.filter((order) => {
+    const query = filters.query.toLowerCase();
+    const matchesQuery = 
+      order.customer.toLowerCase().includes(query) ||
+      order.orderNumber.toLowerCase().includes(query);
 
+    const matchesStatus = 
+      !filters.status || filters.status === "all" || order.status === filters.status;
+
+    const matchesDateRange = 
+      !filters.dateRange ||
+      (order.createdAt >= filters.dateRange.from && order.createdAt <= filters.dateRange.to);
+
+    return matchesQuery && matchesStatus && matchesDateRange;
+  }).sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+
+    return filters.sortDirection === "asc" ? dateA - dateB : dateB - dateA;
+  });
+
+  const handleStatusChange = (newStatus: string) => {
+    filters.setStatus(newStatus);
+  };
+  
   return (
     <div className="space-y-6">
-      {/* Order Stats */}
-      <OrderStats orders={orders} />
-      
-      {/* Header with New Order button */}
       <OrdersHeader 
-        orders={orders}
-        filteredOrders={allFilteredOrders}
-        isFiltered={isFiltered}
-        onNewOrder={() => setShowCreateForm(true)}
+        onCreateOrder={handleCreateOrder}  
       />
-
-      {/* Order Content */}
+      
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4">
+          <OrderSearch query={filters.query} onQueryChange={filters.setQuery} className="w-full lg:w-80" />
+          <OrderFilters 
+            openFilters={openFilters}
+            onOpenFiltersChange={setOpenFilters}
+            status={filters.status as string} // Ensure status is a string, not string[]
+            onStatusChange={handleStatusChange}
+            dateRange={filters.dateRange}
+            onDateRangeChange={filters.setDateRange}
+            sortDirection={filters.sortDirection}
+            onSortDirectionChange={filters.setSortDirection}
+            onResetFilters={filters.resetFilters}
+          />
+        </div>
+        
+        <OrderStats orders={filteredOrders} />
+      </div>
+      
       <OrdersContent 
-        orders={orders}
-        todayOrders={todayOrders}
-        thisWeekOrders={thisWeekOrders}
-        filteredRemainingOrders={filteredRemainingOrders}
-        statusFilter={statusFilter}
-        isFiltered={isFiltered}
-        totalFilteredCount={totalFilteredCount}
-        onSearchResults={handleSearchResults}
-        onFilterChange={handleFilterChange}
-        onStatusChange={handleStatusChange}
+        orders={filteredOrders} 
+        isLoading={isLoading}
+        viewType={viewType}
+        onViewTypeChange={setViewType}
+      />
+      
+      <CreateOrderDialog 
+        open={isCreateDialogOpen} 
+        onOpenChange={setIsCreateDialogOpen} 
       />
     </div>
   );
-};
+}

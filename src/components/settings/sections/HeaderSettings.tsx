@@ -17,6 +17,7 @@ export function HeaderSettings() {
   // Predefined colors
   const colors = [
     { name: 'Default', value: 'hsl(var(--background))' },
+    { name: 'Black', value: '#000000' },
     { name: 'Purple', value: '#9b87f5' },
     { name: 'Blue', value: '#0ea5e9' },
     { name: 'Green', value: '#10b981' },
@@ -71,7 +72,7 @@ export function HeaderSettings() {
         
         <div className="flex items-center gap-4">
           {settings.logoUrl ? (
-            <div className="w-16 h-16 rounded-md overflow-hidden border">
+            <div className="w-16 h-16 rounded-md overflow-hidden border flex items-center justify-center bg-white">
               <img 
                 src={settings.logoUrl} 
                 alt="Company Logo" 
@@ -148,12 +149,18 @@ export function HeaderSettings() {
               key={color.value}
               variant="outline"
               className="h-10 relative"
-              style={{ backgroundColor: color.value }}
+              style={{ 
+                backgroundColor: color.value,
+                color: (color.value === '#000000' || color.name === 'Black') ? 'white' : 'black'
+              }}
               onClick={() => handleColorChange(color.value)}
             >
               {settings.color === color.value && (
-                <Check className="h-4 w-4 absolute text-white" />
+                <Check className={`h-4 w-4 absolute ${(color.value === '#000000' || color.name === 'Black') ? 'text-white' : 'text-black'}`} />
               )}
+              <span className={`text-xs ${(color.value === '#000000' || color.name === 'Black') ? 'text-white' : ''}`}>
+                {color.name}
+              </span>
             </Button>
           ))}
         </div>
@@ -179,9 +186,9 @@ export function HeaderSettings() {
         <Button 
           onClick={() => {
             updateSettings({
-              color: 'hsl(var(--background))',
+              color: '#000000',
               height: 56,
-              logoUrl: ''
+              logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png'
             });
             toast({
               title: "Settings reset",

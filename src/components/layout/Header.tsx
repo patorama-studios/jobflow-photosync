@@ -34,6 +34,9 @@ export const Header: React.FC = () => {
   const { settings } = useHeaderSettings();
   const [showSearch, setShowSearch] = useState(false);
 
+  // Determine if we need light text based on background color
+  const isTextLight = settings.color === '#000000' || settings.color.toLowerCase() === 'black';
+
   return (
     <header 
       className="w-full border-b sticky top-0 z-50 bg-background" 
@@ -54,7 +57,7 @@ export const Header: React.FC = () => {
           ) : (
             <div className="bg-primary text-primary-foreground px-2 py-1 rounded">PS</div>
           )}
-          <span className="font-semibold text-lg">Patorama Studios</span>
+          <span className={`font-semibold text-lg ${isTextLight ? 'text-white' : ''}`}>Patorama Studios</span>
         </div>
 
         {/* Search Bar (Mobile Toggle) */}
@@ -74,18 +77,22 @@ export const Header: React.FC = () => {
               onClick={() => setShowSearch(true)} 
               variant="ghost" 
               size="icon" 
-              className="md:hidden"
+              className={`md:hidden ${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
             >
               <Search className="h-5 w-5" />
             </Button>
             
             {/* Notifications */}
-            <Notifications />
+            <Notifications isTextLight={isTextLight} />
             
             {/* User Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={`rounded-full ${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/placeholder.svg" alt="User" />
                     <AvatarFallback>PS</AvatarFallback>
