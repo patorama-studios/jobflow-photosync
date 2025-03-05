@@ -17,6 +17,7 @@ const Calendar = lazy(() => import('./pages/Calendar'));
 const Orders = lazy(() => import('./pages/Orders'));
 const Customers = lazy(() => import('./pages/Customers'));
 const CustomerDetails = lazy(() => import('./pages/CustomerDetails'));
+const ProductionBoard = lazy(() => import('./pages/ProductionBoard'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -71,7 +72,7 @@ function App() {
                 
                 <Route path="/production" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <ProductionBoard />
                   </ProtectedRoute>
                 } />
                 
