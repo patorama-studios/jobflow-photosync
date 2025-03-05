@@ -6,6 +6,8 @@ import { Bell, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function CalendarPage() {
+  console.log("Rendering CalendarPage component");
+  
   return (
     <SidebarLayout>
       <PageTransition>
