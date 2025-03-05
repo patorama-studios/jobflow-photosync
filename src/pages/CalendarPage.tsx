@@ -19,6 +19,8 @@ const JobCalendarWithErrorBoundary = lazy(() =>
 export function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   
   useEffect(() => {
     console.log("CalendarPage component mounted");
@@ -38,6 +40,14 @@ export function CalendarPage() {
   const handleViewChange = (value: string) => {
     setView(value as "month" | "week" | "day");
     console.log(`Calendar view changed to: ${value}`);
+  };
+
+  const handleOpenDialog = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
   };
 
   return (
@@ -75,14 +85,18 @@ export function CalendarPage() {
               <Users className="h-4 w-4 mr-2" />
               Team View
             </Button>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">
+                <Button size="sm" onClick={handleOpenDialog}>
                   <Plus className="h-4 w-4 mr-2" />
                   New Appointment
                 </Button>
               </DialogTrigger>
-              <CreateAppointmentDialog />
+              <CreateAppointmentDialog 
+                isOpen={isDialogOpen} 
+                onClose={handleCloseDialog} 
+                selectedDate={selectedDate}
+              />
             </Dialog>
           </div>
         </div>

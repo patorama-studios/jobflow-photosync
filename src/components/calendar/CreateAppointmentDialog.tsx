@@ -26,45 +26,47 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   selectedDate,
   selectedTime
 }) => {
+  // Format the date safely - handle potential invalid date errors
+  const formattedDate = selectedDate ? format(selectedDate, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy");
+  const initialAppointmentTime = selectedTime || "11:00 AM";
+  
   const [appointmentDate, setAppointmentDate] = useState<string>(
-    format(selectedDate, "MMM dd, yyyy") + (selectedTime ? ` ${selectedTime}` : " 11:00 AM")
+    `${formattedDate} ${initialAppointmentTime}`
   );
 
   const handleCreateAppointment = () => {
     // In a real app, this would save the appointment
-    console.log("Creating appointment");
+    console.log("Creating appointment with date:", appointmentDate);
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl p-0 gap-0">
-        <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b">
-          <DialogTitle className="text-xl">Create Appointment</DialogTitle>
-          <div className="flex items-center">
-            <Button variant="ghost" className="text-primary">Switch to Block</Button>
-            <Button variant="ghost" size="icon" onClick={onClose} className="ml-2">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </DialogHeader>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column - Order Details */}
-          <OrderDetailsForm />
-          
-          {/* Right Column - Appointment Details */}
-          <AppointmentDetailsForm 
-            appointmentDate={appointmentDate}
-            setAppointmentDate={setAppointmentDate}
-          />
+    <DialogContent className="max-w-4xl p-0 gap-0">
+      <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b">
+        <DialogTitle className="text-xl">Create Appointment</DialogTitle>
+        <div className="flex items-center">
+          <Button variant="ghost" className="text-primary">Switch to Block</Button>
+          <Button variant="ghost" size="icon" onClick={onClose} className="ml-2">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
+      </DialogHeader>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Column - Order Details */}
+        <OrderDetailsForm />
         
-        <DialogFooter className="px-6 py-4 border-t">
-          <Button variant="outline" onClick={onClose} className="mr-2">Close</Button>
-          <Button onClick={handleCreateAppointment}>Create Appointment</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {/* Right Column - Appointment Details */}
+        <AppointmentDetailsForm 
+          appointmentDate={appointmentDate}
+          setAppointmentDate={setAppointmentDate}
+        />
+      </div>
+      
+      <DialogFooter className="px-6 py-4 border-t">
+        <Button variant="outline" onClick={onClose} className="mr-2">Close</Button>
+        <Button onClick={handleCreateAppointment}>Create Appointment</Button>
+      </DialogFooter>
+    </DialogContent>
   );
 };
