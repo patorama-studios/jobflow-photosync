@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -145,6 +144,15 @@ const OrderDetails: React.FC = () => {
             >
               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </Badge>
+            
+            <div className="ml-auto">
+              <Link to={`/delivery/${orderId}`}>
+                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  Content Delivery
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Tag Management */}

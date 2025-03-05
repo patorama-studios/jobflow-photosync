@@ -343,6 +343,13 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
                   <ExternalLink className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
+              
+              <Link to={`/delivery/${order.id}`}>
+                <Button variant="outline" size="sm">
+                  Content Delivery
+                  <FileText className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
             </div>
           </div>
         </CardHeader>
