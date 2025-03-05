@@ -1,149 +1,127 @@
 
-import { useState, useMemo } from 'react';
-import { isToday, isThisWeek, parseISO } from 'date-fns';
+import { useState, useEffect, useMemo } from 'react';
 import { Order } from '@/hooks/useSampleOrders';
 import { OrderFiltersState } from './OrderFilters';
+import { format, startOfDay, endOfDay, isAfter, isBefore, isEqual, addDays, parseISO } from 'date-fns';
 
-export const useOrdersFiltering = (orders: Order[]) => {
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [searchResults, setSearchResults] = useState<Order[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [advancedFilters, setAdvancedFilters] = useState<OrderFiltersState>({
+export function useOrdersFiltering(orders: Order[]) {
+  const [searchResults, setSearchResults] = useState<Order[]>(orders);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [filters, setFilters] = useState<OrderFiltersState>({
+    status: [],
     sortDirection: 'desc',
+    dateRange: {}
   });
-  
-  // Apply advanced filters
-  const applyAdvancedFilters = (ordersToFilter: Order[], filters: OrderFiltersState) => {
-    let result = [...ordersToFilter];
-    
-    // Date Range Created filter
-    if (filters.dateRangeCreated?.from || filters.dateRangeCreated?.to) {
-      // Note: In a real app, this would filter based on creation date
-      // For this demo, we're using scheduledDate as a proxy
-      result = result.filter(order => {
-        const orderDate = parseISO(order.scheduledDate);
-        if (filters.dateRangeCreated?.from && orderDate < filters.dateRangeCreated.from) {
-          return false;
-        }
-        if (filters.dateRangeCreated?.to && orderDate > filters.dateRangeCreated.to) {
-          return false;
-        }
-        return true;
-      });
-    }
-    
-    // Appointment Date Range filter
-    if (filters.appointmentDateRange?.from || filters.appointmentDateRange?.to) {
-      result = result.filter(order => {
-        const appointmentDate = parseISO(order.scheduledDate);
-        if (filters.appointmentDateRange?.from && appointmentDate < filters.appointmentDateRange.from) {
-          return false;
-        }
-        if (filters.appointmentDateRange?.to && appointmentDate > filters.appointmentDateRange.to) {
-          return false;
-        }
-        return true;
-      });
-    }
-    
-    // Order Status filter (overrides the basic filter)
-    if (filters.orderStatus && filters.orderStatus !== 'all') {
-      result = result.filter(order => order.status === filters.orderStatus);
-    }
-    
-    // Payment Status filter
-    if (filters.paymentStatus && filters.paymentStatus !== 'all') {
-      // For demo purposes, we'll just use a simple mapping
-      const paymentStatusMap: Record<string, boolean> = {
-        'paid': true,
-        'unpaid': false,
-        'pending': false
-      };
-      
-      result = result.filter(order => {
-        // Since we don't have a real payment status field, use price as a proxy
-        // This is just for demonstration purposes
-        const isPaid = order.price > 300; // arbitrary condition
-        return filters.paymentStatus === 'paid' ? isPaid : !isPaid;
-      });
-    }
-    
-    // Sort Direction
-    result.sort((a, b) => {
-      const dateA = new Date(a.scheduledDate).getTime();
-      const dateB = new Date(b.scheduledDate).getTime();
-      return filters.sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-    
-    return result;
-  };
-  
-  // Only recompute when orders change, not on every render
+
+  // Apply all filters to orders
   const filteredOrders = useMemo(() => {
-    // Determine which orders to filter
-    const ordersToFilter = isSearching ? searchResults : orders;
-    
-    // Filter orders by date
-    const today = ordersToFilter.filter(order => isToday(parseISO(order.scheduledDate)));
-    
-    const thisWeek = ordersToFilter.filter(order => 
-      isThisWeek(parseISO(order.scheduledDate)) && 
-      !isToday(parseISO(order.scheduledDate))
-    );
+    let result = [...orders];
 
-    // Filter remaining orders by status
-    const remaining = ordersToFilter.filter(order => 
-      !isToday(parseISO(order.scheduledDate)) && 
-      !isThisWeek(parseISO(order.scheduledDate))
-    );
+    // Apply date range filter if set
+    if (filters.dateRange.from || filters.dateRange.to) {
+      result = result.filter(order => {
+        const orderDate = parseISO(order.date);
+        
+        if (filters.dateRange.from && filters.dateRange.to) {
+          return (
+            (isAfter(orderDate, startOfDay(filters.dateRange.from)) || isEqual(orderDate, filters.dateRange.from)) &&
+            (isBefore(orderDate, endOfDay(filters.dateRange.to)) || isEqual(orderDate, filters.dateRange.to))
+          );
+        }
+        
+        if (filters.dateRange.from) {
+          return isAfter(orderDate, startOfDay(filters.dateRange.from)) || isEqual(orderDate, filters.dateRange.from);
+        }
+        
+        if (filters.dateRange.to) {
+          return isBefore(orderDate, endOfDay(filters.dateRange.to)) || isEqual(orderDate, filters.dateRange.to);
+        }
+        
+        return true;
+      });
+    }
 
-    // Apply basic status filter
-    let filtered = remaining;
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'outstanding') {
-        filtered = remaining.filter(order => order.status !== 'completed');
+    // Apply status filter if set
+    if (filters.status.length > 0) {
+      result = result.filter(order => 
+        filters.status.includes(order.status.toLowerCase())
+      );
+    }
+
+    // Apply sort direction
+    result.sort((a, b) => {
+      if (filters.sortDirection === 'asc') {
+        return a.date.localeCompare(b.date);
       } else {
-        filtered = remaining.filter(order => order.status === statusFilter);
+        return b.date.localeCompare(a.date);
       }
+    });
+
+    return result;
+  }, [orders, filters]);
+
+  // Apply search filter to already filtered orders
+  const finalFilteredOrders = useMemo(() => {
+    if (searchResults === orders) {
+      return filteredOrders;
     }
     
-    // Apply advanced filters
-    filtered = applyAdvancedFilters(filtered, advancedFilters);
+    const searchIds = new Set(searchResults.map(order => order.id));
+    return filteredOrders.filter(order => searchIds.has(order.id));
+  }, [filteredOrders, searchResults, orders]);
 
-    return {
-      todayOrders: today,
-      thisWeekOrders: thisWeek,
-      filteredRemainingOrders: filtered,
-      totalFilteredCount: today.length + thisWeek.length + filtered.length,
-      allFilteredOrders: [...today, ...thisWeek, ...filtered]
-    };
-  }, [orders, statusFilter, searchResults, isSearching, advancedFilters]);
-  
-  // Handle search results
+  // Group orders by date categories
+  const todayOrders = useMemo(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return finalFilteredOrders.filter(order => order.date.startsWith(today));
+  }, [finalFilteredOrders]);
+
+  const thisWeekOrders = useMemo(() => {
+    const today = new Date();
+    const weekEnd = addDays(today, 7);
+    const todayStr = format(today, 'yyyy-MM-dd');
+    
+    return finalFilteredOrders.filter(order => {
+      const orderDate = parseISO(order.date);
+      return !order.date.startsWith(todayStr) && 
+             (isAfter(orderDate, today) && isBefore(orderDate, weekEnd));
+    });
+  }, [finalFilteredOrders]);
+
+  const filteredRemainingOrders = useMemo(() => {
+    const today = new Date();
+    const weekEnd = addDays(today, 7);
+    
+    return finalFilteredOrders.filter(order => {
+      const orderDate = parseISO(order.date);
+      return isAfter(orderDate, weekEnd) || isBefore(orderDate, today);
+    });
+  }, [finalFilteredOrders]);
+
+  const isFiltered = filters.status.length > 0 || 
+                     filters.dateRange.from !== undefined || 
+                     filters.dateRange.to !== undefined || 
+                     searchResults !== orders;
+
+  // Handlers
   const handleSearchResults = (results: Order[]) => {
     setSearchResults(results);
-    setIsSearching(results.length !== orders.length);
   };
-  
-  // Handle filter changes
+
   const handleFilterChange = (newFilters: OrderFiltersState) => {
-    setAdvancedFilters(newFilters);
+    setFilters(newFilters);
   };
-  
-  // Calculate if content is filtered
-  const isFiltered = useMemo(() => {
-    return isSearching || statusFilter !== 'all' || 
-           Object.keys(advancedFilters).some(key => 
-             key !== 'sortDirection' && Boolean(advancedFilters[key as keyof OrderFiltersState])
-           );
-  }, [isSearching, statusFilter, advancedFilters]);
 
   return {
     statusFilter,
     setStatusFilter,
+    todayOrders,
+    thisWeekOrders,
+    filteredRemainingOrders,
+    totalFilteredCount: finalFilteredOrders.length,
+    allFilteredOrders: finalFilteredOrders,
     isFiltered,
-    ...filteredOrders,
     handleSearchResults,
     handleFilterChange
   };
-};
+}

@@ -1,60 +1,65 @@
 
 import React from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { FilterActions } from './FilterActions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
-interface StatusFilterProps {
-  label: string;
-  status?: string;
-  onStatusChange: (status: string | undefined) => void;
-  options: { value: string; label: string }[];
+export interface StatusFilterProps {
+  value: string[];
+  onChange: (value: string[]) => void;
 }
 
-export const StatusFilter: React.FC<StatusFilterProps> = ({ 
-  label, 
-  status, 
-  onStatusChange,
-  options
-}) => {
+const statusOptions = [
+  { id: 'new', label: 'New Order' },
+  { id: 'confirmed', label: 'Confirmed' },
+  { id: 'in-progress', label: 'In Progress' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'delivered', label: 'Delivered' },
+  { id: 'cancelled', label: 'Cancelled' }
+];
+
+export const StatusFilter: React.FC<StatusFilterProps> = ({ value, onChange }) => {
+  const handleToggle = (id: string) => {
+    if (value.includes(id)) {
+      onChange(value.filter(item => item !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  };
+
+  const handleReset = () => {
+    onChange([]);
+  };
+
+  const handleSelectAll = () => {
+    onChange(statusOptions.map(option => option.id));
+  };
+
   return (
-    <div>
-      <label className="text-sm font-medium mb-1 block">{label}</label>
-      <Select
-        value={status}
-        onValueChange={(value) => onStatusChange(value)}
-      >
-        <SelectTrigger className="w-full text-xs h-8">
-          <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {status && status !== 'all' && (
-        <div className="flex items-center mt-1">
-          <Badge variant="outline" className="text-xs py-0 h-5">
-            {label}: {status}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-3 w-3 ml-1 p-0"
-              onClick={() => onStatusChange(undefined)}
+    <div className="p-4 space-y-4">
+      <div className="grid gap-3">
+        {statusOptions.map((option) => (
+          <div key={option.id} className="flex items-center space-x-2">
+            <Checkbox 
+              id={`status-${option.id}`} 
+              checked={value.includes(option.id)}
+              onCheckedChange={() => handleToggle(option.id)}
+            />
+            <Label 
+              htmlFor={`status-${option.id}`}
+              className="text-sm font-normal"
             >
-              <X className="h-3 w-3" />
-            </Button>
-          </Badge>
-        </div>
-      )}
+              {option.label}
+            </Label>
+          </div>
+        ))}
+      </div>
+
+      <FilterActions 
+        onReset={handleReset} 
+        onApply={handleSelectAll} 
+        applyText="Select All"
+      />
     </div>
   );
 };

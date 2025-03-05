@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { GoogleMapsProvider } from './contexts/GoogleMapsContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { CalendarSkeleton } from './components/dashboard/calendar/CalendarSkeleton';
+import { Header } from './components/layout/Header';
+import { HeaderSettingsProvider } from './hooks/useHeaderSettings';
 
 // Lazy load pages for better performance
 const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
@@ -28,25 +30,31 @@ function App() {
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
   
   return (
-    <GoogleMapsProvider apiKey={googleMapsApiKey}>
-      <Router>
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/production/:orderId" element={<ProductionUpload />} />
-              <Route path="/orders/*" element={<Orders />} />
-              <Route path="/calendar" element={<CalendarPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/property-website/:orderId" element={<PropertyWebsite />} />
-              <Route path="/files/:orderId" element={<FileDownloads />} />
-              {/* Add a default route to redirect to calendar */}
-              <Route path="/" element={<CalendarPage />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-        <Toaster />
-      </Router>
-    </GoogleMapsProvider>
+    <HeaderSettingsProvider>
+      <GoogleMapsProvider apiKey={googleMapsApiKey}>
+        <Router>
+          <ErrorBoundary>
+            <Header />
+            <div className="pt-[56px]"> {/* Adjust based on header height */}
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/production/:orderId" element={<ProductionUpload />} />
+                  <Route path="/orders/*" element={<Orders />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/property-website/:orderId" element={<PropertyWebsite />} />
+                  <Route path="/files/:orderId" element={<FileDownloads />} />
+                  <Route path="/delivery/:orderId" element={<FileDownloads />} />
+                  {/* Add a default route to redirect to calendar */}
+                  <Route path="/" element={<CalendarPage />} />
+                </Routes>
+              </Suspense>
+            </div>
+          </ErrorBoundary>
+          <Toaster />
+        </Router>
+      </GoogleMapsProvider>
+    </HeaderSettingsProvider>
   );
 }
 

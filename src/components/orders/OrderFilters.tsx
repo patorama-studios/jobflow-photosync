@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { OrderFiltersState } from './OrderFilters';
 
 // Define OrderFiltersState type properly with optional date fields
 export interface OrderFiltersState {
