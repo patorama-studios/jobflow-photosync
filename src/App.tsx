@@ -22,9 +22,8 @@ const PageLoader = () => (
 );
 
 function App() {
-  // Google Maps API key - in a real application, this would be stored securely
-  // Replace this with your actual API key
-  const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
+  // Google Maps API key - use environment variable or fallback
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
   
   return (
     <GoogleMapsProvider apiKey={googleMapsApiKey}>

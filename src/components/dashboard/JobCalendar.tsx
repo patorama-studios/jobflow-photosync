@@ -3,7 +3,7 @@ import React, { useState, useEffect, memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { useSampleOrders } from '@/hooks/useSampleOrders';
+import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CalendarView } from './calendar/CalendarView';
 import { JobList } from './calendar/JobList';
@@ -11,14 +11,16 @@ import { CalendarSkeleton } from './calendar/CalendarSkeleton';
 import { isSameDay } from 'date-fns';
 
 // Use memo to avoid re-renders
-const JobCountBadge = memo(({ selectedDate, orders }) => {
+const JobCountBadge = memo(({ selectedDate, orders }: { selectedDate: Date | undefined, orders: Order[] }) => {
   const jobsForSelectedDay = useMemo(() => {
+    if (!selectedDate) return [];
+    
     return orders.filter(order => 
       order.scheduledDate && isSameDay(new Date(order.scheduledDate), selectedDate)
     );
   }, [orders, selectedDate]);
   
-  if (jobsForSelectedDay.length === 0) return null;
+  if (!selectedDate || jobsForSelectedDay.length === 0) return null;
   
   return (
     <Badge variant="secondary">
@@ -70,7 +72,7 @@ export function JobCalendar() {
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <span>Calendar</span>
-          {selectedDate && <JobCountBadge selectedDate={selectedDate} orders={orders} />}
+          <JobCountBadge selectedDate={selectedDate} orders={orders} />
         </CardTitle>
       </CardHeader>
       <CardContent>
