@@ -7,6 +7,7 @@ import { format, isSameDay } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { Order } from '@/hooks/useSampleOrders';
+import { DayContentProps } from "react-day-picker";
 
 export function JobCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -80,23 +81,21 @@ export function JobCalendar() {
   };
 
   // Custom day renderer that adds indicators for days with jobs
-  const customComponents = useMemo(() => ({
-    DayContent: (props: React.ComponentProps<typeof Calendar>['components']['DayContent']) => {
-      // Extract the date from props
-      const date = props.date;
-      const dateStr = date.toISOString().split('T')[0];
-      const hasJobs = daysWithJobs.has(dateStr);
-      
-      return (
-        <div className="relative">
-          <span>{date.getDate()}</span>
-          {hasJobs && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-          )}
-        </div>
-      );
-    }
-  }), [daysWithJobs]);
+  const customDayContent = (dayProps: DayContentProps) => {
+    // Extract the date from props
+    const date = dayProps.date;
+    const dateStr = date.toISOString().split('T')[0];
+    const hasJobs = daysWithJobs.has(dateStr);
+    
+    return (
+      <div className="relative">
+        <span>{date.getDate()}</span>
+        {hasJobs && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+        )}
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -137,7 +136,9 @@ export function JobCalendar() {
               selected={selectedDate}
               onSelect={handleDateSelect}
               className="rounded-md border"
-              components={customComponents}
+              components={{
+                DayContent: customDayContent
+              }}
             />
           </div>
           
