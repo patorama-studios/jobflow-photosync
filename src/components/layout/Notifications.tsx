@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,28 +8,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useNotificationsContext } from '@/contexts/NotificationsContext';
+import { NotificationItem } from '@/components/notifications/NotificationItem';
 
 interface NotificationsProps {
   isTextLight?: boolean;
 }
 
 export const Notifications: React.FC<NotificationsProps> = ({ isTextLight }) => {
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'New order received', read: false, time: '2 min ago' },
-    { id: 2, text: 'Delivery completed for Order #1234', read: false, time: '1 hour ago' },
-    { id: 3, text: 'Payment received from Client ABC', read: true, time: 'Yesterday' },
-  ]);
+  const navigate = useNavigate();
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification 
+  } = useNotificationsContext();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const viewAllNotifications = () => {
+    navigate('/notifications');
   };
 
   return (
@@ -64,20 +62,14 @@ export const Notifications: React.FC<NotificationsProps> = ({ isTextLight }) => 
         <div className="max-h-[300px] overflow-y-auto">
           {notifications.length > 0 ? (
             <div className="divide-y">
-              {notifications.map((notification) => (
-                <div 
+              {notifications.slice(0, 5).map((notification) => (
+                <NotificationItem
                   key={notification.id}
-                  className={`p-3 hover:bg-muted/50 ${notification.read ? 'opacity-70' : 'bg-muted/20'}`}
-                  onClick={() => markAsRead(notification.id)}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-medium">{notification.text}</p>
-                    {!notification.read && (
-                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{notification.time}</p>
-                </div>
+                  notification={notification}
+                  onMarkAsRead={markAsRead}
+                  onDelete={deleteNotification}
+                  compact
+                />
               ))}
             </div>
           ) : (
@@ -87,7 +79,12 @@ export const Notifications: React.FC<NotificationsProps> = ({ isTextLight }) => 
           )}
         </div>
         <div className="p-2 border-t text-center">
-          <Button variant="ghost" size="sm" className="text-xs w-full">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs w-full"
+            onClick={viewAllNotifications}
+          >
             View all notifications
           </Button>
         </div>
