@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { Apple, Github, Mail, Microsoft } from 'lucide-react';
+import { Apple, Github, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
@@ -58,7 +58,7 @@ const Login = () => {
     }
   };
 
-  const handleOAuthLogin = async (provider: 'google' | 'apple' | 'microsoft') => {
+  const handleOAuthLogin = async (provider: 'google' | 'github' | 'apple') => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -115,12 +115,12 @@ const Login = () => {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => handleOAuthLogin('microsoft')}
+              onClick={() => handleOAuthLogin('github')}
               disabled={isLoading}
               className="flex flex-col items-center justify-center h-20"
             >
-              <Microsoft className="h-6 w-6" />
-              <span className="mt-2 text-sm font-medium">Microsoft</span>
+              <Github className="h-6 w-6" />
+              <span className="mt-2 text-sm font-medium">GitHub</span>
             </Button>
           </div>
           
