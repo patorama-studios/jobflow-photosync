@@ -5,6 +5,7 @@ interface HeaderSettings {
   color: string;
   height: number;
   logoUrl: string;
+  showCompanyName: boolean;
 }
 
 interface HeaderSettingsContextType {
@@ -16,8 +17,9 @@ interface HeaderSettingsContextType {
 const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
   settings: {
     color: '#000000',
-    height: 56,
-    logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png'
+    height: 65,
+    logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png',
+    showCompanyName: false
   },
   updateSettings: () => {}
 });
@@ -25,8 +27,9 @@ const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
 // Default settings
 const defaultSettings: HeaderSettings = {
   color: '#000000',
-  height: 56,
-  logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png'
+  height: 65,
+  logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png',
+  showCompanyName: false
 };
 
 // Provider component

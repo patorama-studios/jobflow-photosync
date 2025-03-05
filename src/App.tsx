@@ -7,6 +7,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { CalendarSkeleton } from './components/dashboard/calendar/CalendarSkeleton';
 import { Header } from './components/layout/Header';
 import { HeaderSettingsProvider } from './hooks/useHeaderSettings';
+import { SidebarLayout } from './components/layout/SidebarLayout';
+import { DynamicCSS } from './components/layout/DynamicCSS';
 
 // Lazy load pages for better performance
 const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
@@ -15,6 +17,7 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const PropertyWebsite = lazy(() => import('./pages/PropertyWebsite'));
 const FileDownloads = lazy(() => import('./pages/FileDownloads'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -34,20 +37,24 @@ function App() {
       <GoogleMapsProvider apiKey={googleMapsApiKey}>
         <Router>
           <ErrorBoundary>
+            <DynamicCSS />
             <Header />
-            <div className="pt-[56px]"> {/* Adjust based on header height */}
+            <div style={{ paddingTop: 'var(--header-height, 65px)' }}> 
               <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/production/:orderId" element={<ProductionUpload />} />
-                  <Route path="/orders/*" element={<Orders />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/property-website/:orderId" element={<PropertyWebsite />} />
-                  <Route path="/files/:orderId" element={<FileDownloads />} />
-                  <Route path="/delivery/:orderId" element={<FileDownloads />} />
-                  {/* Add a default route to redirect to calendar */}
-                  <Route path="/" element={<CalendarPage />} />
-                </Routes>
+                <SidebarLayout>
+                  <Routes>
+                    <Route path="/production/:orderId" element={<ProductionUpload />} />
+                    <Route path="/orders/*" element={<Orders />} />
+                    <Route path="/calendar" element={<CalendarPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/property-website/:orderId" element={<PropertyWebsite />} />
+                    <Route path="/files/:orderId" element={<FileDownloads />} />
+                    <Route path="/delivery/:orderId" element={<FileDownloads />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    {/* Add a default route to redirect to dashboard */}
+                    <Route path="/" element={<Dashboard />} />
+                  </Routes>
+                </SidebarLayout>
               </Suspense>
             </div>
           </ErrorBoundary>

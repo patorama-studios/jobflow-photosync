@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 
@@ -48,6 +49,10 @@ export function HeaderSettings() {
 
   const handleColorChange = (color: string) => {
     updateSettings({ ...settings, color });
+  };
+
+  const handleCompanyNameToggle = (checked: boolean) => {
+    updateSettings({ ...settings, showCompanyName: checked });
   };
 
   return (
@@ -112,6 +117,20 @@ export function HeaderSettings() {
               className="hidden" 
             />
           </div>
+        </div>
+      </div>
+
+      {/* Company Name Display */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="text-md font-medium">Display Company Name</h4>
+            <p className="text-sm text-muted-foreground">Show company name next to logo in header</p>
+          </div>
+          <Switch 
+            checked={settings.showCompanyName} 
+            onCheckedChange={handleCompanyNameToggle}
+          />
         </div>
       </div>
 
@@ -187,8 +206,9 @@ export function HeaderSettings() {
           onClick={() => {
             updateSettings({
               color: '#000000',
-              height: 56,
-              logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png'
+              height: 65,
+              logoUrl: '/lovable-uploads/77021d72-0ef2-4178-8ddf-8a3c742c0974.png',
+              showCompanyName: false
             });
             toast({
               title: "Settings reset",

@@ -4,19 +4,14 @@ import { Link } from 'react-router-dom';
 import { 
   Bell, 
   Search, 
-  User, 
+  User,
   X,
-  Settings
+  Menu
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from '@/components/ui/popover';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -28,11 +23,15 @@ import { useToast } from '@/hooks/use-toast';
 import { GlobalSearch } from './GlobalSearch';
 import { Notifications } from './Notifications';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { SidebarLinks } from './sidebar/SidebarLinks';
 
 export const Header: React.FC = () => {
   const { toast } = useToast();
   const { settings } = useHeaderSettings();
   const [showSearch, setShowSearch] = useState(false);
+  const isMobile = useIsMobile();
 
   // Determine if we need light text based on background color
   const isTextLight = settings.color === '#000000' || settings.color.toLowerCase() === 'black';
@@ -42,84 +41,114 @@ export const Header: React.FC = () => {
       className="w-full border-b sticky top-0 z-50 bg-background" 
       style={{ 
         backgroundColor: settings.color || 'hsl(var(--background))',
-        height: `${settings.height}px`
+        height: `${settings.height || 65}px`
       }}
     >
       <div className="container flex items-center justify-between h-full px-4">
-        {/* Logo/Company Name */}
-        <div className="flex items-center gap-2">
+        {/* Mobile Menu */}
+        {isMobile && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0">
+              <div className="py-4 px-2">
+                <SidebarLinks />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        {/* Logo */}
+        <div className="flex items-center">
           {settings.logoUrl ? (
-            <img 
-              src={settings.logoUrl} 
-              alt="Company Logo" 
-              className="h-8 w-auto" 
-            />
+            <Link to="/">
+              <img 
+                src={settings.logoUrl} 
+                alt="Company Logo" 
+                className="h-8 w-auto" 
+              />
+            </Link>
           ) : (
             <div className="bg-primary text-primary-foreground px-2 py-1 rounded">PS</div>
           )}
-          <span className={`font-semibold text-lg ${isTextLight ? 'text-white' : ''}`}>Patorama Studios</span>
+          
+          {/* Company name (optional based on settings) */}
+          {settings.showCompanyName && (
+            <span className={`font-semibold text-lg ml-2 ${isTextLight ? 'text-white' : ''}`}>
+              Patorama Studios
+            </span>
+          )}
         </div>
 
-        {/* Search Bar (Mobile Toggle) */}
-        {showSearch ? (
+        {/* Search Bar (Mobile Design or Main Design) */}
+        {showSearch && isMobile ? (
           <div className="flex-1 px-4 flex items-center">
             <GlobalSearch onClose={() => setShowSearch(false)} />
           </div>
         ) : (
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Desktop Search */}
-            <div className="hidden md:block w-72">
+          <>
+            {/* Desktop Search - Centered */}
+            <div className={`${isMobile ? 'hidden' : 'flex justify-center'} w-full max-w-lg mx-auto`}>
               <GlobalSearch />
             </div>
             
             {/* Mobile Search Button */}
-            <Button 
-              onClick={() => setShowSearch(true)} 
-              variant="ghost" 
-              size="icon" 
-              className={`md:hidden ${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
-            >
-              <Search className="h-5 w-5" />
-            </Button>
-            
-            {/* Notifications */}
-            <Notifications isTextLight={isTextLight} />
-            
-            {/* User Profile */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={`rounded-full ${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback>PS</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => 
-                  toast({
-                    title: "Logged out",
-                    description: "You have been logged out successfully.",
-                  })
-                }>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            {isMobile && (
+              <Button 
+                onClick={() => setShowSearch(true)} 
+                variant="ghost" 
+                size="icon" 
+                className={`${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+            )}
+          </>
         )}
+        
+        {/* Notifications and User Profile */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Notifications */}
+          <Notifications isTextLight={isTextLight} />
+          
+          {/* User Profile */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={`rounded-full ${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/placeholder.svg" alt="User" />
+                  <AvatarFallback>PS</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/settings">Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => 
+                toast({
+                  title: "Logged out",
+                  description: "You have been logged out successfully.",
+                })
+              }>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

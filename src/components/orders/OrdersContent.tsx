@@ -4,7 +4,7 @@ import { OrderTable } from './OrderTable';
 import { OrderFilter } from './OrderFilter';
 import { OrderSearch } from './OrderSearch';
 import { OrderFilters, OrderFiltersState } from './OrderFilters';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/orders';
 
 interface OrdersContentProps {
   orders: Order[];

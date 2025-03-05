@@ -37,11 +37,11 @@ export const Notifications: React.FC<NotificationsProps> = ({ isTextLight }) => 
         <Button 
           variant="ghost" 
           size="icon"
-          className={isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}
+          className={`relative ${isTextLight ? 'text-white hover:text-white hover:bg-white/10' : ''}`}
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center rounded-full">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center rounded-full">
               {unreadCount}
             </span>
           )}

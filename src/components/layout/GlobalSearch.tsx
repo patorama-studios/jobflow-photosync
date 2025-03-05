@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, User, ShoppingCart, CalendarDays, Settings, Building } from 'lucide-react';
@@ -11,7 +12,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useSampleOrders } from '@/hooks/useSampleOrders';
+import { useOrders } from '@/hooks/use-orders';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SearchResult {
   id: string;
@@ -29,8 +31,9 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onClose }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
-  const { orders } = useSampleOrders();
+  const { orders } = useOrders();
   const [results, setResults] = useState<SearchResult[]>([]);
+  const isMobile = useIsMobile();
 
   // Sample search function
   const performSearch = (searchQuery: string) => {
@@ -46,11 +49,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onClose }) => {
       if (
         order.address.toLowerCase().includes(searchTerm) ||
         order.client.toLowerCase().includes(searchTerm) ||
-        order.id.toString().includes(searchTerm)
+        order.order_number.toLowerCase().includes(searchTerm)
       ) {
         searchResults.push({
           id: `order-${order.id}`,
-          title: `Order #${order.id} - ${order.client}`,
+          title: `Order #${order.order_number} - ${order.client}`,
           category: 'orders',
           url: `/orders/${order.id}`,
           icon: <ShoppingCart className="w-4 h-4" />,
@@ -135,7 +138,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onClose }) => {
 
   return (
     <>
-      <div className="relative w-full flex items-center">
+      <div className={`relative w-full max-w-md ${isMobile ? 'flex-1' : ''} flex items-center`}>
         <Button 
           variant="ghost" 
           size="icon" 
@@ -146,8 +149,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onClose }) => {
         </Button>
         
         <Input
-          placeholder="Search anything... (Press '/' or Ctrl+K)"
-          className="pl-9 pr-4 w-full"
+          placeholder={isMobile ? "Search..." : "Search anything... (Press '/' or Ctrl+K)"}
+          className={`pl-9 pr-4 w-full ${isMobile ? 'h-8 text-sm' : ''}`}
           onClick={handleInputClick}
         />
         

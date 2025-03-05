@@ -8,6 +8,7 @@ import { OrdersContent } from "./OrdersContent";
 import { OrdersHeader } from "./OrdersHeader";
 import { CreateOrderDialog } from "./CreateOrderDialog";
 import { useToast } from "@/hooks/use-toast";
+import { Order } from "@/types/orders";
 
 export function OrdersView() {
   const { 
@@ -34,9 +35,8 @@ export function OrdersView() {
       !filters.status || filters.status === "all" || order.status === filters.status;
 
     const matchesDateRange = 
-      !filters.dateRange ||
-      (filters.dateRange.from && filters.dateRange.to && 
-       new Date(order.scheduled_date) >= filters.dateRange.from && 
+      !filters.dateRange.from || !filters.dateRange.to ||
+      (new Date(order.scheduled_date) >= filters.dateRange.from && 
        new Date(order.scheduled_date) <= filters.dateRange.to);
 
     return matchesQuery && matchesStatus && matchesDateRange;
@@ -83,7 +83,7 @@ export function OrdersView() {
       <div className="space-y-4">
         <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4">
           <OrderSearch 
-            orders={orders} 
+            orders={orders}
             onSearchResults={(results) => {
               // We're not directly setting search results,
               // but updating the query which triggers filtering
