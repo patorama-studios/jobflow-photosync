@@ -7,6 +7,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { Toaster } from "@/components/ui/toaster";
 import { GoogleMapsProvider } from './contexts/GoogleMapsContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SettingsPage } from './pages/Settings';
 
 function App() {
   // Google Maps API key - in a real application, this would be stored securely
@@ -21,6 +22,7 @@ function App() {
             <Route path="/production/:orderId" element={<ProductionUpload />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             {/* Add a default route to redirect to calendar */}
             <Route path="/" element={<CalendarPage />} />
           </Routes>
