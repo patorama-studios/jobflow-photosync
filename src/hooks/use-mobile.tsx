@@ -1,11 +1,11 @@
 
-import { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean>(false)
-  const [isMounted, setIsMounted] = React.useState<boolean>(false)
+  const [isMounted, setIsMounted] = useState<boolean>(false)
 
   // Memoize the resize handler for better performance
   const checkMobile = useCallback(() => {
