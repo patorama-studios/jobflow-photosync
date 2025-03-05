@@ -18,7 +18,10 @@ export interface OrderFilters {
 }
 
 export function useOrders() {
-  const { orders, isLoading } = useSampleOrders();
+  const sampleOrdersResult = useSampleOrders();
+  const { orders } = sampleOrdersResult;
+  const isLoading = false; // Set a default value for isLoading
+  
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});

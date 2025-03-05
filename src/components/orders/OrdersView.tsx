@@ -27,7 +27,7 @@ export function OrdersView() {
   const filteredOrders = orders.filter((order) => {
     const query = filters.query.toLowerCase();
     const matchesQuery = 
-      order.customer.toLowerCase().includes(query) ||
+      order.client.toLowerCase().includes(query) ||
       order.orderNumber.toLowerCase().includes(query);
 
     const matchesStatus = 
@@ -35,12 +35,14 @@ export function OrdersView() {
 
     const matchesDateRange = 
       !filters.dateRange ||
-      (order.createdAt >= filters.dateRange.from && order.createdAt <= filters.dateRange.to);
+      (filters.dateRange.from && filters.dateRange.to && 
+       new Date(order.scheduledDate) >= filters.dateRange.from && 
+       new Date(order.scheduledDate) <= filters.dateRange.to);
 
     return matchesQuery && matchesStatus && matchesDateRange;
   }).sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
+    const dateA = new Date(a.scheduledDate).getTime();
+    const dateB = new Date(b.scheduledDate).getTime();
 
     return filters.sortDirection === "asc" ? dateA - dateB : dateB - dateA;
   });
@@ -67,7 +69,6 @@ export function OrdersView() {
               // but updating the query which triggers filtering
               // in the parent component
             }} 
-            className="w-full lg:w-80" 
           />
           <OrderFilters 
             onFiltersChange={(newFilters) => {
@@ -91,17 +92,17 @@ export function OrdersView() {
       <OrdersContent 
         orders={filteredOrders}
         todayOrders={filteredOrders.filter(order => 
-          new Date(order.createdAt).toDateString() === new Date().toDateString()
+          new Date(order.scheduledDate).toDateString() === new Date().toDateString()
         )}
         thisWeekOrders={filteredOrders.filter(order => {
-          const orderDate = new Date(order.createdAt);
+          const orderDate = new Date(order.scheduledDate);
           const today = new Date();
           const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
           const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
           return orderDate >= weekStart && orderDate <= weekEnd;
         })}
         filteredRemainingOrders={filteredOrders.filter(order => {
-          const orderDate = new Date(order.createdAt);
+          const orderDate = new Date(order.scheduledDate);
           const today = new Date();
           const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
           return orderDate < weekStart;
