@@ -15,6 +15,7 @@ import Settings from './pages/Settings'
 import Production from './pages/Production'
 import Learning from './pages/Learning'
 import Apps from './pages/Apps'
+import Login from './pages/Login'
 import { HeaderSettingsProvider } from './hooks/useHeaderSettings'
 
 // Import the new components and context
@@ -33,6 +34,7 @@ function App() {
               <HeaderSettingsProvider>
                 <Toaster />
                 <Routes>
+                  <Route path="/login" element={<Login />} />
                   <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/orders/*" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
