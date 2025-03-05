@@ -4,6 +4,25 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { getDefaultRegion } from '@/lib/google-maps';
 
+// Make sure we have the right type definition
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        places: {
+          Autocomplete: new (
+            element: HTMLInputElement,
+            options?: google.maps.places.AutocompleteOptions
+          ) => google.maps.places.Autocomplete;
+        };
+        Map: any;
+        Marker: any;
+        event: any;
+      };
+    };
+  }
+}
+
 interface GoogleAddressAutocompleteProps {
   onAddressSelect: (address: {
     formattedAddress: string;

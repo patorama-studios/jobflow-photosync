@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Bold, Italic, Underline, Link2, AlignLeft, List, ListOrdered } from 'lucide-react';
+import { Bold, Italic, Underline, Link2, AlignLeft, List, ListOrdered, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

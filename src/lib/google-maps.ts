@@ -91,7 +91,7 @@ declare global {
   }
 }
 
-// Add the google namespace declaration to fix the typing issues
+// Add the google namespace declaration
 declare namespace google.maps {
   namespace places {
     interface AutocompleteOptions {
