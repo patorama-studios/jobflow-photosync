@@ -1,4 +1,4 @@
-
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -33,7 +33,14 @@ import {
   Users,
   Clock,
   ExternalLink,
-  Info
+  Info,
+  MapPin,
+  Phone,
+  Mail,
+  FileText,
+  Edit,
+  X,
+  CalendarDays
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,7 +50,7 @@ import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 type ViewMode = 'day' | 'week' | 'month' | 'list';
 
@@ -75,6 +82,7 @@ const Calendar: React.FC = () => {
   const isMobile = useIsMobile();
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
+  const [showCalendarSubmenu, setShowCalendarSubmenu] = useState(true);
   
   useEffect(() => {
     // On mobile devices, default to the 'list' view
@@ -139,6 +147,10 @@ const Calendar: React.FC = () => {
       address: order.address,
       eventType,
       client: order.client,
+      phone: "+61 402 123 456", // Sample phone number
+      email: "client@example.com", // Sample email
+      notes: "Client prefers photos to be bright and airy. Has requested special attention to the outdoor areas.",
+      items: ["Real Estate Photography", "Floor Plan", "Drone Photos"],
       color: eventColors[eventType as keyof typeof eventColors]
     };
   });
@@ -646,65 +658,125 @@ const Calendar: React.FC = () => {
            Math.abs(now.getMinutes() - minutes) < 30;
   };
   
-  // Event Details Dialog
+  // Updated Event Details Dialog
   const EventDetailsDialog = () => {
     if (!selectedEvent) return null;
     
     return (
       <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>
-              Order #{selectedEvent.orderNumber}
+            <DialogTitle className="text-xl">
+              Order #{selectedEvent.orderNumber} - {selectedEvent.client}
             </DialogTitle>
             <DialogDescription>
-              {format(selectedEvent.start, 'EEEE, MMMM d, yyyy')}
-              <span className="mx-2">•</span>
-              {format(selectedEvent.start, 'h:mm a')} - {format(selectedEvent.end, 'h:mm a')}
+              {selectedEvent.address}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 pt-4">
+          {/* Map Hero Section */}
+          <div className="w-full h-48 bg-muted rounded-lg mb-4 relative flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
+            <MapPin className="h-12 w-12 text-primary opacity-50" />
+            <div className="absolute bottom-3 left-3 bg-black/60 text-white px-3 py-1 rounded-lg text-sm">
+              {selectedEvent.address}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Customer Details */}
             <div>
-              <div className="flex items-center space-x-2">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: selectedEvent.color }}
-                />
-                <h3 className="font-medium">{selectedEvent.title}</h3>
-              </div>
-              
-              <div className="mt-2 text-sm text-muted-foreground">
-                <p>Client: {selectedEvent.client}</p>
-                <p>Photographer: {selectedEvent.photographer}</p>
-                <p>Address: {selectedEvent.address}</p>
-                <p>Type: {selectedEvent.eventType}</p>
+              <h3 className="font-semibold mb-3">Customer Details</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{selectedEvent.client}</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{selectedEvent.phone}</span>
+                </div>
+                <div className="flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{selectedEvent.email}</span>
+                </div>
+                <div>
+                  <div className="flex items-center mb-1">
+                    <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span className="font-medium">Notes:</span>
+                  </div>
+                  <p className="text-muted-foreground pl-6">{selectedEvent.notes}</p>
+                </div>
               </div>
             </div>
             
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" size="sm" onClick={() => setShowEventDetails(false)}>
-                Close
-              </Button>
-              <Button className="flex items-center space-x-1">
-                <span>View Full Order</span>
-                <ExternalLink className="h-4 w-4 ml-1" />
-              </Button>
+            {/* Order Summary */}
+            <div>
+              <h3 className="font-semibold mb-3">Order Summary</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <div className="font-medium mb-1">Items Ordered:</div>
+                  <ul className="list-disc pl-5 text-muted-foreground">
+                    {selectedEvent.items.map((item: string, idx: number) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <div className="font-medium mb-1">Appointment:</div>
+                  <div className="text-muted-foreground pl-3 space-y-1">
+                    <div className="flex items-center">
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      <span>{format(selectedEvent.start, 'EEEE, MMMM d, yyyy')}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <span>{format(selectedEvent.start, 'h:mm a')} - {format(selectedEvent.end, 'h:mm a')}</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div className="font-medium mb-1">Photographer:</div>
+                  <div className="flex items-center text-muted-foreground pl-3">
+                    <Users className="h-4 w-4 mr-2" />
+                    <span>{selectedEvent.photographer}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+          
+          <DialogFooter className="flex-wrap gap-2 mt-4">
+            <Button variant="outline" className="flex items-center">
+              <X className="h-4 w-4 mr-1" />
+              Cancel Order
+            </Button>
+            <Button variant="outline" className="flex items-center">
+              <CalendarDays className="h-4 w-4 mr-1" />
+              Postpone
+            </Button>
+            <Button variant="outline" className="flex items-center">
+              <Edit className="h-4 w-4 mr-1" />
+              Edit Appointment
+            </Button>
+            <Button className="flex items-center">
+              <ExternalLink className="h-4 w-4 mr-1" />
+              View Full Order
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     );
   };
 
   return (
-    <SidebarLayout>
+    <SidebarLayout showCalendarSubmenu={true}>
       <PageTransition>
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-full">
           {/* Top navigation area */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="icon" className="h-8 w-8">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setShowCalendarSubmenu(false)}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <h1 className="text-2xl font-semibold">Calendar</h1>
@@ -756,151 +828,4 @@ const Calendar: React.FC = () => {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="week" 
-                    className="text-xs px-2 h-7"
-                  >
-                    Week
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="month" 
-                    className="text-xs px-2 h-7"
-                  >
-                    Month
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="list" 
-                    className="text-xs px-2 h-7"
-                  >
-                    List
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-              
-              <Button variant="default" size="sm" className="h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Create
-              </Button>
-            </div>
-          </div>
-          
-          {/* Main calendar content */}
-          <div className="grid grid-cols-12 gap-4">
-            {/* Sidebar: Filters and photographers */}
-            {!isMobile && (
-              <div className="col-span-12 md:col-span-3 space-y-4">
-                {/* Timezone selector */}
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium">Timezone</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <Select defaultValue="Australia/Sydney">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select timezone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Australia/Sydney">Australia/Sydney</SelectItem>
-                        <SelectItem value="America/New_York">America/New_York</SelectItem>
-                        <SelectItem value="Europe/London">Europe/London</SelectItem>
-                        <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </CardContent>
-                </Card>
-                
-                {/* Event types filter */}
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium">Event Types</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <div className="space-y-2">
-                      {Object.entries(eventColors).map(([type, color]) => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`type-${type}`}
-                            defaultChecked
-                          />
-                          <label 
-                            htmlFor={`type-${type}`}
-                            className="text-sm flex items-center"
-                          >
-                            <span 
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: color }}
-                            ></span>
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Photographers filter */}
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium flex items-center">
-                      <Users className="h-4 w-4 mr-1.5" />
-                      Photographers
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <div className="space-y-2">
-                      {photographers.map((photographer) => (
-                        <div key={photographer.id} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`photographer-${photographer.id}`}
-                            checked={selectedPhotographers.includes(photographer.id)}
-                            onCheckedChange={() => togglePhotographer(photographer.id)}
-                          />
-                          <label 
-                            htmlFor={`photographer-${photographer.id}`}
-                            className="text-sm flex items-center"
-                          >
-                            <span 
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: photographer.color }}
-                            ></span>
-                            {photographer.name}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-            
-            {/* Main area */}
-            <div className={`col-span-12 ${!isMobile ? 'md:col-span-9' : ''}`}>
-              <Tabs 
-                defaultValue={viewMode}
-                value={viewMode}
-                onValueChange={(v) => setViewMode(v as ViewMode)}
-                className="w-full"
-              >
-                <TabsContent value="day" className="mt-0">
-                  {renderDayView()}
-                </TabsContent>
-                <TabsContent value="week" className="mt-0">
-                  {renderWeekView()}
-                </TabsContent>
-                <TabsContent value="month" className="mt-0">
-                  {renderMonthView()}
-                </TabsContent>
-                <TabsContent value="list" className="mt-0">
-                  {renderMobileListView()}
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
-          
-          {/* Event details dialog */}
-          <EventDetailsDialog />
-        </div>
-      </PageTransition>
-    </SidebarLayout>
-  );
-};
-
-export default Calendar;
+                    

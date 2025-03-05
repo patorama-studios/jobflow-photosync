@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -14,21 +14,47 @@ import {
   Kanban,
   GraduationCap,
   AppWindow,
-  Puzzle
+  Puzzle,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useSampleOrders } from "@/hooks/useSampleOrders";
 
 type SidebarProps = {
   children: React.ReactNode;
+  showCalendarSubmenu?: boolean;
 };
 
-export function SidebarLayout({ children }: SidebarProps) {
+export function SidebarLayout({ children, showCalendarSubmenu = false }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { orders } = useSampleOrders();
+  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>([1, 2, 3, 4, 5]);
+  
+  // Create array of photographer objects from orders
+  const photographers = Array.from(
+    new Set(orders.map(order => order.photographer))
+  ).map(name => {
+    const id = orders.findIndex(order => order.photographer === name) + 1;
+    return { 
+      id, 
+      name,
+      color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` // Random color
+    };
+  });
+
+  const togglePhotographer = (id: number) => {
+    setSelectedPhotographers(prev => 
+      prev.includes(id) 
+        ? prev.filter(p => p !== id) 
+        : [...prev, id]
+    );
+  };
   
   const sidebarLinks = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
@@ -48,6 +74,13 @@ export function SidebarLayout({ children }: SidebarProps) {
   const isActiveLink = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
+
+  // Push content to the edge when in calendar submenu mode
+  useEffect(() => {
+    if (showCalendarSubmenu && !isMobile) {
+      setCollapsed(false);
+    }
+  }, [showCalendarSubmenu, isMobile]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -78,39 +111,70 @@ export function SidebarLayout({ children }: SidebarProps) {
           </Link>
         </div>
 
-        {/* Navigation Links */}
+        {/* Navigation Links or Calendar Submenu */}
         <div className="flex-1 overflow-y-auto py-6 px-3">
-          <nav className="space-y-2">
-            {sidebarLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  isActiveLink(link.path) 
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                    : "text-sidebar-foreground"
-                )}
-              >
-                <link.icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
-                {!collapsed && <span>{link.name}</span>}
-              </Link>
-            ))}
-          </nav>
+          {showCalendarSubmenu ? (
+            <div className="space-y-4">
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-3 px-3">Photographers</h3>
+                <div className="space-y-2">
+                  {photographers.map((photographer) => (
+                    <div key={photographer.id} className="flex items-center space-x-2 px-3 py-1">
+                      <Checkbox 
+                        id={`photographer-${photographer.id}`}
+                        checked={selectedPhotographers.includes(photographer.id)}
+                        onCheckedChange={() => togglePhotographer(photographer.id)}
+                      />
+                      <label 
+                        htmlFor={`photographer-${photographer.id}`}
+                        className="text-sm flex items-center cursor-pointer"
+                      >
+                        <span 
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: photographer.color }}
+                        ></span>
+                        {photographer.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <nav className="space-y-2">
+              {sidebarLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={cn(
+                    "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    isActiveLink(link.path) 
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                      : "text-sidebar-foreground"
+                  )}
+                >
+                  <link.icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
+                  {!collapsed && <span>{link.name}</span>}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
 
         {/* Collapse toggle */}
-        <div className="p-3 border-t border-sidebar-border">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full flex justify-center"
-            onClick={toggleSidebar}
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-        </div>
+        {!showCalendarSubmenu && (
+          <div className="p-3 border-t border-sidebar-border">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full flex justify-center"
+              onClick={toggleSidebar}
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Mobile sidebar */}
@@ -140,27 +204,61 @@ export function SidebarLayout({ children }: SidebarProps) {
               </Link>
             </div>
 
-            {/* Navigation Links */}
+            {/* Navigation Links or Calendar Submenu */}
             <div className="flex-1 overflow-y-auto py-6 px-3">
-              <nav className="space-y-2">
-                {sidebarLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    className={cn(
-                      "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      isActiveLink(link.path) 
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                        : "text-sidebar-foreground"
-                    )}
-                    onClick={toggleMobileSidebar}
-                  >
-                    <link.icon className="h-5 w-5 mr-3" />
-                    <span>{link.name}</span>
+              {showCalendarSubmenu ? (
+                <div className="space-y-4">
+                  <Link to="/dashboard" className="flex items-center text-sm font-medium mb-4">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Dashboard
                   </Link>
-                ))}
-              </nav>
+                  
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium mb-3">Photographers</h3>
+                    <div className="space-y-2">
+                      {photographers.map((photographer) => (
+                        <div key={photographer.id} className="flex items-center space-x-2 py-1">
+                          <Checkbox 
+                            id={`mobile-photographer-${photographer.id}`}
+                            checked={selectedPhotographers.includes(photographer.id)}
+                            onCheckedChange={() => togglePhotographer(photographer.id)}
+                          />
+                          <label 
+                            htmlFor={`mobile-photographer-${photographer.id}`}
+                            className="text-sm flex items-center cursor-pointer"
+                          >
+                            <span 
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: photographer.color }}
+                            ></span>
+                            {photographer.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <nav className="space-y-2">
+                  {sidebarLinks.map((link) => (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      className={cn(
+                        "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        isActiveLink(link.path) 
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                          : "text-sidebar-foreground"
+                      )}
+                      onClick={toggleMobileSidebar}
+                    >
+                      <link.icon className="h-5 w-5 mr-3" />
+                      <span>{link.name}</span>
+                    </Link>
+                  ))}
+                </nav>
+              )}
             </div>
           </div>
           
@@ -173,11 +271,8 @@ export function SidebarLayout({ children }: SidebarProps) {
       )}
 
       {/* Main content */}
-      <div className={cn(
-        "flex-1 overflow-y-auto transition-all duration-300",
-        isMobile ? "w-full" : (collapsed ? "ml-[70px]" : "ml-[240px]")
-      )}>
-        <div className="container py-6 px-4 md:px-6 lg:px-8">
+      <div className="flex-1 overflow-y-auto">
+        <div className="container py-6 px-1 md:px-2 lg:px-4 max-w-full">
           {children}
         </div>
       </div>
