@@ -11,6 +11,8 @@ const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
 const Orders = lazy(() => import('./pages/Orders'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
+const PropertyWebsite = lazy(() => import('./pages/PropertyWebsite'));
+const FileDownloads = lazy(() => import('./pages/FileDownloads'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -35,6 +37,8 @@ function App() {
               <Route path="/orders/*" element={<Orders />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/property-website/:orderId" element={<PropertyWebsite />} />
+              <Route path="/files/:orderId" element={<FileDownloads />} />
               {/* Add a default route to redirect to calendar */}
               <Route path="/" element={<CalendarPage />} />
             </Routes>

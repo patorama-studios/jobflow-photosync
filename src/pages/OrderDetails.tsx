@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -16,9 +17,10 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -36,7 +38,10 @@ import {
   CheckCircle,
   Lock,
   Mail,
-  Activity
+  Activity,
+  Download,
+  ExternalLink,
+  Truck
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -50,6 +55,14 @@ const OrderDetails: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [orderFulfilled, setOrderFulfilled] = useState(false);
   const [contentLocked, setContentLocked] = useState(false);
+  
+  // New dialog states
+  const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [deliverDialogOpen, setDeliverDialogOpen] = useState(false);
+  const [emailMessage, setEmailMessage] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
   
   const order = orders.find(o => o.id === Number(orderId));
   
@@ -93,10 +106,35 @@ const OrderDetails: React.FC = () => {
   };
 
   const handleDeliverOrder = () => {
+    setDeliverDialogOpen(true);
+  };
+
+  const confirmDeliverOrder = () => {
     toast({
       title: "Order Delivered",
-      description: `Delivery notification sent for order ${order.orderNumber}`,
+      description: `Delivery email sent to ${recipientEmail || 'client'}`,
     });
+    setDeliverDialogOpen(false);
+  };
+
+  const handleEditAppointment = () => {
+    setEditAppointmentOpen(true);
+  };
+
+  const handleRescheduleAppointment = () => {
+    setRescheduleDialogOpen(true);
+  };
+
+  const handleCancelAppointment = () => {
+    setCancelDialogOpen(true);
+  };
+
+  const confirmCancelAppointment = () => {
+    toast({
+      title: "Appointment Cancelled",
+      description: "The appointment has been cancelled successfully",
+    });
+    setCancelDialogOpen(false);
   };
 
   const activityLog = [
@@ -272,15 +310,30 @@ const OrderDetails: React.FC = () => {
                       </div>
                       
                       <div className="pt-2 flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" className="flex items-center gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-1"
+                          onClick={handleEditAppointment}
+                        >
                           <Edit className="h-4 w-4" />
                           Edit Appointment
                         </Button>
-                        <Button variant="outline" size="sm" className="flex items-center gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-1"
+                          onClick={handleRescheduleAppointment}
+                        >
                           <Calendar className="h-4 w-4" />
                           Reschedule
                         </Button>
-                        <Button variant="outline" size="sm" className="flex items-center gap-1 text-destructive">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-1 text-destructive"
+                          onClick={handleCancelAppointment}
+                        >
                           <X className="h-4 w-4" />
                           Cancel Appointment
                         </Button>
@@ -358,6 +411,36 @@ const OrderDetails: React.FC = () => {
 
                 {/* Sidebar - 30% */}
                 <div className="lg:col-span-3 space-y-6">
+                  {/* Order Actions - Moved above Customer Details */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Order Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button 
+                        className="w-full flex items-center gap-2 justify-center" 
+                        onClick={handleDeliverOrder}
+                      >
+                        <Truck className="h-4 w-4" />
+                        Deliver Order
+                      </Button>
+                      
+                      <Link to={`/files/${orderId}`} className="w-full">
+                        <Button variant="outline" className="w-full flex items-center gap-2 justify-center">
+                          <Download className="h-4 w-4" />
+                          Download Files
+                        </Button>
+                      </Link>
+                      
+                      <Link to={`/property-website/${orderId}`} className="w-full">
+                        <Button variant="outline" className="w-full flex items-center gap-2 justify-center">
+                          <ExternalLink className="h-4 w-4" />
+                          View Property Website
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+
                   {/* Customer Details */}
                   <Card>
                     <CardHeader>
@@ -405,24 +488,6 @@ const OrderDetails: React.FC = () => {
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Order Actions */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Order Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <Button className="w-full" onClick={handleDeliverOrder}>
-                        Deliver Order
-                      </Button>
-                      <Button variant="outline" className="w-full">
-                        Download All Files
-                      </Button>
-                      <Button variant="outline" className="w-full">
-                        Print Order Details
-                      </Button>
                     </CardContent>
                   </Card>
 
@@ -540,6 +605,7 @@ const OrderDetails: React.FC = () => {
             </TabsContent>
           </Tabs>
 
+          {/* Dialogs */}
           {/* Media Dialog */}
           <Dialog open={mediaDialogOpen} onOpenChange={setMediaDialogOpen}>
             <DialogContent className="max-w-4xl">
@@ -559,6 +625,185 @@ const OrderDetails: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Appointment Dialog */}
+          <Dialog open={editAppointmentOpen} onOpenChange={setEditAppointmentOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Appointment</DialogTitle>
+                <DialogDescription>
+                  Update the details for this appointment.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Appointment Date</h4>
+                  <Input
+                    type="date"
+                    defaultValue={format(new Date(order.scheduledDate), 'yyyy-MM-dd')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Appointment Time</h4>
+                  <Input
+                    type="time"
+                    defaultValue={order.scheduledTime.replace(/\s?(AM|PM)/i, '')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Photographer</h4>
+                  <Input
+                    defaultValue={order.photographer}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditAppointmentOpen(false)}>Cancel</Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Appointment Updated",
+                    description: "The appointment details have been updated.",
+                  });
+                  setEditAppointmentOpen(false);
+                }}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Reschedule Dialog */}
+          <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Reschedule Appointment</DialogTitle>
+                <DialogDescription>
+                  Select a new date and time for this appointment.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">New Date</h4>
+                  <Input
+                    type="date"
+                    defaultValue={format(new Date(order.scheduledDate), 'yyyy-MM-dd')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">New Time</h4>
+                  <Input
+                    type="time"
+                    defaultValue={order.scheduledTime.replace(/\s?(AM|PM)/i, '')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Reason for Rescheduling</h4>
+                  <Textarea placeholder="Provide a reason for rescheduling..." />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setRescheduleDialogOpen(false)}>Cancel</Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Appointment Rescheduled",
+                    description: "The appointment has been rescheduled successfully.",
+                  });
+                  setRescheduleDialogOpen(false);
+                }}>Confirm Reschedule</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Cancel Appointment Dialog */}
+          <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Cancel Appointment</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to cancel this appointment? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Reason for Cancellation</h4>
+                  <Textarea placeholder="Provide a reason for cancellation..." />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Notify Client</h4>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="notify-client" className="rounded border-gray-300" />
+                    <label htmlFor="notify-client">Send cancellation notification to client</label>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+                  Go Back
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmCancelAppointment}
+                >
+                  Confirm Cancellation
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Deliver Order Dialog */}
+          <Dialog open={deliverDialogOpen} onOpenChange={setDeliverDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Deliver Order</DialogTitle>
+                <DialogDescription>
+                  Send a delivery notification with the order details.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Recipient Email</h4>
+                  <Input
+                    type="email"
+                    placeholder="client@example.com"
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Delivery Message</h4>
+                  <Textarea 
+                    placeholder="Your order is ready for delivery..." 
+                    value={emailMessage}
+                    onChange={(e) => setEmailMessage(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Include Files</h4>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="include-photos" className="rounded border-gray-300" defaultChecked />
+                      <label htmlFor="include-photos">Photos</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="include-videos" className="rounded border-gray-300" defaultChecked />
+                      <label htmlFor="include-videos">Videos</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="include-floor-plans" className="rounded border-gray-300" defaultChecked />
+                      <label htmlFor="include-floor-plans">Floor Plans</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDeliverDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmDeliverOrder}>
+                  Send Delivery
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
