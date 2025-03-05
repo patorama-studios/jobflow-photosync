@@ -79,20 +79,24 @@ export function JobCalendar() {
     }
   };
 
-  // Custom day render function to show indicators for days with jobs
-  const renderDay = (day: Date) => {
-    const dayStr = day.toISOString().split('T')[0];
-    const hasJobs = daysWithJobs.has(dayStr);
-    
-    return (
-      <div className="relative">
-        <span>{day.getDate()}</span>
-        {hasJobs && (
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-        )}
-      </div>
-    );
-  };
+  // Custom day renderer that adds indicators for days with jobs
+  const customComponents = useMemo(() => ({
+    DayContent: (props: React.ComponentProps<typeof Calendar>['components']['DayContent']) => {
+      // Extract the date from props
+      const date = props.date;
+      const dateStr = date.toISOString().split('T')[0];
+      const hasJobs = daysWithJobs.has(dateStr);
+      
+      return (
+        <div className="relative">
+          <span>{date.getDate()}</span>
+          {hasJobs && (
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+          )}
+        </div>
+      );
+    }
+  }), [daysWithJobs]);
 
   if (isLoading) {
     return (
@@ -133,9 +137,7 @@ export function JobCalendar() {
               selected={selectedDate}
               onSelect={handleDateSelect}
               className="rounded-md border"
-              components={{
-                DayContent: ({ day }) => renderDay(day),
-              }}
+              components={customComponents}
             />
           </div>
           
