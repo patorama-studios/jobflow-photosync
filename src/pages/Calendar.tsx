@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -390,9 +390,6 @@ const Calendar: React.FC = () => {
                 <span className="text-xs bg-accent px-2 py-0.5 rounded-full">
                   {event.photographer}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {event.eventType}
-                </span>
               </div>
             </div>
           </div>
@@ -772,11 +769,11 @@ const Calendar: React.FC = () => {
   return (
     <SidebarLayout showCalendarSubmenu={true}>
       <PageTransition>
-        <div className="space-y-4 max-w-full">
+        <div className="space-y-4 max-w-full px-0">
           {/* Top navigation area */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setShowCalendarSubmenu(false)}>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setShowCalendarSubmenu(!showCalendarSubmenu)}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <h1 className="text-2xl font-semibold">Calendar</h1>
@@ -828,4 +825,50 @@ const Calendar: React.FC = () => {
                   </TabsTrigger>
                   <TabsTrigger 
                     value="week" 
-                    
+                    className="text-xs px-2 h-7"
+                  >
+                    Week
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="month" 
+                    className="text-xs px-2 h-7"
+                  >
+                    Month
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="list" 
+                    className="text-xs px-2 h-7"
+                  >
+                    List
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </div>
+          
+          {/* Main content area */}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Calendar Views */}
+            <TabsContent value="day" className="m-0">
+              {renderDayView()}
+            </TabsContent>
+            <TabsContent value="week" className="m-0">
+              {renderWeekView()}
+            </TabsContent>
+            <TabsContent value="month" className="m-0">
+              {renderMonthView()}
+            </TabsContent>
+            <TabsContent value="list" className="m-0">
+              {renderMobileListView()}
+            </TabsContent>
+          </div>
+        </div>
+      </PageTransition>
+      
+      {/* Event Details Dialog */}
+      <EventDetailsDialog />
+    </SidebarLayout>
+  );
+};
+
+export default Calendar;
