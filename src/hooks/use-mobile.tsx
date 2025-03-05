@@ -19,11 +19,20 @@ export function useIsMobile() {
     // Check on mount
     checkMobile()
     
-    // Add event listener for resize
-    window.addEventListener("resize", checkMobile)
+    // Add event listener for resize with debounce
+    let resizeTimer: ReturnType<typeof setTimeout>
+    const handleResize = () => {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(checkMobile, 100) // Debounce resize events
+    }
+    
+    window.addEventListener("resize", handleResize)
     
     // Clean up
-    return () => window.removeEventListener("resize", checkMobile)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      clearTimeout(resizeTimer)
+    }
   }, [])
 
   // Return false for SSR

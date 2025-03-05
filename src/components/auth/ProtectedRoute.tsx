@@ -1,10 +1,10 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+export const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
   const location = useLocation();
   const [longLoadingDetected, setLongLoadingDetected] = useState(false);
@@ -21,7 +21,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         console.warn('Auth loading timeout exceeded - may be stuck in loading state');
         setLongLoadingDetected(true);
       }
-    }, 3000); // Reduced from 5 seconds to 3 seconds for faster feedback
+    }, 2000); // Reduced from 3 seconds to 2 seconds for faster feedback
 
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
@@ -57,4 +57,6 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   // User is authenticated and loaded, render the protected content
   console.log('ProtectedRoute - Authenticated, rendering content');
   return <>{children}</>;
-};
+});
+
+ProtectedRoute.displayName = 'ProtectedRoute';
