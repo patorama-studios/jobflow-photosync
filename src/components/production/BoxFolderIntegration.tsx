@@ -28,6 +28,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BoxFolderIntegrationProps {
   orderNumber: string;
@@ -53,11 +54,15 @@ export function BoxFolderIntegration({
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [authTab, setAuthTab] = useState('token');
+  const isMobile = useIsMobile();
   
   const { toast } = useToast();
   
   // Box integration instance
   const [boxIntegration, setBoxIntegration] = useState<BoxIntegration | null>(null);
+  
+  // Check if default token is available
+  const hasDefaultToken = true; // Since we've added the token directly to box-integration.ts
   
   // Enable Box integration
   const handleConnectBox = () => {
@@ -70,7 +75,7 @@ export function BoxFolderIntegration({
       return;
     }
     
-    if (authTab === 'token' && !accessToken) {
+    if (authTab === 'token' && !hasDefaultToken && !accessToken) {
       toast({
         title: "Access Token Required",
         description: "Please enter a Box access token to connect.",
@@ -89,10 +94,12 @@ export function BoxFolderIntegration({
     }
     
     try {
-      // Create Box integration instance with provided credentials
-      const credentials = authTab === 'token' 
+      // Create Box integration instance with provided credentials or use default
+      const credentials = authTab === 'token' && accessToken
         ? { accessToken } 
-        : { clientId, clientSecret };
+        : authTab === 'oauth'
+          ? { clientId, clientSecret }
+          : {}; // Use default token
         
       const newBoxIntegration = createBoxIntegration(credentials);
       
@@ -121,7 +128,7 @@ export function BoxFolderIntegration({
           console.error('Box connection error:', error);
           toast({
             title: "Connection Error",
-            description: "Failed to connect to Box API. Please check your credentials.",
+            description: "Failed to connect to Box API. Please check your credentials and folder ID.",
             variant: "destructive",
           });
         });
@@ -294,56 +301,64 @@ export function BoxFolderIntegration({
       <CardContent>
         {!isConnected ? (
           <div className="space-y-4">
-            <Tabs defaultValue="token" value={authTab} onValueChange={setAuthTab}>
-              <TabsList className="mb-4 w-full">
-                <TabsTrigger value="token" className="flex-1">Access Token</TabsTrigger>
-                <TabsTrigger value="oauth" className="flex-1">OAuth Client</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="token" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="access-token">Box Access Token</Label>
-                  <Input
-                    id="access-token"
-                    type="password"
-                    placeholder="Enter your Box developer token"
-                    value={accessToken}
-                    onChange={(e) => setAccessToken(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    You can generate a developer token in your Box Developer Console
+            {!hasDefaultToken ? (
+              <Tabs defaultValue="token" value={authTab} onValueChange={setAuthTab}>
+                <TabsList className="mb-4 w-full">
+                  <TabsTrigger value="token" className="flex-1">Access Token</TabsTrigger>
+                  <TabsTrigger value="oauth" className="flex-1">OAuth Client</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="token" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="access-token">Box Access Token</Label>
+                    <Input
+                      id="access-token"
+                      type="password"
+                      placeholder="Enter your Box developer token"
+                      value={accessToken}
+                      onChange={(e) => setAccessToken(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You can generate a developer token in your Box Developer Console
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="oauth" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="client-id">Client ID</Label>
+                    <Input
+                      id="client-id"
+                      placeholder="Enter your Box client ID"
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="client-secret">Client Secret</Label>
+                    <Input
+                      id="client-secret"
+                      type="password"
+                      placeholder="Enter your Box client secret"
+                      value={clientSecret}
+                      onChange={(e) => setClientSecret(e.target.value)}
+                    />
+                  </div>
+                  
+                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                    <Key className="h-3.5 w-3.5" />
+                    OAuth flow is not fully implemented yet. Use access token instead.
                   </p>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="oauth" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="client-id">Client ID</Label>
-                  <Input
-                    id="client-id"
-                    placeholder="Enter your Box client ID"
-                    value={clientId}
-                    onChange={(e) => setClientId(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="client-secret">Client Secret</Label>
-                  <Input
-                    id="client-secret"
-                    type="password"
-                    placeholder="Enter your Box client secret"
-                    value={clientSecret}
-                    onChange={(e) => setClientSecret(e.target.value)}
-                  />
-                </div>
-                
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <Key className="h-3.5 w-3.5" />
-                  OAuth flow is not fully implemented yet. Use access token instead.
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="p-3 bg-primary/10 rounded-md mb-4">
+                <p className="text-sm">
+                  Developer token is already configured. Just enter your master folder ID to connect.
                 </p>
-              </TabsContent>
-            </Tabs>
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="master-folder">Master Folder ID</Label>
@@ -361,7 +376,7 @@ export function BoxFolderIntegration({
             <Button 
               className="w-full" 
               onClick={handleConnectBox}
-              disabled={!masterFolderId || (authTab === 'token' && !accessToken) || (authTab === 'oauth' && (!clientId || !clientSecret))}
+              disabled={!masterFolderId}
             >
               Connect to Box
             </Button>
@@ -369,10 +384,10 @@ export function BoxFolderIntegration({
             <div className="rounded-md bg-muted p-3 text-sm">
               <p className="font-medium mb-1">How to get started with Box:</p>
               <ol className="list-decimal ml-4 space-y-1 text-muted-foreground">
-                <li>Create a <a href="https://developer.box.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Box Developer account</a></li>
-                <li>Create a new application or use an existing one</li>
-                <li>Generate a developer token for quick testing</li>
-                <li>Find your folder ID by navigating to it in Box and checking the URL</li>
+                <li>Find your Box folder ID by navigating to it in Box</li>
+                <li>The folder ID is in the URL: app.box.com/folder/<strong>123456789</strong></li>
+                <li>Enter that ID in the field above to connect</li>
+                <li>Click "Connect to Box" to initialize the integration</li>
               </ol>
             </div>
           </div>

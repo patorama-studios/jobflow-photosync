@@ -26,6 +26,15 @@ export interface BoxFolder {
 export type ProductType = 'Photography' | 'Video' | 'Drone' | 'Floor Plans' | 'Print Material';
 
 /**
+ * Default Box credentials with the provided developer token
+ */
+const DEFAULT_BOX_CREDENTIALS: BoxCredentials = {
+  clientId: '',
+  clientSecret: '',
+  accessToken: 'ciC5vPaP0UwIocR3wtn1S3h5zMNmjS24', // Default developer token
+};
+
+/**
  * Box Integration class to handle folder creation and management
  */
 export class BoxIntegration {
@@ -377,9 +386,7 @@ export class BoxIntegration {
  */
 export const createBoxIntegration = (credentials?: Partial<BoxCredentials>): BoxIntegration => {
   const defaultCredentials: BoxCredentials = {
-    clientId: '',
-    clientSecret: '',
-    accessToken: '',
+    ...DEFAULT_BOX_CREDENTIALS,
     ...credentials
   };
   
@@ -390,7 +397,7 @@ export const createBoxIntegration = (credentials?: Partial<BoxCredentials>): Box
  * Use this hook to get a Box integration instance
  */
 export const useBoxIntegration = () => {
-  // Initialize the Box integration
+  // Initialize the Box integration with default credentials
   const boxIntegration = createBoxIntegration();
   
   return boxIntegration;

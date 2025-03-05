@@ -13,9 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertCircle, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { createBoxIntegration } from "@/lib/box-integration";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Integration = {
   id: string;
@@ -41,16 +43,52 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
   const [isSync, setIsSync] = useState(true);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSyncLoading, setIsSyncLoading] = useState(false);
+  const [masterFolderId, setMasterFolderId] = useState("");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  const handleConnect = () => {
-    // This would be an API call in a real app
-    setIsConnected(true);
-    
-    toast({
-      title: "Integration connected",
-      description: `${name} has been successfully connected.`,
-    });
+  const handleConnect = async () => {
+    // For Box integration
+    if (id === 'box') {
+      try {
+        // Create a Box integration instance
+        const boxIntegration = createBoxIntegration();
+        
+        if (!masterFolderId) {
+          toast({
+            title: "Master Folder ID Required",
+            description: "Please enter a master folder ID to connect with Box.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Test the connection by trying to get folder info
+        boxIntegration.setMasterFolder(masterFolderId);
+        await boxIntegration.initializeAutoFolder();
+        
+        setIsConnected(true);
+        toast({
+          title: "Integration connected",
+          description: `${name} has been successfully connected.`,
+        });
+      } catch (error) {
+        console.error("Box connection error:", error);
+        toast({
+          title: "Connection failed",
+          description: `Failed to connect to ${name}. Please check your credentials.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // For other integrations
+      setIsConnected(true);
+      toast({
+        title: "Integration connected",
+        description: `${name} has been successfully connected.`,
+      });
+    }
   };
 
   const handleDisconnect = () => {
@@ -74,6 +112,10 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
         description: `${name} data has been synchronized.`,
       });
     }, 2000);
+  };
+
+  const handleOpenBox = () => {
+    window.open('https://app.box.com', '_blank');
   };
 
   return (
@@ -140,7 +182,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                 )}
               </div>
               
-              <div className="pt-2">
+              <div className="pt-2 space-y-2">
                 <Button 
                   className="w-full"
                   onClick={handleSync}
@@ -158,48 +200,87 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                     </>
                   )}
                 </Button>
+                
+                {id === 'box' && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleOpenBox}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open Box.com
+                  </Button>
+                )}
               </div>
             </>
           ) : (
             // Not connected view
             <>
-              <div className="space-y-2">
-                <Label htmlFor="api-key">API Key</Label>
-                <Input 
-                  id="api-key"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)} 
-                  placeholder="Enter your API key"
-                />
-                <p className="text-xs text-muted-foreground">
-                  You can find your API key in your {name} account settings
-                </p>
-              </div>
-              
-              {id === 'zapier' && (
-                <div className="space-y-2">
-                  <Label htmlFor="webhook-url">Webhook URL</Label>
-                  <Input 
-                    id="webhook-url"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)} 
-                    placeholder="https://hooks.zapier.com/hooks/catch/..."
-                  />
+              {id === 'box' ? (
+                <div className="space-y-4">
+                  <div className="p-3 bg-primary/10 rounded-md">
+                    <p className="text-sm">
+                      Developer token is already set up. Just enter your master folder ID to connect.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="master-folder">Master Folder ID</Label>
+                    <Input 
+                      id="master-folder"
+                      value={masterFolderId}
+                      onChange={(e) => setMasterFolderId(e.target.value)} 
+                      placeholder="Enter your Box folder ID"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Find your folder ID in the URL when viewing a folder in Box
+                    </p>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="api-key">API Key</Label>
+                    <Input 
+                      id="api-key"
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)} 
+                      placeholder="Enter your API key"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You can find your API key in your {name} account settings
+                    </p>
+                  </div>
+                  
+                  {id === 'zapier' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="webhook-url">Webhook URL</Label>
+                      <Input 
+                        id="webhook-url"
+                        value={webhookUrl}
+                        onChange={(e) => setWebhookUrl(e.target.value)} 
+                        placeholder="https://hooks.zapier.com/hooks/catch/..."
+                      />
+                    </div>
+                  )}
+                </>
               )}
               
               <div className="flex items-start space-x-2 text-amber-600">
                 <AlertCircle className="h-5 w-5 mt-0.5" />
                 <p className="text-sm">
-                  Make sure to keep your API keys secure. Never share them with others.
+                  {id === 'box' 
+                    ? "You'll need to select a master folder where all order folders will be created."
+                    : "Make sure to keep your API keys secure. Never share them with others."
+                  }
                 </p>
               </div>
             </>
           )}
         </div>
         
-        <DialogFooter className="flex justify-between items-center">
+        <DialogFooter className={isMobile ? "flex-col" : "flex justify-between items-center"}>
           {isConnected ? (
             <>
               <Popover open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -250,7 +331,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
               </Button>
               <Button 
                 onClick={handleConnect}
-                disabled={!apiKey}
+                disabled={id === 'box' ? !masterFolderId : !apiKey}
               >
                 Connect
               </Button>
