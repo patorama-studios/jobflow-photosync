@@ -20,6 +20,7 @@ const CustomerDetails = lazy(() => import('./pages/CustomerDetails'));
 const ProductionBoard = lazy(() => import('./pages/ProductionBoard'));
 const ProductionOrderDetails = lazy(() => import('./pages/ProductionOrderDetails'));
 const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
+const Apps = lazy(() => import('./pages/Apps'));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -87,6 +88,12 @@ function App() {
                 <Route path="/production/upload/:orderId" element={
                   <ProtectedRoute>
                     <ProductionUpload />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/apps" element={
+                  <ProtectedRoute>
+                    <Apps />
                   </ProtectedRoute>
                 } />
                 

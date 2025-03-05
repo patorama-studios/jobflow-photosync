@@ -12,7 +12,9 @@ import {
   X,
   ShoppingCart,
   Kanban,
-  GraduationCap
+  GraduationCap,
+  AppWindow,
+  Puzzle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ export function SidebarLayout({ children }: SidebarProps) {
     { name: "Orders", icon: ShoppingCart, path: "/orders" },
     { name: "Customers", icon: Users, path: "/customers" },
     { name: "Production Board", icon: Kanban, path: "/production" },
+    { name: "Apps", icon: Puzzle, path: "/apps" },
     { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
     { name: "Settings", icon: Settings, path: "/settings" }
   ];
