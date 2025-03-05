@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   DropdownMenu, 
@@ -7,7 +6,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, FileSpreadsheet, FilePdf } from 'lucide-react';
+import { Download, FileText, FileSpreadsheet, File } from 'lucide-react';
 import { Order } from '@/hooks/useSampleOrders';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -107,7 +106,7 @@ export const OrderExport: React.FC<OrderExportProps> = ({
           disabled={orders.length === 0}
           className="flex items-center cursor-pointer"
         >
-          <FilePdf className="mr-2 h-4 w-4" />
+          <File className="mr-2 h-4 w-4" />
           <span>Export as PDF</span>
         </DropdownMenuItem>
         

@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { 
   Card, 
@@ -10,11 +9,12 @@ import {
 import { 
   isThisMonth, 
   isThisWeek, 
-  isNextWeek, 
   parseISO, 
   startOfMonth, 
   endOfMonth, 
-  format
+  format,
+  addWeeks,
+  isSameWeek
 } from 'date-fns';
 import { DollarSign, TrendingUp, CalendarRange, BarChart3 } from 'lucide-react';
 import { Order } from '@/hooks/useSampleOrders';
@@ -22,6 +22,12 @@ import { Order } from '@/hooks/useSampleOrders';
 interface OrderStatsProps {
   orders: Order[];
 }
+
+// Custom isNextWeek function since date-fns doesn't export it directly
+const isNextWeek = (date: Date): boolean => {
+  const nextWeekStart = addWeeks(new Date(), 1);
+  return isSameWeek(date, nextWeekStart);
+};
 
 export const OrderStats: React.FC<OrderStatsProps> = ({ orders }) => {
   const stats = useMemo(() => {
