@@ -849,18 +849,20 @@ const Calendar: React.FC = () => {
           {/* Main content area */}
           <div className="grid grid-cols-1 gap-4">
             {/* Calendar Views */}
-            <TabsContent value="day" className="m-0">
-              {renderDayView()}
-            </TabsContent>
-            <TabsContent value="week" className="m-0">
-              {renderWeekView()}
-            </TabsContent>
-            <TabsContent value="month" className="m-0">
-              {renderMonthView()}
-            </TabsContent>
-            <TabsContent value="list" className="m-0">
-              {renderMobileListView()}
-            </TabsContent>
+            <Tabs value={viewMode} className="w-full">
+              <TabsContent value="day" className="m-0">
+                {renderDayView()}
+              </TabsContent>
+              <TabsContent value="week" className="m-0">
+                {renderWeekView()}
+              </TabsContent>
+              <TabsContent value="month" className="m-0">
+                {renderMonthView()}
+              </TabsContent>
+              <TabsContent value="list" className="m-0">
+                {renderMobileListView()}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </PageTransition>
