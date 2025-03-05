@@ -1,13 +1,14 @@
 
 import { useState, useEffect, Suspense, lazy } from "react";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
-import { Plus, Users, Calendar, List, LayoutDashboard } from "lucide-react";
+import { Plus, Calendar, List, LayoutDashboard, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CalendarSkeleton } from "@/components/dashboard/calendar/CalendarSkeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog";
+import { addDays, addWeeks, format, subDays, subWeeks } from "date-fns";
 
 // Lazy load the calendar component for better initial load performance
 const JobCalendarWithErrorBoundary = lazy(() => 
@@ -21,6 +22,7 @@ export function CalendarPage() {
   const [view, setView] = useState<"month" | "week" | "day">("month");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [timeSlot, setTimeSlot] = useState<string | null>(null);
   
   useEffect(() => {
     console.log("CalendarPage component mounted");
@@ -42,12 +44,30 @@ export function CalendarPage() {
     console.log(`Calendar view changed to: ${value}`);
   };
 
-  const handleOpenDialog = () => {
+  const handleOpenDialog = (time?: string) => {
+    setTimeSlot(time || null);
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setTimeSlot(null);
+  };
+
+  const navigatePrevious = () => {
+    if (view === "day") {
+      setSelectedDate(prev => subDays(prev, 1));
+    } else if (view === "week") {
+      setSelectedDate(prev => subWeeks(prev, 1));
+    }
+  };
+
+  const navigateNext = () => {
+    if (view === "day") {
+      setSelectedDate(prev => addDays(prev, 1));
+    } else if (view === "week") {
+      setSelectedDate(prev => addWeeks(prev, 1));
+    }
   };
 
   return (
@@ -81,13 +101,24 @@ export function CalendarPage() {
           </Tabs>
           
           <div className="flex space-x-3">
-            <Button variant="outline" size="sm">
-              <Users className="h-4 w-4 mr-2" />
-              Team View
-            </Button>
+            {(view === 'day' || view === 'week') && (
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="icon" onClick={navigatePrevious}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">
+                  {view === 'day' 
+                    ? format(selectedDate, 'MMM d, yyyy')
+                    : `Week of ${format(selectedDate, 'MMM d')}`}
+                </span>
+                <Button variant="outline" size="icon" onClick={navigateNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" onClick={handleOpenDialog}>
+                <Button size="sm" onClick={() => handleOpenDialog()}>
                   <Plus className="h-4 w-4 mr-2" />
                   New Appointment
                 </Button>
@@ -96,6 +127,7 @@ export function CalendarPage() {
                 isOpen={isDialogOpen} 
                 onClose={handleCloseDialog} 
                 selectedDate={selectedDate}
+                selectedTime={timeSlot || undefined}
               />
             </Dialog>
           </div>
@@ -105,7 +137,10 @@ export function CalendarPage() {
       <div className="grid grid-cols-1 gap-6">
         <Suspense fallback={<CalendarSkeleton />}>
           <ErrorBoundary>
-            <JobCalendarWithErrorBoundary calendarView={view} />
+            <JobCalendarWithErrorBoundary 
+              calendarView={view} 
+              onTimeSlotClick={handleOpenDialog}
+            />
           </ErrorBoundary>
         </Suspense>
       </div>

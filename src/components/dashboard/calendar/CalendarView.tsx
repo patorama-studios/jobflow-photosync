@@ -1,7 +1,7 @@
 
 import React, { useMemo, memo, useCallback } from 'react';
 import { Calendar } from "@/components/ui/calendar";
-import { isSameDay, format, addHours, startOfDay } from "date-fns";
+import { isSameDay, format, startOfDay } from "date-fns";
 import { DayContentProps } from "react-day-picker";
 import { useToast } from "@/components/ui/use-toast";
 import { Order } from '@/hooks/useSampleOrders';
@@ -14,6 +14,7 @@ interface CalendarViewProps {
   selectedDate: Date | undefined;
   onSelectDate: (date: Date | undefined) => void;
   onDateSelected: (date: Date | undefined) => void;
+  onTimeSlotClick?: (time: string) => void;
   view?: "month" | "week" | "day";
   viewDates?: Date[];
 }
@@ -101,8 +102,40 @@ const DayAppointment = memo(({ job, startHour }: { job: Order, startHour: number
 
 DayAppointment.displayName = 'DayAppointment';
 
+// Time slot component for day view
+const TimeSlot = memo(({ hour, onTimeSlotClick }: { hour: number, onTimeSlotClick?: (time: string) => void }) => {
+  const handleClick = useCallback(() => {
+    if (onTimeSlotClick) {
+      const formattedHour = hour % 12 || 12;
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      onTimeSlotClick(`${formattedHour}:00 ${ampm}`);
+    }
+  }, [hour, onTimeSlotClick]);
+
+  return (
+    <div 
+      className="flex border-t border-gray-200 relative hover:bg-accent/30 cursor-pointer transition-colors"
+      style={{ height: '60px' }}
+      onClick={handleClick}
+    >
+      <div className="w-16 text-xs text-gray-500 -mt-2.5">{hour % 12 || 12}{hour >= 12 ? 'pm' : 'am'}</div>
+      <div className="flex-1"></div>
+    </div>
+  );
+});
+
+TimeSlot.displayName = 'TimeSlot';
+
 // Detailed Day View
-const DayView = memo(({ date, orders }: { date: Date, orders: Order[] }) => {
+const DayView = memo(({ 
+  date, 
+  orders, 
+  onTimeSlotClick 
+}: { 
+  date: Date, 
+  orders: Order[], 
+  onTimeSlotClick?: (time: string) => void 
+}) => {
   const jobsForDay = useMemo(() => {
     return orders.filter(order => 
       order.scheduledDate && isSameDay(new Date(order.scheduledDate), date)
@@ -121,10 +154,7 @@ const DayView = memo(({ date, orders }: { date: Date, orders: Order[] }) => {
       <div className="relative">
         {/* Time grid */}
         {hours.map(hour => (
-          <div key={hour} className="flex border-t border-gray-200 relative" style={{ height: '60px' }}>
-            <div className="w-16 text-xs text-gray-500 -mt-2.5">{hour % 12 || 12}{hour >= 12 ? 'pm' : 'am'}</div>
-            <div className="flex-1"></div>
-          </div>
+          <TimeSlot key={hour} hour={hour} onTimeSlotClick={onTimeSlotClick} />
         ))}
         
         {/* Appointments */}
@@ -144,44 +174,128 @@ const DayView = memo(({ date, orders }: { date: Date, orders: Order[] }) => {
 
 DayView.displayName = 'DayView';
 
-// Week View
-const WeekView = memo(({ dates, orders }: { dates: Date[], orders: Order[] }) => {
+// Week View Time Slot Component
+const WeekTimeSlot = memo(({ 
+  date,
+  hour,
+  onTimeSlotClick 
+}: { 
+  date: Date,
+  hour: number,
+  onTimeSlotClick?: (time: string) => void 
+}) => {
+  const handleClick = useCallback(() => {
+    if (onTimeSlotClick) {
+      const formattedHour = hour % 12 || 12;
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      onTimeSlotClick(`${formattedHour}:00 ${ampm}`);
+    }
+  }, [hour, onTimeSlotClick]);
+
   return (
-    <div className="grid grid-cols-7 gap-1">
-      {dates.map(date => (
-        <Card key={date.toISOString()} className="min-h-48 h-full">
-          <CardContent className="p-2">
-            <div className="text-sm font-medium mb-2 text-center">
-              {format(date, 'EEE')}
-              <div className="text-xs text-muted-foreground">{format(date, 'MMM d')}</div>
+    <div 
+      className="p-1 border-t border-gray-200 h-8 hover:bg-accent/30 cursor-pointer transition-colors"
+      onClick={handleClick}
+    ></div>
+  );
+});
+
+WeekTimeSlot.displayName = 'WeekTimeSlot';
+
+// Week View
+const WeekView = memo(({ 
+  dates, 
+  orders,
+  onTimeSlotClick 
+}: { 
+  dates: Date[], 
+  orders: Order[],
+  onTimeSlotClick?: (time: string) => void 
+}) => {
+  // Hours for the time slots (8am-8pm)
+  const hours = Array.from({ length: 13 }, (_, i) => i + 8);
+
+  return (
+    <div className="week-view overflow-auto" style={{ height: 'calc(100vh - 250px)' }}>
+      <div className="grid grid-cols-8 gap-1">
+        {/* Time column headers */}
+        <div className="h-14 flex items-end pb-2">
+          <span className="text-xs text-muted-foreground">Time</span>
+        </div>
+        
+        {/* Day column headers */}
+        {dates.map(date => (
+          <div key={date.toISOString()} className="h-14 flex flex-col items-center justify-end pb-2">
+            <div className="text-sm font-medium">{format(date, 'EEE')}</div>
+            <div className="text-xs text-muted-foreground">{format(date, 'MMM d')}</div>
+          </div>
+        ))}
+        
+        {/* Time slots grid */}
+        {hours.map(hour => (
+          <React.Fragment key={hour}>
+            {/* Hour label */}
+            <div className="text-xs text-muted-foreground h-8 flex items-center">
+              {hour % 12 || 12}{hour >= 12 ? 'pm' : 'am'}
             </div>
             
-            <div className="space-y-1 max-h-[calc(100vh-350px)] overflow-y-auto">
-              {orders
-                .filter(order => order.scheduledDate && isSameDay(new Date(order.scheduledDate), date))
-                .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
-                .map(job => (
-                  <div key={job.id} className="text-xs p-1 bg-primary/10 rounded border-l-2 border-primary">
-                    <div className="font-medium">{job.scheduledTime}</div>
-                    <div className="truncate">{job.client}</div>
-                    {job.drivingTimeMin && (
-                      <div className="flex items-center">
-                        <Timer className="h-2.5 w-2.5 mr-0.5" />
-                        {Math.floor(job.drivingTimeMin / 60)}h {job.drivingTimeMin % 60}m
-                      </div>
-                    )}
-                  </div>
-                ))}
-              
-              {orders.filter(order => 
-                order.scheduledDate && isSameDay(new Date(order.scheduledDate), date)
-              ).length === 0 && (
-                <div className="text-center text-xs text-muted-foreground py-2">No appointments</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            {/* Time slots for each day */}
+            {dates.map(date => (
+              <WeekTimeSlot 
+                key={`${date.toISOString()}-${hour}`}
+                date={date}
+                hour={hour}
+                onTimeSlotClick={(time) => {
+                  if (onTimeSlotClick) {
+                    onTimeSlotClick(time);
+                  }
+                }}
+              />
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
+      
+      {/* Appointments overlay */}
+      <div className="relative">
+        {dates.map((date, dateIndex) => {
+          const jobsForDay = orders.filter(order => 
+            order.scheduledDate && isSameDay(new Date(order.scheduledDate), date)
+          );
+          
+          return jobsForDay.map(job => {
+            // Extract hour information from scheduledTime
+            const timeComponents = job.scheduledTime.split(':');
+            const hour = parseInt(timeComponents[0], 10);
+            const isPM = job.scheduledTime.includes('PM');
+            const jobHour = isPM && hour !== 12 ? hour + 12 : (!isPM && hour === 12 ? 0 : hour);
+            
+            // Only show jobs for hours in our grid (8am-8pm)
+            if (jobHour < 8 || jobHour > 20) return null;
+            
+            // Position calculations
+            const topPosition = (jobHour - 8) * 32 + 56; // 32px per hour + 56px header offset
+            const leftPosition = (dateIndex + 1) * (100 / 8); // +1 for time column
+            
+            return (
+              <div 
+                key={job.id}
+                className="absolute bg-primary/10 border-l-2 border-primary rounded-r-sm px-1 text-xs"
+                style={{
+                  top: `${topPosition}px`,
+                  left: `${leftPosition}%`,
+                  width: `${100/8 - 1}%`,
+                  height: '30px',
+                  zIndex: 10,
+                }}
+              >
+                <div className="truncate font-medium">{job.client}</div>
+                <div className="truncate">{job.scheduledTime}</div>
+              </div>
+            );
+          });
+        }).flat().filter(Boolean)}
+      </div>
     </div>
   );
 });
@@ -193,6 +307,7 @@ export function CalendarView({
   selectedDate, 
   onSelectDate,
   onDateSelected,
+  onTimeSlotClick,
   view = "month",
   viewDates = []
 }: CalendarViewProps) {
@@ -251,11 +366,11 @@ export function CalendarView({
 
   // Render different views based on the view prop
   if (view === "day" && selectedDate) {
-    return <DayView date={selectedDate} orders={orders} />;
+    return <DayView date={selectedDate} orders={orders} onTimeSlotClick={onTimeSlotClick} />;
   }
   
   if (view === "week" && viewDates.length > 0) {
-    return <WeekView dates={viewDates} orders={orders} />;
+    return <WeekView dates={viewDates} orders={orders} onTimeSlotClick={onTimeSlotClick} />;
   }
 
   // Default month view

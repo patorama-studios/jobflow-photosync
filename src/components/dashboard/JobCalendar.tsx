@@ -40,9 +40,10 @@ JobCountBadge.displayName = 'JobCountBadge';
 
 interface JobCalendarProps {
   calendarView?: "month" | "week" | "day";
+  onTimeSlotClick?: (time: string) => void;
 }
 
-export function JobCalendar({ calendarView = "month" }: JobCalendarProps) {
+export function JobCalendar({ calendarView = "month", onTimeSlotClick }: JobCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
   const { orders } = useSampleOrders();
@@ -95,6 +96,14 @@ export function JobCalendar({ calendarView = "month" }: JobCalendarProps) {
     }
   }, [toast]);
 
+  // Handle time slot click
+  const handleTimeSlotClick = useCallback((time: string) => {
+    console.log("Time slot clicked:", time);
+    if (onTimeSlotClick) {
+      onTimeSlotClick(time);
+    }
+  }, [onTimeSlotClick]);
+
   if (isLoading) {
     return <CalendarSkeleton />;
   }
@@ -120,6 +129,7 @@ export function JobCalendar({ calendarView = "month" }: JobCalendarProps) {
             selectedDate={selectedDate}
             onSelectDate={handleDateSelect}
             onDateSelected={handleDateSelect}
+            onTimeSlotClick={handleTimeSlotClick}
             view={calendarView}
             viewDates={viewDates}
           />
@@ -137,7 +147,7 @@ export function JobCalendar({ calendarView = "month" }: JobCalendarProps) {
 }
 
 // Wrap the JobCalendar component with ErrorBoundary for better error handling
-export function JobCalendarWithErrorBoundary({ calendarView }: JobCalendarProps) {
+export function JobCalendarWithErrorBoundary({ calendarView, onTimeSlotClick }: JobCalendarProps) {
   return (
     <ErrorBoundary fallback={
       <Card className="bg-card rounded-lg shadow">
@@ -149,7 +159,7 @@ export function JobCalendarWithErrorBoundary({ calendarView }: JobCalendarProps)
         </CardContent>
       </Card>
     }>
-      <JobCalendar calendarView={calendarView} />
+      <JobCalendar calendarView={calendarView} onTimeSlotClick={onTimeSlotClick} />
     </ErrorBoundary>
   );
 }
