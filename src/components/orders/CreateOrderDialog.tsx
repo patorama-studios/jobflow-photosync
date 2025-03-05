@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CreateOrderForm } from './CreateOrderForm';
+import CreateOrderForm from './CreateOrderForm';
 
 interface CreateOrderDialogProps {
   open: boolean;
