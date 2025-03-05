@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -15,7 +14,7 @@ import {
   Camera, 
   FileText, 
   Video, 
-  Drone, 
+  Plane, 
   Compass, 
   Edit, 
   ExternalLink, 
@@ -104,7 +103,7 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
       case "video":
         return <Video className="h-5 w-5" />;
       case "drone":
-        return <Drone className="h-5 w-5" />;
+        return <Plane className="h-5 w-5" />; // Replaced Drone with Plane icon
       case "virtual-tour":
         return <Compass className="h-5 w-5" />;
       default:

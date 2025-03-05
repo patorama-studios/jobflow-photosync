@@ -1,4 +1,4 @@
-
+<lov-code>
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -15,7 +15,7 @@ import {
   Camera, 
   FileText, 
   Video, 
-  Drone, 
+  Plane, 
   Compass,
   ChevronRight,
   ChevronLeft,
@@ -268,7 +268,7 @@ export function UploadFormView({ orderId, initialProductType }: UploadFormViewPr
       case "video":
         return <Video className="h-5 w-5" />;
       case "drone":
-        return <Drone className="h-5 w-5" />;
+        return <Plane className="h-5 w-5" />;
       case "virtual-tour":
         return <Compass className="h-5 w-5" />;
       default:
@@ -823,104 +823,3 @@ export function UploadFormView({ orderId, initialProductType }: UploadFormViewPr
                   </>
                 )}
                 
-                {selectedProductType === "floorplan" && (
-                  <>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Floor Plan Files</span>
-                      <span>{floorPlanForm.files.length} files</span>
-                    </div>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Links Provided</span>
-                      <span>
-                        {(floorPlanForm.primaryLink ? 1 : 0) + 
-                          floorPlanForm.secondaryLinks.filter(link => link.trim() !== "").length}
-                      </span>
-                    </div>
-                  </>
-                )}
-                
-                {selectedProductType === "video" && (
-                  <>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Drone Footage</span>
-                      <span>{videoForm.droneFootage.length} files</span>
-                    </div>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Vertical Footage</span>
-                      <span>{videoForm.verticalFootage.length} files</span>
-                    </div>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Landscape Footage</span>
-                      <span>{videoForm.landscapeFootage.length} files</span>
-                    </div>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Additional Notes</span>
-                      <span>{videoForm.notes ? "Yes" : "No"}</span>
-                    </div>
-                    <div className="p-4 pl-8 flex justify-between">
-                      <span>Music Preference</span>
-                      <span>{videoForm.musicPreference ? "Yes" : "No"}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              {isOverLimit(selectedProductType) && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
-                  <h4 className="font-medium">Warning: File Limit Exceeded</h4>
-                  <p className="text-sm mt-1">
-                    You have exceeded the maximum file limit for {selectedProductType}. 
-                    Please go back and remove some files before submitting.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 0}
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Previous
-          </Button>
-          
-          <Button
-            onClick={handleNext}
-            disabled={isOverLimit(selectedProductType) || isUploading}
-          >
-            {currentStep < steps.length - 1 ? (
-              <>
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </>
-            ) : (
-              "Complete Upload"
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-      
-      {/* Upload progress indicator */}
-      {isUploading && (
-        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg border p-4 w-80">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="font-medium">Uploading Files</h4>
-            <span className="text-sm">{uploadProgress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-primary h-2.5 rounded-full" 
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Uploading {getFileCount(selectedProductType)} files...
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
