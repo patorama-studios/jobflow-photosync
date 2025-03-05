@@ -5,8 +5,12 @@ const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean>(false)
+  const [isMounted, setIsMounted] = React.useState<boolean>(false)
 
   React.useEffect(() => {
+    // Set mounted state
+    setIsMounted(true)
+    
     // Set initial state
     const checkMobile = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
@@ -22,5 +26,6 @@ export function useIsMobile() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  return isMobile
+  // Return false for SSR
+  return isMounted ? isMobile : false
 }
