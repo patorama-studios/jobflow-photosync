@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from "@/components/theme-provider"
@@ -22,6 +23,7 @@ import NotificationsCenter from './pages/NotificationsCenter';
 import MainLayout from './components/layout/MainLayout'
 import Client from './pages/Client'
 import CompanyDetails from './pages/CompanyDetails'
+import { Toaster as SonnerToaster } from "sonner";
 
 function App() {
   const queryClient = new QueryClient()
@@ -34,6 +36,7 @@ function App() {
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <HeaderSettingsProvider>
+                <SonnerToaster position="top-right" closeButton />
                 <Toaster />
                 <Routes>
                   <Route path="/login" element={<Login />} />

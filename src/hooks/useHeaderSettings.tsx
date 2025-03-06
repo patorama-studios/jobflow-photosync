@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export interface HeaderSettings {
@@ -40,25 +40,34 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   useEffect(() => {
     const savedSettings = localStorage.getItem('headerSettings');
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      try {
+        setSettings(JSON.parse(savedSettings));
+      } catch (e) {
+        console.error("Failed to parse header settings:", e);
+        // Use default settings if parse fails
+      }
     }
   }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('headerSettings', JSON.stringify(settings));
+    try {
+      localStorage.setItem('headerSettings', JSON.stringify(settings));
+    } catch (e) {
+      console.error("Failed to save header settings:", e);
+    }
   }, [settings]);
 
-  const updateSettings = (newSettings: Partial<HeaderSettings>) => {
+  const updateSettings = useCallback((newSettings: Partial<HeaderSettings>) => {
     setSettings(prev => ({
       ...prev,
       ...newSettings
     }));
-  };
+  }, []);
 
-  const onBackButtonClick = () => {
+  const onBackButtonClick = useCallback(() => {
     backButtonAction();
-  };
+  }, [backButtonAction]);
 
   return (
     <HeaderSettingsContext.Provider 

@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const clientFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -50,7 +51,7 @@ interface AddClientDialogProps {
 
 export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClientDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { companies } = useCompanies();
+  const { companies, isLoading: isLoadingCompanies } = useCompanies();
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
@@ -74,7 +75,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
         phone: data.phone,
         company: data.company,
         company_id: data.company_id,
-        status: data.status,
+        status: data.status as 'active' | 'inactive',
         total_jobs: 0,
         outstanding_jobs: 0,
         outstanding_payment: 0,
@@ -82,8 +83,10 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
       
       await onClientAdded(newClient);
       form.reset();
+      toast.success("Client added successfully");
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast.error("Failed to add client");
     } finally {
       setIsSubmitting(false);
     }
@@ -174,11 +177,17 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="">No company</SelectItem>
-                      {companies.map((company) => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {company.name}
-                        </SelectItem>
-                      ))}
+                      {isLoadingCompanies ? (
+                        <SelectItem value="" disabled>Loading companies...</SelectItem>
+                      ) : companies.length === 0 ? (
+                        <SelectItem value="" disabled>No companies available</SelectItem>
+                      ) : (
+                        companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />

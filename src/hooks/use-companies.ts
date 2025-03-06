@@ -88,7 +88,7 @@ export function useCompanies() {
       setCompanies(typedCompanies);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch companies');
-      console.error(err);
+      console.error('Error fetching companies:', err);
     } finally {
       setIsLoading(false);
     }
@@ -103,6 +103,10 @@ export function useCompanies() {
 
       if (error) {
         throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No data returned after insert');
       }
 
       // Convert the response to Company type
@@ -132,8 +136,8 @@ export function useCompanies() {
       toast.success("Company added successfully");
       return addedCompany;
     } catch (err: any) {
-      toast.error("Failed to add company: " + err.message);
-      console.error(err);
+      toast.error("Failed to add company: " + (err.message || 'Unknown error'));
+      console.error('Error adding company:', err);
       throw err;
     }
   };
@@ -148,6 +152,10 @@ export function useCompanies() {
 
       if (error) {
         throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No data returned after update');
       }
 
       // Convert the response to Company type
@@ -179,8 +187,8 @@ export function useCompanies() {
       toast.success("Company updated successfully");
       return updatedCompany;
     } catch (err: any) {
-      toast.error("Failed to update company: " + err.message);
-      console.error(err);
+      toast.error("Failed to update company: " + (err.message || 'Unknown error'));
+      console.error('Error updating company:', err);
       throw err;
     }
   };

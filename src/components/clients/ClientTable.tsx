@@ -25,6 +25,7 @@ import { useClients, Client } from "@/hooks/use-clients";
 import { AddClientDialog } from "@/components/clients/AddClientDialog";
 import { exportToCSV } from "@/utils/csv-export";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export function ClientTable() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,14 +40,13 @@ export function ClientTable() {
       client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Find company ID by name for linking
-  const getCompanyIdByName = (companyName: string) => {
-    // In a real app, we'd use a relationship. For now, we'll just use the name as an identifier
-    return companyName ? companyName.toLowerCase().replace(/\s+/g, '-') : undefined;
-  };
-
   const handleExport = () => {
-    // Filter the data to export (remove fields we don't want in the export)
+    if (clients.length === 0) {
+      toast.info("No clients to export");
+      return;
+    }
+    
+    // Filter the data to export
     const exportData = filteredClients.map(client => ({
       ID: client.id,
       Name: client.name,
@@ -61,11 +61,17 @@ export function ClientTable() {
     }));
     
     exportToCSV(exportData, 'clients-export');
+    toast.success(`Exported ${exportData.length} clients`);
   };
 
   const handleAddClient = async (client: Omit<Client, 'id' | 'created_at'>) => {
-    await addClient(client);
-    setAddClientOpen(false);
+    try {
+      await addClient(client);
+      setAddClientOpen(false);
+    } catch (error) {
+      console.error("Error adding client:", error);
+      // Note: Error toast is already shown in the addClient function
+    }
   };
 
   if (error) {
@@ -153,7 +159,9 @@ export function ClientTable() {
               ) : filteredClients.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
-                    No clients found. Try adjusting your search or add a new client.
+                    {clients.length === 0 ? 
+                      "No clients yet. Add your first client to get started." : 
+                      "No clients found matching your search criteria."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -167,19 +175,26 @@ export function ClientTable() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{client.name}</p>
+                        <Link to={`/client/${client.id}`} className="font-medium hover:underline">
+                          {client.name}
+                        </Link>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        {client.company ? (
+                        {client.company && client.company_id ? (
                           <Link 
-                            to={`/companies/${getCompanyIdByName(client.company)}`}
+                            to={`/company/${client.company_id}`}
                             className="text-sm font-medium text-primary flex items-center hover:underline"
                           >
                             <Building className="h-3 w-3 mr-1" />
                             {client.company}
                           </Link>
+                        ) : client.company ? (
+                          <span className="text-sm flex items-center">
+                            <Building className="h-3 w-3 mr-1" />
+                            {client.company}
+                          </span>
                         ) : (
                           <span className="text-sm text-muted-foreground">Not assigned</span>
                         )}
@@ -208,11 +223,11 @@ export function ClientTable() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/clients/${client.id}`}>View</Link>
+                          <Link to={`/client/${client.id}`}>View</Link>
                         </Button>
                         <Button variant="outline" size="sm">
                           <MessageSquare className="h-4 w-4 mr-2" />
-                          Interview
+                          Contact
                         </Button>
                       </div>
                     </TableCell>
