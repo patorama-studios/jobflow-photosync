@@ -1,14 +1,13 @@
-
 import React, { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { Order } from '@/hooks/useSampleOrders';
-import { cn } from '@/lib/utils';
 
 interface GoogleDayViewProps {
   date: Date;
   orders: Order[];
-  photographers: { id: number; name: string; color: string; }[];
+  photographers: Array<{id: number; name: string; color: string}>;
   selectedPhotographers: number[];
+  onTimeSlotClick?: (time: string) => void;
 }
 
 export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
@@ -16,153 +15,76 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
   orders,
   photographers,
   selectedPhotographers,
+  onTimeSlotClick
 }) => {
-  // Filter orders for the selected date
-  const ordersForDay = useMemo(() => {
-    return orders.filter(order => 
-      order.scheduledDate && isSameDay(new Date(order.scheduledDate), date)
-    );
-  }, [orders, date]);
-
-  // Generate time slots for the day view
   const timeSlots = useMemo(() => {
-    return Array.from({ length: 24 }, (_, i) => {
-      const hour = i;
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const hour12 = hour % 12 || 12;
-      return {
-        hour,
-        display: `${hour12}:00 ${ampm}`,
-        displayHalf: `${hour12}:30 ${ampm}`,
-      };
-    });
+    const slots = [];
+    for (let i = 8; i <= 18; i++) {
+      slots.push(`${i}:00`);
+      slots.push(`${i}:30`);
+    }
+    return slots;
   }, []);
 
-  // Map orders to photographers
-  const ordersByPhotographer = useMemo(() => {
-    const result: { [photographerId: number]: Order[] } = {};
-    
-    photographers.forEach(photographer => {
-      result[photographer.id] = ordersForDay.filter(order => {
-        // Match photographer name (in a real app, would use IDs)
-        return order.photographer.includes(photographer.name);
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      if (!order.scheduledDate) return false;
+      const orderDate = new Date(order.scheduledDate);
+      return isSameDay(orderDate, date) && selectedPhotographers.some(id => {
+        const photographer = photographers.find(p => p.id === id);
+        return photographer && order.photographer.includes(photographer.name);
       });
     });
-    
-    return result;
-  }, [ordersForDay, photographers]);
+  }, [orders, date, selectedPhotographers, photographers]);
+
+  const handleTimeSlotClick = (time: string) => {
+    if (onTimeSlotClick) {
+      onTimeSlotClick(time);
+    }
+  };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] bg-white border rounded-md">
-      <div className="grid grid-cols-[100px_1fr] border-b">
-        <div className="p-2 border-r"></div>
-        <div className="grid" style={{ 
-          gridTemplateColumns: `repeat(${selectedPhotographers.length}, 1fr)` 
-        }}>
-          {photographers
-            .filter(p => selectedPhotographers.includes(p.id))
-            .map(photographer => (
-              <div 
-                key={photographer.id}
-                className="p-2 border-r text-center flex flex-col items-center gap-1"
-              >
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white"
-                  style={{ backgroundColor: photographer.color }}
-                >
-                  {photographer.name.charAt(0)}
-                </div>
-                <div className="text-sm font-medium">{photographer.name}</div>
-              </div>
-            ))}
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-[100px_1fr]">
-          <div className="border-r">
-            {timeSlots.map(slot => (
-              <div key={slot.hour} className="h-16 border-b relative">
-                <div className="absolute -top-2 right-2 text-xs text-gray-500">
-                  {slot.display}
-                </div>
-              </div>
-            ))}
+    <div className="grid grid-cols-[50px_1fr] h-full">
+      {/* Time slots */}
+      <div className="border-r border-gray-200">
+        {timeSlots.map(time => (
+          <div key={time} className="h-12 flex items-center justify-center text-xs text-gray-500">
+            {time}
           </div>
-          
-          <div className="relative grid" style={{ 
-            gridTemplateColumns: `repeat(${selectedPhotographers.length}, 1fr)` 
-          }}>
-            {/* Grid lines */}
-            {timeSlots.map(slot => (
-              <React.Fragment key={slot.hour}>
-                {selectedPhotographers.map(photographerId => (
-                  <div 
-                    key={`${slot.hour}-${photographerId}`} 
-                    className="h-16 border-b border-r"
-                  ></div>
-                ))}
-              </React.Fragment>
-            ))}
-            
-            {/* Appointments */}
-            {selectedPhotographers.map((photographerId, colIndex) => {
-              const photographerOrders = ordersByPhotographer[photographerId] || [];
-              const photographer = photographers.find(p => p.id === photographerId);
-              
-              return photographerOrders.map((order, idx) => {
-                // Parse time to determine vertical position
-                const timeStr = order.scheduledTime || '';
-                const hourMatch = timeStr.match(/(\d+)(?::(\d+))?\s*(am|pm|AM|PM)/i);
-                
-                if (!hourMatch) return null;
-                
-                let orderHour = parseInt(hourMatch[1], 10);
-                const orderMinute = parseInt(hourMatch[2] || '0', 10);
-                const isPM = /pm/i.test(hourMatch[3]);
-                
-                if (isPM && orderHour !== 12) orderHour += 12;
-                if (!isPM && orderHour === 12) orderHour = 0;
-                
-                // Duration in hours - default to 1 hour
-                const durationHours = 1; 
-                
-                // Calculate top position
-                const topPercentage = (orderHour + orderMinute / 60) * 16; // Each hour is 16px
-                
+        ))}
+      </div>
+
+      {/* Events */}
+      <div className="relative">
+        {timeSlots.map(time => (
+          <div 
+            key={time} 
+            className="h-12 border-b border-gray-200 last:border-none relative"
+            onClick={() => handleTimeSlotClick(time)}
+          >
+            {filteredOrders.map(order => {
+              if (!order.scheduledDate) return null;
+              const orderDate = new Date(order.scheduledDate);
+              const orderTime = format(orderDate, 'H:mm');
+
+              if (orderTime === time) {
+                const photographer = photographers.find(p => order.photographer.includes(p.name));
+                const color = photographer?.color || 'gray';
+
                 return (
                   <div
-                    key={`${order.id}-${idx}`}
-                    className={cn(
-                      "absolute p-2 rounded overflow-hidden border-l-4 shadow-sm",
-                      "min-h-[60px] hover:shadow-md transition-shadow z-10"
-                    )}
-                    style={{
-                      top: `${topPercentage}px`,
-                      height: `${durationHours * 16}px`,
-                      left: `${(100 / selectedPhotographers.length) * colIndex}%`,
-                      width: `calc(${100 / selectedPhotographers.length}% - 8px)`,
-                      backgroundColor: `${photographer?.color}15`, // 15% opacity
-                      borderLeftColor: photographer?.color
-                    }}
+                    key={order.id}
+                    className="absolute top-0 left-0 w-full h-12 bg-blue-100 border-l-4 border-blue-500 pl-2 text-sm overflow-hidden whitespace-nowrap overflow-ellipsis"
+                    style={{borderColor: color}}
                   >
-                    <div className="text-xs font-medium">
-                      {order.scheduledTime}
-                    </div>
-                    <div className="text-xs truncate">
-                      {order.address.split(',')[0]}
-                    </div>
-                    {order.client && (
-                      <div className="text-xs text-gray-600 truncate">
-                        {order.client.split('-')[0].trim()}
-                      </div>
-                    )}
+                    {order.title} - {order.photographer}
                   </div>
                 );
-              });
+              }
+              return null;
             })}
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );

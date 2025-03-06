@@ -16,6 +16,21 @@ interface GoogleCalendarProps {
   defaultView?: "month" | "week" | "day";
 }
 
+// Define types for the view components
+interface GoogleWeekViewProps {
+  date: Date;
+  orders: Order[];
+  onTimeSlotClick?: (time: string) => void;
+}
+
+interface GoogleDayViewProps {
+  date: Date;
+  orders: Order[];
+  photographers: Array<{id: number; name: string; color: string}>;
+  selectedPhotographers: number[];
+  onTimeSlotClick?: (time: string) => void;
+}
+
 const samplePhotographers = [
   { id: 1, name: 'David Thompson', color: '#4299E1' },  // Blue
   { id: 2, name: 'Emma Richardson', color: '#F6E05E' }, // Yellow
