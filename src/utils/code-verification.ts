@@ -34,6 +34,11 @@ export function verifyRouterNesting(code: string): { valid: boolean; issues: str
     }
   });
 
+  // Check for Route components outside Router
+  if ((code.includes('<Route') || code.includes('<Routes')) && !code.includes('<Router')) {
+    issues.push('Route or Routes components detected but no Router component found');
+  }
+
   // Check for Router components used inside a provider that should be inside Router
   if (code.includes('<HeaderSettingsProvider>') && 
       code.includes('<Router') && 
@@ -71,6 +76,68 @@ export function verifyProviderNesting(code: string): { valid: boolean; issues: s
     }
   });
 
+  // Check for potential recursive provider issues
+  providerHookPairs.forEach(({ provider, hook }) => {
+    if (code.includes(provider) && code.includes(hook)) {
+      const providerStart = code.indexOf(provider);
+      const hookUse = code.indexOf(hook);
+      
+      if (hookUse < providerStart) {
+        issues.push(`${hook} is used before ${provider} is initialized`);
+      }
+    }
+  });
+
+  return {
+    valid: issues.length === 0,
+    issues
+  };
+}
+
+/**
+ * Verifies component import and usage issues
+ */
+export function verifyComponentUsage(code: string): { valid: boolean; issues: string[] } {
+  const issues: string[] = [];
+  
+  // Check for potential missing imports
+  const componentUsageRegex = /<([A-Z][a-zA-Z0-9]*)/g;
+  const importRegex = /import\s+(?:{[^}]*}|\*\s+as\s+[^;]*|[^;{]*)\s+from\s+['"][^'"]*['"]/g;
+  
+  let match;
+  const usedComponents = new Set<string>();
+  
+  while ((match = componentUsageRegex.exec(code)) !== null) {
+    usedComponents.add(match[1]);
+  }
+
+  const importStatements = code.match(importRegex) || [];
+  const importedComponents = new Set<string>();
+  
+  importStatements.forEach(statement => {
+    // Very simple extraction, would need more robust parsing for real usage
+    const components = statement.replace(/import\s+/, '').replace(/\s+from.*/, '');
+    
+    if (components.includes('{')) {
+      const matches = components.match(/{([^}]*)}/);
+      if (matches && matches[1]) {
+        matches[1].split(',').forEach(comp => {
+          const trimmed = comp.trim().split(' as ')[0];
+          if (trimmed) importedComponents.add(trimmed);
+        });
+      }
+    } else {
+      const defaultImport = components.trim();
+      if (defaultImport) importedComponents.add(defaultImport);
+    }
+  });
+
+  usedComponents.forEach(component => {
+    if (!importedComponents.has(component) && !['React', 'Fragment'].includes(component)) {
+      issues.push(`Component <${component}> is used but not imported`);
+    }
+  });
+
   return {
     valid: issues.length === 0,
     issues
@@ -102,6 +169,12 @@ export function verifyCodeBeforeDeployment(files: Record<string, string>): {
       if (!providerCheck.valid) {
         fileIssues.push(...providerCheck.issues);
       }
+      
+      // Component import checks
+      const componentCheck = verifyComponentUsage(content);
+      if (!componentCheck.valid) {
+        fileIssues.push(...componentCheck.issues);
+      }
     }
     
     if (fileIssues.length > 0) {
@@ -113,4 +186,42 @@ export function verifyCodeBeforeDeployment(files: Record<string, string>): {
     valid: allIssues.length === 0,
     issues: allIssues
   };
+}
+
+// Runtime verification functions
+/**
+ * Check if we're in a browser environment
+ */
+export function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+/**
+ * Performs a runtime verification to ensure all contexts are properly provided
+ */
+export function verifyRuntimeContexts(): { valid: boolean; issues: string[] } {
+  if (!isBrowser()) {
+    return { valid: true, issues: [] };
+  }
+  
+  const issues: string[] = [];
+  
+  // Check if we're inside a Router context
+  if (typeof window.history.pushState === 'function' && !window.__REACT_ROUTER_HISTORY__) {
+    issues.push('Application might be missing Router context');
+  }
+  
+  return {
+    valid: issues.length === 0,
+    issues
+  };
+}
+
+/**
+ * Declare global namespace for React Router history
+ */
+declare global {
+  interface Window {
+    __REACT_ROUTER_HISTORY__?: unknown;
+  }
 }
