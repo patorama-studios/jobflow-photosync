@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { JobCalendarWithErrorBoundary } from '@/components/dashboard/JobCalendar';
 import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, memo, useCallback } from 'react';
+import React, { useState, useMemo, memo, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -143,4 +143,6 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubm
 
 MainLayout.displayName = 'MainLayout';
 
-export default MainLayout;
+export { MainLayout }; // Export named component
+
+export default MainLayout; // Also export as default for backward compatibility
