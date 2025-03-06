@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/order-types';
 import { 
   AlertDialog,
   AlertDialogAction,

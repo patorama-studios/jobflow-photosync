@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/order-types';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 

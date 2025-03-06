@@ -1,6 +1,6 @@
 
 import React, { memo } from 'react';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/order-types';
 import { WeekDraggableAppointment } from './WeekDraggableAppointment';
 import { isSameDay } from 'date-fns';
 
