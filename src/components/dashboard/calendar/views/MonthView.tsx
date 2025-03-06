@@ -4,7 +4,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Order } from '@/hooks/useSampleOrders';
 import { DayContentProps } from "react-day-picker";
 import { isSameDay } from 'date-fns';
-import { Timer } from 'lucide-react';
+import { Timer, Calendar as CalendarIcon } from 'lucide-react';
 
 interface MonthViewProps {
   orders: Order[];
@@ -38,15 +38,21 @@ const CustomDayContent = memo(({
   }, [jobsForDay]);
 
   return (
-    <div className="relative">
-      <span>{date.getDate()}</span>
+    <div className="relative flex flex-col items-center justify-center py-1">
+      <span className="text-sm font-medium">{date.getDate()}</span>
       {hasJobs && (
-        <div className="flex flex-col items-center">
-          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full" />
+        <div className="flex flex-col items-center mt-1">
+          <div className="w-6 h-1 bg-primary rounded-full mb-1" />
+          {jobsForDay.length > 0 && (
+            <div className="text-[0.5rem] text-muted-foreground flex items-center gap-1">
+              <CalendarIcon className="h-2 w-2" />
+              <span>{jobsForDay.length}</span>
+            </div>
+          )}
           {totalDrivingTime > 0 && (
-            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 text-[0.5rem] text-muted-foreground flex items-center">
-              <Timer className="h-2 w-2 mr-0.5" />
-              {Math.round(totalDrivingTime / 60)}h
+            <div className="text-[0.5rem] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <Timer className="h-2 w-2" />
+              <span>{Math.round(totalDrivingTime / 60)}h</span>
             </div>
           )}
         </div>
@@ -82,15 +88,16 @@ export const MonthView = memo(({ orders, selectedDate, onSelectDate }: MonthView
   );
 
   return (
-    <div className="calendar-container">
+    <div className="w-full flex justify-center">
       <Calendar
         mode="single"
         selected={selectedDate}
         onSelect={onSelectDate}
-        className="rounded-md border"
+        className="rounded-md border w-full max-w-3xl"
         components={{
           DayContent: customDayContent
         }}
+        showOutsideDays={true}
       />
     </div>
   );

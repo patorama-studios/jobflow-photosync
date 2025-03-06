@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, memo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -9,15 +9,19 @@ import {
   ShoppingCart,
   Kanban,
   GraduationCap,
-  Bell
+  Bell,
+  ArrowLeft
 } from "lucide-react";
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Header } from './Header';
+import { useSampleOrders } from "@/hooks/useSampleOrders";
+import { Button } from "@/components/ui/button";
 
 type MainLayoutProps = {
   children: React.ReactNode;
+  showCalendarSubmenu?: boolean;
 };
 
 // Memoize the sidebar links array since it never changes
@@ -34,26 +38,60 @@ const useSidebarLinks = () => {
   ], []);
 };
 
-const MainLayout: React.FC<MainLayoutProps> = memo(({ children }) => {
+const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubmenu = false }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showMainMenu, setShowMainMenu] = useState(!showCalendarSubmenu);
   const location = useLocation();
   const isMobile = useIsMobile();
   const sidebarLinks = useSidebarLinks();
+  const { orders } = useSampleOrders();
+
+  // Create array of photographer objects from orders
+  const photographers = useMemo(() => Array.from(
+    new Set(orders.map(order => order.photographer))
+  ).map((name, index) => {
+    return { 
+      id: index + 1, 
+      name,
+      color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` // Random color
+    };
+  }), [orders]);
+
+  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>(
+    photographers.map(p => p.id)
+  );
 
   // Memoize expensive functions
-  const toggleSidebar = useMemo(() => () => 
-    setCollapsed(prev => !prev), 
+  const toggleSidebar = useCallback(() => 
+    setCollapsed(prev => !prev),
   []);
   
-  const toggleMobileSidebar = useMemo(() => () => 
-    setMobileOpen(prev => !prev), 
+  const toggleMobileSidebar = useCallback(() => 
+    setMobileOpen(prev => !prev),
   []);
+
+  const toggleMainMenu = useCallback(() => 
+    setShowMainMenu(prev => !prev),
+  []);
+
+  const togglePhotographer = useCallback((id: number) => {
+    setSelectedPhotographers(prev => 
+      prev.includes(id) 
+        ? prev.filter(p => p !== id) 
+        : [...prev, id]
+    );
+  }, []);
 
   // Memoize active link checker function
   const isActiveLink = useMemo(() => (path: string) => 
     location.pathname === path || location.pathname.startsWith(`${path}/`),
   [location.pathname]);
+
+  // Update showMainMenu when showCalendarSubmenu changes
+  useEffect(() => {
+    setShowMainMenu(!showCalendarSubmenu);
+  }, [showCalendarSubmenu]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -66,29 +104,29 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children }) => {
           <DesktopSidebar
             collapsed={collapsed}
             toggleSidebar={toggleSidebar}
-            showCalendarSubmenu={false}
-            showBackButton={false}
-            showMainMenu={true}
-            toggleMainMenu={() => {}}
+            showCalendarSubmenu={showCalendarSubmenu}
+            showBackButton={showCalendarSubmenu && !showMainMenu}
+            showMainMenu={showMainMenu}
+            toggleMainMenu={toggleMainMenu}
             sidebarLinks={sidebarLinks}
             isActiveLink={isActiveLink}
-            photographers={[]}
-            selectedPhotographers={[]}
-            togglePhotographer={() => {}}
+            photographers={photographers}
+            selectedPhotographers={selectedPhotographers}
+            togglePhotographer={togglePhotographer}
           />
         ) : (
           <MobileSidebar
             mobileOpen={mobileOpen}
             toggleMobileSidebar={toggleMobileSidebar}
-            showCalendarSubmenu={false}
-            showBackButton={false}
-            showMainMenu={true}
-            toggleMainMenu={() => {}}
+            showCalendarSubmenu={showCalendarSubmenu}
+            showBackButton={showCalendarSubmenu && !showMainMenu}
+            showMainMenu={showMainMenu}
+            toggleMainMenu={toggleMainMenu}
             sidebarLinks={sidebarLinks}
             isActiveLink={isActiveLink}
-            photographers={[]}
-            selectedPhotographers={[]}
-            togglePhotographer={() => {}}
+            photographers={photographers}
+            selectedPhotographers={selectedPhotographers}
+            togglePhotographer={togglePhotographer}
           />
         )}
 

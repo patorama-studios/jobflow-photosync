@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { JobCalendarWithErrorBoundary } from '@/components/dashboard/JobCalendar';
 import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
@@ -43,7 +43,7 @@ const Calendar = () => {
   };
 
   return (
-    <SidebarLayout showCalendarSubmenu={true} showBackButton={true}>
+    <MainLayout showCalendarSubmenu={true}>
       <PageTransition>
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-4">
@@ -85,7 +85,7 @@ const Calendar = () => {
           />
         </div>
       </PageTransition>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

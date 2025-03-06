@@ -122,12 +122,9 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
     return <CalendarSkeleton />;
   }
 
-  // Log the orders for debugging
-  console.log("Orders in JobCalendar:", orders);
-
   return (
     <Card className="bg-card rounded-lg shadow">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <CardTitle className="flex justify-between items-center">
           <span>
             {calendarView === "month" 
@@ -140,7 +137,7 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`grid gap-8 ${calendarView === "month" ? "md:grid-cols-2" : "grid-cols-1"}`}>
+        <div className={`grid gap-8 ${calendarView === "month" ? "grid-cols-1" : "grid-cols-1"}`}>
           <CalendarView 
             orders={orders}
             selectedDate={selectedDate}
@@ -151,7 +148,8 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
             viewDates={viewDates}
           />
           
-          {(calendarView === "month" || !selectedDate) && (
+          {/* Always show the job list in month view */}
+          {calendarView === "month" && (
             <JobList
               selectedDate={selectedDate}
               orders={orders}
