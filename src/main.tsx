@@ -21,20 +21,26 @@ const applyTheme = () => {
 // Execute theme application immediately
 applyTheme();
 
-// Use requestIdleCallback for non-critical initialization
+// Function to mount the app with error handling
 const mountApp = () => {
-  const rootElement = document.getElementById("root");
-  if (rootElement) {
-    const root = createRoot(rootElement);
-    root.render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+  try {
+    const rootElement = document.getElementById("root");
+    if (rootElement) {
+      const root = createRoot(rootElement);
+      root.render(
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      );
+    } else {
+      console.error("Root element not found");
+    }
+  } catch (error) {
+    console.error("Error mounting app:", error);
   }
 };
 
-// Optimized app mounting with fallback
+// Optimized app mounting with fallback and error handling
 if (typeof window.requestIdleCallback === 'function') {
   window.requestIdleCallback(mountApp, { timeout: 2000 }); // Add timeout to ensure it runs
 } else {

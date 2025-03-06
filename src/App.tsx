@@ -11,7 +11,7 @@ import Dashboard from './pages/Dashboard'
 import OrdersPage from './pages/Orders'
 import Customers from './pages/Customers'
 import Calendar from './pages/Calendar'
-import Settings from './pages/Settings'
+import SettingsPage from './pages/Settings'
 import Production from './pages/Production'
 import Learning from './pages/Learning'
 import Apps from './pages/Apps'
@@ -41,7 +41,7 @@ function App() {
                   <Route path="/orders/*" element={<MainLayout><ProtectedRoute><OrdersPage /></ProtectedRoute></MainLayout>} />
                   <Route path="/customers" element={<MainLayout><ProtectedRoute><Customers /></ProtectedRoute></MainLayout>} />
                   <Route path="/calendar" element={<MainLayout><ProtectedRoute><Calendar /></ProtectedRoute></MainLayout>} />
-                  <Route path="/settings/*" element={<MainLayout><ProtectedRoute><Settings /></ProtectedRoute></MainLayout>} />
+                  <Route path="/settings/*" element={<MainLayout><ProtectedRoute><SettingsPage /></ProtectedRoute></MainLayout>} />
                   <Route path="/production" element={<MainLayout><ProtectedRoute><Production /></ProtectedRoute></MainLayout>} />
                   <Route path="/learning" element={<MainLayout><ProtectedRoute><Learning /></ProtectedRoute></MainLayout>} />
                   <Route path="/apps" element={<MainLayout><ProtectedRoute><Apps /></ProtectedRoute></MainLayout>} />

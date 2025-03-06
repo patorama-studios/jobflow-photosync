@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 // Define the different settings categories
 export type SettingsCategory = 
@@ -19,22 +20,24 @@ export function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");
   
   return (
-    <div className="w-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold">Settings</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your account and application preferences
-        </p>
+    <PageTransition>
+      <div className="w-full">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold">Settings</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your account and application preferences
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
+          <SettingsNav 
+            activeCategory={activeCategory} 
+            onCategoryChange={setActiveCategory} 
+          />
+          <SettingsPanel activeCategory={activeCategory} />
+        </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
-        <SettingsNav 
-          activeCategory={activeCategory} 
-          onCategoryChange={setActiveCategory} 
-        />
-        <SettingsPanel activeCategory={activeCategory} />
-      </div>
-    </div>
+    </PageTransition>
   );
 }
 
