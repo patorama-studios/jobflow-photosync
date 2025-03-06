@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Route,
@@ -13,10 +13,10 @@ import OrderDetails from './pages/OrderDetails';
 import Clients from './pages/Clients';
 import Companies from './pages/Companies';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Toaster } from '@/components/ui/toaster';
 import MainLayout from '@/components/layout/MainLayout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   useEffect(() => {
@@ -34,10 +34,12 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <AppRoutes />
-      <Toaster />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppRoutes />
+        <Toaster />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -57,7 +59,7 @@ function AppRoutes() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
         <Route
           path="/dashboard"
           element={
@@ -118,9 +120,10 @@ function AppRoutes() {
             )
           }
         />
-        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+        {/* Default route - redirect to login by default */}
+        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
         {/* Catch all route - redirect to login or dashboard based on auth state */}
-        <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+        <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
       </Routes>
     </Router>
   );

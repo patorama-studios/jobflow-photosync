@@ -11,6 +11,7 @@ import { Header } from './Header';
 
 type MainLayoutProps = {
   children: React.ReactNode;
+  showCalendarSubmenu?: boolean;
 };
 
 // Define sidebar links
@@ -21,7 +22,7 @@ const sidebarLinks = [
   { name: "Companies", icon: Building2, path: "/companies" }
 ];
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children, showCalendarSubmenu }) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
@@ -76,6 +77,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               ))}
             </ul>
           </nav>
+          
+          {/* Calendar submenu logic can be implemented here if needed */}
+          {showCalendarSubmenu && (
+            <div className="mt-4 px-2">
+              {/* Calendar submenu content */}
+            </div>
+          )}
         </div>
 
         {/* Main content */}
