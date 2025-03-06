@@ -12,8 +12,8 @@ export function generateSampleOrders(): Order[] {
       order_number: "ORD-2023-001",
       address: "123 Maple Street, Seattle, WA 98101",
       client: "John Smith - ABC Realty",
-      customerName: "John Smith - ABC Realty", // Add for compatibility 
-      propertyAddress: "123 Maple Street, Seattle, WA 98101", // Add for compatibility
+      customerName: "John Smith - ABC Realty", 
+      propertyAddress: "123 Maple Street, Seattle, WA 98101",
       photographer: "Alex Johnson",
       photographerPayoutRate: 95,
       photographer_payout_rate: 95,

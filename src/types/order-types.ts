@@ -46,4 +46,8 @@ export interface Order {
   additionalAppointments?: any[];
   mediaLinks?: any[];
   mediaUploaded?: boolean;
+  
+  // Add both formats for consistent access
+  scheduled_date?: string;
+  scheduled_time?: string;
 }
