@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,9 +40,10 @@ JobCountBadge.displayName = 'JobCountBadge';
 interface JobCalendarProps {
   calendarView?: "month" | "week" | "day";
   onTimeSlotClick?: (time: string) => void;
+  onDayClick?: (date: Date) => void;
 }
 
-export function JobCalendar({ calendarView = "month", onTimeSlotClick }: JobCalendarProps) {
+export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClick }: JobCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
   const { orders } = useSampleOrders();
@@ -86,6 +86,11 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick }: JobCale
     try {
       setSelectedDate(date);
       console.log("Selected date:", date ? format(date, 'yyyy-MM-dd') : 'none');
+      
+      // Call the onDayClick prop if provided
+      if (date && onDayClick) {
+        onDayClick(date);
+      }
     } catch (error) {
       console.error("Error selecting date:", error);
       toast({
@@ -94,7 +99,7 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick }: JobCale
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, onDayClick]);
 
   // Handle time slot click
   const handleTimeSlotClick = useCallback((time: string, date?: Date) => {
@@ -150,7 +155,7 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick }: JobCale
 }
 
 // Wrap the JobCalendar component with ErrorBoundary for better error handling
-export function JobCalendarWithErrorBoundary({ calendarView, onTimeSlotClick }: JobCalendarProps) {
+export function JobCalendarWithErrorBoundary({ calendarView, onTimeSlotClick, onDayClick }: JobCalendarProps) {
   return (
     <ErrorBoundary fallback={
       <Card className="bg-card rounded-lg shadow">
@@ -162,7 +167,7 @@ export function JobCalendarWithErrorBoundary({ calendarView, onTimeSlotClick }: 
         </CardContent>
       </Card>
     }>
-      <JobCalendar calendarView={calendarView} onTimeSlotClick={onTimeSlotClick} />
+      <JobCalendar calendarView={calendarView} onTimeSlotClick={onTimeSlotClick} onDayClick={onDayClick} />
     </ErrorBoundary>
   );
 }
