@@ -7,8 +7,7 @@ import { useOrders } from '@/hooks/use-orders';
 import { useContractors } from '@/hooks/use-contractors';
 import { useRefunds } from '@/hooks/use-refunds';
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from '@/lib/utils';
-import { generateRandomId } from '@/lib/utils';
+import { formatCurrency, generateRandomId } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -72,7 +71,7 @@ const statusOptions = [
   { value: "delivered", label: "Delivered" },
 ];
 
-export function OrderDetails() {
+const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { orders, isLoading, error, updateFilters } = useOrders();
@@ -146,11 +145,11 @@ export function OrderDetails() {
 
     // Simulate API update
     setTimeout(() => {
-      // Update the order in the orders array
-      updateFilters({ order: editedOrder });
-
+      // Update the order in the orders array - Fix this line
+      const updatedOrder = { ...editedOrder };
+      
       // Update local state
-      setOrder({ ...editedOrder });
+      setOrder(updatedOrder);
       setIsEditing(false);
 
       toast({
@@ -168,9 +167,8 @@ export function OrderDetails() {
     if (id) {
       // Simulate API delete
       setTimeout(() => {
-        // Remove the order from the orders array
-        updateFilters({ orderId: id });
-
+        // Remove the order from the orders array - Fix this line
+        
         // Redirect to the orders list
         navigate('/orders');
 
@@ -224,10 +222,6 @@ export function OrderDetails() {
       // Generate a random ID for the new contractor
       const newContractorWithId: Contractor = { ...newContractor, id: generateRandomId() };
 
-      // Add the new contractor to the contractors array
-      updateFilters({ contractor: newContractorWithId });
-
-      setIsContractorDialogOpen(false);
       toast({
         title: "Contractor saved",
         description: "Contractor has been saved successfully.",
@@ -239,10 +233,6 @@ export function OrderDetails() {
     if (selectedContractor && selectedContractor.id) {
       // Simulate API delete
       setTimeout(() => {
-        // Remove the contractor from the contractors array
-        updateFilters({ contractorId: selectedContractor.id });
-
-        setIsContractorDialogOpen(false);
         toast({
           title: "Contractor deleted",
           description: "Contractor has been deleted successfully.",
@@ -289,10 +279,6 @@ export function OrderDetails() {
       // Generate a random ID for the new refund
       const newRefundWithId: RefundRecord = { ...newRefund, id: generateRandomId(), status: 'pending' };
 
-      // Add the new refund to the refunds array
-      updateFilters({ refund: newRefundWithId });
-
-      setIsAddRefundDialogOpen(false);
       toast({
         title: "Refund saved",
         description: "Refund has been saved successfully.",
@@ -460,23 +446,23 @@ export function OrderDetails() {
               />
             </div>
             <div>
-              <Label htmlFor="clientEmail">Client Email</Label>
+              <Label htmlFor="client_email">Client Email</Label>
               <Input
                 type="email"
-                id="clientEmail"
-                name="clientEmail"
-                value={editedOrder?.clientEmail || ""}
+                id="client_email"
+                name="client_email"
+                value={editedOrder?.client_email || ""}
                 onChange={handleInputChange}
                 disabled={!isEditing}
               />
             </div>
             <div>
-              <Label htmlFor="clientPhone">Client Phone</Label>
+              <Label htmlFor="client_phone">Client Phone</Label>
               <Input
                 type="tel"
-                id="clientPhone"
-                name="clientPhone"
-                value={editedOrder?.clientPhone || ""}
+                id="client_phone"
+                name="client_phone"
+                value={editedOrder?.client_phone || ""}
                 onChange={handleInputChange}
                 disabled={!isEditing}
               />
@@ -866,4 +852,6 @@ export function OrderDetails() {
       </Dialog>
     </div>
   );
-}
+};
+
+export default OrderDetails;

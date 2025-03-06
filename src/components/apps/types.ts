@@ -7,6 +7,6 @@ export type Integration = {
   description: string;
   icon: React.ElementType;
   connected: boolean;
-  status?: 'active' | 'pending' | 'error';
+  status?: 'active' | 'pending' | 'error' | 'inactive';
   lastSynced?: string;
 };

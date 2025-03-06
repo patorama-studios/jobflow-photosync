@@ -29,7 +29,7 @@ export function AppsOverview() {
         description: 'Cloud content management & file sharing',
         icon: Box,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       },
       {
         id: 'stripe',
@@ -37,7 +37,7 @@ export function AppsOverview() {
         description: 'Payment processing platform',
         icon: CreditCard,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       },
       {
         id: 'google-calendar',
@@ -45,7 +45,7 @@ export function AppsOverview() {
         description: 'Sync events and appointments',
         icon: CalendarIcon,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       },
       {
         id: 'microsoft-365',
@@ -53,7 +53,7 @@ export function AppsOverview() {
         description: 'Outlook calendar and email integration',
         icon: Mail,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       },
       {
         id: 'zapier',
@@ -61,7 +61,7 @@ export function AppsOverview() {
         description: 'Connect with thousands of apps',
         icon: Plug,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       },
       {
         id: 'xero',
@@ -69,7 +69,7 @@ export function AppsOverview() {
         description: 'Accounting & invoicing platform',
         icon: BarChart,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       },
       {
         id: 'go-high-level',
@@ -77,7 +77,7 @@ export function AppsOverview() {
         description: 'All-in-one marketing platform',
         icon: Megaphone,
         connected: false,
-        status: 'inactive'
+        status: 'pending'
       }
     ];
     
