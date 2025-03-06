@@ -33,26 +33,34 @@ export function SidebarLayout({
   const location = useLocation();
   const isMobile = useIsMobile();
   const { orders } = useSampleOrders();
-  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>([1, 2, 3, 4, 5]);
-  
+
   // Create array of photographer objects from orders
   const photographers = Array.from(
     new Set(orders.map(order => order.photographer))
-  ).map(name => {
-    const id = orders.findIndex(order => order.photographer === name) + 1;
+  ).map((name, index) => {
     return { 
-      id, 
+      id: index + 1, 
       name,
       color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` // Random color
     };
   });
 
+  // Get selected photographers from localStorage or use all by default
+  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>(() => {
+    const saved = localStorage.getItem('selectedPhotographers');
+    return saved ? JSON.parse(saved) : photographers.map(p => p.id);
+  });
+
   const togglePhotographer = (id: number) => {
-    setSelectedPhotographers(prev => 
-      prev.includes(id) 
+    setSelectedPhotographers(prev => {
+      const updated = prev.includes(id) 
         ? prev.filter(p => p !== id) 
-        : [...prev, id]
-    );
+        : [...prev, id];
+      
+      // Save to localStorage
+      localStorage.setItem('selectedPhotographers', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const toggleMainMenu = () => {

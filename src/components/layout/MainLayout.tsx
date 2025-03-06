@@ -10,14 +10,12 @@ import {
   Kanban,
   GraduationCap,
   Bell,
-  ArrowLeft
 } from "lucide-react";
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Header } from './Header';
 import { useSampleOrders } from "@/hooks/useSampleOrders";
-import { Button } from "@/components/ui/button";
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -58,9 +56,19 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubm
     };
   }), [orders]);
 
-  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>(
-    photographers.map(p => p.id)
-  );
+  // Get selected photographers from localStorage or use all by default
+  const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>(() => {
+    const saved = localStorage.getItem('selectedPhotographers');
+    return saved ? JSON.parse(saved) : photographers.map(p => p.id);
+  });
+
+  // Update selected photographers if photographers list changes
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedPhotographers');
+    if (!saved) {
+      setSelectedPhotographers(photographers.map(p => p.id));
+    }
+  }, [photographers]);
 
   // Memoize expensive functions
   const toggleSidebar = useCallback(() => 
@@ -76,11 +84,15 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubm
   []);
 
   const togglePhotographer = useCallback((id: number) => {
-    setSelectedPhotographers(prev => 
-      prev.includes(id) 
+    setSelectedPhotographers(prev => {
+      const updated = prev.includes(id) 
         ? prev.filter(p => p !== id) 
-        : [...prev, id]
-    );
+        : [...prev, id];
+      
+      // Save to localStorage
+      localStorage.setItem('selectedPhotographers', JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   // Memoize active link checker function

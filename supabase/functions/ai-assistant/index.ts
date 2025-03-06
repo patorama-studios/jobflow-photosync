@@ -16,6 +16,10 @@ serve(async (req) => {
   }
 
   try {
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not set. Please configure it in your environment variables.');
+    }
+
     const { query, history, context } = await req.json();
 
     // Base system instructions
@@ -47,7 +51,7 @@ serve(async (req) => {
     ];
 
     console.log("Sending request to OpenAI with:", {
-      model: messages.length > 15 ? "gpt-4o" : "gpt-4o-mini",
+      model: "gpt-4o-mini",
       messageCount: messages.length
     });
 
@@ -59,7 +63,7 @@ serve(async (req) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: messages.length > 15 ? "gpt-4o" : "gpt-4o-mini", // Use a more powerful model for longer conversations
+        model: "gpt-4o-mini", // Use gpt-4o-mini for faster responses
         messages: messages,
         temperature: 0.7,
         max_tokens: 1024
