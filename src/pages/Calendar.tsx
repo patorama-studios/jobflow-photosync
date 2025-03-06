@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
@@ -10,7 +10,6 @@ const Calendar = () => {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
 
   const handleTimeSlotClick = (time: string) => {
@@ -25,30 +24,14 @@ const Calendar = () => {
     setShowCreateAppointment(true);
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    }
-  };
-
   return (
-    <MainLayout showCalendarSubmenu={true}>
+    <MainLayout>
       <PageTransition>
-        <div className="h-[calc(100vh-64px)] w-full">
+        <div className="h-[calc(100vh-64px)]">
           <GoogleCalendar 
             onTimeSlotClick={handleTimeSlotClick}
             onDayClick={handleDayClick}
             defaultView="month"
-            onToggleFullscreen={toggleFullscreen}
-            isFullscreen={isFullscreen}
           />
           
           <CreateAppointmentDialog

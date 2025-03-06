@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw, Maximize, Minimize } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { format, addDays, addMonths, subMonths, isToday } from 'date-fns';
 
 interface CalendarHeaderProps {
@@ -12,8 +12,6 @@ interface CalendarHeaderProps {
   onNext: () => void;
   onToday: () => void;
   onViewChange: (view: "month" | "week" | "day") => void;
-  onToggleFullscreen?: () => void;
-  isFullscreen?: boolean;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -24,8 +22,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onNext,
   onToday,
   onViewChange,
-  onToggleFullscreen,
-  isFullscreen = false,
 }) => {
   const getTitle = () => {
     if (view === "day") {
@@ -101,12 +97,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             Day
           </Button>
         </div>
-        
-        {onToggleFullscreen && (
-          <Button variant="ghost" size="icon" onClick={onToggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
-        )}
         
         <Button variant="ghost" size="icon" onClick={() => window.location.reload()}>
           <RefreshCw className="h-4 w-4" />
