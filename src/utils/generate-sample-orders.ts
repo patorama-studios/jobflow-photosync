@@ -12,6 +12,8 @@ export function generateSampleOrders(): Order[] {
       order_number: "ORD-2023-001",
       address: "123 Maple Street, Seattle, WA 98101",
       client: "John Smith - ABC Realty",
+      customerName: "John Smith - ABC Realty", // Add for compatibility 
+      propertyAddress: "123 Maple Street, Seattle, WA 98101", // Add for compatibility
       photographer: "Alex Johnson",
       photographerPayoutRate: 95,
       photographer_payout_rate: 95,
@@ -43,6 +45,8 @@ export function generateSampleOrders(): Order[] {
       order_number: "ORD-2023-002",
       address: "456 Oak Avenue, Seattle, WA 98102",
       client: "Sarah Johnson - Johnson Properties",
+      customerName: "Sarah Johnson - Johnson Properties", // Add for compatibility
+      propertyAddress: "456 Oak Avenue, Seattle, WA 98102", // Add for compatibility  
       photographer: "Maria Garcia",
       photographerPayoutRate: 120,
       photographer_payout_rate: 120,
@@ -73,6 +77,8 @@ export function generateSampleOrders(): Order[] {
       order_number: "ORD-2023-003",
       address: "789 Pine Boulevard, Bellevue, WA 98004",
       client: "Michael Williams - Luxury Homes",
+      customerName: "Michael Williams - Luxury Homes", // Add for compatibility
+      propertyAddress: "789 Pine Boulevard, Bellevue, WA 98004", // Add for compatibility
       photographer: "Wei Chen",
       photographerPayoutRate: 150,
       photographer_payout_rate: 150,
@@ -103,6 +109,8 @@ export function generateSampleOrders(): Order[] {
       order_number: "ORD-2023-004",
       address: "321 Cedar Road, Redmond, WA 98052",
       client: "Emily Davis - Modern Living",
+      customerName: "Emily Davis - Modern Living", // Add for compatibility
+      propertyAddress: "321 Cedar Road, Redmond, WA 98052", // Add for compatibility
       photographer: "Priya Patel",
       photographerPayoutRate: 85,
       photographer_payout_rate: 85,
@@ -133,6 +141,8 @@ export function generateSampleOrders(): Order[] {
       order_number: "ORD-2023-005",
       address: "654 Birch Lane, Kirkland, WA 98033",
       client: "David Wilson - Wilson Realty",
+      customerName: "David Wilson - Wilson Realty", // Add for compatibility
+      propertyAddress: "654 Birch Lane, Kirkland, WA 98033", // Add for compatibility
       photographer: "Thomas Wilson",
       photographerPayoutRate: 110,
       photographer_payout_rate: 110,

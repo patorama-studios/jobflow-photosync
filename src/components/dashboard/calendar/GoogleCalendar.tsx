@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { CalendarEvent } from '@/types/calendar';
-import { Order } from '@/types/orders';
+import { Order } from '@/types/order-types';
 import { CalendarToolbar } from './CalendarToolbar';
 import { CalendarEventPopover } from './CalendarEventPopover';
 import { useNavigate } from 'react-router-dom';

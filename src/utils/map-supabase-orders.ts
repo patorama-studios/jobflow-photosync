@@ -7,6 +7,7 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     orderNumber: order.order_number,
     order_number: order.order_number,
     client: order.client,
+    customerName: order.client, // Add for compatibility
     clientEmail: order.client_email,
     client_email: order.client_email,
     clientPhone: order.client_phone || '',
@@ -25,6 +26,7 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     square_feet: order.square_feet,
     status: order.status,
     address: order.address,
+    propertyAddress: order.address, // Add for compatibility
     city: order.city || '',
     state: order.state || '',
     zip: order.zip || '',
