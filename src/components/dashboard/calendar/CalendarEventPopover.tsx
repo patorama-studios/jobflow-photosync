@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit, X, MapPin, Calendar, Clock, User } from 'lucide-react';
-import { Order } from '@/types/orders';
+import { Order } from '@/types/order-types';
 import { CalendarEvent } from '@/types/calendar';
 
 interface CalendarEventPopoverProps {

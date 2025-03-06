@@ -1,5 +1,5 @@
 
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/order-types';
 
 export interface CalendarEvent {
   id: string | number;

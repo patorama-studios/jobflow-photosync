@@ -1,7 +1,8 @@
+
 import React, { useMemo, memo, useCallback } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { format, isSameDay } from "date-fns";
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/order-types';
 import { CalendarClock, MapPin, Timer } from 'lucide-react';
 
 interface JobCardProps {

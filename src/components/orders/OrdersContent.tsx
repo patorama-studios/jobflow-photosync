@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { OrderActions } from "./OrderActions";
 import { useNavigate } from "react-router-dom";
+import { Order } from "@/types/order-types";
 
 type OrdersContentProps = {
   view?: "list" | "grid";
@@ -59,7 +60,7 @@ const OrderRow = memo(({
   order, 
   onRowClick 
 }: { 
-  order: any, 
+  order: Order, 
   onRowClick: (id: string | number) => void 
 }) => (
   <TableRow 

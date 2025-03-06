@@ -33,6 +33,7 @@ export interface Order {
   package?: string;
   stripePaymentId?: string;
   notes?: string;
+  stripe_payment_id?: string; // Adding this to match the Supabase response structure
   
   // Legacy property names for compatibility
   order_number?: string;
@@ -45,5 +46,4 @@ export interface Order {
   photographer_payout_rate?: number;
   internal_notes?: string;
   customer_notes?: string;
-  stripe_payment_id?: string;
 }

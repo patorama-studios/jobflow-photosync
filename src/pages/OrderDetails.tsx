@@ -5,6 +5,8 @@ import { Edit, Trash2 } from 'lucide-react';
 import { useOrderDetails } from '@/hooks/use-order-details';
 import { useContractors } from '@/hooks/use-contractors';
 import { useRefunds } from '@/hooks/use-refunds';
+import { Order as OrderType } from '@/types/order-types';
+import { Order as UIOrder } from '@/types/orders';
 
 import { Button } from "@/components/ui/button";
 import { OrderInformation } from '@/components/orders/details/OrderInformation';
@@ -59,6 +61,10 @@ const OrderDetails = () => {
     return <p>Order not found.</p>;
   }
 
+  // Type assertion to resolve type mismatch
+  const typedOrder = order as unknown as UIOrder;
+  const typedEditedOrder = editedOrder as unknown as UIOrder;
+
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8 flex items-center justify-between">
@@ -87,26 +93,26 @@ const OrderDetails = () => {
       </div>
 
       <OrderInformation 
-        editedOrder={editedOrder}
+        editedOrder={typedEditedOrder}
         isEditing={isEditing}
         handleInputChange={handleInputChange}
         handleStatusChange={handleStatusChange}
       />
 
       <ClientInformation
-        editedOrder={editedOrder}
+        editedOrder={typedEditedOrder}
         isEditing={isEditing}
         handleInputChange={handleInputChange}
       />
 
       <PhotographerInformation
-        editedOrder={editedOrder}
+        editedOrder={typedEditedOrder}
         isEditing={isEditing}
         handleInputChange={handleInputChange}
       />
 
       <OrderNotes
-        editedOrder={editedOrder}
+        editedOrder={typedEditedOrder}
         isEditing={isEditing}
         handleInputChange={handleInputChange}
       />
@@ -117,7 +123,7 @@ const OrderDetails = () => {
 
       <RefundsSection 
         refundsForOrder={refundsForOrder}
-        order={order}
+        order={typedOrder}
       />
 
       <DeleteOrderDialog
