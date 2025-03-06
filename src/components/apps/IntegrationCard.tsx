@@ -11,16 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-type Integration = {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
-  connected: boolean;
-  status?: 'active' | 'pending' | 'error';
-  lastSynced?: string;
-};
+import { Integration } from './types';
 
 interface IntegrationCardProps {
   integration: Integration;

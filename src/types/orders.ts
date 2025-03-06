@@ -1,81 +1,69 @@
 
+// Define the type for order status
+export type OrderStatus = 
+  | "scheduled" 
+  | "completed" 
+  | "pending" 
+  | "canceled" 
+  | "rescheduled" 
+  | "in_progress"
+  | "editing"
+  | "review"
+  | "delivered";
+
+// Define the interface for an order
 export interface Order {
-  id: string | number;
-  orderNumber: string;
+  id: string;
+  order_number: string;
+  client: string;
+  clientEmail?: string; // Add clientEmail property
+  clientPhone?: string; // Add clientPhone property
   address: string;
   city: string;
   state: string;
   zip: string;
-  client: string;
-  clientEmail: string;
-  clientPhone?: string;
-  photographer?: string;
-  photographerPayoutRate?: number;
-  price: number;
-  propertyType: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  squareFeet: number;
-  status: 'pending' | 'scheduled' | 'completed';
-  additionalAppointments?: Array<{
-    id: string | number;
-    date: string;
-    time: string;
-    description: string;
-  }>;
-  customFields?: Record<string, any>;
-  customerNotes?: string;
-  internalNotes?: string;
+  date_created?: string;
+  scheduled_date: string;
+  scheduled_time: string;
+  photographer: string;
   package: string;
-  drivingTimeMin?: number;
-  previousLocation?: string;
-  mediaUploaded?: boolean;
-  mediaLinks?: string[];
-  contractors?: Array<{
-    id: string | number;
-    name: string;
-    role: string;
-    payoutRate?: number;
-    payoutAmount?: number;
-    notes?: string;
-  }>;
-  refundHistory?: RefundRecord[];
-  paymentStatus?: 'paid' | 'unpaid' | 'partially_refunded' | 'fully_refunded';
-  paymentMethod?: 'credit_card' | 'bank_transfer' | 'cash' | 'other';
-  stripePaymentId?: string;
-}
-
-export interface RefundRecord {
-  id: string | number;
-  amount: number;
-  date: string;
-  reason?: string;
-  status: 'pending' | 'completed' | 'failed';
-  stripeRefundId?: string;
-  isFullRefund: boolean;
-}
-
-export interface OrderFilters {
-  query: string;
-  setQuery: (query: string) => void;
-  status: string;
-  setStatus: (status: string) => void;
-  dateRange: { from?: Date; to?: Date };
-  setDateRange: (dateRange: { from?: Date; to?: Date }) => void;
-  sortDirection: "asc" | "desc";
-  setSortDirection: (direction: "asc" | "desc") => void;
-  resetFilters: () => void;
-}
-
-export interface OrderActionsProps {
-  orderId: string | number;
-}
-
-export interface Contractor {
-  id: string | number;
-  name: string;
-  role: string;
-  payoutRate?: number;
-  payoutAmount?: number;
+  property_type: string;
+  square_feet: number;
+  price: number;
+  status: OrderStatus;
   notes?: string;
+  photographer_payout_rate?: number;
+  photographer_payout_amount?: number;
+  stripePaymentId?: string; // Add stripePaymentId property
+}
+
+// Define the interface for order filters
+export interface OrderFilters {
+  status?: OrderStatus[];
+  photographer?: string;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
+  searchQuery?: string;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+}
+
+// Define the interface for pagination
+export interface Pagination {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+// Define the interface for order statistics
+export interface OrderStatistics {
+  total: number;
+  scheduled: number;
+  completed: number;
+  pending: number;
+  canceled: number;
+  revenue: number;
 }

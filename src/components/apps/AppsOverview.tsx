@@ -11,16 +11,7 @@ import {
   Megaphone,
   CreditCard
 } from 'lucide-react';
-
-type Integration = {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
-  connected: boolean;
-  status?: 'active' | 'pending' | 'error';
-  lastSynced?: string;
-};
+import { Integration } from './types';
 
 export function AppsOverview() {
   const [open, setOpen] = React.useState(false);

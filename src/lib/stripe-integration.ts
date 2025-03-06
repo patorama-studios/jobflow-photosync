@@ -1,53 +1,61 @@
 
+// This is a utility file for interacting with Stripe
 import { supabase } from '@/integrations/supabase/client';
 
+// Define the interface for Stripe configurations
 export interface StripeConfig {
   mode: 'test' | 'live';
-  account_id?: string;
-  connected_at?: string;
-}
-
-export interface Integration {
-  id: string;
-  name: string;
+  accountId?: string;
+  publishableKey?: string;
   connected: boolean;
-  config?: StripeConfig;
-  updated_at?: string;
 }
 
-// Check if Stripe is connected
-export const isStripeConnected = async (): Promise<boolean> => {
+/**
+ * Verifies Stripe API keys by making a request to the Stripe Connect edge function
+ */
+export const verifyStripeKeys = async (
+  secretKey: string,
+  mode: 'test' | 'live'
+): Promise<{ success: boolean; accountId?: string }> => {
   try {
-    // Since we don't have direct access to an 'integrations' table yet,
-    // we'll simulate this check by using the Supabase function
-    // This will be replaced once the table is created
-    const { data, error } = await supabase.rpc('get_stripe_status');
-    
+    const { data, error } = await supabase.functions.invoke('stripe-connect', {
+      body: {
+        action: 'verify',
+        secretKey,
+        mode
+      }
+    });
+
     if (error) {
-      console.error('Error checking Stripe connection:', error);
-      return false;
+      console.error('Error verifying Stripe keys:', error);
+      return { success: false };
     }
-    
-    return data?.connected || false;
+
+    return { 
+      success: true, 
+      accountId: data.accountId 
+    };
   } catch (error) {
-    console.error('Error checking Stripe connection:', error);
-    return false;
+    console.error('Error calling Stripe Connect function:', error);
+    return { success: false };
   }
 };
 
-// Get Stripe configuration
+/**
+ * Gets the current Stripe configuration from Supabase
+ */
 export const getStripeConfig = async (): Promise<StripeConfig | null> => {
   try {
-    // Since we don't have direct access to an 'integrations' table yet,
-    // we'll simulate this by using a Supabase function
-    // This will be replaced once the table is created
+    // In a real implementation, this would query a proper table
+    // For now, we'll use a custom RPC function
     const { data, error } = await supabase.rpc('get_stripe_config');
     
     if (error) {
       console.error('Error getting Stripe config:', error);
       return null;
     }
-    
+
+    // Parse the response data into our StripeConfig interface
     return data as StripeConfig;
   } catch (error) {
     console.error('Error getting Stripe config:', error);
@@ -55,27 +63,25 @@ export const getStripeConfig = async (): Promise<StripeConfig | null> => {
   }
 };
 
-// Verify Stripe credentials using the Edge Function
-export const verifyStripeCredentials = async (
-  secretKey: string,
-  mode: 'test' | 'live'
-): Promise<{ success: boolean; accountId?: string; error?: string }> => {
+/**
+ * Disconnects the Stripe integration
+ */
+export const disconnectStripe = async (): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.functions.invoke('stripe-connect', {
-      body: { action: 'verify', secretKey, mode },
+    const { error } = await supabase.rpc('save_stripe_config', {
+      is_connected: false,
+      stripe_mode: null,
+      account_id: null
     });
-
+    
     if (error) {
-      console.error('Error verifying Stripe credentials:', error);
-      return { success: false, error: error.message };
+      console.error('Error disconnecting Stripe:', error);
+      return false;
     }
 
-    return data;
+    return true;
   } catch (error) {
-    console.error('Error verifying Stripe credentials:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
+    console.error('Error disconnecting Stripe:', error);
+    return false;
   }
 };
