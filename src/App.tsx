@@ -36,10 +36,12 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
-          <Router>
-            <HeaderSettingsProvider>
+          <HeaderSettingsProvider>
+            <Router>
               <Routes>
-                <Route path="/" element={<Home />} />
+                {/* Explicit index route that redirects to Calendar */}
+                <Route index element={<Navigate to="/calendar" replace />} />
+                <Route path="/" element={<Navigate to="/calendar" replace />} />
                 <Route path="/login" element={<Login />} />
                 <Route 
                   path="/dashboard" 
@@ -157,8 +159,8 @@ function App() {
               </Routes>
               <Toaster />
               <Sonner />
-            </HeaderSettingsProvider>
-          </Router>
+            </Router>
+          </HeaderSettingsProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
