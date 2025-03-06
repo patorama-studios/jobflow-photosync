@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Order } from '@/hooks/useSampleOrders';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { CalendarOrder } from '@/types/calendar';
 
 interface GoogleWeekViewProps {
   date: Date;
-  orders: Order[];
+  orders: CalendarOrder[];
   onTimeSlotClick?: (time: string) => void;
 }
 
@@ -37,9 +37,9 @@ export const GoogleWeekView: React.FC<GoogleWeekViewProps> = ({
   // Get appointments for each day and time slot
   const getAppointmentsForSlot = (day: Date, timeSlot: string) => {
     return orders.filter(order => {
-      if (!order.scheduledDate) return false;
+      if (!order.scheduled_date) return false;
       
-      const orderDate = new Date(order.scheduledDate);
+      const orderDate = new Date(order.scheduled_date);
       const orderTime = format(orderDate, 'h:mm a');
       
       return isSameDay(orderDate, day) && orderTime === timeSlot;

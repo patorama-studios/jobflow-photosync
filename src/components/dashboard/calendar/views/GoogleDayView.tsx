@@ -1,11 +1,11 @@
 
 import React, { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
-import { Order } from '@/hooks/useSampleOrders';
+import { CalendarOrder } from '@/types/calendar';
 
 interface GoogleDayViewProps {
   date: Date;
-  orders: Order[];
+  orders: CalendarOrder[];
   photographers: Array<{id: number; name: string; color: string}>;
   selectedPhotographers: number[];
   onTimeSlotClick?: (time: string) => void;
@@ -29,11 +29,11 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      if (!order.scheduledDate) return false;
-      const orderDate = new Date(order.scheduledDate);
+      if (!order.scheduled_date) return false;
+      const orderDate = new Date(order.scheduled_date);
       return isSameDay(orderDate, date) && selectedPhotographers.some(id => {
         const photographer = photographers.find(p => p.id === id);
-        return photographer && order.photographer.includes(photographer.name);
+        return photographer && order.photographer && order.photographer.includes(photographer.name);
       });
     });
   }, [orders, date, selectedPhotographers, photographers]);
@@ -72,12 +72,14 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
             onClick={() => handleTimeSlotClick(time)}
           >
             {filteredOrders.map(order => {
-              if (!order.scheduledDate) return null;
-              const orderDate = new Date(order.scheduledDate);
+              if (!order.scheduled_date) return null;
+              const orderDate = new Date(order.scheduled_date);
               const orderTime = format(orderDate, 'H:mm');
 
               if (orderTime === time) {
-                const photographer = photographers.find(p => order.photographer.includes(p.name));
+                const photographer = photographers.find(p => 
+                  order.photographer && order.photographer.includes(p.name)
+                );
                 const color = photographer?.color || 'gray';
 
                 return (
@@ -90,7 +92,7 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
                       // Handle event click differently if needed
                     }}
                   >
-                    {order.client || 'Untitled'} - {order.photographer}
+                    {order.client || 'Untitled'} - {order.photographer || 'Unassigned'}
                   </div>
                 );
               }

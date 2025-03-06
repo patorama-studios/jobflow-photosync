@@ -11,27 +11,13 @@ import { GoogleCardView } from './views/GoogleCardView';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CalendarOrder } from '@/types/calendar';
+import { Order as SampleOrder } from '@/hooks/useSampleOrders';
 
 interface GoogleCalendarProps {
   onTimeSlotClick?: (time: string) => void;
   onDayClick?: (date: Date) => void;
   defaultView?: "month" | "week" | "day" | "card";
   isMobileView?: boolean;
-}
-
-// Define types for the view components
-interface GoogleWeekViewProps {
-  date: Date;
-  orders: CalendarOrder[];
-  onTimeSlotClick?: (time: string) => void;
-}
-
-interface GoogleDayViewProps {
-  date: Date;
-  orders: CalendarOrder[];
-  photographers: Array<{id: number; name: string; color: string}>;
-  selectedPhotographers: number[];
-  onTimeSlotClick?: (time: string) => void;
 }
 
 const samplePhotographers = [
@@ -61,10 +47,30 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   const filteredOrders = useMemo(() => {
     if (!orders.length) return [] as CalendarOrder[];
     
-    // Map orders to CalendarOrder type
+    // Map SampleOrder to CalendarOrder
     const calendarOrders: CalendarOrder[] = orders.map(order => ({
-      ...order,
-      address: `${order.address || ''}, ${order.city || ''}, ${order.state || ''} ${order.zip || ''}`,
+      id: order.id,
+      order_number: order.orderNumber,
+      client: order.client,
+      client_email: order.clientEmail,
+      client_phone: order.clientPhone,
+      address: order.address,
+      city: order.city || '',
+      state: order.state || '',
+      zip: order.zip || '',
+      date_created: new Date().toISOString(),
+      scheduled_date: order.scheduledDate,
+      scheduled_time: order.scheduledTime,
+      photographer: order.photographer,
+      package: order.package || '',
+      property_type: order.propertyType,
+      square_feet: order.squareFeet,
+      price: order.price,
+      status: order.status as any,
+      photographer_payout_rate: order.photographerPayoutRate,
+      stripe_payment_id: order.stripePaymentId,
+      notes: '',
+      location: `${order.address}, ${order.city || ''}, ${order.state || ''} ${order.zip || ''}`,
     }));
     
     return calendarOrders.filter(order => {
