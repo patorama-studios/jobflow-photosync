@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { Clock, Calendar as CalendarIcon } from 'lucide-react';
@@ -62,6 +63,26 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
     }
   };
 
+  // Generate time options in 45-minute increments
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 8; hour <= 17; hour++) {
+      const hourStr = hour > 12 ? (hour - 12) : hour;
+      const amPm = hour >= 12 ? 'PM' : 'AM';
+      
+      // Add hour on the hour
+      options.push(`${hourStr}:00 ${amPm}`);
+      
+      // Add 45 minutes past the hour (except for the last hour)
+      if (hour < 17) {
+        options.push(`${hourStr}:45 ${amPm}`);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -102,16 +123,9 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="8:00 AM">8:00 AM</SelectItem>
-              <SelectItem value="9:00 AM">9:00 AM</SelectItem>
-              <SelectItem value="10:00 AM">10:00 AM</SelectItem>
-              <SelectItem value="11:00 AM">11:00 AM</SelectItem>
-              <SelectItem value="12:00 PM">12:00 PM</SelectItem>
-              <SelectItem value="1:00 PM">1:00 PM</SelectItem>
-              <SelectItem value="2:00 PM">2:00 PM</SelectItem>
-              <SelectItem value="3:00 PM">3:00 PM</SelectItem>
-              <SelectItem value="4:00 PM">4:00 PM</SelectItem>
-              <SelectItem value="5:00 PM">5:00 PM</SelectItem>
+              {timeOptions.map((time) => (
+                <SelectItem key={time} value={time}>{time}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -120,15 +134,14 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
       
         <div className="space-y-2">
           <Label htmlFor="duration">Duration</Label>
-          <Select defaultValue="60">
+          <Select defaultValue="45">
             <SelectTrigger>
               <SelectValue placeholder="Select duration" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="30">30 minutes</SelectItem>
-              <SelectItem value="60">1 hour</SelectItem>
+              <SelectItem value="45">45 minutes</SelectItem>
               <SelectItem value="90">1.5 hours</SelectItem>
-              <SelectItem value="120">2 hours</SelectItem>
+              <SelectItem value="135">2.25 hours</SelectItem>
               <SelectItem value="180">3 hours</SelectItem>
             </SelectContent>
           </Select>

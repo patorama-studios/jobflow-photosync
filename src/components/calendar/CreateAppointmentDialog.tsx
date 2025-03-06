@@ -56,8 +56,8 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl p-0 gap-0">
-        <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b">
+      <DialogContent className="max-w-4xl p-0 gap-0 h-[90vh] flex flex-col">
+        <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b shrink-0">
           <DialogTitle className="text-xl">Create Appointment</DialogTitle>
           <div className="flex items-center">
             <Button variant="ghost" className="text-primary">Switch to Block</Button>
@@ -67,18 +67,20 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
           </div>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
           {/* Left Column - Order Details */}
           <OrderDetailsForm />
           
           {/* Right Column - Appointment Details */}
-          <AppointmentDetailsForm 
-            appointmentDate={appointmentDate}
-            setAppointmentDate={setAppointmentDate}
-          />
+          <div className="p-6">
+            <AppointmentDetailsForm 
+              appointmentDate={appointmentDate}
+              setAppointmentDate={setAppointmentDate}
+            />
+          </div>
         </div>
         
-        <DialogFooter className="px-6 py-4 border-t">
+        <DialogFooter className="px-6 py-4 border-t mt-auto shrink-0">
           <Button variant="outline" onClick={onClose} className="mr-2">Close</Button>
           <Button onClick={handleCreateAppointment}>Create Appointment</Button>
         </DialogFooter>

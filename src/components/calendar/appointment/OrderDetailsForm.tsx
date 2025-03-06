@@ -1,15 +1,25 @@
 
 import React, { useState } from 'react';
-import { Bold, Italic, Underline, Link2, AlignLeft, List, ListOrdered, Search } from 'lucide-react';
+import { Bold, Italic, Underline, Link2, AlignLeft, List, ListOrdered, Search, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GoogleAddressAutocomplete } from '@/components/ui/google-address-autocomplete';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
+import { Label } from '@/components/ui/label';
+import { useClients } from '@/hooks/use-clients';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
+interface CustomItem {
+  id: string;
+  name: string;
+  price: number;
+}
 
 export const OrderDetailsForm: React.FC = () => {
   const { isLoaded } = useGoogleMaps();
+  const { clients } = useClients();
   const [addressDetails, setAddressDetails] = useState({
     formattedAddress: '',
     streetAddress: '',
@@ -19,6 +29,50 @@ export const OrderDetailsForm: React.FC = () => {
     lat: 0,
     lng: 0
   });
+  const [searchCustomer, setSearchCustomer] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    email: '',
+    company: ''
+  });
+  const [customItems, setCustomItems] = useState<CustomItem[]>([]);
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    price: 0
+  });
+  const [searchProduct, setSearchProduct] = useState('');
+
+  // Sample products for demonstration
+  const products = [
+    { id: 'p1', name: 'Standard Photography Package', price: 149 },
+    { id: 'p2', name: 'Premium Photography Package', price: 249 },
+    { id: 'p3', name: 'Virtual Tour Package', price: 199 },
+    { id: 'p4', name: 'Drone Photography', price: 299 },
+    { id: 'p5', name: 'Twilight Photography', price: 179 }
+  ];
+  
+  // Sample photographers for demonstration
+  const photographers = [
+    { id: 'ph1', name: 'Maria Garcia' },
+    { id: 'ph2', name: 'Alex Johnson' },
+    { id: 'ph3', name: 'Wei Chen' },
+    { id: 'ph4', name: 'David Smith' },
+    { id: 'ph5', name: 'Sophia Patel' }
+  ];
+
+  // Filter products based on search term
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchProduct.toLowerCase())
+  );
+
+  // Filter clients based on search term
+  const filteredClients = clients.filter(client => 
+    client.name.toLowerCase().includes(searchCustomer.toLowerCase()) ||
+    (client.email && client.email.toLowerCase().includes(searchCustomer.toLowerCase()))
+  );
 
   const handleAddressSelect = (address: {
     formattedAddress: string;
@@ -43,8 +97,44 @@ export const OrderDetailsForm: React.FC = () => {
     console.log('Selected address:', address);
   };
 
+  const handleCustomerSelect = (client: any) => {
+    setSelectedCustomer(client);
+    setSearchCustomer('');
+  };
+
+  const handleCreateCustomer = () => {
+    // In a real app, this would create a new customer in the database
+    console.log('Creating new customer:', newCustomer);
+    setSelectedCustomer({
+      id: `new-${Date.now()}`,
+      name: newCustomer.name,
+      email: newCustomer.email,
+      company: newCustomer.company
+    });
+    setShowNewCustomerDialog(false);
+    setNewCustomer({ name: '', email: '', company: '' });
+  };
+
+  const handleAddCustomItem = () => {
+    if (newItem.name && newItem.price > 0) {
+      setCustomItems([...customItems, { 
+        id: `item-${Date.now()}`, 
+        name: newItem.name, 
+        price: newItem.price 
+      }]);
+      setNewItem({ name: '', price: 0 });
+      setShowAddItemDialog(false);
+    }
+  };
+
+  const handleProductSelect = (product: any) => {
+    console.log('Selected product:', product);
+    // In a real app, this would add the product to the order
+    setSearchProduct('');
+  };
+
   return (
-    <div className="p-6 bg-muted/20">
+    <div className="p-6 bg-muted/20 max-h-[calc(100vh-200px)] overflow-y-auto">
       <h2 className="text-xl font-semibold mb-6">Create New Order</h2>
       
       <div className="space-y-6">
@@ -66,6 +156,26 @@ export const OrderDetailsForm: React.FC = () => {
           {addressDetails.formattedAddress && (
             <div className="mt-2 p-2 bg-primary/5 rounded text-sm">
               <p className="font-medium">{addressDetails.formattedAddress}</p>
+              {addressDetails.streetAddress && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Street</p>
+                    <p>{addressDetails.streetAddress}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">City</p>
+                    <p>{addressDetails.city}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">State</p>
+                    <p>{addressDetails.state}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Postal Code</p>
+                    <p>{addressDetails.postalCode}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -74,9 +184,62 @@ export const OrderDetailsForm: React.FC = () => {
           <p className="text-sm font-medium mb-2">Customer</p>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search for a customer..." className="pl-9" />
+            <Input 
+              placeholder="Search for a customer..." 
+              className="pl-9"
+              value={searchCustomer}
+              onChange={(e) => setSearchCustomer(e.target.value)}
+            />
           </div>
-          <Button variant="link" className="p-0 h-auto text-primary mt-1">Create New Customer</Button>
+          
+          {searchCustomer && filteredClients.length > 0 && (
+            <div className="mt-1 border rounded-md shadow-sm bg-background max-h-40 overflow-y-auto z-10 absolute">
+              {filteredClients.map(client => (
+                <div 
+                  key={client.id}
+                  className="p-2 hover:bg-muted/50 cursor-pointer"
+                  onClick={() => handleCustomerSelect(client)}
+                >
+                  <p className="font-medium">{client.name}</p>
+                  <p className="text-sm text-muted-foreground">{client.email}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {selectedCustomer && (
+            <div className="mt-2 p-2 bg-primary/5 rounded text-sm">
+              <p className="font-medium">{selectedCustomer.name}</p>
+              <p className="text-muted-foreground">{selectedCustomer.email}</p>
+              {selectedCustomer.company && (
+                <p className="text-muted-foreground">{selectedCustomer.company}</p>
+              )}
+            </div>
+          )}
+          
+          <Button 
+            variant="link" 
+            className="p-0 h-auto text-primary mt-1"
+            onClick={() => setShowNewCustomerDialog(true)}
+          >
+            Create New Customer
+          </Button>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium mb-2">Photographer</p>
+          <Select>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a photographer" />
+            </SelectTrigger>
+            <SelectContent>
+              {photographers.map((photographer) => (
+                <SelectItem key={photographer.id} value={photographer.id}>
+                  {photographer.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <div>
@@ -114,16 +277,56 @@ export const OrderDetailsForm: React.FC = () => {
           <p className="text-sm font-medium mb-2">Products</p>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search for a product..." className="pl-9" />
+            <Input 
+              placeholder="Search for a product..." 
+              className="pl-9"
+              value={searchProduct}
+              onChange={(e) => setSearchProduct(e.target.value)}
+            />
           </div>
+          
+          {searchProduct && filteredProducts.length > 0 && (
+            <div className="mt-1 border rounded-md shadow-sm bg-background max-h-40 overflow-y-auto z-10 absolute">
+              {filteredProducts.map(product => (
+                <div 
+                  key={product.id}
+                  className="p-2 hover:bg-muted/50 cursor-pointer"
+                  onClick={() => handleProductSelect(product)}
+                >
+                  <div className="flex justify-between">
+                    <p className="font-medium">{product.name}</p>
+                    <p className="font-medium">${product.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         
         <div>
           <div className="flex justify-between items-center mb-2">
             <p className="text-sm font-medium">Custom Items</p>
-            <Button variant="link" className="p-0 h-auto text-primary">Add Custom Item</Button>
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-primary"
+              onClick={() => setShowAddItemDialog(true)}
+            >
+              Add Custom Item
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground">No custom items added.</p>
+          
+          {customItems.length > 0 ? (
+            <div className="space-y-2">
+              {customItems.map(item => (
+                <div key={item.id} className="flex justify-between p-2 bg-muted/30 rounded">
+                  <p>{item.name}</p>
+                  <p className="font-medium">${item.price}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No custom items added.</p>
+          )}
         </div>
         
         <div>
@@ -141,6 +344,78 @@ export const OrderDetailsForm: React.FC = () => {
           </Select>
         </div>
       </div>
+
+      {/* New Customer Dialog */}
+      <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Customer</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input 
+                id="name" 
+                value={newCustomer.name}
+                onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email"
+                value={newCustomer.email}
+                onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="company">Company (Optional)</Label>
+              <Input 
+                id="company"
+                value={newCustomer.company}
+                onChange={(e) => setNewCustomer({...newCustomer, company: e.target.value})}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewCustomerDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateCustomer}>Create Customer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Custom Item Dialog */}
+      <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Custom Item</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="itemName">Item Name</Label>
+              <Input 
+                id="itemName" 
+                value={newItem.name}
+                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="itemPrice">Price</Label>
+              <Input 
+                id="itemPrice" 
+                type="number"
+                value={newItem.price || ''}
+                onChange={(e) => setNewItem({...newItem, price: parseFloat(e.target.value) || 0})}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddItemDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddCustomItem}>Add Item</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
