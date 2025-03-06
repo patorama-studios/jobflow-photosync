@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -888,4 +888,46 @@ const OrderDetails: React.FC = () => {
         {/* Deliver Order Dialog */}
         <Dialog open={deliverDialogOpen} onOpenChange={setDeliverDialogOpen}>
           <DialogContent className="max-w-md">
-            <
+            <DialogHeader>
+              <DialogTitle>Deliver Order</DialogTitle>
+              <DialogDescription>
+                Send delivery notification to your client.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Recipient Email</h4>
+                <Input
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  placeholder={order.clientEmail || "client@example.com"}
+                />
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Email Message</h4>
+                <Textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  placeholder="Your order is ready! Click the link below to access your content."
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="include-links" checked className="rounded border-gray-300" />
+                  <label htmlFor="include-links">Include download links</label>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeliverDialogOpen(false)}>Cancel</Button>
+              <Button onClick={confirmDeliverOrder}>Send Delivery</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageTransition>
+  );
+};
+
+export default OrderDetails;
