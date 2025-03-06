@@ -2,7 +2,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/patorama/public_html/book/
+    - export DEPLOYPATH=/home/patorama/public_html/book.patorama.com.au/
     - /bin/cp -R build/* $DEPLOYPATH
     - /bin/cp .htaccess $DEPLOYPATH
 
