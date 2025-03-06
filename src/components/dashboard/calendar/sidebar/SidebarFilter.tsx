@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format, addDays, subDays, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
-import { PhotographerFilter } from '../../layout/sidebar/PhotographerFilter';
+import { PhotographerFilter } from '@/components/layout/sidebar/PhotographerFilter';
 
 type Photographer = {
   id: number;
