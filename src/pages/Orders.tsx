@@ -2,7 +2,6 @@
 import React, { lazy, Suspense, memo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { SidebarLayout } from '@/components/layout/SidebarLayout';
 import { OrdersView } from '@/components/orders/OrdersView';
 
 // Lazy load the OrderDetails component
