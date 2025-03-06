@@ -8,12 +8,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Optimize HMR for better development experience
+    hmr: {
+      overlay: true,
+    },
   },
   plugins: [
     react({
-      // SWC config options
+      // Use SWC's fast refresh for development
       jsxImportSource: undefined,
       tsDecorators: false,
+      // Enable fast refresh for development
+      fastRefresh: mode === 'development',
     }),
     mode === 'development' &&
     componentTagger(),
@@ -30,12 +36,13 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: mode === 'production',
         drop_debugger: mode === 'production',
+        pure_funcs: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
       },
     },
     rollupOptions: {
       output: {
         manualChunks: {
-          // Main vendor bundle 
+          // Core vendor bundle - most used packages
           vendor: ['react', 'react-dom', 'react-router-dom'],
           
           // UI components bundle
@@ -54,21 +61,38 @@ export default defineConfig(({ mode }) => ({
             '@supabase/supabase-js'
           ]
         }
-      }
+      },
+      // Disable tree-shaking for faster builds in development
+      treeshake: mode === 'production',
     },
     chunkSizeWarningLimit: 1000,
     // Generate source maps only in development
     sourcemap: mode !== 'production',
+    // Improve CSS extraction
+    cssCodeSplit: true,
+    // Keep assets inline up to this size to reduce HTTP requests
+    assetsInlineLimit: 4096,
   },
   optimizeDeps: {
     // Improve first load time by pre-bundling these dependencies
     include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
     // Exclude large dependencies from pre-bundling if they're not needed on initial load
-    exclude: ['recharts']
+    exclude: ['recharts'],
+    // Enable dependency optimization in development mode
+    force: true,
   },
   // Reduce build size by excluding dev-only code in production
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode),
     __DEV__: mode !== 'production',
+  },
+  // Experimental features for more performance
+  esbuild: {
+    // Enable JSX optimization
+    jsx: 'automatic',
+    // Use native ESBuild minification for JS
+    minifyIdentifiers: mode === 'production',
+    minifySyntax: mode === 'production',
+    minifyWhitespace: mode === 'production',
   },
 }));

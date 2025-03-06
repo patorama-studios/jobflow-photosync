@@ -23,7 +23,7 @@ export function getConnectionStatus(integration: Integration): {
 } {
   return {
     isConnected: integration.connected,
-    status: integration.status,
+    status: integration.status === 'inactive' ? 'pending' : integration.status,
     lastSynced: integration.lastSynced
   };
 }

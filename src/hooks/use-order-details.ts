@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Order, OrderStatus, RefundRecord } from '@/types/orders';
 import { useOrders } from '@/hooks/use-orders';
 import { useNavigate } from 'react-router-dom';
@@ -16,35 +16,28 @@ export function useOrderDetails(id: string | undefined) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [refundsForOrder, setRefundsForOrder] = useState<RefundRecord[]>([]);
 
-  useEffect(() => {
-    if (id && orders) {
-      const foundOrder = orders.find((order) => order.id === id);
-      setOrder(foundOrder || null);
-      setEditedOrder(foundOrder ? { ...foundOrder } : null);
-    }
-  }, [id, orders]);
-
-  const handleEditClick = () => {
+  // Use useCallback for event handlers to prevent unnecessary re-renders
+  const handleEditClick = useCallback(() => {
     setIsEditing(true);
-  };
+  }, []);
 
-  const handleCancelClick = () => {
+  const handleCancelClick = useCallback(() => {
     setIsEditing(false);
     if (order) {
       setEditedOrder({ ...order });
     }
-  };
+  }, [order]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEditedOrder((prev) => (prev ? { ...prev, [name]: value } : prev));
-  };
+  }, []);
 
-  const handleStatusChange = (status: OrderStatus) => {
+  const handleStatusChange = useCallback((status: OrderStatus) => {
     setEditedOrder((prev) => (prev ? { ...prev, status: status } : prev));
-  };
+  }, []);
 
-  const handleSaveClick = () => {
+  const handleSaveClick = useCallback(() => {
     if (!editedOrder) return;
 
     // Simulate API update
@@ -61,13 +54,13 @@ export function useOrderDetails(id: string | undefined) {
         description: "Your order has been updated successfully.",
       });
     }, 500);
-  };
+  }, [editedOrder, toast]);
 
-  const handleDeleteClick = () => {
+  const handleDeleteClick = useCallback(() => {
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (id) {
       // Simulate API delete
       setTimeout(() => {
@@ -80,7 +73,16 @@ export function useOrderDetails(id: string | undefined) {
         });
       }, 500);
     }
-  };
+  }, [id, navigate, toast]);
+
+  // Use memoized effect to improve performance
+  useEffect(() => {
+    if (id && orders) {
+      const foundOrder = orders.find((order) => order.id === id);
+      setOrder(foundOrder || null);
+      setEditedOrder(foundOrder ? { ...foundOrder } : null);
+    }
+  }, [id, orders]);
 
   return {
     order,

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,12 @@ interface PhotographerInformationProps {
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
 }
 
-export function PhotographerInformation({ editedOrder, isEditing, handleInputChange }: PhotographerInformationProps) {
+// Use memo to prevent unnecessary re-renders
+export const PhotographerInformation = memo(function PhotographerInformation({ 
+  editedOrder, 
+  isEditing, 
+  handleInputChange 
+}: PhotographerInformationProps) {
   return (
     <Card className="mt-8">
       <CardHeader>
@@ -46,4 +51,4 @@ export function PhotographerInformation({ editedOrder, isEditing, handleInputCha
       </CardContent>
     </Card>
   );
-}
+});

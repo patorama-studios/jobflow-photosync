@@ -4,58 +4,88 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 
-// Apply theme and font immediately on script execution to prevent flash of wrong theme/style
+// Apply theme and font immediately to prevent layout shifts
 const applyThemeAndFont = () => {
-  // Theme application
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  if (savedTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else if (savedTheme === 'light') {
-    document.documentElement.classList.remove('dark');
-  } else {
-    // System preference
+  try {
+    // Theme application
+    const savedTheme = localStorage.getItem('theme') || 'system';
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', prefersDark);
-  }
-  
-  // Font application
-  const savedFont = localStorage.getItem('preferredFont');
-  if (savedFont) {
-    document.body.style.fontFamily = `${savedFont}, sans-serif`;
-  }
-  
-  // Font size application
-  const savedFontSize = localStorage.getItem('fontSize');
-  if (savedFontSize) {
-    document.documentElement.style.fontSize = `${savedFontSize}px`;
+    
+    if (savedTheme === 'dark' || (savedTheme === 'system' && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Font application
+    const savedFont = localStorage.getItem('preferredFont');
+    if (savedFont) {
+      document.body.style.fontFamily = `${savedFont}, sans-serif`;
+    }
+    
+    // Font size application
+    const savedFontSize = localStorage.getItem('fontSize');
+    if (savedFontSize) {
+      document.documentElement.style.fontSize = `${savedFontSize}px`;
+    }
+  } catch (error) {
+    console.error('Failed to apply theme settings:', error);
+    // Continue with default theme/font if there's an error
   }
 };
 
-// Execute theme and font application immediately
+// Execute theme application immediately
 applyThemeAndFont();
 
 // Function to mount the app with error handling
 const mountApp = () => {
   try {
+    // Pre-fetch root element for better performance
     const rootElement = document.getElementById("root");
-    if (rootElement) {
-      const root = createRoot(rootElement);
-      root.render(
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      );
-    } else {
-      console.error("Root element not found");
+    if (!rootElement) {
+      throw new Error("Root element not found");
     }
+    
+    // Create and mount root
+    const root = createRoot(rootElement);
+    root.render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
   } catch (error) {
     console.error("Error mounting app:", error);
+    // Display error message on the page
+    const errorElement = document.createElement('div');
+    errorElement.className = 'error-container';
+    errorElement.innerHTML = `
+      <h2>Application Error</h2>
+      <p>Sorry, there was a problem loading the application. Please try refreshing the page.</p>
+      <p>Technical details: ${error instanceof Error ? error.message : String(error)}</p>
+    `;
+    document.body.appendChild(errorElement);
   }
 };
 
-// Optimized app mounting with fallback and error handling
-if (typeof window.requestIdleCallback === 'function') {
-  window.requestIdleCallback(mountApp, { timeout: 2000 }); // Add timeout to ensure it runs
+// Use native browser API if available, else use setTimeout
+if (navigator.onLine) {
+  // Only optimize startup if we're online
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(mountApp, { timeout: 2000 }); // Add timeout to ensure it runs
+  } else {
+    // Use queueMicrotask for better performance than setTimeout
+    queueMicrotask(mountApp);
+  }
 } else {
-  setTimeout(mountApp, 1);
+  // If offline, mount immediately
+  mountApp();
+}
+
+// Register service worker for production
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(error => {
+      console.error('ServiceWorker registration failed:', error);
+    });
+  });
 }

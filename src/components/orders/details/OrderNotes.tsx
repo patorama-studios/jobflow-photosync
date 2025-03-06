@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,12 @@ interface OrderNotesProps {
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
 }
 
-export function OrderNotes({ editedOrder, isEditing, handleInputChange }: OrderNotesProps) {
+// Use memo to prevent unnecessary re-renders
+export const OrderNotes = memo(function OrderNotes({ 
+  editedOrder, 
+  isEditing, 
+  handleInputChange 
+}: OrderNotesProps) {
   return (
     <Card className="mt-8">
       <CardHeader>
@@ -42,4 +47,4 @@ export function OrderNotes({ editedOrder, isEditing, handleInputChange }: OrderN
       </CardContent>
     </Card>
   );
-}
+});

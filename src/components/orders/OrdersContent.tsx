@@ -26,16 +26,76 @@ type OrdersContentProps = {
   onViewChange?: (view: "list" | "grid") => void;
 };
 
-export const OrdersContent = memo(({ 
+// Create separate memoized components for better performance
+const TableHeader = memo(() => (
+  <TableHead>
+    <TableRow>
+      <TableHead>Order ID</TableHead>
+      <TableHead>Customer</TableHead>
+      <TableHead>Date</TableHead>
+      <TableHead>Amount</TableHead>
+      <TableHead>Status</TableHead>
+      <TableHead className="text-right">Actions</TableHead>
+    </TableRow>
+  </TableHead>
+));
+
+TableHeader.displayName = 'TableHeader';
+
+const TableFooterComponent = memo(({ count }: { count: number }) => (
+  <TableFooter>
+    <TableRow>
+      <TableCell colSpan={6} className="text-right">
+        Total {count} orders
+      </TableCell>
+    </TableRow>
+  </TableFooter>
+));
+
+TableFooterComponent.displayName = 'TableFooterComponent';
+
+// Memoized table row component to prevent unnecessary re-renders
+const OrderRow = memo(({ 
+  order, 
+  onRowClick 
+}: { 
+  order: any, 
+  onRowClick: (id: string | number) => void 
+}) => (
+  <TableRow 
+    className="cursor-pointer hover:bg-accent/50"
+    onClick={() => onRowClick(order.id)}
+  >
+    <TableCell>{order.orderNumber || order.id}</TableCell>
+    <TableCell>{order.client || order.customer || "Unknown"}</TableCell>
+    <TableCell>{order.scheduledDate || order.date || "N/A"}</TableCell>
+    <TableCell>${order.price || order.amount || 0}</TableCell>
+    <TableCell>
+      <Badge variant="secondary">{order.status || "pending"}</Badge>
+    </TableCell>
+    <TableCell 
+      className="text-right"
+      onClick={(e) => e.stopPropagation()} // Prevent row click when clicking on actions
+    >
+      <OrderActions orderId={order.id} />
+    </TableCell>
+  </TableRow>
+));
+
+OrderRow.displayName = 'OrderRow';
+
+// Main component with performance optimizations
+export const OrdersContent = memo(function OrdersContent({ 
   view = "list",
   onViewChange = () => {},
-}: OrdersContentProps) => {
+}: OrdersContentProps) {
   const { orders } = useSampleOrders();
   const navigate = useNavigate();
   
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Use useCallback for all event handlers
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   }, []);
@@ -50,21 +110,26 @@ export const OrdersContent = memo(({
 
   // Memoize filtered orders to avoid recalculation on every render
   const filteredOrders = useMemo(() => {
-    const ordersData: any[] = orders || [];
+    const ordersData = orders || [];
+    if (!searchQuery && !date) return ordersData;
+    
+    const searchTermLower = searchQuery.toLowerCase();
     
     return ordersData.filter((order: any) => {
-      const searchTerm = searchQuery.toLowerCase();
-      const orderMatchesSearch =
-        (order.client?.toLowerCase().includes(searchTerm) || false) ||
-        (order.orderNumber?.toLowerCase().includes(searchTerm) || false) ||
-        (order.address?.toLowerCase().includes(searchTerm) || false);
+      // Skip search filtering if no search term
+      const orderMatchesSearch = !searchQuery || 
+        (order.client?.toLowerCase().includes(searchTermLower) || false) ||
+        (order.orderNumber?.toLowerCase().includes(searchTermLower) || false) ||
+        (order.address?.toLowerCase().includes(searchTermLower) || false);
 
+      // Skip date filtering if no date selected
+      if (!date) return orderMatchesSearch;
+      
       const orderDate = order.scheduledDate ? new Date(order.scheduledDate) : null;
-      const selectedDate = date ? new Date(date) : null;
+      const selectedDate = date;
 
-      const orderMatchesDate = selectedDate && orderDate
-        ? orderDate.toDateString() === selectedDate.toDateString()
-        : true;
+      const orderMatchesDate = !selectedDate || !orderDate ? true :
+        orderDate.toDateString() === selectedDate.toDateString();
 
       return orderMatchesSearch && orderMatchesDate;
     });
@@ -111,38 +176,15 @@ export const OrdersContent = memo(({
 
       <Table>
         <TableCaption>A list of your recent orders.</TableCaption>
-        <TableHead>
-          <TableRow>
-            <TableHead>Order ID</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHead>
+        <TableHeader />
         <TableBody>
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order: any) => (
-              <TableRow 
+              <OrderRow 
                 key={order.id} 
-                className="cursor-pointer hover:bg-accent/50"
-                onClick={() => handleRowClick(order.id)}
-              >
-                <TableCell>{order.orderNumber || order.id}</TableCell>
-                <TableCell>{order.client || order.customer || "Unknown"}</TableCell>
-                <TableCell>{order.scheduledDate || order.date || "N/A"}</TableCell>
-                <TableCell>${order.price || order.amount || 0}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{order.status || "pending"}</Badge>
-                </TableCell>
-                <TableCell 
-                  className="text-right"
-                  onClick={(e) => e.stopPropagation()} // Prevent row click when clicking on actions
-                >
-                  <OrderActions orderId={order.id} />
-                </TableCell>
-              </TableRow>
+                order={order} 
+                onRowClick={handleRowClick} 
+              />
             ))
           ) : (
             <TableRow>
@@ -152,16 +194,8 @@ export const OrdersContent = memo(({
             </TableRow>
           )}
         </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={6} className="text-right">
-              Total {filteredOrders.length} orders
-            </TableCell>
-          </TableRow>
-        </TableFooter>
+        <TableFooterComponent count={filteredOrders.length} />
       </Table>
     </div>
   );
 });
-
-OrdersContent.displayName = 'OrdersContent';

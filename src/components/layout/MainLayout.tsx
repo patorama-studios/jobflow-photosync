@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -21,13 +21,9 @@ type MainLayoutProps = {
   children: React.ReactNode;
 };
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
-  const isMobile = useIsMobile();
-
-  const sidebarLinks = [
+// Memoize the sidebar links array since it never changes
+const useSidebarLinks = () => {
+  return useMemo(() => [
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { name: "Calendar", icon: Calendar, path: "/calendar" },
     { name: "Orders", icon: ShoppingCart, path: "/orders" },
@@ -37,15 +33,29 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
     { name: "Notifications", icon: Bell, path: "/notifications" },
     { name: "Settings", icon: Settings, path: "/settings" }
-  ];
+  ], []);
+};
 
-  const toggleSidebar = () => setCollapsed(!collapsed);
-  const toggleMobileSidebar = () => setMobileOpen(!mobileOpen);
+const MainLayout: React.FC<MainLayoutProps> = memo(({ children }) => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const sidebarLinks = useSidebarLinks();
 
-  // Helper function to determine if a link is active
-  const isActiveLink = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
+  // Memoize expensive functions
+  const toggleSidebar = useMemo(() => () => 
+    setCollapsed(prev => !prev), 
+  []);
+  
+  const toggleMobileSidebar = useMemo(() => () => 
+    setMobileOpen(prev => !prev), 
+  []);
+
+  // Memoize active link checker function
+  const isActiveLink = useMemo(() => (path: string) => 
+    location.pathname === path || location.pathname.startsWith(`${path}/`),
+  [location.pathname]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -53,35 +63,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <Header />
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Sidebar */}
-        <DesktopSidebar
-          collapsed={collapsed}
-          toggleSidebar={toggleSidebar}
-          showCalendarSubmenu={false}
-          showBackButton={false}
-          showMainMenu={true}
-          toggleMainMenu={() => {}}
-          sidebarLinks={sidebarLinks}
-          isActiveLink={isActiveLink}
-          photographers={[]}
-          selectedPhotographers={[]}
-          togglePhotographer={() => {}}
-        />
-
-        {/* Mobile Sidebar */}
-        <MobileSidebar
-          mobileOpen={mobileOpen}
-          toggleMobileSidebar={toggleMobileSidebar}
-          showCalendarSubmenu={false}
-          showBackButton={false}
-          showMainMenu={true}
-          toggleMainMenu={() => {}}
-          sidebarLinks={sidebarLinks}
-          isActiveLink={isActiveLink}
-          photographers={[]}
-          selectedPhotographers={[]}
-          togglePhotographer={() => {}}
-        />
+        {/* Only render the appropriate sidebar based on device type */}
+        {!isMobile ? (
+          <DesktopSidebar
+            collapsed={collapsed}
+            toggleSidebar={toggleSidebar}
+            showCalendarSubmenu={false}
+            showBackButton={false}
+            showMainMenu={true}
+            toggleMainMenu={() => {}}
+            sidebarLinks={sidebarLinks}
+            isActiveLink={isActiveLink}
+            photographers={[]}
+            selectedPhotographers={[]}
+            togglePhotographer={() => {}}
+          />
+        ) : (
+          <MobileSidebar
+            mobileOpen={mobileOpen}
+            toggleMobileSidebar={toggleMobileSidebar}
+            showCalendarSubmenu={false}
+            showBackButton={false}
+            showMainMenu={true}
+            toggleMainMenu={() => {}}
+            sidebarLinks={sidebarLinks}
+            isActiveLink={isActiveLink}
+            photographers={[]}
+            selectedPhotographers={[]}
+            togglePhotographer={() => {}}
+          />
+        )}
 
         {/* Main content */}
         <div className="flex-1 overflow-y-auto pt-16"> {/* Add padding top for the header */}
@@ -92,6 +103,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </div>
     </div>
   );
-};
+});
+
+MainLayout.displayName = 'MainLayout';
 
 export default MainLayout;

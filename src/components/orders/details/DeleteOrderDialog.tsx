@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
@@ -9,7 +9,12 @@ interface DeleteOrderDialogProps {
   onConfirmDelete: () => void;
 }
 
-export function DeleteOrderDialog({ isOpen, onOpenChange, onConfirmDelete }: DeleteOrderDialogProps) {
+// Use memo to prevent unnecessary re-renders
+export const DeleteOrderDialog = memo(function DeleteOrderDialog({ 
+  isOpen, 
+  onOpenChange, 
+  onConfirmDelete 
+}: DeleteOrderDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -32,4 +37,4 @@ export function DeleteOrderDialog({ isOpen, onOpenChange, onConfirmDelete }: Del
       </DialogContent>
     </Dialog>
   );
-}
+});
