@@ -19,6 +19,7 @@ import { HeaderSettingsProvider } from './hooks/useHeaderSettings'
 
 // Import the new components and context
 import { NotificationsProvider } from './contexts/NotificationsContext';
+import { AIAssistantProvider } from './contexts/AIAssistantContext';
 import NotificationsCenter from './pages/NotificationsCenter';
 import MainLayout from './components/layout/MainLayout'
 import Client from './pages/Client'
@@ -35,24 +36,26 @@ function App() {
         <GoogleMapsProvider apiKey={googleMapsApiKey}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <HeaderSettingsProvider>
-                <SonnerToaster position="top-right" closeButton />
-                <Toaster />
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
-                  <Route path="/dashboard" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
-                  <Route path="/orders/*" element={<MainLayout><ProtectedRoute><OrdersPage /></ProtectedRoute></MainLayout>} />
-                  <Route path="/customers" element={<MainLayout><ProtectedRoute><Customers /></ProtectedRoute></MainLayout>} />
-                  <Route path="/client/:clientId" element={<MainLayout><ProtectedRoute><Client /></ProtectedRoute></MainLayout>} />
-                  <Route path="/company/:companyId" element={<MainLayout><ProtectedRoute><CompanyDetails /></ProtectedRoute></MainLayout>} />
-                  <Route path="/calendar" element={<MainLayout><ProtectedRoute><Calendar /></ProtectedRoute></MainLayout>} />
-                  <Route path="/settings/*" element={<MainLayout><ProtectedRoute><SettingsPage /></ProtectedRoute></MainLayout>} />
-                  <Route path="/production" element={<MainLayout><ProtectedRoute><Production /></ProtectedRoute></MainLayout>} />
-                  <Route path="/learning" element={<MainLayout><ProtectedRoute><Learning /></ProtectedRoute></MainLayout>} />
-                  <Route path="/notifications" element={<MainLayout><ProtectedRoute><NotificationsCenter /></ProtectedRoute></MainLayout>} />
-                </Routes>
-              </HeaderSettingsProvider>
+              <AIAssistantProvider>
+                <HeaderSettingsProvider>
+                  <SonnerToaster position="top-right" closeButton />
+                  <Toaster />
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
+                    <Route path="/dashboard" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
+                    <Route path="/orders/*" element={<MainLayout><ProtectedRoute><OrdersPage /></ProtectedRoute></MainLayout>} />
+                    <Route path="/customers" element={<MainLayout><ProtectedRoute><Customers /></ProtectedRoute></MainLayout>} />
+                    <Route path="/client/:clientId" element={<MainLayout><ProtectedRoute><Client /></ProtectedRoute></MainLayout>} />
+                    <Route path="/company/:companyId" element={<MainLayout><ProtectedRoute><CompanyDetails /></ProtectedRoute></MainLayout>} />
+                    <Route path="/calendar" element={<MainLayout><ProtectedRoute><Calendar /></ProtectedRoute></MainLayout>} />
+                    <Route path="/settings/*" element={<MainLayout><ProtectedRoute><SettingsPage /></ProtectedRoute></MainLayout>} />
+                    <Route path="/production" element={<MainLayout><ProtectedRoute><Production /></ProtectedRoute></MainLayout>} />
+                    <Route path="/learning" element={<MainLayout><ProtectedRoute><Learning /></ProtectedRoute></MainLayout>} />
+                    <Route path="/notifications" element={<MainLayout><ProtectedRoute><NotificationsCenter /></ProtectedRoute></MainLayout>} />
+                  </Routes>
+                </HeaderSettingsProvider>
+              </AIAssistantProvider>
             </AuthProvider>
           </QueryClientProvider>
         </GoogleMapsProvider>

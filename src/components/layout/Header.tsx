@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Bell, LogOut, User, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
-import GlobalSearch from './GlobalSearch';  // Fixed import
+import AIAssistant from './AIAssistant';
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
@@ -78,9 +78,9 @@ export function Header() {
           )}
         </div>
 
-        {/* Search and actions section */}
+        {/* AI Assistant and actions section */}
         <div className="flex items-center space-x-2">
-          <GlobalSearch />
+          <AIAssistant />
 
           <Button variant="ghost" size="icon" asChild>
             <Link to="/notifications">
