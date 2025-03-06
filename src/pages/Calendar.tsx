@@ -10,13 +10,7 @@ const Calendar = () => {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
-  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Log when the calendar view changes for debugging
-    console.log("Calendar view changed to:", calendarView);
-  }, [calendarView]);
 
   const handleTimeSlotClick = (time: string) => {
     console.log("Time slot clicked:", time);
