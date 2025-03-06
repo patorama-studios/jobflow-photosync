@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { OrderActions } from "./OrderActions";
+import { useNavigate } from "react-router-dom";
 
 type OrdersContentProps = {
   view?: "list" | "grid";
@@ -30,6 +31,7 @@ export const OrdersContent = memo(({
   onViewChange = () => {},
 }: OrdersContentProps) => {
   const { orders } = useSampleOrders();
+  const navigate = useNavigate();
   
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +43,10 @@ export const OrdersContent = memo(({
   const handleDateSelect = useCallback((newDate: Date | undefined) => {
     setDate(newDate);
   }, []);
+
+  const handleRowClick = useCallback((orderId: string | number) => {
+    navigate(`/orders/${orderId}`);
+  }, [navigate]);
 
   // Memoize filtered orders to avoid recalculation on every render
   const filteredOrders = useMemo(() => {
@@ -118,7 +124,11 @@ export const OrdersContent = memo(({
         <TableBody>
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order: any) => (
-              <TableRow key={order.id}>
+              <TableRow 
+                key={order.id} 
+                className="cursor-pointer hover:bg-accent/50"
+                onClick={() => handleRowClick(order.id)}
+              >
                 <TableCell>{order.orderNumber || order.id}</TableCell>
                 <TableCell>{order.client || order.customer || "Unknown"}</TableCell>
                 <TableCell>{order.scheduledDate || order.date || "N/A"}</TableCell>
@@ -126,7 +136,10 @@ export const OrdersContent = memo(({
                 <TableCell>
                   <Badge variant="secondary">{order.status || "pending"}</Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell 
+                  className="text-right"
+                  onClick={(e) => e.stopPropagation()} // Prevent row click when clicking on actions
+                >
                   <OrderActions orderId={order.id} />
                 </TableCell>
               </TableRow>

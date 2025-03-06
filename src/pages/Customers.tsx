@@ -1,16 +1,13 @@
 
 import { PageTransition } from "@/components/layout/PageTransition";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { ClientsView } from "@/components/clients/ClientsView";
 
-const Clients = () => {
+const Customers = () => {
   return (
     <PageTransition>
-      <SidebarLayout>
-        <ClientsView />
-      </SidebarLayout>
+      <ClientsView />
     </PageTransition>
   );
 };
 
-export default Clients;
+export default Customers;

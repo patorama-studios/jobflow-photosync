@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -16,6 +17,13 @@ interface OrderActionsProps {
 }
 
 export function OrderActions({ orderId }: OrderActionsProps) {
+  const navigate = useNavigate();
+
+  const handleView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/orders/${orderId}`);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -27,7 +35,7 @@ export function OrderActions({ orderId }: OrderActionsProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleView}>
           <Eye className="mr-2 h-4 w-4" />
           View
         </DropdownMenuItem>
