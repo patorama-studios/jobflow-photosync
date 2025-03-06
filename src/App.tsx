@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Toaster } from '@/components/ui/toaster';
+import MainLayout from '@/components/layout/MainLayout';
 
 function App() {
   useEffect(() => {
@@ -60,31 +61,61 @@ function AppRoutes() {
         <Route
           path="/dashboard"
           element={
-            user ? <Dashboard /> : <Navigate to="/login" replace />
+            user ? (
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
         <Route
           path="/orders"
           element={
-            user ? <Orders /> : <Navigate to="/login" replace />
+            user ? (
+              <MainLayout>
+                <Orders />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
         <Route
           path="/orders/:id"
           element={
-            user ? <OrderDetails /> : <Navigate to="/login" replace />
+            user ? (
+              <MainLayout>
+                <OrderDetails />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
         <Route
           path="/clients"
           element={
-            user ? <Clients /> : <Navigate to="/login" replace />
+            user ? (
+              <MainLayout>
+                <Clients />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
         <Route
           path="/companies"
           element={
-            user ? <Companies /> : <Navigate to="/login" replace />
+            user ? (
+              <MainLayout>
+                <Companies />
+              </MainLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
         <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
