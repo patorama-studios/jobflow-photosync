@@ -94,7 +94,7 @@ export function GoogleCalendar({
     });
 
     // Convert orders to calendar events
-    const calendarEvents = orders.map((order) => {
+    const calendarEvents: CalendarEvent[] = orders.map((order) => {
       const startDate = new Date(order.scheduledDate);
       // Set the hours from the scheduled_time (format: "HH:MM AM/PM")
       const timeMatch = order.scheduledTime.match(/(\d+):(\d+)\s*([AP]M)/i);
@@ -112,6 +112,31 @@ export function GoogleCalendar({
       const endDate = new Date(startDate);
       endDate.setHours(startDate.getHours() + 2); // Assume 2 hour sessions
 
+      // Create an order object that conforms to the Order type from types/orders.ts
+      const typedOrder: Order = {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        address: order.address,
+        city: order.city || "",
+        state: order.state || "",
+        zip: order.zip || "",
+        client: order.client,
+        clientEmail: order.clientEmail,
+        clientPhone: order.clientPhone,
+        photographer: order.photographer,
+        photographerPayoutRate: order.photographerPayoutRate,
+        price: order.price,
+        propertyType: order.propertyType,
+        scheduledDate: order.scheduledDate,
+        scheduledTime: order.scheduledTime,
+        squareFeet: order.squareFeet,
+        status: order.status as any,
+        package: order.package || "",
+        internalNotes: order.internalNotes,
+        customerNotes: order.customerNotes,
+        stripePaymentId: order.stripePaymentId,
+      };
+
       return {
         id: order.id,
         title: order.package || "",
@@ -124,7 +149,7 @@ export function GoogleCalendar({
         status: order.status,
         color: photographerColors[order.photographer],
         orderNumber: order.orderNumber || `ORD-${Math.floor(Math.random() * 10000)}`,
-        order: order,
+        order: typedOrder,
         // Additional properties to match with CalendarEvent type
         scheduledDate: order.scheduledDate,
         scheduledTime: order.scheduledTime,
@@ -198,8 +223,33 @@ export function GoogleCalendar({
     }
   };
 
+  // Map the orders to the typed Order interface from orders.ts
+  const typedOrders: Order[] = orders.map(order => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    address: order.address,
+    city: order.city || "",
+    state: order.state || "",
+    zip: order.zip || "",
+    client: order.client,
+    clientEmail: order.clientEmail,
+    clientPhone: order.clientPhone,
+    photographer: order.photographer,
+    photographerPayoutRate: order.photographerPayoutRate,
+    price: order.price,
+    propertyType: order.propertyType,
+    scheduledDate: order.scheduledDate,
+    scheduledTime: order.scheduledTime,
+    squareFeet: order.squareFeet,
+    status: order.status as any,
+    package: order.package || "",
+    internalNotes: order.internalNotes,
+    customerNotes: order.customerNotes,
+    stripePaymentId: order.stripePaymentId,
+  }));
+
   // Get the filtered orders for the selected date
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = typedOrders.filter(order => {
     const orderDate = new Date(order.scheduledDate);
     return orderDate.toDateString() === date.toDateString();
   });

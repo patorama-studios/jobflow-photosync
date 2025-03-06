@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, subDays } from 'date-fns';
+import { Order } from '@/types/orders';
 
-export interface Order {
+// Interface for the Order in this hook
+interface SampleOrder {
   id: string | number;
   orderNumber: string;
   address: string;
@@ -38,7 +40,7 @@ export interface Order {
 }
 
 export function useSampleOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<SampleOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +60,7 @@ export function useSampleOrders() {
 
         if (supabaseOrders && supabaseOrders.length > 0) {
           // Map Supabase orders to our Order format
-          const mappedOrders = supabaseOrders.map((order): Order => ({
+          const mappedOrders = supabaseOrders.map((order): SampleOrder => ({
             id: order.id,
             orderNumber: order.order_number,
             client: order.client,
@@ -106,7 +108,7 @@ export function useSampleOrders() {
 }
 
 // Fallback sample data generator
-function generateSampleOrders(): Order[] {
+function generateSampleOrders(): SampleOrder[] {
   const today = new Date();
   return [
     {
@@ -207,3 +209,6 @@ function generateSampleOrders(): Order[] {
     }
   ];
 }
+
+// Export the SampleOrder type for use in other files
+export type { SampleOrder };

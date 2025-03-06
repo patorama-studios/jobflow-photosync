@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { 
   Plus, 
   Download, 
@@ -14,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ClientTable } from "@/components/clients/ClientTable";
 import { CompanyList } from "@/components/clients/CompanyList";
-import { AddClientDialog } from "@/components/clients/AddClientDialog";
 import { AddCompanyDialog } from "@/components/clients/AddCompanyDialog";
 import { useClients } from "@/hooks/use-clients";
 import { useCompanies } from "@/hooks/use-companies";
@@ -136,13 +134,16 @@ export function ClientsView() {
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button 
-            size="sm" 
-            onClick={() => activeTab === "clients" ? null : setAddCompanyOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {activeTab === "clients" ? "Add Client" : "Add Company"}
-          </Button>
+          {/* We're removing the Add Client button here since ClientTable has its own */}
+          {activeTab === "companies" && (
+            <Button 
+              size="sm"
+              onClick={() => setAddCompanyOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Company
+            </Button>
+          )}
         </div>
       </div>
 

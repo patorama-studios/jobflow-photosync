@@ -15,11 +15,16 @@ export interface CalendarEvent {
   orderNumber?: string;
   order?: Order;
   
-  // Additional properties to match the Order type
+  // Standard property names
   scheduledDate?: string;
   scheduledTime?: string;
   package?: string;
   address?: string;
+  
+  // Legacy property names for backward compatibility 
+  // with existing components that use these names
+  scheduled_date?: string;
+  scheduled_time?: string;
 }
 
 // Adding this type for compatibility with existing files
