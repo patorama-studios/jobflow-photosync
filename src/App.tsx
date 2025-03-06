@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
@@ -17,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Toaster } from '@/components/ui/toaster';
 import MainLayout from '@/components/layout/MainLayout';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
 
 function App() {
   useEffect(() => {
@@ -58,73 +58,75 @@ function AppRoutes() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/orders"
-          element={
-            user ? (
-              <MainLayout>
-                <Orders />
-              </MainLayout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/orders/:id"
-          element={
-            user ? (
-              <MainLayout>
-                <OrderDetails />
-              </MainLayout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/clients"
-          element={
-            user ? (
-              <MainLayout>
-                <Clients />
-              </MainLayout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/companies"
-          element={
-            user ? (
-              <MainLayout>
-                <Companies />
-              </MainLayout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        {/* Default route - redirect to login by default */}
-        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
-        {/* Catch all route - redirect to login or dashboard based on auth state */}
-        <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
-      </Routes>
+      <HeaderSettingsProvider>
+        <Routes>
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              user ? (
+                <MainLayout>
+                  <Orders />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              user ? (
+                <MainLayout>
+                  <OrderDetails />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/clients"
+            element={
+              user ? (
+                <MainLayout>
+                  <Clients />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/companies"
+            element={
+              user ? (
+                <MainLayout>
+                  <Companies />
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          {/* Default route - redirect to login by default */}
+          <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+          {/* Catch all route - redirect to login or dashboard based on auth state */}
+          <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+        </Routes>
+      </HeaderSettingsProvider>
     </Router>
   );
 }
