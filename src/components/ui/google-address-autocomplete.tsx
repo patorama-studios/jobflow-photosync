@@ -39,7 +39,7 @@ export const GoogleAddressAutocomplete = memo(({
   id = "google-address-autocomplete"
 }: GoogleAddressAutocompleteProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<GoogleMapsTypes.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any | null>(null);
   const [inputValue, setInputValue] = useState(defaultValue);
   const [isInitialized, setIsInitialized] = useState(false);
   

@@ -8,6 +8,10 @@ export default function Home() {
     console.log('Home component mounted, redirecting to calendar');
   }, []);
 
-  // Redirect to calendar by default
-  return <Navigate to="/calendar" replace />;
+  // Redirect to calendar by default (wrapped in a div to ensure proper rendering)
+  return (
+    <div>
+      <Navigate to="/calendar" replace />
+    </div>
+  );
 }

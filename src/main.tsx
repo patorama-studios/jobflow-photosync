@@ -40,8 +40,8 @@ applyThemeAndFont();
 // Install global error monitoring early but with improved performance
 installGlobalErrorMonitoring();
 
-// Optimize mounting process
-const mountApp = async () => {
+// Immediate mount function to fix loading issues
+const mountApp = () => {
   try {
     // Get root element
     const rootElement = document.getElementById("root");
@@ -51,9 +51,6 @@ const mountApp = async () => {
     
     // Create and mount root
     const root = createRoot(rootElement);
-    
-    // Small optimization to ensure smooth rendering
-    await Promise.resolve();
     
     root.render(
       <App />
@@ -84,13 +81,8 @@ const mountApp = async () => {
   }
 };
 
-// Use requestIdleCallback for non-critical mounting if available
-if ('requestIdleCallback' in window) {
-  (window as any).requestIdleCallback(() => mountApp());
-} else {
-  // Fallback to setTimeout with a small delay for older browsers
-  setTimeout(mountApp, 10);
-}
+// Mount immediately to fix loading issues
+mountApp();
 
 // Optimize service worker registration
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
