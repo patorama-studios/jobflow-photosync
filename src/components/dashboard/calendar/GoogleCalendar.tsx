@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { format, addDays, addMonths, subMonths, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
 import { CalendarHeader } from './header/CalendarHeader';
-import { SidebarFilter } from './sidebar/SidebarFilter';
 import { GoogleMonthView } from './views/GoogleMonthView';
 import { GoogleWeekView } from './views/GoogleWeekView';
 import { GoogleDayView } from './views/GoogleDayView';
@@ -14,6 +13,8 @@ interface GoogleCalendarProps {
   onTimeSlotClick?: (time: string) => void;
   onDayClick?: (date: Date) => void;
   defaultView?: "month" | "week" | "day";
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 const samplePhotographers = [
@@ -26,7 +27,9 @@ const samplePhotographers = [
 export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   onTimeSlotClick,
   onDayClick,
-  defaultView = "month"
+  defaultView = "month",
+  onToggleFullscreen,
+  isFullscreen = false
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "day">(defaultView);
@@ -108,7 +111,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   }, [filteredOrders, selectedDate, view]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       <CalendarHeader 
         date={selectedDate}
         view={view}
@@ -117,51 +120,46 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
         onNext={goToNext}
         onToday={goToToday}
         onViewChange={setView}
+        onToggleFullscreen={onToggleFullscreen}
+        isFullscreen={isFullscreen}
       />
       
-      <div className="flex flex-1 overflow-hidden">
-        <SidebarFilter
-          selectedDate={selectedDate}
-          onDateSelect={handleDateSelect}
-        />
+      <div className={`flex-1 overflow-hidden relative ${isFullscreen ? 'p-0' : 'p-4'}`}>
+        {view === "month" && (
+          <GoogleMonthView 
+            date={selectedDate}
+            orders={filteredOrders}
+            onSelectDate={handleDateSelect}
+          />
+        )}
         
-        <div className="flex-1 overflow-hidden p-4 relative">
-          {view === "month" && (
-            <GoogleMonthView 
-              date={selectedDate}
-              orders={filteredOrders}
-              onSelectDate={handleDateSelect}
-            />
-          )}
-          
-          {view === "week" && (
-            <GoogleWeekView 
-              date={selectedDate}
-              orders={filteredOrders}
-            />
-          )}
-          
-          {view === "day" && (
-            <GoogleDayView 
-              date={selectedDate}
-              orders={filteredOrders}
-              photographers={samplePhotographers}
-              selectedPhotographers={selectedPhotographers}
-            />
-          )}
-          
-          {/* Floating action button for adding events */}
-          <div className="absolute bottom-8 right-8">
-            <Button 
-              size="lg" 
-              className="rounded-full h-14 w-14 shadow-lg"
-              onClick={() => {
-                if (onDayClick) onDayClick(selectedDate);
-              }}
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-          </div>
+        {view === "week" && (
+          <GoogleWeekView 
+            date={selectedDate}
+            orders={filteredOrders}
+          />
+        )}
+        
+        {view === "day" && (
+          <GoogleDayView 
+            date={selectedDate}
+            orders={filteredOrders}
+            photographers={samplePhotographers}
+            selectedPhotographers={selectedPhotographers}
+          />
+        )}
+        
+        {/* Floating action button for adding events */}
+        <div className="absolute bottom-8 right-8">
+          <Button 
+            size="lg" 
+            className="rounded-full h-14 w-14 shadow-lg"
+            onClick={() => {
+              if (onDayClick) onDayClick(selectedDate);
+            }}
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
         </div>
       </div>
     </div>
