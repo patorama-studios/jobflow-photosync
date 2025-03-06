@@ -19,14 +19,14 @@ export interface Order {
   clientEmail?: string;
   clientPhone?: string;
   address: string;
-  city: string;
-  state: string;
-  zip: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   dateCreated?: string;
   scheduledDate: string;
   scheduledTime: string;
   photographer: string;
-  package: string;
+  package?: string;
   propertyType: string;
   squareFeet: number;
   price: number;
@@ -48,6 +48,9 @@ export interface Order {
   square_feet?: number;
   photographer_payout_rate?: number;
   photographer_payout_amount?: number;
+  internal_notes?: string;
+  customer_notes?: string;
+  stripe_payment_id?: string;
 }
 
 // Define interface for Contractor
