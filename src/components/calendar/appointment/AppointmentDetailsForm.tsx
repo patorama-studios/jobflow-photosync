@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -20,12 +19,32 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
   appointmentDate,
   setAppointmentDate
 }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date(appointmentDate.split(' ')[0])
-  );
-  const [selectedTime, setSelectedTime] = useState<string>(
-    appointmentDate.split(' ').slice(1).join(' ') || "11:00 AM"
-  );
+  console.log("AppointmentDetailsForm received date:", appointmentDate);
+  
+  // Parse date parts from the appointmentDate string
+  const dateParts = appointmentDate.split(' ');
+  const timeStr = dateParts.length > 2 ? dateParts.slice(-2).join(' ') : "11:00 AM";
+  const dateStr = dateParts.length > 2 ? dateParts.slice(0, -2).join(' ') : dateParts[0];
+  
+  // Initialize state with parsed values
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    try {
+      return new Date(dateStr);
+    } catch (e) {
+      console.error("Error parsing date:", dateStr);
+      return new Date();
+    }
+  });
+  
+  const [selectedTime, setSelectedTime] = useState<string>(timeStr || "11:00 AM");
+
+  // Update parent state when local state changes
+  useEffect(() => {
+    if (selectedDate) {
+      const formattedDate = format(selectedDate, "MMM dd, yyyy");
+      setAppointmentDate(`${formattedDate} ${selectedTime}`);
+    }
+  }, [selectedDate, selectedTime, setAppointmentDate]);
 
   const handleDateChange = (date: Date | undefined) => {
     if (!date) return;
@@ -44,63 +63,61 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
   };
 
   return (
-    <div className="p-6 border-l md:border-l">
-      <h2 className="text-xl font-semibold mb-6">Appointment Details</h2>
-      
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="date">Appointment Date</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateChange}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            
-            <Select 
-              value={selectedTime} 
-              onValueChange={handleTimeChange}
-            >
-              <SelectTrigger>
-                <div className="flex items-center">
-                  <Clock className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Select time" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="8:00 AM">8:00 AM</SelectItem>
-                <SelectItem value="9:00 AM">9:00 AM</SelectItem>
-                <SelectItem value="10:00 AM">10:00 AM</SelectItem>
-                <SelectItem value="11:00 AM">11:00 AM</SelectItem>
-                <SelectItem value="12:00 PM">12:00 PM</SelectItem>
-                <SelectItem value="1:00 PM">1:00 PM</SelectItem>
-                <SelectItem value="2:00 PM">2:00 PM</SelectItem>
-                <SelectItem value="3:00 PM">3:00 PM</SelectItem>
-                <SelectItem value="4:00 PM">4:00 PM</SelectItem>
-                <SelectItem value="5:00 PM">5:00 PM</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="date">Appointment Date</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateChange}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <Select 
+            value={selectedTime} 
+            onValueChange={handleTimeChange}
+          >
+            <SelectTrigger>
+              <div className="flex items-center">
+                <Clock className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Select time" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="8:00 AM">8:00 AM</SelectItem>
+              <SelectItem value="9:00 AM">9:00 AM</SelectItem>
+              <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+              <SelectItem value="11:00 AM">11:00 AM</SelectItem>
+              <SelectItem value="12:00 PM">12:00 PM</SelectItem>
+              <SelectItem value="1:00 PM">1:00 PM</SelectItem>
+              <SelectItem value="2:00 PM">2:00 PM</SelectItem>
+              <SelectItem value="3:00 PM">3:00 PM</SelectItem>
+              <SelectItem value="4:00 PM">4:00 PM</SelectItem>
+              <SelectItem value="5:00 PM">5:00 PM</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        
+      </div>
+      
+      
         <div className="space-y-2">
           <Label htmlFor="duration">Duration</Label>
           <Select defaultValue="60">
@@ -153,7 +170,7 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
             ))}
           </div>
         </div>
-      </div>
+      
     </div>
   );
 };

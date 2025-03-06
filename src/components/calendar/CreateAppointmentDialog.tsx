@@ -27,6 +27,8 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   selectedDate,
   selectedTime
 }) => {
+  console.log("Dialog props:", { isOpen, selectedDate, selectedTime });
+  
   // Format the date safely - handle potential invalid date errors
   const formattedDate = selectedDate ? format(selectedDate, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy");
   const initialAppointmentTime = selectedTime || "11:00 AM";
@@ -41,6 +43,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
       const formattedDate = format(selectedDate, "MMM dd, yyyy");
       const time = selectedTime || initialAppointmentTime;
       setAppointmentDate(`${formattedDate} ${time}`);
+      console.log("Updated appointment date:", `${formattedDate} ${time}`);
     }
   }, [selectedDate, selectedTime, initialAppointmentTime]);
 
