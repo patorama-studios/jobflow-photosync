@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useClients } from "@/hooks/use-clients";
+import { useClients, Client } from "@/hooks/use-clients";
 import { AddClientDialog } from "@/components/clients/AddClientDialog";
 import { exportToCSV } from "@/utils/csv-export";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,7 +63,7 @@ export function ClientTable() {
     exportToCSV(exportData, 'clients-export');
   };
 
-  const handleAddClient = async (client: any) => {
+  const handleAddClient = async (client: Omit<Client, 'id' | 'created_at'>) => {
     await addClient(client);
     setAddClientOpen(false);
   };

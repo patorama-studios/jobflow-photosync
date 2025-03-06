@@ -45,7 +45,7 @@ type ClientFormValues = z.infer<typeof clientFormSchema>;
 interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onClientAdded: (client: Client) => void;
+  onClientAdded: (client: Omit<Client, 'id' | 'created_at'>) => void;
 }
 
 export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClientDialogProps) {
@@ -67,9 +67,8 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
   const onSubmit = async (data: ClientFormValues) => {
     setIsSubmitting(true);
     try {
-      // Handle form submission - this data will be passed to the parent component
-      // which will call the addClient function from useClients
-      const newClient = {
+      // Create the client object to pass to the parent component
+      const newClient: Omit<Client, 'id' | 'created_at'> = {
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -81,9 +80,8 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
         outstanding_payment: 0,
       };
       
-      onClientAdded(newClient as Client);
+      await onClientAdded(newClient);
       form.reset();
-      onOpenChange(false);
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
@@ -92,6 +90,12 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
   };
 
   const handleCompanySelect = (companyId: string) => {
+    if (companyId === "") {
+      form.setValue("company", "");
+      form.setValue("company_id", "");
+      return;
+    }
+    
     const selectedCompany = companies.find(c => c.id === companyId);
     if (selectedCompany) {
       form.setValue("company", selectedCompany.name);
@@ -161,6 +165,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
                   <Select
                     onValueChange={(value) => handleCompanySelect(value)}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -189,6 +194,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>

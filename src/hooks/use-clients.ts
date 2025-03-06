@@ -19,6 +19,22 @@ export interface Client {
   outstanding_payment: number;
 }
 
+// Type for client data from Supabase
+interface ClientResponse {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  company_id: string | null;
+  photo_url: string | null;
+  created_at: string;
+  status: string;
+  total_jobs: number | null;
+  outstanding_jobs: number | null;
+  outstanding_payment: number | null;
+}
+
 export function useClients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +52,25 @@ export function useClients() {
         throw error;
       }
 
-      setClients(data || []);
+      // Convert database response to Client type
+      const typedClients: Client[] = (data || []).map((client: ClientResponse) => ({
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone || undefined,
+        company: client.company || undefined,
+        company_id: client.company_id || undefined,
+        photo_url: client.photo_url || undefined,
+        created_at: client.created_at,
+        status: (client.status === 'active' || client.status === 'inactive') 
+          ? client.status 
+          : 'active',
+        total_jobs: client.total_jobs || 0,
+        outstanding_jobs: client.outstanding_jobs || 0,
+        outstanding_payment: client.outstanding_payment || 0
+      }));
+
+      setClients(typedClients);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch clients');
       console.error(err);
@@ -56,9 +90,27 @@ export function useClients() {
         throw error;
       }
 
-      setClients(prev => [data[0], ...prev]);
+      // Convert the response to Client type
+      const addedClient: Client = {
+        id: data[0].id,
+        name: data[0].name,
+        email: data[0].email,
+        phone: data[0].phone || undefined,
+        company: data[0].company || undefined,
+        company_id: data[0].company_id || undefined,
+        photo_url: data[0].photo_url || undefined,
+        created_at: data[0].created_at,
+        status: (data[0].status === 'active' || data[0].status === 'inactive') 
+          ? data[0].status 
+          : 'active',
+        total_jobs: data[0].total_jobs || 0,
+        outstanding_jobs: data[0].outstanding_jobs || 0,
+        outstanding_payment: data[0].outstanding_payment || 0
+      };
+
+      setClients(prev => [addedClient, ...prev]);
       toast.success("Client added successfully");
-      return data[0];
+      return addedClient;
     } catch (err: any) {
       toast.error("Failed to add client: " + err.message);
       console.error(err);
@@ -78,11 +130,29 @@ export function useClients() {
         throw error;
       }
 
+      // Convert the response to Client type
+      const updatedClient: Client = {
+        id: data[0].id,
+        name: data[0].name,
+        email: data[0].email,
+        phone: data[0].phone || undefined,
+        company: data[0].company || undefined,
+        company_id: data[0].company_id || undefined,
+        photo_url: data[0].photo_url || undefined,
+        created_at: data[0].created_at,
+        status: (data[0].status === 'active' || data[0].status === 'inactive') 
+          ? data[0].status 
+          : 'active',
+        total_jobs: data[0].total_jobs || 0,
+        outstanding_jobs: data[0].outstanding_jobs || 0,
+        outstanding_payment: data[0].outstanding_payment || 0
+      };
+
       setClients(prev => prev.map(client => 
-        client.id === id ? { ...client, ...data[0] } : client
+        client.id === id ? updatedClient : client
       ));
       toast.success("Client updated successfully");
-      return data[0];
+      return updatedClient;
     } catch (err: any) {
       toast.error("Failed to update client: " + err.message);
       console.error(err);

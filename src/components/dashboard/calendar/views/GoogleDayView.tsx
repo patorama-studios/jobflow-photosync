@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { Order } from '@/hooks/useSampleOrders';
@@ -77,7 +78,7 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
                     className="absolute top-0 left-0 w-full h-12 bg-blue-100 border-l-4 border-blue-500 pl-2 text-sm overflow-hidden whitespace-nowrap overflow-ellipsis"
                     style={{borderColor: color}}
                   >
-                    {order.title} - {order.photographer}
+                    {order.customerName || 'Untitled'} - {order.photographer}
                   </div>
                 );
               }
