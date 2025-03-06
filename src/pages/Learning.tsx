@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -74,6 +75,53 @@ const resources = [
   }
 ];
 
+// Resource Card Component
+function ResourceCard({ resource }: { resource: typeof resources[0] }) {
+  const typeColors: Record<string, string> = {
+    article: "bg-blue-100 text-blue-800",
+    video: "bg-red-100 text-red-800",
+    document: "bg-green-100 text-green-800"
+  };
+
+  return (
+    <GlassCard className="overflow-hidden h-full" hoverEffect>
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="bg-primary/10 p-3 rounded-lg">
+            {resource.icon}
+          </div>
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${typeColors[resource.type]}`}>
+            {resource.type}
+          </span>
+        </div>
+        <h3 className="text-lg font-medium mb-2">{resource.title}</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {resource.description}
+        </p>
+        <a
+          href="#"
+          className="inline-flex items-center text-primary hover:underline text-sm font-medium"
+        >
+          View Resource
+          <svg
+            className="ml-1 w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </a>
+      </div>
+    </GlassCard>
+  );
+}
+
 const Learning = () => {
   return (
     <PageTransition>
@@ -137,52 +185,5 @@ const Learning = () => {
     </PageTransition>
   );
 };
-
-// Resource Card Component
-function ResourceCard({ resource }: { resource: typeof resources[0] }) {
-  const typeColors: Record<string, string> = {
-    article: "bg-blue-100 text-blue-800",
-    video: "bg-red-100 text-red-800",
-    document: "bg-green-100 text-green-800"
-  };
-
-  return (
-    <GlassCard className="overflow-hidden h-full" hoverEffect>
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="bg-primary/10 p-3 rounded-lg">
-            {resource.icon}
-          </div>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${typeColors[resource.type]}`}>
-            {resource.type}
-          </span>
-        </div>
-        <h3 className="text-lg font-medium mb-2">{resource.title}</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          {resource.description}
-        </p>
-        <a
-          href="#"
-          className="inline-flex items-center text-primary hover:underline text-sm font-medium"
-        >
-          View Resource
-          <svg
-            className="ml-1 w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </a>
-      </div>
-    </GlassCard>
-  );
-}
 
 export default Learning;

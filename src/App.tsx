@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Home from './pages/Home';
+import Learning from './pages/Learning';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/orders" element={<OrdersView />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/learning" element={<Learning />} />
       </Routes>
     </ErrorBoundary>
   );
