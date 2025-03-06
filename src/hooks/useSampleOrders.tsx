@@ -17,14 +17,9 @@ export type Order = {
   scheduledTime: string;
   squareFeet: number;
   status: 'pending' | 'scheduled' | 'completed';
-  client_email?: string;
-  client_phone?: string;
-  order_number?: string;
-  scheduled_date?: string;
-  scheduled_time?: string;
-  property_type?: string;
-  square_feet?: number;
-  stripe_payment_id?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  stripePaymentId?: string;
   additionalAppointments?: Array<{
     date: string;
     time: string;
@@ -48,25 +43,20 @@ export const useSampleOrders = () => {
     const sampleOrdersData = generateSampleOrders();
     const mappedOrders: Order[] = sampleOrdersData.map(order => ({
       id: order.id,
-      orderNumber: order.orderNumber || order.order_number || '',
+      orderNumber: order.orderNumber || '',
       address: order.address,
       client: order.client,
       photographer: order.photographer,
-      photographerPayoutRate: order.photographerPayoutRate || (order.photographer_payout_rate as number) || 0,
+      photographerPayoutRate: order.photographerPayoutRate || 0,
       price: order.price,
-      propertyType: order.propertyType || order.property_type || '',
-      scheduledDate: order.scheduledDate || order.scheduled_date || '',
-      scheduledTime: order.scheduledTime || order.scheduled_time || '',
-      squareFeet: order.squareFeet || order.square_feet || 0,
+      propertyType: order.propertyType || '',
+      scheduledDate: order.scheduledDate || '',
+      scheduledTime: order.scheduledTime || '',
+      squareFeet: order.squareFeet || 0,
       status: order.status as 'pending' | 'scheduled' | 'completed',
-      client_email: order.clientEmail || order.client_email,
-      client_phone: order.clientPhone || order.client_phone,
-      order_number: order.orderNumber || order.order_number,
-      scheduled_date: order.scheduledDate || order.scheduled_date,
-      scheduled_time: order.scheduledTime || order.scheduled_time,
-      property_type: order.propertyType || order.property_type,
-      square_feet: order.squareFeet || order.square_feet,
-      stripe_payment_id: order.stripePaymentId || order.stripe_payment_id,
+      clientEmail: order.clientEmail,
+      clientPhone: order.clientPhone,
+      stripePaymentId: order.stripePaymentId,
       additionalAppointments: order.additionalAppointments,
       customFields: order.customFields,
       customerNotes: order.customerNotes,

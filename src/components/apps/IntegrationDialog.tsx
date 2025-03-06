@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -37,7 +38,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSyncLoading, setIsSyncLoading] = useState(false);
   const [masterFolderId, setMasterFolderId] = useState("");
-  const [mode, setMode] = useState<'test' | 'live'>('live'); // Changed to 'live' from 'test'
+  const [mode, setMode] = useState<'test' | 'live'>('live');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -161,7 +162,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
     if (id === 'box') {
       // Clear Box-related data from localStorage
       localStorage.removeItem('box_master_folder_id');
-      // Don't remove the auth token - that's separate from disconnecting the integration
+      localStorage.removeItem('box_access_token');
     }
     
     // In a real app, we would delete the integration from the database

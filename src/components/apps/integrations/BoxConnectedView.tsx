@@ -18,7 +18,7 @@ interface BoxConnectedViewProps {
   isSyncLoading: boolean;
   handleSync: () => void;
   handleOpenBox: () => void;
-  masterFolderId?: string;
+  masterFolderId: string;
   setMasterFolderId: (id: string) => void;
 }
 
@@ -47,14 +47,23 @@ export function BoxConnectedView({
   
   const handleSaveFolder = async () => {
     try {
-      // Validate the new folder ID first
+      if (!tempFolderId) {
+        toast({
+          title: "Validation Error",
+          description: "Master folder ID cannot be empty.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Save the folder ID to localStorage
+      localStorage.setItem('box_master_folder_id', tempFolderId);
+      
+      // Initialize Box integration with the new folder ID
       const boxIntegration = createBoxIntegration();
       boxIntegration.setMasterFolder(tempFolderId);
       
-      // In a real implementation, we would verify the folder exists:
-      // const folderInfo = await boxIntegration.getFolderInfo(tempFolderId);
-      // For now we'll just assume it worked
-      
+      // Update state
       setMasterFolderId(tempFolderId);
       setIsEditing(false);
       

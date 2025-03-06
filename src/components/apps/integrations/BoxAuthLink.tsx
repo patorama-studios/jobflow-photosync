@@ -10,16 +10,10 @@ interface BoxAuthLinkProps {
 export function BoxAuthLink({ setIsAuthenticated }: BoxAuthLinkProps) {
   const handleAuth = async () => {
     // In a real implementation, this would redirect to Box OAuth
-    // For demo purposes, we'll simulate authentication by setting a token directly
+    // For this demo, we're simulating authentication with localStorage
     
-    // Production code would use something like this:
-    // const clientId = process.env.BOX_CLIENT_ID;
-    // const redirectUri = window.location.origin + window.location.pathname;
-    // const state = generateRandomString(); // For CSRF protection
-    // window.location.href = `https://account.box.com/api/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&state=${state}`;
-    
-    // For demo purposes, simulate successful authentication:
-    localStorage.setItem('box_access_token', 'simulated_demo_token');
+    // Simulate the Box OAuth process by setting a token directly
+    localStorage.setItem('box_access_token', 'simulated_box_auth_token');
     setIsAuthenticated(true);
   };
 
