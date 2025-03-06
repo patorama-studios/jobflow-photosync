@@ -13,4 +13,8 @@ export interface CalendarEvent {
   status?: string;
   color?: string;
   orderNumber?: string;
+  order?: Order;
 }
+
+// Adding this type for compatibility with existing files
+export type CalendarOrder = CalendarEvent;

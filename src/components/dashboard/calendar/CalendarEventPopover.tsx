@@ -4,18 +4,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Trash2, Edit, X, MapPin, Calendar, Clock, User } from 'lucide-react';
 import { Order } from '@/types/orders';
+import { CalendarEvent } from '@/types/calendar';
 
 interface CalendarEventPopoverProps {
-  event: {
-    id: string | number;
-    title: string;
-    client?: string;
-    photographer?: string;
-    location?: string;
-    start: Date;
-    end: Date;
-    orderNumber?: string;
-  };
+  event: CalendarEvent;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;

@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { CalendarEvent } from '@/types/calendar';
-import { Order } from '@/types/order';
+import { Order } from '@/types/orders';
 import { CalendarToolbar } from './CalendarToolbar';
 import { CalendarEventPopover } from './CalendarEventPopover';
 import { useNavigate } from 'react-router-dom';
@@ -48,9 +49,19 @@ const TimeSlotWrapper = ({ children }: { children: React.ReactNode }) => {
 // Define the props for the GoogleCalendar component
 interface GoogleCalendarProps {
   selectedPhotographers?: number[];
+  onTimeSlotClick?: (time: string) => void;
+  onDayClick?: (date: Date) => void;
+  defaultView?: "month" | "week" | "day" | "card";
+  isMobileView?: boolean;
 }
 
-export function GoogleCalendar({ selectedPhotographers = [] }: GoogleCalendarProps) {
+export function GoogleCalendar({ 
+  selectedPhotographers = [], 
+  onTimeSlotClick,
+  onDayClick,
+  defaultView = "month",
+  isMobileView = false
+}: GoogleCalendarProps) {
   const { orders } = useSampleOrders();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -84,22 +95,36 @@ export function GoogleCalendar({ selectedPhotographers = [] }: GoogleCalendarPro
 
     // Convert orders to calendar events
     const calendarEvents = orders.map((order) => {
-      const startDate = new Date(order.date);
+      const startDate = new Date(order.scheduled_date);
+      // Set the hours from the scheduled_time (format: "HH:MM AM/PM")
+      const timeMatch = order.scheduled_time.match(/(\d+):(\d+)\s*([AP]M)/i);
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1]);
+        const minutes = parseInt(timeMatch[2]);
+        const ampm = timeMatch[3].toUpperCase();
+        
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        
+        startDate.setHours(hours, minutes, 0);
+      }
+      
       const endDate = new Date(startDate);
       endDate.setHours(startDate.getHours() + 2); // Assume 2 hour sessions
 
       return {
         id: order.id,
-        title: order.type,
+        title: order.package,
         start: startDate,
         end: endDate,
         client: order.client,
         photographer: order.photographer,
         photographerId: orders.findIndex((o) => o.photographer === order.photographer) + 1,
-        location: order.location,
+        location: order.address + ', ' + order.city,
         status: order.status,
         color: photographerColors[order.photographer],
-        orderNumber: order.orderNumber || `ORD-${Math.floor(Math.random() * 10000)}`,
+        orderNumber: order.order_number || `ORD-${Math.floor(Math.random() * 10000)}`,
+        order: order
       };
     });
 
@@ -132,7 +157,16 @@ export function GoogleCalendar({ selectedPhotographers = [] }: GoogleCalendarPro
 
   // Handle slot selection (clicking on an empty time slot)
   const handleSelectSlot = ({ start }: { start: Date }) => {
-    navigate(`/orders/new?date=${start.toISOString()}`);
+    if (onTimeSlotClick) {
+      const formattedTime = format(start, 'h:mm a');
+      onTimeSlotClick(formattedTime);
+    }
+    
+    if (onDayClick) {
+      onDayClick(start);
+    } else {
+      navigate(`/orders/new?date=${start.toISOString()}`);
+    }
   };
 
   // Handle event editing
@@ -161,7 +195,7 @@ export function GoogleCalendar({ selectedPhotographers = [] }: GoogleCalendarPro
 
   // Get the filtered orders for the selected date
   const filteredOrders = orders.filter(order => {
-    const orderDate = new Date(order.date);
+    const orderDate = new Date(order.scheduled_date);
     return orderDate.toDateString() === date.toDateString();
   });
 
@@ -211,6 +245,7 @@ export function GoogleCalendar({ selectedPhotographers = [] }: GoogleCalendarPro
           }}
           date={date}
           onNavigate={setDate}
+          defaultView={defaultView}
           eventPropGetter={(event) => ({
             style: {
               backgroundColor: event.color,
@@ -241,10 +276,7 @@ export function GoogleCalendar({ selectedPhotographers = [] }: GoogleCalendarPro
               onClose={() => setIsPopoverOpen(false)}
               onEdit={() => handleEditEvent(selectedEvent)}
               onDelete={() => handleDeleteEvent(selectedEvent)}
-              orders={filteredOrders.map(order => ({
-                ...order,
-                orderNumber: order.orderNumber || `ORD-${Math.floor(Math.random() * 10000)}`,
-              }))}
+              orders={filteredOrders}
             />
           </div>
         )}
