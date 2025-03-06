@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -6,6 +5,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { GlassCard } from "@/components/ui/glass-card";
 import { BookOpen, Video, File, Link2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MainLayout from "@/components/layout/MainLayout";
 
 // Sample learning resources
 const resources = [
@@ -124,65 +124,65 @@ function ResourceCard({ resource }: { resource: typeof resources[0] }) {
 
 const Learning = () => {
   return (
-    <PageTransition>
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow pt-24 pb-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8 max-w-3xl">
-              <h1 className="text-3xl font-semibold">Learning Hub</h1>
-              <p className="text-muted-foreground mt-2">
-                Access training materials, tutorials, and guides to help you master real estate photography and content creation.
-              </p>
-            </div>
-            
-            <Tabs defaultValue="all" className="max-w-5xl mx-auto">
-              <TabsList className="mb-8">
-                <TabsTrigger value="all">All Resources</TabsTrigger>
-                <TabsTrigger value="photography">Photography</TabsTrigger>
-                <TabsTrigger value="videography">Videography</TabsTrigger>
-                <TabsTrigger value="editing">Editing</TabsTrigger>
-                <TabsTrigger value="business">Business</TabsTrigger>
-              </TabsList>
+    <MainLayout>
+      <PageTransition>
+        <div className="min-h-screen flex flex-col">
+          <main className="flex-grow pt-24 pb-16">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="mb-8 max-w-3xl">
+                <h1 className="text-3xl font-semibold">Learning Hub</h1>
+                <p className="text-muted-foreground mt-2">
+                  Access training materials, tutorials, and guides to help you master real estate photography and content creation.
+                </p>
+              </div>
               
-              <TabsContent value="all" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {resources.map((resource) => (
-                    <ResourceCard key={resource.id} resource={resource} />
-                  ))}
-                </div>
-              </TabsContent>
-              
-              {["photography", "videography", "editing", "business"].map((category) => (
-                <TabsContent key={category} value={category} className="mt-0">
+              <Tabs defaultValue="all" className="max-w-5xl mx-auto">
+                <TabsList className="mb-8">
+                  <TabsTrigger value="all">All Resources</TabsTrigger>
+                  <TabsTrigger value="photography">Photography</TabsTrigger>
+                  <TabsTrigger value="videography">Videography</TabsTrigger>
+                  <TabsTrigger value="editing">Editing</TabsTrigger>
+                  <TabsTrigger value="business">Business</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="all" className="mt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {resources
-                      .filter((resource) => resource.category === category)
-                      .map((resource) => (
-                        <ResourceCard key={resource.id} resource={resource} />
-                      ))}
+                    {resources.map((resource) => (
+                      <ResourceCard key={resource.id} resource={resource} />
+                    ))}
                   </div>
                 </TabsContent>
-              ))}
-            </Tabs>
-            
-            <div className="mt-16 max-w-3xl mx-auto text-center">
-              <h2 className="text-2xl font-semibold mb-4">Can't find what you're looking for?</h2>
-              <p className="text-muted-foreground mb-6">
-                Our learning resources are constantly growing. If you need help with something specific, let us know!
-              </p>
-              <div className="flex justify-center">
-                <a href="#" className="inline-flex items-center text-primary hover:underline">
-                  <Link2 className="h-4 w-4 mr-2" />
-                  Request a tutorial
-                </a>
+                
+                {["photography", "videography", "editing", "business"].map((category) => (
+                  <TabsContent key={category} value={category} className="mt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {resources
+                        .filter((resource) => resource.category === category)
+                        .map((resource) => (
+                          <ResourceCard key={resource.id} resource={resource} />
+                        ))}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+              
+              <div className="mt-16 max-w-3xl mx-auto text-center">
+                <h2 className="text-2xl font-semibold mb-4">Can't find what you're looking for?</h2>
+                <p className="text-muted-foreground mb-6">
+                  Our learning resources are constantly growing. If you need help with something specific, let us know!
+                </p>
+                <div className="flex justify-center">
+                  <a href="#" className="inline-flex items-center text-primary hover:underline">
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Request a tutorial
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    </PageTransition>
+          </main>
+        </div>
+      </PageTransition>
+    </MainLayout>
   );
 };
 
