@@ -31,6 +31,14 @@ export interface Order {
   previousLocation?: string;
   mediaUploaded?: boolean;
   mediaLinks?: string[];
+  contractors?: Array<{
+    id: string | number;
+    name: string;
+    role: string;
+    payoutRate?: number;
+    payoutAmount?: number;
+    notes?: string;
+  }>;
 }
 
 export interface OrderFilters {
@@ -47,4 +55,13 @@ export interface OrderFilters {
 
 export interface OrderActionsProps {
   orderId: string | number;
+}
+
+export interface Contractor {
+  id: string | number;
+  name: string;
+  role: string;
+  payoutRate?: number;
+  payoutAmount?: number;
+  notes?: string;
 }

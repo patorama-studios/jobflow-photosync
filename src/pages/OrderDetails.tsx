@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -20,8 +19,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { InvoiceItems, ContractorPayout, InvoiceItem } from '@/components/orders/InvoiceItems';
+import { InvoiceItems, InvoiceItem } from '@/components/orders/InvoiceItems';
+import { ContractorPayouts } from '@/components/orders/ContractorPayouts';
 import { Label } from '@/components/ui/label';
+import { Contractor } from '@/types/orders';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -58,12 +59,10 @@ const OrderDetails: React.FC = () => {
   const [orderFulfilled, setOrderFulfilled] = useState(false);
   const [contentLocked, setContentLocked] = useState(false);
   
-  // Contractor payout state
-  const [customPayoutRate, setCustomPayoutRate] = useState<number | undefined>(undefined);
-  const [showCustomPayoutInput, setShowCustomPayoutInput] = useState(false);
-  const [contractorEditor, setContractorEditor] = useState('');
+  // New contractors state
+  const [contractors, setContractors] = useState<Contractor[]>([]);
   
-  // New dialog states
+  // Dialog states
   const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -89,28 +88,30 @@ const OrderDetails: React.FC = () => {
         }
       ]);
       
-      // Initialize custom payout rate with order's rate if available
-      if (order.photographerPayoutRate) {
-        setCustomPayoutRate(order.photographerPayoutRate);
+      // Initialize contractors with the photographer if available
+      if (order.photographer) {
+        setContractors([
+          {
+            id: '1',
+            name: order.photographer,
+            role: 'photographer',
+            payoutRate: order.photographerPayoutRate,
+            payoutAmount: order.photographerPayoutRate 
+              ? (order.price * order.photographerPayoutRate / 100) 
+              : undefined
+          }
+        ]);
+      } else {
+        setContractors([]);
       }
     }
   }, [order]);
   
-  // Handle custom payout rate change
-  const handleCustomPayoutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    setCustomPayoutRate(isNaN(value) ? undefined : value);
+  // Calculate total order amount from invoice items
+  const calculateTotalOrderAmount = () => {
+    return invoiceItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
-  
-  // Save custom payout rate
-  const saveCustomPayoutRate = () => {
-    toast({
-      title: "Payout Rate Updated",
-      description: `Custom payout rate of $${customPayoutRate} has been saved`,
-    });
-    setShowCustomPayoutInput(false);
-  };
-  
+
   if (!order) {
     return (
       <PageTransition>
@@ -428,118 +429,21 @@ const OrderDetails: React.FC = () => {
                   </Card>
                 )}
                 
-                {/* Contractor Payout Section - New Section */}
+                {/* Contractor Payouts Section - Updated to use the new component */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Users className="h-5 w-5" />
-                      Contractor Payment
+                      Contractor Payouts
                     </CardTitle>
-                    <CardDescription>Manage contractor payout details</CardDescription>
+                    <CardDescription>Manage payments to contractors</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <h3 className="font-medium">Assigned Contractor</h3>
-                          <div className="flex items-center gap-3 mt-2">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src="" alt={order.photographer || 'Contractor'} />
-                              <AvatarFallback>
-                                {order.photographer?.split(' ').map(part => part[0]).join('').slice(0, 2) || 'CN'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{order.photographer || 'Not assigned'}</p>
-                              <p className="text-sm text-muted-foreground">Photographer</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="font-medium">Editor</h3>
-                          <div className="flex items-center mt-2">
-                            <Input
-                              placeholder="Enter editor name"
-                              value={contractorEditor}
-                              onChange={(e) => setContractorEditor(e.target.value)}
-                              className="w-full max-w-xs"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-medium">Payout Rate</h3>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="flex items-center gap-1"
-                              onClick={() => setShowCustomPayoutInput(!showCustomPayoutInput)}
-                            >
-                              <Edit className="h-4 w-4" />
-                              {showCustomPayoutInput ? 'Cancel' : 'Override Rate'}
-                            </Button>
-                          </div>
-                          
-                          {showCustomPayoutInput ? (
-                            <div className="mt-2 space-y-3">
-                              <div className="space-y-2">
-                                <Label htmlFor="custom-payout">Custom Payout Amount ($)</Label>
-                                <div className="flex items-center gap-2">
-                                  <Input
-                                    id="custom-payout"
-                                    type="number"
-                                    placeholder="Enter amount"
-                                    value={customPayoutRate !== undefined ? customPayoutRate : ''}
-                                    onChange={handleCustomPayoutChange}
-                                    className="w-full max-w-xs"
-                                  />
-                                  <Button onClick={saveCustomPayoutRate}>Save</Button>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-2">
-                              <div className="bg-muted p-4 rounded-md">
-                                <p className="text-lg font-semibold flex items-center">
-                                  <DollarSign className="h-5 w-5 mr-1" />
-                                  {customPayoutRate !== undefined ? customPayoutRate.toFixed(2) : (order.photographerPayoutRate?.toFixed(2) || 'Not set')}
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {customPayoutRate !== undefined ? 'Custom rate' : 'Default rate'}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div>
-                          <h3 className="font-medium">Total Payout</h3>
-                          <div className="bg-muted p-4 rounded-md mt-2">
-                            <ContractorPayout 
-                              items={invoiceItems} 
-                              payoutRate={customPayoutRate !== undefined ? customPayoutRate : (order.photographerPayoutRate || 0)} 
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="font-medium">Payout Notes</h3>
-                      <Textarea 
-                        placeholder="Add notes about this payment..." 
-                        className="mt-2"
-                      />
-                      <div className="mt-3 flex justify-end">
-                        <Button variant="default" size="sm">Save Notes</Button>
-                      </div>
-                    </div>
+                  <CardContent>
+                    <ContractorPayouts 
+                      contractors={contractors} 
+                      onContractorsChange={setContractors}
+                      totalOrderAmount={calculateTotalOrderAmount()}
+                    />
                   </CardContent>
                 </Card>
               </div>
