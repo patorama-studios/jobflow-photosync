@@ -6,12 +6,14 @@ import { JobCalendarWithErrorBoundary } from '@/components/dashboard/JobCalendar
 import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar as CalendarIcon, Clock, LayoutGrid } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const Calendar = () => {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
+  const { toast } = useToast();
 
   useEffect(() => {
     // Log when the calendar view changes for debugging
@@ -32,6 +34,12 @@ const Calendar = () => {
 
   const handleViewChange = (value: string) => {
     setCalendarView(value as "month" | "week" | "day");
+    
+    toast({
+      title: `Switched to ${value} view`,
+      description: `You are now viewing the ${value} calendar.`,
+      variant: "default",
+    });
   };
 
   return (
