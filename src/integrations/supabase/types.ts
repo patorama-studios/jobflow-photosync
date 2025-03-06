@@ -44,6 +44,119 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          company: string | null
+          company_id: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          outstanding_jobs: number | null
+          outstanding_payment: number | null
+          phone: string | null
+          photo_url: string | null
+          status: string
+          total_jobs: number | null
+        }
+        Insert: {
+          company?: string | null
+          company_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          outstanding_jobs?: number | null
+          outstanding_payment?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          status?: string
+          total_jobs?: number | null
+        }
+        Update: {
+          company?: string | null
+          company_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          outstanding_jobs?: number | null
+          outstanding_payment?: number | null
+          phone?: string | null
+          photo_url?: string | null
+          status?: string
+          total_jobs?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_clients_companies"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          industry: string
+          logo_url: string | null
+          name: string
+          open_jobs: number | null
+          outstanding_amount: number | null
+          phone: string | null
+          state: string | null
+          status: string
+          total_jobs: number | null
+          total_revenue: number | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string
+          logo_url?: string | null
+          name: string
+          open_jobs?: number | null
+          outstanding_amount?: number | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          total_jobs?: number | null
+          total_revenue?: number | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string
+          logo_url?: string | null
+          name?: string
+          open_jobs?: number | null
+          outstanding_amount?: number | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          total_jobs?: number | null
+          total_revenue?: number | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       custom_fields: {
         Row: {
           created_at: string

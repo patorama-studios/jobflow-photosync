@@ -1,94 +1,110 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Define company interface
 export interface Company {
   id: string;
   name: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   address?: string;
   city?: string;
   state?: string;
   zip?: string;
   website?: string;
-  createdAt: string;
+  industry: string;
+  logo_url?: string;
+  created_at: string;
   status: 'active' | 'inactive';
-  totalOrders?: number;
-  activeOrders?: number;
+  open_jobs: number;
+  total_jobs: number;
+  outstanding_amount: number;
+  total_revenue: number;
 }
-
-// Sample company data
-const sampleCompanies: Company[] = [
-  {
-    id: '1',
-    name: 'Acme Real Estate',
-    email: 'info@acme-realty.com',
-    phone: '(555) 987-6543',
-    address: '123 Main St, Suite 100',
-    city: 'Austin',
-    state: 'TX',
-    zip: '78701',
-    website: 'https://acme-realty.com',
-    createdAt: new Date().toISOString(),
-    status: 'active',
-    totalOrders: 24,
-    activeOrders: 5
-  },
-  {
-    id: '2',
-    name: 'Summit Properties',
-    email: 'contact@summitproperties.com',
-    phone: '(555) 123-4567',
-    address: '456 Oak Ave',
-    city: 'Seattle',
-    state: 'WA',
-    zip: '98101',
-    website: 'https://summitproperties.com',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'active',
-    totalOrders: 18,
-    activeOrders: 3
-  },
-  {
-    id: '3',
-    name: 'Horizon Realty Group',
-    email: 'sales@horizonrealty.com',
-    phone: '(555) 789-0123',
-    address: '789 Pine St',
-    city: 'Denver',
-    state: 'CO',
-    zip: '80202',
-    website: 'https://horizonrealty.com',
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'inactive',
-    totalOrders: 7,
-    activeOrders: 0
-  }
-];
 
 export function useCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        // In a real application, this would fetch from an API
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setCompanies(sampleCompanies);
-      } catch (err) {
-        setError('Failed to fetch companies');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchCompanies = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false });
 
+      if (error) {
+        throw error;
+      }
+
+      setCompanies(data || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch companies');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addCompany = async (newCompany: Omit<Company, 'id' | 'created_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .insert([newCompany])
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      setCompanies(prev => [data[0], ...prev]);
+      toast.success("Company added successfully");
+      return data[0];
+    } catch (err: any) {
+      toast.error("Failed to add company: " + err.message);
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const updateCompany = async (id: string, updates: Partial<Company>) => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      setCompanies(prev => prev.map(company => 
+        company.id === id ? { ...company, ...data[0] } : company
+      ));
+      toast.success("Company updated successfully");
+      return data[0];
+    } catch (err: any) {
+      toast.error("Failed to update company: " + err.message);
+      console.error(err);
+      throw err;
+    }
+  };
+
+  useEffect(() => {
     fetchCompanies();
   }, []);
 
-  return { companies, isLoading, error };
+  return { 
+    companies, 
+    isLoading, 
+    error, 
+    refetch: fetchCompanies,
+    addCompany,
+    updateCompany
+  };
 }

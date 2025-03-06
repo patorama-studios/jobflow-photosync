@@ -5,7 +5,9 @@ import {
   Search, 
   Filter, 
   MessageSquare,
-  Building
+  Building,
+  Download,
+  UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,23 +21,67 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { mockCustomers, mockCompanies } from "@/components/clients/mock-data";
+import { useClients } from "@/hooks/use-clients";
+import { AddClientDialog } from "@/components/clients/AddClientDialog";
+import { exportToCSV } from "@/utils/csv-export";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ClientTable() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [addClientOpen, setAddClientOpen] = useState(false);
   
-  const filteredClients = mockCustomers.filter(
+  const { clients, isLoading, error, addClient } = useClients();
+  
+  const filteredClients = clients.filter(
     client => 
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.company || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Find company ID by name for linking
   const getCompanyIdByName = (companyName: string) => {
-    const company = mockCompanies.find(c => c.name === companyName);
-    return company ? company.id : undefined;
+    // In a real app, we'd use a relationship. For now, we'll just use the name as an identifier
+    return companyName ? companyName.toLowerCase().replace(/\s+/g, '-') : undefined;
   };
+
+  const handleExport = () => {
+    // Filter the data to export (remove fields we don't want in the export)
+    const exportData = filteredClients.map(client => ({
+      ID: client.id,
+      Name: client.name,
+      Email: client.email,
+      Phone: client.phone || '',
+      Company: client.company || '',
+      'Created Date': new Date(client.created_at).toLocaleDateString(),
+      Status: client.status,
+      'Total Jobs': client.total_jobs,
+      'Outstanding Jobs': client.outstanding_jobs,
+      'Outstanding Payment': client.outstanding_payment
+    }));
+    
+    exportToCSV(exportData, 'clients-export');
+  };
+
+  const handleAddClient = async (client: any) => {
+    await addClient(client);
+    setAddClientOpen(false);
+  };
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Client Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-red-500">
+            Error loading clients: {error}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -53,9 +99,16 @@ export function ClientTable() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button size="sm" onClick={() => setAddClientOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Client
+            </Button>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
@@ -73,70 +126,108 @@ export function ClientTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell>
-                    <Avatar>
-                      <AvatarImage src={client.photoUrl} alt={client.name} />
-                      <AvatarFallback>{client.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{client.name}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      {client.company ? (
-                        <Link 
-                          to={`/companies/${getCompanyIdByName(client.company)}`}
-                          className="text-sm font-medium text-primary flex items-center hover:underline"
-                        >
-                          <Building className="h-3 w-3 mr-1" />
-                          {client.company}
-                        </Link>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Not assigned</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <p>{client.phone}</p>
-                      <p className="text-muted-foreground">{client.email}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex flex-col items-center">
-                      <p className="font-medium">{client.totalJobs}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {client.outstandingJobs} open
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium text-amber-600">${client.outstandingPayment}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">{client.createdDate}</span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/clients/${client.id}`}>View</Link>
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Interview
-                      </Button>
-                    </div>
+              {isLoading ? (
+                // Loading skeleton
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
+                    <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center"><Skeleton className="h-5 w-12 mx-auto" /></TableCell>
+                    <TableCell className="text-center"><Skeleton className="h-5 w-16 mx-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Skeleton className="h-9 w-16" />
+                        <Skeleton className="h-9 w-24" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : filteredClients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                    No clients found. Try adjusting your search or add a new client.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>
+                      <Avatar>
+                        <AvatarImage src={client.photo_url} alt={client.name} />
+                        <AvatarFallback>{client.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{client.name}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        {client.company ? (
+                          <Link 
+                            to={`/companies/${getCompanyIdByName(client.company)}`}
+                            className="text-sm font-medium text-primary flex items-center hover:underline"
+                          >
+                            <Building className="h-3 w-3 mr-1" />
+                            {client.company}
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Not assigned</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <p>{client.phone}</p>
+                        <p className="text-muted-foreground">{client.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center">
+                        <p className="font-medium">{client.total_jobs}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {client.outstanding_jobs} open
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="font-medium text-amber-600">${client.outstanding_payment}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">{new Date(client.created_at).toLocaleDateString()}</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/clients/${client.id}`}>View</Link>
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Interview
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
+
+        <AddClientDialog 
+          open={addClientOpen} 
+          onOpenChange={setAddClientOpen} 
+          onClientAdded={handleAddClient} 
+        />
       </CardContent>
     </Card>
   );

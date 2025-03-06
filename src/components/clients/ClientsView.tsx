@@ -17,25 +17,76 @@ import {
   LayoutList
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { mockCustomers } from "@/components/clients/mock-data";
 import { ClientTable } from "@/components/clients/ClientTable";
 import { CompanyList } from "@/components/clients/CompanyList";
+import { AddClientDialog } from "@/components/clients/AddClientDialog";
+import { AddCompanyDialog } from "@/components/clients/AddCompanyDialog";
+import { useClients } from "@/hooks/use-clients";
+import { useCompanies } from "@/hooks/use-companies";
+import { exportToCSV } from "@/utils/csv-export";
 
 export function ClientsView() {
   const [activeTab, setActiveTab] = useState("clients");
   const [companyViewMode, setCompanyViewMode] = useState<'table' | 'card'>('table');
+  const [addClientOpen, setAddClientOpen] = useState(false);
+  const [addCompanyOpen, setAddCompanyOpen] = useState(false);
+  
+  const { clients, addClient } = useClients();
+  const { companies, addCompany } = useCompanies();
+
+  const handleAddClient = async (client: any) => {
+    await addClient(client);
+    setAddClientOpen(false);
+  };
+
+  const handleAddCompany = async (company: any) => {
+    await addCompany(company);
+    setAddCompanyOpen(false);
+  };
+
+  const handleExport = () => {
+    if (activeTab === "clients") {
+      // Export clients
+      const exportData = clients.map(client => ({
+        ID: client.id,
+        Name: client.name,
+        Email: client.email,
+        Phone: client.phone || '',
+        Company: client.company || '',
+        'Created Date': new Date(client.created_at).toLocaleDateString(),
+        Status: client.status,
+        'Total Jobs': client.total_jobs,
+        'Outstanding Jobs': client.outstanding_jobs,
+        'Outstanding Payment': client.outstanding_payment
+      }));
+      exportToCSV(exportData, 'clients-export');
+    } else {
+      // Export companies
+      const exportData = companies.map(company => ({
+        ID: company.id,
+        Name: company.name,
+        Email: company.email || '',
+        Phone: company.phone || '',
+        Website: company.website || '',
+        Industry: company.industry || '',
+        Address: [company.address, company.city, company.state, company.zip].filter(Boolean).join(', '),
+        'Created Date': new Date(company.created_at).toLocaleDateString(),
+        Status: company.status,
+        'Open Jobs': company.open_jobs,
+        'Total Jobs': company.total_jobs,
+        'Outstanding Amount': company.outstanding_amount,
+        'Total Revenue': company.total_revenue
+      }));
+      exportToCSV(exportData, 'companies-export');
+    }
+  };
+
+  const handleImport = () => {
+    // Just a placeholder for now - in a real app, this would open a dialog to import data
+    alert("Import functionality would go here. This would allow uploading a CSV file to import clients or companies.");
+  };
   
   return (
     <div className="space-y-6">
@@ -47,17 +98,20 @@ export function ClientsView() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleImport}>
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button size="sm">
+          <Button 
+            size="sm" 
+            onClick={() => activeTab === "clients" ? setAddClientOpen(true) : setAddCompanyOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Add Client
+            Add {activeTab === "clients" ? "Client" : "Company"}
           </Button>
         </div>
       </div>
@@ -107,6 +161,18 @@ export function ClientsView() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AddClientDialog 
+        open={addClientOpen} 
+        onOpenChange={setAddClientOpen} 
+        onClientAdded={handleAddClient} 
+      />
+      
+      <AddCompanyDialog 
+        open={addCompanyOpen} 
+        onOpenChange={setAddCompanyOpen} 
+        onCompanyAdded={handleAddCompany} 
+      />
     </div>
   );
 }
