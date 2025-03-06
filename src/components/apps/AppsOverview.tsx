@@ -84,7 +84,7 @@ export function AppsOverview() {
         return {
           ...integration,
           connected: true,
-          status: 'active',
+          status: 'active' as const,
           lastSynced: '2 hours ago'
         };
       }
