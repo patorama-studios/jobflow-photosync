@@ -42,6 +42,8 @@ export function useClients() {
 
   const fetchClients = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase
         .from('clients')
@@ -73,7 +75,8 @@ export function useClients() {
       setClients(typedClients);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch clients');
-      console.error(err);
+      console.error("Error fetching clients:", err);
+      toast.error(`Failed to fetch clients: ${err.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -88,6 +91,10 @@ export function useClients() {
 
       if (error) {
         throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("No data returned after inserting client");
       }
 
       // Convert the response to Client type
@@ -108,12 +115,13 @@ export function useClients() {
         outstanding_payment: data[0].outstanding_payment || 0
       };
 
+      // Update the local state with the new client
       setClients(prev => [addedClient, ...prev]);
-      toast.success("Client added successfully");
+      
       return addedClient;
     } catch (err: any) {
-      toast.error("Failed to add client: " + err.message);
-      console.error(err);
+      console.error("Error adding client:", err);
+      toast.error(`Failed to add client: ${err.message || 'Unknown error'}`);
       throw err;
     }
   };
@@ -128,6 +136,10 @@ export function useClients() {
 
       if (error) {
         throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("No data returned after updating client");
       }
 
       // Convert the response to Client type
@@ -151,11 +163,12 @@ export function useClients() {
       setClients(prev => prev.map(client => 
         client.id === id ? updatedClient : client
       ));
+      
       toast.success("Client updated successfully");
       return updatedClient;
     } catch (err: any) {
-      toast.error("Failed to update client: " + err.message);
-      console.error(err);
+      console.error("Error updating client:", err);
+      toast.error(`Failed to update client: ${err.message || 'Unknown error'}`);
       throw err;
     }
   };

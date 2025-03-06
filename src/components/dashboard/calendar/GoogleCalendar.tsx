@@ -49,7 +49,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
     
     // Map SampleOrder to CalendarOrder
     const calendarOrders: CalendarOrder[] = orders.map(order => ({
-      id: order.id,
+      id: String(order.id), // Convert ID to string to ensure compatibility
       order_number: order.orderNumber,
       client: order.client,
       client_email: order.clientEmail,

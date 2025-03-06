@@ -67,7 +67,6 @@ export function ClientTable() {
   const handleAddClient = async (client: Omit<Client, 'id' | 'created_at'>) => {
     try {
       const newClient = await addClient(client);
-      setAddClientOpen(false);
       
       // Show a success message
       toast.success("Client added successfully");
@@ -77,11 +76,14 @@ export function ClientTable() {
         // Short delay to allow the toast to be seen and state to update
         setTimeout(() => {
           navigate(`/client/${newClient.id}`);
-        }, 500);
+        }, 200);
       }
-    } catch (error) {
+      
+      return Promise.resolve();
+    } catch (error: any) {
       console.error("Error adding client:", error);
       // Error toast is already shown in the addClient function
+      return Promise.reject(error);
     }
   };
 

@@ -74,9 +74,9 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
       const newClient: Omit<Client, 'id' | 'created_at'> = {
         name: data.name,
         email: data.email,
-        phone: data.phone,
-        company: data.company,
-        company_id: data.company_id,
+        phone: data.phone || undefined,
+        company: data.company || undefined,
+        company_id: data.company_id || undefined,
         status: data.status as 'active' | 'inactive',
         total_jobs: 0,
         outstanding_jobs: 0,
@@ -84,10 +84,17 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
       };
       
       await onClientAdded(newClient);
+      
+      // Reset form AFTER the client has been successfully added
+      // This ensures that the form state is clean for next use
       form.reset();
-    } catch (error) {
+      
+      // Close the dialog AFTER the client has been successfully added
+      // This prevents issues with half-completed actions
+      onOpenChange(false);
+    } catch (error: any) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to add client");
+      toast.error("Failed to add client: " + (error.message || "Unknown error"));
     } finally {
       setIsSubmitting(false);
     }
