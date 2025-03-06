@@ -51,8 +51,8 @@ import { toast } from '@/components/ui/use-toast';
 import { RefundDialog } from '@/components/orders/RefundDialog';
 import { RefundHistory } from '@/components/orders/RefundHistory';
 
-// Import Order type from useSampleOrders to match the expected structure
-import { Order } from '@/hooks/useSampleOrders';
+// Import Order type from types/orders to match the expected structure
+import { Order } from '@/types/orders';
 
 const OrderDetails: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -106,9 +106,9 @@ const OrderDetails: React.FC = () => {
             id: '1',
             name: order.photographer,
             role: 'photographer',
-            payoutRate: order.photographerPayoutRate,
-            payoutAmount: order.photographerPayoutRate 
-              ? (order.price * order.photographerPayoutRate / 100) 
+            payoutRate: order.photographer_payout_rate,
+            payoutAmount: order.photographer_payout_rate 
+              ? (order.price * order.photographer_payout_rate / 100) 
               : undefined
           }
         ]);
@@ -244,7 +244,7 @@ const OrderDetails: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Orders
           </Button>
-          <h1 className="text-3xl font-semibold">Order {order.orderNumber}</h1>
+          <h1 className="text-3xl font-semibold">Order {order.order_number}</h1>
           <Badge 
             className="ml-4"
             variant={
@@ -341,11 +341,11 @@ const OrderDetails: React.FC = () => {
                       <h3 className="font-medium">Date & Time</h3>
                       <p className="flex items-center gap-1 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(order.scheduledDate), 'MMMM d, yyyy')}
+                        {format(new Date(order.scheduled_date), 'MMMM d, yyyy')}
                       </p>
                       <p className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        {order.scheduledTime}
+                        {order.scheduled_time}
                       </p>
                     </div>
                     <div>
@@ -549,8 +549,8 @@ const OrderDetails: React.FC = () => {
                     
                     <div>
                       <h3 className="text-sm font-medium">Contact Details</h3>
-                      <p className="text-sm text-muted-foreground">Email: {order.clientEmail || 'client@example.com'}</p>
-                      <p className="text-sm text-muted-foreground">Phone: {order.clientPhone || '(555) 123-4567'}</p>
+                      <p className="text-sm text-muted-foreground">Email: {order.client_email || 'client@example.com'}</p>
+                      <p className="text-sm text-muted-foreground">Phone: {order.client_phone || '(555) 123-4567'}</p>
                     </div>
                     
                     <Separator />
@@ -583,15 +583,15 @@ const OrderDetails: React.FC = () => {
                   <CardContent className="space-y-3">
                     <div>
                       <h3 className="text-sm font-medium">Order Number</h3>
-                      <p className="text-sm">{order.orderNumber}</p>
+                      <p className="text-sm">{order.order_number}</p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium">Property Type</h3>
-                      <p className="text-sm">{order.propertyType} ({order.squareFeet} sq ft)</p>
+                      <p className="text-sm">{order.property_type} ({order.square_feet} sq ft)</p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium">Created Date</h3>
-                      <p className="text-sm">{format(new Date(order.scheduledDate), 'MMMM d, yyyy')}</p>
+                      <p className="text-sm">{format(new Date(order.scheduled_date), 'MMMM d, yyyy')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -726,14 +726,14 @@ const OrderDetails: React.FC = () => {
                 <h4 className="text-sm font-medium">Appointment Date</h4>
                 <Input
                   type="date"
-                  defaultValue={format(new Date(order.scheduledDate), 'yyyy-MM-dd')}
+                  defaultValue={format(new Date(order.scheduled_date), 'yyyy-MM-dd')}
                 />
               </div>
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Appointment Time</h4>
                 <Input
                   type="time"
-                  defaultValue={order.scheduledTime.replace(/\s?(AM|PM)/i, '')}
+                  defaultValue={order.scheduled_time.replace(/\s?(AM|PM)/i, '')}
                 />
               </div>
               <div className="space-y-2">
@@ -770,14 +770,14 @@ const OrderDetails: React.FC = () => {
                 <h4 className="text-sm font-medium">New Date</h4>
                 <Input
                   type="date"
-                  defaultValue={format(new Date(order.scheduledDate), 'yyyy-MM-dd')}
+                  defaultValue={format(new Date(order.scheduled_date), 'yyyy-MM-dd')}
                 />
               </div>
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">New Time</h4>
                 <Input
                   type="time"
-                  defaultValue={order.scheduledTime.replace(/\s?(AM|PM)/i, '')}
+                  defaultValue={order.scheduled_time.replace(/\s?(AM|PM)/i, '')}
                 />
               </div>
               <div className="space-y-2">
@@ -849,7 +849,7 @@ const OrderDetails: React.FC = () => {
                 <Input
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
-                  placeholder={order.clientEmail || "client@example.com"}
+                  placeholder={order.client_email || "client@example.com"}
                 />
               </div>
               <div className="space-y-2">
@@ -881,7 +881,7 @@ const OrderDetails: React.FC = () => {
           onOpenChange={setRefundDialogOpen}
           orderId={order.id.toString()}
           orderTotal={calculateTotalOrderAmount()}
-          stripePaymentId={order.stripePaymentId || "pi_mock_123456789"}
+          stripePaymentId={order.stripe_payment_id || "pi_mock_123456789"}
           onRefundComplete={handleRefundComplete}
         />
       </div>

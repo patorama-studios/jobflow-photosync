@@ -1,8 +1,42 @@
 
 import { addDays } from 'date-fns';
-import { Order } from '@/hooks/useSampleOrders';
 
-// Sample data that would normally come from an API
+// Define the Order type for the sample data
+export interface Order {
+  id: number;
+  orderNumber: string;
+  address: string;
+  client: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  photographer: string;
+  photographerPayoutRate?: number;
+  price: number;
+  propertyType: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  squareFeet: number;
+  status: string;
+  additionalAppointments?: {
+    date: string;
+    time: string;
+    description: string;
+  }[];
+  customFields?: Record<string, string>;
+  customerNotes?: string;
+  internalNotes?: string;
+  mediaUploaded?: boolean;
+  mediaLinks?: string[];
+  drivingTimeMin?: number;
+  previousLocation?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  package?: string;
+  stripePaymentId?: string;
+}
+
+// Generate sample orders data
 export const generateSampleOrders = (): Order[] => {
   const sampleOrders: Order[] = [
     {
@@ -199,3 +233,6 @@ export const generateSampleOrders = (): Order[] => {
     return order;
   });
 };
+
+// Export the sample orders for use in other components
+export const sampleOrders = generateSampleOrders();

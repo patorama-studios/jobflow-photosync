@@ -33,9 +33,9 @@ export function useOrders() {
           client_email: order.clientEmail,
           client_phone: order.clientPhone,
           address: order.address,
-          city: order.city,
-          state: order.state,
-          zip: order.zip,
+          city: order.city || '',
+          state: order.state || '',
+          zip: order.zip || '',
           scheduled_date: order.scheduledDate,
           scheduled_time: order.scheduledTime,
           photographer: order.photographer,
@@ -47,7 +47,7 @@ export function useOrders() {
           notes: order.notes,
           internal_notes: order.internalNotes,
           customer_notes: order.customerNotes,
-          package: order.package,
+          package: order.package || '',
           stripe_payment_id: order.stripePaymentId
         }));
         
