@@ -14,7 +14,6 @@ import Calendar from './pages/Calendar'
 import SettingsPage from './pages/Settings'
 import Production from './pages/Production'
 import Learning from './pages/Learning'
-import Apps from './pages/Apps'
 import Login from './pages/Login'
 import { HeaderSettingsProvider } from './hooks/useHeaderSettings'
 
@@ -48,7 +47,6 @@ function App() {
                   <Route path="/settings/*" element={<MainLayout><ProtectedRoute><SettingsPage /></ProtectedRoute></MainLayout>} />
                   <Route path="/production" element={<MainLayout><ProtectedRoute><Production /></ProtectedRoute></MainLayout>} />
                   <Route path="/learning" element={<MainLayout><ProtectedRoute><Learning /></ProtectedRoute></MainLayout>} />
-                  <Route path="/apps" element={<MainLayout><ProtectedRoute><Apps /></ProtectedRoute></MainLayout>} />
                   <Route path="/notifications" element={<MainLayout><ProtectedRoute><NotificationsCenter /></ProtectedRoute></MainLayout>} />
                 </Routes>
               </HeaderSettingsProvider>

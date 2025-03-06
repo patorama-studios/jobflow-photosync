@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { IntegrationCard } from './IntegrationCard';
 import { IntegrationDialog } from './IntegrationDialog';
 import { 
@@ -14,7 +14,11 @@ import {
 import { Integration } from './types';
 import { useAuth } from '@/contexts/AuthContext';
 
-export function AppsOverview() {
+interface AppsOverviewProps {
+  hideHeader?: boolean;
+}
+
+export const AppsOverview = memo(function AppsOverview({ hideHeader = false }: AppsOverviewProps) {
   const [open, setOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -119,17 +123,19 @@ export function AppsOverview() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Integrations</h2>
-        <p className="text-muted-foreground">
-          Connect Patorama Studios with your favorite tools and services
-        </p>
-        {!user && (
-          <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-sm text-yellow-800">
-            You need to be logged in to connect or manage integrations.
-          </div>
-        )}
-      </div>
+      {!hideHeader && (
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Integrations</h2>
+          <p className="text-muted-foreground">
+            Connect Patorama Studios with your favorite tools and services
+          </p>
+          {!user && (
+            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-sm text-yellow-800">
+              You need to be logged in to connect or manage integrations.
+            </div>
+          )}
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {integrations.map(integration => (
@@ -150,4 +156,4 @@ export function AppsOverview() {
       )}
     </div>
   );
-}
+});

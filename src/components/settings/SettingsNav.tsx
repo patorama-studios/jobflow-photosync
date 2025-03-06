@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { SettingsCategory } from "@/pages/Settings";
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,7 +13,8 @@ import {
   MonitorSmartphone,
   FileText,
   Paintbrush,
-  Package
+  Package,
+  Puzzle
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -27,7 +28,7 @@ interface SettingsNavItem {
   icon: React.ReactNode;
 }
 
-export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavProps) {
+export const SettingsNav = memo(function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavProps) {
   const navItems: SettingsNavItem[] = [
     { category: "user", label: "User Settings", icon: <User className="h-4 w-4 mr-2" /> },
     { category: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4 mr-2" /> },
@@ -40,6 +41,7 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
     { category: "header", label: "Header", icon: <MonitorSmartphone className="h-4 w-4 mr-2" /> },
     { category: "theme", label: "Theme", icon: <Paintbrush className="h-4 w-4 mr-2" /> },
     { category: "legal", label: "Legal", icon: <FileText className="h-4 w-4 mr-2" /> },
+    { category: "apps", label: "Integrations", icon: <Puzzle className="h-4 w-4 mr-2" /> },
   ];
 
   return (
@@ -57,4 +59,4 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
       ))}
     </div>
   );
-}
+});

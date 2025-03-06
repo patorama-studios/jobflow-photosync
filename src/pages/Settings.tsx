@@ -16,7 +16,8 @@ export type SettingsCategory =
   | "presentation"
   | "header"
   | "theme"
-  | "legal";
+  | "legal"
+  | "apps";
 
 export function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");
@@ -31,12 +32,14 @@ export function SettingsPage() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
-          <SettingsNav 
-            activeCategory={activeCategory} 
-            onCategoryChange={setActiveCategory} 
-          />
-          <SettingsPanel activeCategory={activeCategory} />
+        <div className="flex flex-col w-full">
+          <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
+            <SettingsNav 
+              activeCategory={activeCategory} 
+              onCategoryChange={setActiveCategory} 
+            />
+            <SettingsPanel activeCategory={activeCategory} />
+          </div>
         </div>
       </div>
     </PageTransition>

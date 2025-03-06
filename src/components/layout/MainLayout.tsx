@@ -9,7 +9,6 @@ import {
   ShoppingCart,
   Kanban,
   GraduationCap,
-  Puzzle,
   Bell
 } from "lucide-react";
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
@@ -29,7 +28,6 @@ const useSidebarLinks = () => {
     { name: "Orders", icon: ShoppingCart, path: "/orders" },
     { name: "Customers", icon: Users, path: "/customers" },
     { name: "Production Board", icon: Kanban, path: "/production" },
-    { name: "Apps", icon: Puzzle, path: "/apps" },
     { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
     { name: "Notifications", icon: Bell, path: "/notifications" },
     { name: "Settings", icon: Settings, path: "/settings" }

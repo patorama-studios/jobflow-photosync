@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { SettingsCategory } from "@/pages/Settings";
 import { UserSettings } from "./sections/UserSettings";
 import { NotificationPreferences } from "./sections/NotificationPreferences";
@@ -12,13 +12,14 @@ import { PresentationSettings } from "./sections/PresentationSettings";
 import { HeaderSettings } from "./sections/HeaderSettings";
 import { ThemeSettings } from "./sections/ThemeSettings";
 import { LegalSettings } from "./sections/LegalSettings";
+import { AppsSettings } from "./sections/AppsSettings";
 import { Card } from "@/components/ui/card";
 
 interface SettingsPanelProps {
   activeCategory: SettingsCategory;
 }
 
-export function SettingsPanel({ activeCategory }: SettingsPanelProps) {
+export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: SettingsPanelProps) {
   return (
     <Card className="p-6">
       {activeCategory === "user" && <UserSettings />}
@@ -32,6 +33,7 @@ export function SettingsPanel({ activeCategory }: SettingsPanelProps) {
       {activeCategory === "header" && <HeaderSettings />}
       {activeCategory === "theme" && <ThemeSettings />}
       {activeCategory === "legal" && <LegalSettings />}
+      {activeCategory === "apps" && <AppsSettings />}
     </Card>
   );
-}
+});
