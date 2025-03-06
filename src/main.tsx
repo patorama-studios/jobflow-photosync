@@ -1,8 +1,8 @@
 
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
+import { ThemeProvider } from '@/components/theme-provider'
 
 // Apply theme and font immediately to prevent layout shifts
 const applyThemeAndFont = () => {
@@ -49,9 +49,9 @@ const mountApp = () => {
     // Create and mount root
     const root = createRoot(rootElement);
     root.render(
-      <BrowserRouter>
+      <ThemeProvider defaultTheme="system" storageKey="theme">
         <App />
-      </BrowserRouter>
+      </ThemeProvider>
     );
   } catch (error) {
     console.error("Error mounting app:", error);
@@ -67,25 +67,10 @@ const mountApp = () => {
   }
 };
 
-// Use native browser API if available, else use setTimeout
-if (navigator.onLine) {
-  // Only optimize startup if we're online
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(mountApp, { timeout: 2000 }); // Add timeout to ensure it runs
-  } else {
-    // Use queueMicrotask for better performance than setTimeout
-    queueMicrotask(mountApp);
-  }
+// Use requestIdleCallback or fallback to immediate mounting
+if (typeof window.requestIdleCallback === 'function') {
+  window.requestIdleCallback(mountApp, { timeout: 1000 });
 } else {
-  // If offline, mount immediately
-  mountApp();
-}
-
-// Register service worker for production
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(error => {
-      console.error('ServiceWorker registration failed:', error);
-    });
-  });
+  // Fallback for browsers that don't support requestIdleCallback
+  setTimeout(mountApp, 0);
 }

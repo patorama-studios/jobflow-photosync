@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   BrowserRouter as Router,
@@ -14,6 +15,7 @@ import Companies from './pages/Companies';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   useEffect(() => {
@@ -30,19 +32,26 @@ function App() {
     initializeStorage();
   }, []);
 
-  const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-    const { user, isLoading } = useAuth();
+  return (
+    <AuthProvider>
+      <AppRoutes />
+      <Toaster />
+    </AuthProvider>
+  );
+}
 
-    if (isLoading) {
-      return <div>Loading...</div>;
-    }
+// Separate component for routes to access auth context
+function AppRoutes() {
+  const { user, isLoading } = useAuth();
 
-    return user ? (
-      children
-    ) : (
-      <Navigate to="/login" replace />
+  // Show a simple loading state while auth state is being determined
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-lg">Loading...</div>
+      </div>
     );
-  };
+  }
 
   return (
     <Router>
@@ -51,44 +60,36 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
+            user ? <Dashboard /> : <Navigate to="/login" replace />
           }
         />
         <Route
           path="/orders"
           element={
-            <PrivateRoute>
-              <Orders />
-            </PrivateRoute>
+            user ? <Orders /> : <Navigate to="/login" replace />
           }
         />
         <Route
           path="/orders/:id"
           element={
-            <PrivateRoute>
-              <OrderDetails />
-            </PrivateRoute>
+            user ? <OrderDetails /> : <Navigate to="/login" replace />
           }
         />
         <Route
           path="/clients"
           element={
-            <PrivateRoute>
-              <Clients />
-            </PrivateRoute>
+            user ? <Clients /> : <Navigate to="/login" replace />
           }
         />
         <Route
           path="/companies"
           element={
-            <PrivateRoute>
-              <Companies />
-            </PrivateRoute>
+            user ? <Companies /> : <Navigate to="/login" replace />
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+        {/* Catch all route - redirect to login or dashboard based on auth state */}
+        <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
       </Routes>
     </Router>
   );
