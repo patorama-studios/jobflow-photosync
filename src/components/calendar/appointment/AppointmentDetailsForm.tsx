@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AppointmentDetailsFormProps {
   appointmentDate: string;
@@ -21,6 +22,7 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
   setAppointmentDate
 }) => {
   console.log("AppointmentDetailsForm received date:", appointmentDate);
+  const isMobile = useIsMobile();
   
   // Parse date parts from the appointmentDate string
   const dateParts = appointmentDate.split(' ');
@@ -125,13 +127,13 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
       
       <div className="space-y-2">
         <Label htmlFor="date">Appointment Date</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className={isMobile ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 gap-3"}>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal",
                   !selectedDate && "text-muted-foreground"
                 )}
               >

@@ -10,6 +10,7 @@ import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 import { Label } from '@/components/ui/label';
 import { useClients } from '@/hooks/use-clients';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CustomItem {
   id: string;
@@ -20,6 +21,8 @@ interface CustomItem {
 export const OrderDetailsForm: React.FC = () => {
   const { isLoaded } = useGoogleMaps();
   const { clients } = useClients();
+  const isMobile = useIsMobile();
+
   const [addressDetails, setAddressDetails] = useState({
     formattedAddress: '',
     streetAddress: '',
@@ -134,7 +137,7 @@ export const OrderDetailsForm: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-muted/20 max-h-[calc(100vh-200px)] overflow-y-auto">
+    <div className={`${isMobile ? 'space-y-4' : 'bg-muted/20 max-h-[calc(100vh-200px)] overflow-y-auto p-6'}`}>
       <h2 className="text-xl font-semibold mb-6">Create New Order</h2>
       
       <div className="space-y-6">
@@ -157,7 +160,7 @@ export const OrderDetailsForm: React.FC = () => {
             <div className="mt-2 p-2 bg-primary/5 rounded text-sm">
               <p className="font-medium">{addressDetails.formattedAddress}</p>
               {addressDetails.streetAddress && (
-                <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className={`${isMobile ? 'space-y-2' : 'grid grid-cols-2 gap-2'} mt-2`}>
                   <div>
                     <p className="text-xs text-muted-foreground">Street</p>
                     <p>{addressDetails.streetAddress}</p>
@@ -245,7 +248,7 @@ export const OrderDetailsForm: React.FC = () => {
         <div>
           <p className="text-sm font-medium mb-2">Order Notes (private)</p>
           <div className="border rounded-md mb-2">
-            <div className="flex items-center border-b p-1 gap-1">
+            <div className={`flex items-center border-b p-1 ${isMobile ? 'flex-wrap' : ''}`}>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Bold className="h-4 w-4" />
               </Button>
@@ -347,7 +350,7 @@ export const OrderDetailsForm: React.FC = () => {
 
       {/* New Customer Dialog */}
       <Dialog open={showNewCustomerDialog} onOpenChange={setShowNewCustomerDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className={`${isMobile ? 'w-[95%]' : 'sm:max-w-[425px]'}`}>
           <DialogHeader>
             <DialogTitle>Create New Customer</DialogTitle>
           </DialogHeader>
@@ -378,16 +381,16 @@ export const OrderDetailsForm: React.FC = () => {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewCustomerDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateCustomer}>Create Customer</Button>
+          <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
+            <Button variant="outline" onClick={() => setShowNewCustomerDialog(false)} className={isMobile ? "w-full" : ""}>Cancel</Button>
+            <Button onClick={handleCreateCustomer} className={isMobile ? "w-full" : ""}>Create Customer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Add Custom Item Dialog */}
       <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className={`${isMobile ? 'w-[95%]' : 'sm:max-w-[425px]'}`}>
           <DialogHeader>
             <DialogTitle>Add Custom Item</DialogTitle>
           </DialogHeader>
@@ -410,9 +413,9 @@ export const OrderDetailsForm: React.FC = () => {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddItemDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddCustomItem}>Add Item</Button>
+          <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
+            <Button variant="outline" onClick={() => setShowAddItemDialog(false)} className={isMobile ? "w-full" : ""}>Cancel</Button>
+            <Button onClick={handleAddCustomItem} className={isMobile ? "w-full" : ""}>Add Item</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
