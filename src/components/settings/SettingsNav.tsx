@@ -1,53 +1,58 @@
 
 import React from "react";
-import { 
-  User, Bell, Building2, PenLine, Download, 
-  CreditCard, LayoutGrid, FileText, Layout
-} from "lucide-react";
 import { SettingsCategory } from "@/pages/Settings";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { 
+  User, 
+  Bell, 
+  Building2, 
+  Edit, 
+  Download, 
+  CreditCard, 
+  Palette, 
+  MonitorSmartphone,
+  FileText,
+  Paintbrush
+} from "lucide-react";
 
 interface SettingsNavProps {
   activeCategory: SettingsCategory;
   onCategoryChange: (category: SettingsCategory) => void;
 }
 
-interface NavItem {
-  id: SettingsCategory;
+interface SettingsNavItem {
+  category: SettingsCategory;
   label: string;
   icon: React.ReactNode;
 }
 
 export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavProps) {
-  const navItems: NavItem[] = [
-    { id: "user", label: "User Details", icon: <User className="h-5 w-5" /> },
-    { id: "notifications", label: "Notification Preferences", icon: <Bell className="h-5 w-5" /> },
-    { id: "organization", label: "Organization Settings", icon: <Building2 className="h-5 w-5" /> },
-    { id: "editor", label: "Notification Editor", icon: <PenLine className="h-5 w-5" /> },
-    { id: "downloads", label: "Download Settings", icon: <Download className="h-5 w-5" /> },
-    { id: "payments", label: "Payments & Orders", icon: <CreditCard className="h-5 w-5" /> },
-    { id: "presentation", label: "Order Presentation", icon: <LayoutGrid className="h-5 w-5" /> },
-    { id: "header", label: "Header Settings", icon: <Layout className="h-5 w-5" /> },
-    { id: "legal", label: "Legal Settings", icon: <FileText className="h-5 w-5" /> },
+  const navItems: SettingsNavItem[] = [
+    { category: "user", label: "User Settings", icon: <User className="h-4 w-4 mr-2" /> },
+    { category: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4 mr-2" /> },
+    { category: "organization", label: "Organization", icon: <Building2 className="h-4 w-4 mr-2" /> },
+    { category: "editor", label: "Editor", icon: <Edit className="h-4 w-4 mr-2" /> },
+    { category: "downloads", label: "Downloads", icon: <Download className="h-4 w-4 mr-2" /> },
+    { category: "payments", label: "Payments", icon: <CreditCard className="h-4 w-4 mr-2" /> },
+    { category: "presentation", label: "Presentation", icon: <Palette className="h-4 w-4 mr-2" /> },
+    { category: "header", label: "Header", icon: <MonitorSmartphone className="h-4 w-4 mr-2" /> },
+    { category: "theme", label: "Theme", icon: <Paintbrush className="h-4 w-4 mr-2" /> },
+    { category: "legal", label: "Legal", icon: <FileText className="h-4 w-4 mr-2" /> },
   ];
-  
+
   return (
-    <nav className="space-y-1">
+    <div className="flex flex-col space-y-1">
       {navItems.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onCategoryChange(item.id)}
-          className={cn(
-            "flex w-full items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium",
-            activeCategory === item.id
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-muted"
-          )}
+        <Button
+          key={item.category}
+          variant={activeCategory === item.category ? "secondary" : "ghost"}
+          className="justify-start"
+          onClick={() => onCategoryChange(item.category)}
         >
           {item.icon}
-          <span>{item.label}</span>
-        </button>
+          {item.label}
+        </Button>
       ))}
-    </nav>
+    </div>
   );
 }

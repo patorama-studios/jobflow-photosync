@@ -14,6 +14,7 @@ export type SettingsCategory =
   | "payments"
   | "presentation"
   | "header"
+  | "theme"
   | "legal";
 
 export function SettingsPage() {
