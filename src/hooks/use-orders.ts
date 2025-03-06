@@ -44,7 +44,7 @@ export function useOrders() {
           property_type: order.propertyType,
           square_feet: order.squareFeet,
           status: order.status as OrderStatus,
-          notes: order.notes,
+          notes: order.internalNotes, // Map internalNotes to notes for compatibility
           internal_notes: order.internalNotes,
           customer_notes: order.customerNotes,
           package: order.package || '',

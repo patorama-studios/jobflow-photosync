@@ -12,10 +12,12 @@ import {
   CreditCard
 } from 'lucide-react';
 import { Integration } from './types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function AppsOverview() {
   const [open, setOpen] = React.useState(false);
   const [selectedIntegration, setSelectedIntegration] = React.useState<Integration | null>(null);
+  const { user } = useAuth();
 
   const integrations: Integration[] = [
     {
@@ -85,6 +87,11 @@ export function AppsOverview() {
         <p className="text-muted-foreground">
           Connect Patorama Studios with your favorite tools and services
         </p>
+        {!user && (
+          <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-sm text-yellow-800">
+            You need to be logged in to connect or manage integrations.
+          </div>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

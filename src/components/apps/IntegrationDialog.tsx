@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createBoxIntegration } from "@/lib/box-integration";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Import the integration components
 import { IntegrationHeader } from './integrations/IntegrationHeader';
@@ -26,7 +27,7 @@ interface IntegrationDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function IntegrationDialog({ integration, open, onOpenChange }: IntegrationDialogProps) {
+export function IntegrationDialog({ integration, onClick, open, onOpenChange }: IntegrationDialogProps) {
   const { name, id, connected, icon, status, lastSynced } = integration;
   const [isConnected, setIsConnected] = useState(connected);
   const [apiKey, setApiKey] = useState("");
@@ -40,8 +41,36 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
   const [mode, setMode] = useState<'test' | 'live'>('test');
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    // Reset state when the dialog opens with a different integration
+    setIsConnected(connected);
+    setApiKey("");
+    setSecretKey("");
+    setWebhookSecret("");
+    setWebhookUrl("");
+    setMasterFolderId("");
+    setIsDeleteOpen(false);
+    
+    // If this was a real app, we would load existing integration settings from the backend
+    if (connected && id === 'box') {
+      // Demo: For the purpose of the prototype, we'll set a default folder ID
+      setMasterFolderId("12345");
+    }
+  }, [id, connected, open]);
 
   const handleConnect = async () => {
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to connect integrations.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // For Stripe integration
     if (id === 'stripe') {
       try {
@@ -87,7 +116,18 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
         
         // Test the connection by trying to get folder info
         boxIntegration.setMasterFolder(masterFolderId);
-        await boxIntegration.initializeAutoFolder();
+        
+        // In a real implementation, we would call:
+        // await boxIntegration.initializeAutoFolder();
+        // But for the demo, we'll simulate a successful connection
+        
+        // Save integration settings to user profile (in a real app)
+        // await supabase.from('user_integrations').upsert({
+        //   user_id: user.id,
+        //   integration_id: id,
+        //   settings: { masterFolderId },
+        //   is_active: true
+        // });
         
         setIsConnected(true);
         toast({
@@ -114,8 +154,18 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
   };
 
   const handleDisconnect = () => {
+    // In a real app, we would delete the integration from the database
+    // await supabase.from('user_integrations').delete().eq('user_id', user.id).eq('integration_id', id);
+    
     setIsConnected(false);
     setIsDeleteOpen(false);
+    
+    // Reset form values
+    setApiKey("");
+    setSecretKey("");
+    setWebhookSecret("");
+    setWebhookUrl("");
+    setMasterFolderId("");
     
     toast({
       title: "Integration disconnected",
@@ -176,6 +226,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                   isSyncLoading={isSyncLoading}
                   handleSync={handleSync}
                   handleOpenBox={handleOpenBox}
+                  masterFolderId={masterFolderId}
                 />
               )}
               
