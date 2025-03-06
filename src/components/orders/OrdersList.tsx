@@ -17,7 +17,7 @@ type OrdersListProps = {
 
 export const OrdersList: React.FC<OrdersListProps> = ({ filter }) => {
   const { orders } = useSampleOrders();
-  const [selectedOrder, setSelectedOrder] = useState<number | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [currentMedia, setCurrentMedia] = useState<string[]>([]);
@@ -29,8 +29,10 @@ export const OrdersList: React.FC<OrdersListProps> = ({ filter }) => {
     return true;
   });
 
-  const handleViewDetails = (orderId: number) => {
-    setSelectedOrder(selectedOrder === orderId ? null : orderId);
+  const handleViewDetails = (orderId: string | number) => {
+    // Convert orderId to string to fix type error
+    const orderIdString = orderId.toString();
+    setSelectedOrder(selectedOrder === orderIdString ? null : orderIdString);
   };
 
   const handleViewMedia = (mediaLinks: string[] | undefined) => {
