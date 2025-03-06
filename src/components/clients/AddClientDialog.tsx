@@ -46,7 +46,7 @@ type ClientFormValues = z.infer<typeof clientFormSchema>;
 interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onClientAdded: (client: Omit<Client, 'id' | 'created_at'>) => void;
+  onClientAdded: (client: Omit<Client, 'id' | 'created_at'>) => Promise<void>;
 }
 
 export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClientDialogProps) {
@@ -66,6 +66,8 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
   });
 
   const onSubmit = async (data: ClientFormValues) => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     setIsSubmitting(true);
     try {
       // Create the client object to pass to the parent component
@@ -83,7 +85,6 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
       
       await onClientAdded(newClient);
       form.reset();
-      toast.success("Client added successfully");
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error("Failed to add client");
@@ -109,8 +110,17 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
     }
   };
 
+  // Clean up form when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset form when dialog closes
+      form.reset();
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Client</DialogTitle>

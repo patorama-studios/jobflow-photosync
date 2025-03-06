@@ -5,48 +5,33 @@ import { ClientDetailsView } from '@/components/clients/ClientDetailsView';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { PageTransition } from '@/components/layout/PageTransition';
-
-// Define client type to match what ClientDetailsView expects
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  company?: string;
-  createdAt: string;
-  status: 'active' | 'inactive';
-}
+import { useClients, Client as ClientType } from '@/hooks/use-clients';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ClientPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [clientData, setClientData] = useState<Client | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { clients } = useClients();
+
+  // Find the client data from the clients hook instead of mocking it
+  const clientData = clients.find(client => client.id === clientId);
 
   useEffect(() => {
-    // In a real application, this would fetch client data
-    // For now, we'll simulate a successful fetch after a delay
-    const timer = setTimeout(() => {
-      if (clientId) {
-        setClientData({
-          id: clientId,
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          phone: '(555) 123-4567',
-          company: 'Example Realty',
-          createdAt: new Date().toISOString(),
-          status: 'active'
-        });
+    // Set loading state based on whether we found the client
+    if (clientId) {
+      if (clients.length > 0) {
         setIsLoading(false);
-      } else {
-        setError('Client ID not found');
-        setIsLoading(false);
+        if (!clientData) {
+          setError('Client not found');
+        }
       }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [clientId]);
+    } else {
+      setError('Client ID not provided');
+      setIsLoading(false);
+    }
+  }, [clientId, clients, clientData]);
 
   if (error) {
     return (
@@ -85,7 +70,9 @@ const ClientPage = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Clients
           </Button>
-          <h1 className="text-3xl font-semibold">{isLoading ? 'Loading...' : clientData?.name}</h1>
+          <h1 className="text-3xl font-semibold">
+            {isLoading ? 'Loading...' : clientData?.name}
+          </h1>
         </div>
         
         {isLoading ? (
@@ -95,7 +82,6 @@ const ClientPage = () => {
             <div className="h-64 bg-muted rounded-md"></div>
           </div>
         ) : (
-          // Pass clientId instead of client object
           <ClientDetailsView clientId={clientId} />
         )}
       </div>

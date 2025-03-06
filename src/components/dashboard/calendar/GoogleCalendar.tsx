@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, addDays, addMonths, subMonths, subDays, startOfWeek, startOfMonth } from 'date-fns';
-import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
+import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { CalendarHeader } from './header/CalendarHeader';
 import { SidebarFilter } from './sidebar/SidebarFilter';
 import { GoogleMonthView } from './views/GoogleMonthView';
@@ -10,6 +10,7 @@ import { GoogleDayView } from './views/GoogleDayView';
 import { GoogleCardView } from './views/GoogleCardView';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { CalendarOrder } from '@/types/calendar';
 
 interface GoogleCalendarProps {
   onTimeSlotClick?: (time: string) => void;
@@ -21,13 +22,13 @@ interface GoogleCalendarProps {
 // Define types for the view components
 interface GoogleWeekViewProps {
   date: Date;
-  orders: Order[];
+  orders: CalendarOrder[];
   onTimeSlotClick?: (time: string) => void;
 }
 
 interface GoogleDayViewProps {
   date: Date;
-  orders: Order[];
+  orders: CalendarOrder[];
   photographers: Array<{id: number; name: string; color: string}>;
   selectedPhotographers: number[];
   onTimeSlotClick?: (time: string) => void;
@@ -56,16 +57,21 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
     setView(defaultView);
   }, [defaultView]);
 
-  // Filter orders for selected photographers
+  // Convert orders to CalendarOrder type and filter for selected photographers
   const filteredOrders = useMemo(() => {
-    if (!orders.length) return [];
+    if (!orders.length) return [] as CalendarOrder[];
     
-    return orders.filter(order => {
+    // Map orders to CalendarOrder type
+    const calendarOrders: CalendarOrder[] = orders.map(order => ({
+      ...order,
+      address: `${order.address || ''}, ${order.city || ''}, ${order.state || ''} ${order.zip || ''}`,
+    }));
+    
+    return calendarOrders.filter(order => {
       // Match photographer to selected photographers
-      // In a real app, we would match by photographer ID
       return selectedPhotographers.some(id => {
         const photographer = samplePhotographers.find(p => p.id === id);
-        return photographer && order.photographer.includes(photographer.name);
+        return photographer && order.photographer && order.photographer.includes(photographer.name);
       });
     });
   }, [orders, selectedPhotographers]);
@@ -122,15 +128,15 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   const appointmentCount = useMemo(() => {
     if (view === "day") {
       return filteredOrders.filter(order => 
-        order.scheduledDate && format(new Date(order.scheduledDate), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
+        order.scheduled_date && format(new Date(order.scheduled_date), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
       ).length;
     } else if (view === "week") {
       const weekStart = startOfWeek(selectedDate);
       const weekEnd = addDays(weekStart, 6);
       
       return filteredOrders.filter(order => {
-        if (!order.scheduledDate) return false;
-        const orderDate = new Date(order.scheduledDate);
+        if (!order.scheduled_date) return false;
+        const orderDate = new Date(order.scheduled_date);
         return orderDate >= weekStart && orderDate <= weekEnd;
       }).length;
     } else {
@@ -138,8 +144,8 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
       const monthEnd = addDays(addMonths(monthStart, 1), -1);
       
       return filteredOrders.filter(order => {
-        if (!order.scheduledDate) return false;
-        const orderDate = new Date(order.scheduledDate);
+        if (!order.scheduled_date) return false;
+        const orderDate = new Date(order.scheduled_date);
         return orderDate >= monthStart && orderDate <= monthEnd;
       }).length;
     }

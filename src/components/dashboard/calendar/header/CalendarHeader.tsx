@@ -1,132 +1,97 @@
-
 import React from 'react';
-import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CalendarDays } from 'lucide-react';
+import { format, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  CalendarDays, 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  Calendar as CalendarIcon,
+  LayoutList,
+  CalendarIcon as CalendarCheck
+} from 'lucide-react';
 
 interface CalendarHeaderProps {
   date: Date;
-  view: "month" | "week" | "day" | "card";  // Updated type to include "card"
+  view: "month" | "week" | "day";
   appointmentCount: number;
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
-  onViewChange: (view: "month" | "week" | "day" | "card") => void;
+  onViewChange: (view: "month" | "week" | "day") => void;
   isMobileView?: boolean;
   restrictMobileViews?: boolean;
 }
 
-export const CalendarHeader = ({ 
-  date, 
-  view, 
-  appointmentCount, 
-  onPrevious, 
-  onNext, 
-  onToday, 
+export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
+  date,
+  view,
+  appointmentCount,
+  onPrevious,
+  onNext,
+  onToday,
   onViewChange,
   isMobileView = false,
   restrictMobileViews = false
-}: CalendarHeaderProps) => {
-  const formattedDate = React.useMemo(() => {
-    if (view === 'month') {
-      return format(date, 'MMMM yyyy');
-    } else if (view === 'week' || view === 'card') {
-      return `Week of ${format(date, 'MMM d, yyyy')}`;
-    } else {
-      return format(date, 'EEEE, MMMM d, yyyy');
-    }
-  }, [date, view]);
+}) => {
+  const handleViewChange = (newView: "month" | "week" | "day") => {
+    onViewChange(newView);
+  };
 
   return (
-    <div className={`border-b p-4 ${isMobileView ? 'grid gap-2' : 'flex justify-between items-center'}`}>
-      <div className={`flex items-center ${isMobileView ? 'justify-between' : ''}`}>
-        <h2 className="text-xl font-semibold flex items-center">
-          {formattedDate}
-          {appointmentCount > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              {appointmentCount} {appointmentCount === 1 ? 'appointment' : 'appointments'}
-            </Badge>
-          )}
-        </h2>
-      </div>
-      
-      <div className={`flex items-center space-x-1 ${isMobileView ? 'justify-between mt-2' : ''}`}>
-        <div className="flex items-center space-x-1">
-          <Button variant="outline" size="icon" onClick={onPrevious}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" onClick={onToday}>
-            Today
-          </Button>
-          <Button variant="outline" size="icon" onClick={onNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* View switcher - show limited views on mobile if restrictMobileViews is true */}
-        {(!restrictMobileViews || !isMobileView) && (
-          <div className={`flex items-center space-x-1 ${isMobileView ? 'ml-2' : 'ml-4'}`}>
-            <Button
-              variant={view === 'day' ? 'default' : 'outline'}
-              size={isMobileView ? 'icon' : 'default'}
-              onClick={() => onViewChange('day')}
-              className={isMobileView ? 'p-2' : ''}
-            >
-              {isMobileView ? (
-                <Clock className="h-4 w-4" />
-              ) : (
-                'Day'
-              )}
+    <Card className="mb-4">
+      <Card className="flex items-center justify-between p-4">
+        <div className="flex items-center gap-2">
+          {/* Mobile View: Show only Today button */}
+          {isMobileView ? (
+            <Button size="sm" onClick={onToday}>
+              Today
             </Button>
-            
-            {(!restrictMobileViews || !isMobileView) && (
-              <>
-                <Button
-                  variant={view === 'week' ? 'default' : 'outline'}
-                  size={isMobileView ? 'icon' : 'default'}
-                  onClick={() => onViewChange('week')}
-                  className={isMobileView ? 'p-2' : ''}
-                >
-                  {isMobileView ? (
-                    <Calendar className="h-4 w-4" />
-                  ) : (
-                    'Week'
-                  )}
-                </Button>
-                
-                <Button
-                  variant={view === 'month' ? 'default' : 'outline'}
-                  size={isMobileView ? 'icon' : 'default'}
-                  onClick={() => onViewChange('month')}
-                  className={isMobileView ? 'p-2' : ''}
-                >
-                  {isMobileView ? (
-                    <CalendarDays className="h-4 w-4" />
-                  ) : (
-                    'Month'
-                  )}
-                </Button>
-                
-                {!isMobileView && (
-                  <Button
-                    variant={view === 'card' ? 'default' : 'outline'}
-                    size={isMobileView ? 'icon' : 'default'}
-                    onClick={() => onViewChange('card')}
-                    className={isMobileView ? 'p-2' : ''}
-                  >
-                    {isMobileView ? (
-                      <CalendarCheck className="h-4 w-4" />
-                    ) : (
-                      'Card'
-                    )}
-                  </Button>
-                )}
-              </>
-            )}
+          ) : (
+            <>
+              <Button size="sm" onClick={onPrevious}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button size="sm" onClick={onNext}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button size="sm" onClick={onToday}>
+                Today
+              </Button>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-col items-center">
+          <h2 className="text-lg font-semibold">{format(date, 'MMMM yyyy')}</h2>
+          <div className="text-sm text-muted-foreground">
+            <Clock className="h-4 w-4 inline-block mr-1" />
+            {appointmentCount} Appointments
           </div>
+        </div>
+
+        {/* Mobile View: Hide Tabs */}
+        {!isMobileView && (
+          <Tabs defaultValue={view} className="w-[300px]" onValueChange={handleViewChange}>
+            <TabsList>
+              <TabsTrigger value="month" disabled={restrictMobileViews}>
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Month
+              </TabsTrigger>
+              <TabsTrigger value="week" disabled={restrictMobileViews}>
+                <LayoutList className="h-4 w-4 mr-2" />
+                Week
+              </TabsTrigger>
+              <TabsTrigger value="day">
+                <CalendarCheck className="h-4 w-4 mr-2" />
+                Day
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         )}
-      </div>
-    </div>
+      </Card>
+    </Card>
   );
 };

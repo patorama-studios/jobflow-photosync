@@ -1,9 +1,8 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Search, 
-  Filter, 
   MessageSquare,
   Building,
   Download,
@@ -30,6 +29,7 @@ import { toast } from "sonner";
 export function ClientTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [addClientOpen, setAddClientOpen] = useState(false);
+  const navigate = useNavigate();
   
   const { clients, isLoading, error, addClient } = useClients();
   
@@ -66,11 +66,22 @@ export function ClientTable() {
 
   const handleAddClient = async (client: Omit<Client, 'id' | 'created_at'>) => {
     try {
-      await addClient(client);
+      const newClient = await addClient(client);
       setAddClientOpen(false);
+      
+      // Show a success message
+      toast.success("Client added successfully");
+      
+      // Navigate to the new client page after a brief delay
+      if (newClient && newClient.id) {
+        // Short delay to allow the toast to be seen and state to update
+        setTimeout(() => {
+          navigate(`/client/${newClient.id}`);
+        }, 500);
+      }
     } catch (error) {
       console.error("Error adding client:", error);
-      // Note: Error toast is already shown in the addClient function
+      // Error toast is already shown in the addClient function
     }
   };
 
