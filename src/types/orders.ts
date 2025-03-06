@@ -39,6 +39,20 @@ export interface Order {
     payoutAmount?: number;
     notes?: string;
   }>;
+  refundHistory?: RefundRecord[];
+  paymentStatus?: 'paid' | 'unpaid' | 'partially_refunded' | 'fully_refunded';
+  paymentMethod?: 'credit_card' | 'bank_transfer' | 'cash' | 'other';
+  stripePaymentId?: string;
+}
+
+export interface RefundRecord {
+  id: string | number;
+  amount: number;
+  date: string;
+  reason?: string;
+  status: 'pending' | 'completed' | 'failed';
+  stripeRefundId?: string;
+  isFullRefund: boolean;
 }
 
 export interface OrderFilters {

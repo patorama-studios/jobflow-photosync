@@ -44,9 +44,13 @@ import {
   Download,
   ExternalLink,
   Truck,
-  Users
+  Users,
+  CreditCard
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { RefundDialog } from '@/components/orders/RefundDialog';
+import { RefundHistory } from '@/components/orders/RefundHistory';
+import { RefundRecord } from '@/types/orders';
 
 const OrderDetails: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -73,6 +77,10 @@ const OrderDetails: React.FC = () => {
   // Invoice items state
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   
+  // Add new state variables for refunds
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [refundHistory, setRefundHistory] = useState<RefundRecord[]>([]);
+
   const order = orders.find(o => o.id === Number(orderId));
 
   useEffect(() => {
@@ -110,6 +118,24 @@ const OrderDetails: React.FC = () => {
   // Calculate total order amount from invoice items
   const calculateTotalOrderAmount = () => {
     return invoiceItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+
+  // Add a new function to handle refund completion
+  const handleRefundComplete = (newRefund: RefundRecord) => {
+    setRefundHistory([...refundHistory, newRefund]);
+    
+    // Update order status based on refund
+    if (newRefund.isFullRefund) {
+      toast({
+        title: "Full Refund Processed",
+        description: `$${newRefund.amount.toFixed(2)} has been refunded to the customer.`,
+      });
+    } else {
+      toast({
+        title: "Partial Refund Processed",
+        description: `$${newRefund.amount.toFixed(2)} has been refunded to the customer.`,
+      });
+    }
   };
 
   if (!order) {
@@ -292,6 +318,12 @@ const OrderDetails: React.FC = () => {
                   </CardContent>
                 </Card>
 
+                {/* Refund Section - New addition */}
+                <RefundHistory 
+                  refunds={refundHistory} 
+                  orderTotal={calculateTotalOrderAmount()}
+                />
+
                 {/* Appointment Section */}
                 <Card>
                   <CardHeader>
@@ -462,6 +494,16 @@ const OrderDetails: React.FC = () => {
                     >
                       <Truck className="h-4 w-4" />
                       Deliver Order
+                    </Button>
+                    
+                    {/* Add Refund button */}
+                    <Button 
+                      variant="outline" 
+                      className="w-full flex items-center gap-2 justify-center"
+                      onClick={() => setRefundDialogOpen(true)}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Process Refund
                     </Button>
                     
                     <Link to={`/files/${orderId}`} className="w-full">
@@ -829,6 +871,16 @@ const OrderDetails: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Refund Dialog */}
+        <RefundDialog
+          open={refundDialogOpen}
+          onOpenChange={setRefundDialogOpen}
+          orderId={order.id}
+          orderTotal={calculateTotalOrderAmount()}
+          stripePaymentId={order.stripePaymentId || "pi_mock_123456789"}
+          onRefundComplete={handleRefundComplete}
+        />
       </div>
     </PageTransition>
   );
