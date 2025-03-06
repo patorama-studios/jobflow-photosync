@@ -36,8 +36,8 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
-          <HeaderSettingsProvider>
-            <Router>
+          <Router>
+            <HeaderSettingsProvider>
               <Routes>
                 {/* Explicit index route that redirects to Calendar */}
                 <Route index element={<Navigate to="/calendar" replace />} />
@@ -159,8 +159,8 @@ function App() {
               </Routes>
               <Toaster />
               <Sonner />
-            </Router>
-          </HeaderSettingsProvider>
+            </HeaderSettingsProvider>
+          </Router>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>

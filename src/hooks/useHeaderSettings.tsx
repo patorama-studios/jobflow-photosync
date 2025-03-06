@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export interface HeaderSettings {
   color: string;
@@ -33,8 +32,10 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
   const [title, setTitle] = useState<string | null>(null);
   const [showBackButton, setShowBackButton] = useState(false);
-  const navigate = useNavigate();
-  const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => navigate(-1));
+  // Initialize with a no-op function instead of navigate
+  const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => {
+    console.log('Back button action not set');
+  });
 
   // Load settings from localStorage on first render
   useEffect(() => {
