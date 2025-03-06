@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -82,15 +81,12 @@ const Calendar = () => {
             defaultView="month"
           />
           
-          {/* Ensure this dialog always appears when showCreateAppointment is true */}
-          {showCreateAppointment && (
-            <CreateAppointmentDialog
-              isOpen={showCreateAppointment}
-              onClose={() => setShowCreateAppointment(false)}
-              selectedDate={selectedDate || new Date()}
-              selectedTime={selectedTime}
-            />
-          )}
+          <CreateAppointmentDialog
+            isOpen={showCreateAppointment}
+            onClose={() => setShowCreateAppointment(false)}
+            selectedDate={selectedDate || new Date()}
+            selectedTime={selectedTime}
+          />
         </div>
       </PageTransition>
     </MainLayout>

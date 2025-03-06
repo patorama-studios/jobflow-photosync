@@ -59,6 +59,11 @@ export const GoogleMonthView: React.FC<GoogleMonthViewProps> = ({
     return day.getDay() === 0; // Sunday
   };
 
+  const handleDayClick = (day: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelectDate(day);
+  };
+
   return (
     <div className="bg-white border rounded-md shadow-sm">
       {/* Day headers */}
@@ -87,11 +92,11 @@ export const GoogleMonthView: React.FC<GoogleMonthViewProps> = ({
             <div 
               key={i}
               className={cn(
-                "border-r border-b p-1 relative overflow-hidden",
+                "border-r border-b p-1 relative overflow-hidden cursor-pointer",
                 !isCurrentMonth && "bg-gray-50",
                 isSelectedDay && "bg-blue-50",
               )}
-              onClick={() => onSelectDate(day)}
+              onClick={(e) => handleDayClick(day, e)}
             >
               <div className="flex justify-between">
                 <div 
@@ -133,6 +138,10 @@ export const GoogleMonthView: React.FC<GoogleMonthViewProps> = ({
                     <div 
                       key={`${order.id}-${idx}`}
                       className={`text-xs p-1 truncate border-l-2 rounded-r-sm ${bgColor}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle event click differently if needed
+                      }}
                     >
                       {order.scheduledTime} {order.address.split(',')[0]}
                     </div>

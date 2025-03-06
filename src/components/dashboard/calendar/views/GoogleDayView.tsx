@@ -38,9 +38,17 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
     });
   }, [orders, date, selectedPhotographers, photographers]);
 
+  const formatTimeForDisplay = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+    return `${displayHours}:${minutes === 0 ? '00' : minutes} ${period}`;
+  };
+
   const handleTimeSlotClick = (time: string) => {
     if (onTimeSlotClick) {
-      onTimeSlotClick(time);
+      const displayTime = formatTimeForDisplay(time);
+      onTimeSlotClick(displayTime);
     }
   };
 
@@ -60,7 +68,7 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
         {timeSlots.map(time => (
           <div 
             key={time} 
-            className="h-12 border-b border-gray-200 last:border-none relative"
+            className="h-12 border-b border-gray-200 last:border-none relative cursor-pointer hover:bg-gray-50"
             onClick={() => handleTimeSlotClick(time)}
           >
             {filteredOrders.map(order => {
@@ -75,8 +83,12 @@ export const GoogleDayView: React.FC<GoogleDayViewProps> = ({
                 return (
                   <div
                     key={order.id}
-                    className="absolute top-0 left-0 w-full h-12 bg-blue-100 border-l-4 border-blue-500 pl-2 text-sm overflow-hidden whitespace-nowrap overflow-ellipsis"
+                    className="absolute top-0 left-0 w-full h-12 bg-blue-100 border-l-4 border-blue-500 pl-2 text-sm overflow-hidden whitespace-nowrap overflow-ellipsis z-10"
                     style={{borderColor: color}}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle event click differently if needed
+                    }}
                   >
                     {order.client || 'Untitled'} - {order.photographer}
                   </div>
