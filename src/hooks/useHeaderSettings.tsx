@@ -1,4 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface HeaderSettings {
   color: string;
@@ -31,21 +33,14 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
   const [title, setTitle] = useState<string | null>(null);
   const [showBackButton, setShowBackButton] = useState(false);
-  const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => {
-    // Default no-op function that will be replaced
-    console.log("Back button clicked, but no action set");
-  });
+  const navigate = useNavigate();
+  const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => navigate(-1));
 
   // Load settings from localStorage on first render
   useEffect(() => {
     const savedSettings = localStorage.getItem('headerSettings');
     if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (error) {
-        console.error("Failed to parse saved header settings:", error);
-        // Keep default settings if there's an error
-      }
+      setSettings(JSON.parse(savedSettings));
     }
   }, []);
 

@@ -1,5 +1,5 @@
 
-project_id = "yuswvcremziknjbxwvsa"
+project_id = "your-project-id"
 
 [api]
 enabled = true
@@ -29,8 +29,7 @@ enabled = true
 
 [auth]
 enabled = true
-site_url = "https://book.patorama.com.au"
-additional_redirect_urls = ["https://book.patorama.com.au/auth/callback"]
+site_url = "http://localhost:3000"
 
 [realtime]
 enabled = true
@@ -41,5 +40,3 @@ verify_jwt = false
 [functions.stripe-connect]
 verify_jwt = false
 
-[functions.initialize-storage]
-verify_jwt = false

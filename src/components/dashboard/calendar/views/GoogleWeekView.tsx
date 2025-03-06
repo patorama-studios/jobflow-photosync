@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Order } from '@/hooks/useSampleOrders';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
@@ -32,7 +33,7 @@ export const GoogleWeekView: React.FC<GoogleWeekViewProps> = ({
     dayName: format(day, 'EEE'),
     dayNumber: format(day, 'd'),
   }));
-  
+
   // Get appointments for each day and time slot
   const getAppointmentsForSlot = (day: Date, timeSlot: string) => {
     return orders.filter(order => {
@@ -106,10 +107,10 @@ export const GoogleWeekView: React.FC<GoogleWeekViewProps> = ({
                       <div 
                         key={i}
                         className="bg-blue-100 border-l-4 border-blue-500 p-1 mb-1 text-xs rounded"
-                        title={appointment.client || 'Unnamed'}
+                        title={appointment.customer || appointment.client || 'Unnamed'}
                       >
-                        <div className="font-medium truncate">{appointment.client || 'Unnamed'}</div>
-                        <div className="truncate">{appointment.package || appointment.propertyType || 'Service'}</div>
+                        <div className="font-medium truncate">{appointment.customer || appointment.client || 'Unnamed'}</div>
+                        <div className="truncate">{appointment.orderType || appointment.package || 'Service'}</div>
                       </div>
                     ))
                   ) : (

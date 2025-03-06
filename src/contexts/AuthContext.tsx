@@ -38,9 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
 
   useEffect(() => {
-    // Set loading true when checking auth state
-    setIsLoading(true);
-    
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -48,11 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user || null);
       } catch (error) {
         console.error('Error initializing auth:', error);
-        toast({
-          title: "Authentication Error",
-          description: "Failed to initialize authentication. Please refresh the page.",
-          variant: "destructive",
-        });
       } finally {
         setIsLoading(false);
       }
@@ -62,7 +54,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        console.log("Auth state changed:", _event);
         setSession(session);
         setUser(session?.user || null);
         setIsLoading(false);
@@ -75,20 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
-      });
-    } catch (error: any) {
-      console.error("Error signing out:", error);
-      toast({
-        title: "Sign out failed",
-        description: error.message || "An error occurred while signing out.",
-        variant: "destructive",
-      });
-    }
+    await supabase.auth.signOut();
   };
 
   const activateUser = async (email: string) => {
