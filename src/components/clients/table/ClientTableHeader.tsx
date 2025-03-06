@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, Download, UserPlus } from "lucide-react";
+import { Search, Download, Upload, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -9,13 +9,15 @@ interface ClientTableHeaderProps {
   setSearchQuery: (query: string) => void;
   onAddClient: () => void;
   onExport: () => void;
+  onImport?: () => void;
 }
 
 export function ClientTableHeader({ 
   searchQuery, 
   setSearchQuery, 
   onAddClient, 
-  onExport 
+  onExport,
+  onImport 
 }: ClientTableHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
@@ -33,6 +35,12 @@ export function ClientTableHeader({
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>
+        {onImport && (
+          <Button variant="outline" size="sm" onClick={onImport}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
+        )}
         <Button size="sm" onClick={onAddClient}>
           <UserPlus className="h-4 w-4 mr-2" />
           Add Client

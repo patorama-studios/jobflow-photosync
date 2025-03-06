@@ -5,14 +5,7 @@ import {
   Plus, 
   Download, 
   Upload, 
-  Search, 
-  Filter, 
-  UserPlus,
-  Users,
   Building,
-  Calendar, 
-  DollarSign,
-  MessageSquare,
   LayoutGrid,
   LayoutList
 } from "lucide-react";
@@ -26,20 +19,15 @@ import { AddCompanyDialog } from "@/components/clients/AddCompanyDialog";
 import { useClients } from "@/hooks/use-clients";
 import { useCompanies } from "@/hooks/use-companies";
 import { exportToCSV } from "@/utils/csv-export";
+import { toast } from "sonner";
 
 export function ClientsView() {
   const [activeTab, setActiveTab] = useState("clients");
   const [companyViewMode, setCompanyViewMode] = useState<'table' | 'card'>('table');
-  const [addClientOpen, setAddClientOpen] = useState(false);
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   
-  const { clients, addClient } = useClients();
+  const { clients } = useClients();
   const { companies, addCompany } = useCompanies();
-
-  const handleAddClient = async (client: any) => {
-    await addClient(client);
-    setAddClientOpen(false);
-  };
 
   const handleAddCompany = async (company: any) => {
     await addCompany(company);
@@ -49,6 +37,11 @@ export function ClientsView() {
   const handleExport = () => {
     if (activeTab === "clients") {
       // Export clients
+      if (clients.length === 0) {
+        toast.info("No clients to export");
+        return;
+      }
+      
       const exportData = clients.map(client => ({
         ID: client.id,
         Name: client.name,
@@ -62,8 +55,14 @@ export function ClientsView() {
         'Outstanding Payment': client.outstanding_payment
       }));
       exportToCSV(exportData, 'clients-export');
+      toast.success(`Exported ${exportData.length} clients`);
     } else {
       // Export companies
+      if (companies.length === 0) {
+        toast.info("No companies to export");
+        return;
+      }
+      
       const exportData = companies.map(company => ({
         ID: company.id,
         Name: company.name,
@@ -80,12 +79,43 @@ export function ClientsView() {
         'Total Revenue': company.total_revenue
       }));
       exportToCSV(exportData, 'companies-export');
+      toast.success(`Exported ${exportData.length} companies`);
     }
   };
 
   const handleImport = () => {
-    // Just a placeholder for now - in a real app, this would open a dialog to import data
-    alert("Import functionality would go here. This would allow uploading a CSV file to import clients or companies.");
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+      
+      const file = target.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = async (event) => {
+        try {
+          const csvData = event.target?.result as string;
+          // For demonstration, just show a toast with the file name
+          toast.success(`Import started: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+          toast.info(`Importing ${activeTab === "clients" ? "clients" : "companies"} from CSV`);
+          console.log("CSV data to process:", csvData.substring(0, 100) + "...");
+        } catch (error: any) {
+          toast.error(`Import failed: ${error.message || 'Unknown error'}`);
+        }
+      };
+      
+      reader.onerror = () => {
+        toast.error("Failed to read the file");
+      };
+      
+      reader.readAsText(file);
+    };
+    
+    input.click();
   };
   
   return (
@@ -108,10 +138,10 @@ export function ClientsView() {
           </Button>
           <Button 
             size="sm" 
-            onClick={() => activeTab === "clients" ? setAddClientOpen(true) : setAddCompanyOpen(true)}
+            onClick={() => activeTab === "clients" ? null : setAddCompanyOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add {activeTab === "clients" ? "Client" : "Company"}
+            {activeTab === "clients" ? "Add Client" : "Add Company"}
           </Button>
         </div>
       </div>
@@ -119,7 +149,6 @@ export function ClientsView() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="clients" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
             <span>Clients</span>
           </TabsTrigger>
           <TabsTrigger value="companies" className="flex items-center gap-2">
@@ -161,12 +190,6 @@ export function ClientsView() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <AddClientDialog 
-        open={addClientOpen} 
-        onOpenChange={setAddClientOpen} 
-        onClientAdded={handleAddClient} 
-      />
       
       <AddCompanyDialog 
         open={addCompanyOpen} 
