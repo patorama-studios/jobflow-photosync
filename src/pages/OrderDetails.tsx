@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -19,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { InvoiceItems, ContractorPayout, InvoiceItem } from '@/components/orders/InvoiceItems';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -61,8 +63,26 @@ const OrderDetails: React.FC = () => {
   const [deliverDialogOpen, setDeliverDialogOpen] = useState(false);
   const [emailMessage, setEmailMessage] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
+
+  // Invoice items state
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   
   const order = orders.find(o => o.id === Number(orderId));
+
+  useEffect(() => {
+    // Initialize invoice items when order is loaded
+    if (order) {
+      setInvoiceItems([
+        {
+          id: '1',
+          name: 'Professional Photography',
+          quantity: 1,
+          price: order.price,
+          type: 'service'
+        }
+      ]);
+    }
+  }, [order]);
   
   if (!order) {
     return (
@@ -237,32 +257,17 @@ const OrderDetails: React.FC = () => {
                       <DollarSign className="h-5 w-5" />
                       Invoicing
                     </CardTitle>
+                    <CardDescription>Manage invoice items and see contractor payout</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-muted-foreground border-b">
-                          <th className="pb-2">Item</th>
-                          <th className="pb-2">Quantity</th>
-                          <th className="pb-2">Price</th>
-                          <th className="pb-2">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="py-2">Professional Photography</td>
-                          <td className="py-2">1</td>
-                          <td className="py-2">${order.price}</td>
-                          <td className="py-2">${order.price}</td>
-                        </tr>
-                      </tbody>
-                      <tfoot>
-                        <tr className="border-t">
-                          <td className="pt-2" colSpan={3}><strong>Total</strong></td>
-                          <td className="pt-2"><strong>${order.price}</strong></td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                    <InvoiceItems items={invoiceItems} onItemsChange={setInvoiceItems} />
+                    
+                    <div className="mt-6">
+                      <ContractorPayout 
+                        items={invoiceItems} 
+                        payoutRate={order.photographerPayoutRate || 0} 
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -460,8 +465,8 @@ const OrderDetails: React.FC = () => {
                     
                     <div>
                       <h3 className="text-sm font-medium">Contact Details</h3>
-                      <p className="text-sm text-muted-foreground">Email: client@example.com</p>
-                      <p className="text-sm text-muted-foreground">Phone: (555) 123-4567</p>
+                      <p className="text-sm text-muted-foreground">Email: {order.clientEmail || 'client@example.com'}</p>
+                      <p className="text-sm text-muted-foreground">Phone: {order.clientPhone || '(555) 123-4567'}</p>
                     </div>
                     
                     <Separator />
