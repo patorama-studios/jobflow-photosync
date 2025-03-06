@@ -1,14 +1,14 @@
 
 import React, { useMemo } from 'react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
-import { Order } from '@/hooks/useSampleOrders';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, User } from 'lucide-react';
+import { CalendarOrder } from '@/types/calendar';
 
 interface GoogleCardViewProps {
   date: Date;
-  orders: Order[];
+  orders: CalendarOrder[];
   photographers: Array<{id: number; name: string; color: string}>;
   selectedPhotographers: number[];
   onCardClick?: (date: Date) => void;
@@ -91,6 +91,7 @@ export const GoogleCardView: React.FC<GoogleCardViewProps> = ({
             {dayOrders.map(order => {
               const orderDate = new Date(order.scheduledDate || '');
               const photographerColor = getPhotographerColor(order.photographer);
+              const locationDisplay = order.location || order.address;
               
               return (
                 <Card 
@@ -113,10 +114,10 @@ export const GoogleCardView: React.FC<GoogleCardViewProps> = ({
                         <Clock className="h-3 w-3 mr-2" />
                         {order.scheduledTime}
                       </div>
-                      {order.location && (
+                      {locationDisplay && (
                         <div className="flex items-center">
                           <MapPin className="h-3 w-3 mr-2" />
-                          {order.location}
+                          {locationDisplay}
                         </div>
                       )}
                       <div className="flex items-center">

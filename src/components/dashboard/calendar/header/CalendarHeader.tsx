@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CalendarDays, CalendarCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface CalendarHeaderProps {
   date: Date;
-  view: "month" | "week" | "day";
+  view: "month" | "week" | "day" | "card";  // Updated type to include "card"
   appointmentCount: number;
   onPrevious: () => void;
   onNext: () => void;
@@ -31,7 +31,7 @@ export const CalendarHeader = ({
   const formattedDate = React.useMemo(() => {
     if (view === 'month') {
       return format(date, 'MMMM yyyy');
-    } else if (view === 'week') {
+    } else if (view === 'week' || view === 'card') {
       return `Week of ${format(date, 'MMM d, yyyy')}`;
     } else {
       return format(date, 'EEEE, MMMM d, yyyy');
