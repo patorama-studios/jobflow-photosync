@@ -1,38 +1,88 @@
 
-import React from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
-
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Calendar from './pages/Calendar';
-import Orders from './pages/Orders';
-import OrderDetails from './pages/OrderDetails';
-import Customers from './pages/Customers';
-import CustomerDetails from './pages/CustomerDetails';
-import CompanyDetails from './pages/CompanyDetails';
-import Settings from './pages/Settings';
-import NotFound from './pages/NotFound';
-import Production from './pages/Production';
-import ProductionBoard from './pages/ProductionBoard';
-import ProductionOrderDetails from './pages/ProductionOrderDetails';
-import ProductionUpload from './pages/ProductionUpload';
-import Learning from './pages/Learning';
-import NotificationsCenter from './pages/NotificationsCenter';
-import Debug from './pages/Debug';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { HeaderSettingsProvider } from './hooks/useHeaderSettings';
+import { resourceMonitor } from './utils/resource-monitor';
+import { initAutoPrefetch } from './utils/resource-prefetcher';
 
-// Create a client
-const queryClient = new QueryClient();
+// Lazy load non-critical components and pages
+const Debug = lazy(() => import('./pages/Debug'));
+
+// Create a client with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      cacheTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      refetchOnWindowFocus: import.meta.env.PROD, // Only in production
+    },
+  },
+});
+
+// Import all critical paths eagerly
+import Home from './pages/Home';
+import Login from './pages/Login';
+import NotFound from './pages/NotFound';
+
+// Lazy load less critical paths
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Orders = lazy(() => import('./pages/Orders'));
+const OrderDetails = lazy(() => import('./pages/OrderDetails'));
+const Customers = lazy(() => import('./pages/Customers'));
+const CustomerDetails = lazy(() => import('./pages/CustomerDetails'));
+const CompanyDetails = lazy(() => import('./pages/CompanyDetails'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Production = lazy(() => import('./pages/Production'));
+const ProductionBoard = lazy(() => import('./pages/ProductionBoard'));
+const ProductionOrderDetails = lazy(() => import('./pages/ProductionOrderDetails'));
+const ProductionUpload = lazy(() => import('./pages/ProductionUpload'));
+const Learning = lazy(() => import('./pages/Learning'));
+const NotificationsCenter = lazy(() => import('./pages/NotificationsCenter'));
+
+// Loading fallback for lazy-loaded components
+const PageLoading = () => (
+  <div className="flex h-screen w-full items-center justify-center">
+    <div className="h-16 w-16 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+  </div>
+);
 
 function App() {
+  // Initialize performance monitoring
+  useEffect(() => {
+    // Initialize performance monitoring
+    resourceMonitor.init();
+    
+    // Initialize automatic prefetching of resources for visible links
+    const cleanupPrefetch = initAutoPrefetch();
+    
+    // Log performance metrics after page is fully loaded
+    window.addEventListener('load', () => {
+      // Schedule metrics logging during idle time
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => {
+          resourceMonitor.logMetrics();
+        });
+      } else {
+        setTimeout(() => {
+          resourceMonitor.logMetrics();
+        }, 1000);
+      }
+    });
+    
+    return () => {
+      cleanupPrefetch();
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -44,11 +94,15 @@ function App() {
                 <Route index element={<Navigate to="/calendar" replace />} />
                 <Route path="/" element={<Navigate to="/calendar" replace />} />
                 <Route path="/login" element={<Login />} />
+                
+                {/* Protected routes with loading state */}
                 <Route 
                   path="/dashboard" 
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <Suspense fallback={<PageLoading />}>
+                        <Dashboard />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -56,7 +110,9 @@ function App() {
                   path="/calendar" 
                   element={
                     <ProtectedRoute>
-                      <Calendar />
+                      <Suspense fallback={<PageLoading />}>
+                        <Calendar />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -64,7 +120,9 @@ function App() {
                   path="/orders" 
                   element={
                     <ProtectedRoute>
-                      <Orders />
+                      <Suspense fallback={<PageLoading />}>
+                        <Orders />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -72,7 +130,9 @@ function App() {
                   path="/orders/:id" 
                   element={
                     <ProtectedRoute>
-                      <OrderDetails />
+                      <Suspense fallback={<PageLoading />}>
+                        <OrderDetails />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -80,7 +140,9 @@ function App() {
                   path="/customers" 
                   element={
                     <ProtectedRoute>
-                      <Customers />
+                      <Suspense fallback={<PageLoading />}>
+                        <Customers />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -88,7 +150,9 @@ function App() {
                   path="/customers/:id" 
                   element={
                     <ProtectedRoute>
-                      <CustomerDetails />
+                      <Suspense fallback={<PageLoading />}>
+                        <CustomerDetails />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -96,7 +160,9 @@ function App() {
                   path="/companies/:id" 
                   element={
                     <ProtectedRoute>
-                      <CompanyDetails />
+                      <Suspense fallback={<PageLoading />}>
+                        <CompanyDetails />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -104,7 +170,9 @@ function App() {
                   path="/production" 
                   element={
                     <ProtectedRoute>
-                      <Production />
+                      <Suspense fallback={<PageLoading />}>
+                        <Production />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -112,7 +180,9 @@ function App() {
                   path="/production/board" 
                   element={
                     <ProtectedRoute>
-                      <ProductionBoard />
+                      <Suspense fallback={<PageLoading />}>
+                        <ProductionBoard />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -120,7 +190,9 @@ function App() {
                   path="/production/order/:id" 
                   element={
                     <ProtectedRoute>
-                      <ProductionOrderDetails />
+                      <Suspense fallback={<PageLoading />}>
+                        <ProductionOrderDetails />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -128,7 +200,9 @@ function App() {
                   path="/production/upload/:id" 
                   element={
                     <ProtectedRoute>
-                      <ProductionUpload />
+                      <Suspense fallback={<PageLoading />}>
+                        <ProductionUpload />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -136,7 +210,9 @@ function App() {
                   path="/learning" 
                   element={
                     <ProtectedRoute>
-                      <Learning />
+                      <Suspense fallback={<PageLoading />}>
+                        <Learning />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -144,7 +220,9 @@ function App() {
                   path="/notifications" 
                   element={
                     <ProtectedRoute>
-                      <NotificationsCenter />
+                      <Suspense fallback={<PageLoading />}>
+                        <NotificationsCenter />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
@@ -152,15 +230,22 @@ function App() {
                   path="/settings" 
                   element={
                     <ProtectedRoute>
-                      <Settings />
+                      <Suspense fallback={<PageLoading />}>
+                        <Settings />
+                      </Suspense>
                     </ProtectedRoute>
                   } 
                 />
+                
                 {/* Debug route - only available in development */}
                 {import.meta.env.DEV && (
                   <Route 
                     path="/debug" 
-                    element={<Debug />} 
+                    element={
+                      <Suspense fallback={<PageLoading />}>
+                        <Debug />
+                      </Suspense>
+                    } 
                   />
                 )}
                 <Route path="*" element={<NotFound />} />

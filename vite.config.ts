@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -13,6 +14,8 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
+  // Add caching for improved performance
+  cacheDir: '.vite-cache',
   plugins: [
     react({
       // Use SWC's configuration
@@ -27,8 +30,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Enable asset optimizations
   build: {
-    // Use esbuild minification in development for faster builds
+    // Use esbuild minification for faster builds
     minify: mode === 'production' ? 'terser' : 'esbuild',
     terserOptions: {
       compress: {
@@ -37,46 +41,72 @@ export default defineConfig(({ mode }) => ({
         pure_funcs: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
       },
     },
+    // Enable reportCompressedSize for better size analysis in production
+    reportCompressedSize: mode === 'production',
+    // Enable asset compression
+    assetsInlineLimit: 4096,
+    // Improved CSS code splitting
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core vendor bundle - most used packages
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+        manualChunks: (id) => {
+          // Core libraries
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
           
-          // UI components bundle
-          ui: [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            'lucide-react'
-          ],
+          // Router
+          if (id.includes('node_modules/react-router')) {
+            return 'vendor-router';
+          }
           
-          // Features bundle
-          features: [
-            'date-fns',
-            '@tanstack/react-query',
-            '@supabase/supabase-js'
-          ]
+          // UI components
+          if (id.includes('node_modules/@radix-ui') || id.includes('node_modules/lucide-react')) {
+            return 'vendor-ui';
+          }
+          
+          // Data fetching
+          if (id.includes('node_modules/@tanstack/react-query') || 
+              id.includes('node_modules/@supabase')) {
+            return 'vendor-data';
+          }
+          
+          // Utilities and date libraries
+          if (id.includes('node_modules/date-fns') || 
+              id.includes('node_modules/clsx') ||
+              id.includes('node_modules/tailwind-merge')) {
+            return 'vendor-utils';
+          }
+          
+          // Everything else from node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor-others';
+          }
         }
       },
-      // Disable tree-shaking for faster builds in development
+      // Improve tree-shaking
       treeshake: mode === 'production',
     },
-    chunkSizeWarningLimit: 1000,
+    // Increase chunk size warning to avoid unnecessary splitting
+    chunkSizeWarningLimit: 1200,
     // Generate source maps only in development
     sourcemap: mode !== 'production',
-    // Improve CSS extraction
-    cssCodeSplit: true,
-    // Keep assets inline up to this size to reduce HTTP requests
-    assetsInlineLimit: 4096,
   },
   optimizeDeps: {
     // Improve first load time by pre-bundling these dependencies
-    include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom', 
+      '@tanstack/react-query',
+      'clsx',
+      'tailwind-merge',
+      'date-fns',
+      'lucide-react',
+    ],
     // Exclude large dependencies from pre-bundling if they're not needed on initial load
     exclude: ['recharts'],
-    // Enable dependency optimization in development mode
+    // Enable dependency optimization in development mode for faster reloads
     force: true,
   },
   // Reduce build size by excluding dev-only code in production
@@ -84,7 +114,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.NODE_ENV': JSON.stringify(mode),
     __DEV__: mode !== 'production',
   },
-  // Experimental features for more performance
+  // Improved esbuild configuration
   esbuild: {
     // Enable JSX optimization
     jsx: 'automatic',
@@ -92,5 +122,7 @@ export default defineConfig(({ mode }) => ({
     minifyIdentifiers: mode === 'production',
     minifySyntax: mode === 'production',
     minifyWhitespace: mode === 'production',
+    // Improve tree-shaking in production
+    treeShaking: mode === 'production',
   },
 }));
