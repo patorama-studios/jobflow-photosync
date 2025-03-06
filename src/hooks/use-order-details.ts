@@ -1,12 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { Order } from '@/types/orders';
+import { Order } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useOrderDetails = (orderId: string | undefined) => {
   const [order, setOrder] = useState<Order | null>(null);
+  const [editedOrder, setEditedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [refundsForOrder, setRefundsForOrder] = useState<any[]>([]);
 
   useEffect(() => {
     if (!orderId) {
@@ -47,6 +51,7 @@ export const useOrderDetails = (orderId: string | undefined) => {
             photographerPayoutRate: data.photographer_payout_rate,
             notes: data.notes,
             package: data.package,
+            stripePaymentId: data.stripe_payment_id,
             
             // Also set legacy properties for backward compatibility
             order_number: data.order_number,
@@ -63,6 +68,7 @@ export const useOrderDetails = (orderId: string | undefined) => {
           };
 
           setOrder(orderData);
+          setEditedOrder(orderData);
         } else {
           setError('Order not found');
         }
@@ -77,5 +83,61 @@ export const useOrderDetails = (orderId: string | undefined) => {
     fetchOrderDetails();
   }, [orderId]);
 
-  return { order, isLoading, error };
+  const handleEditClick = () => setIsEditing(true);
+  const handleCancelClick = () => {
+    setEditedOrder(order);
+    setIsEditing(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!editedOrder) return;
+    
+    const { name, value } = e.target;
+    setEditedOrder(prev => {
+      if (!prev) return prev;
+      return { ...prev, [name]: value };
+    });
+  };
+
+  const handleStatusChange = (value: string) => {
+    if (!editedOrder) return;
+    
+    setEditedOrder(prev => {
+      if (!prev) return prev;
+      return { ...prev, status: value };
+    });
+  };
+
+  const handleSaveClick = async () => {
+    // Implement save functionality
+    setIsEditing(false);
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    // Implement delete functionality
+    setIsDeleteDialogOpen(false);
+  };
+
+  return {
+    order,
+    editedOrder,
+    isLoading,
+    error,
+    isEditing,
+    isDeleteDialogOpen,
+    refundsForOrder,
+    setRefundsForOrder,
+    setIsDeleteDialogOpen,
+    handleEditClick,
+    handleCancelClick,
+    handleInputChange,
+    handleStatusChange,
+    handleSaveClick,
+    handleDeleteClick,
+    confirmDelete
+  };
 };

@@ -86,6 +86,8 @@ export const useOrders = (
             status: item.status as any,
             photographerPayoutRate: item.photographer_payout_rate,
             package: item.package,
+            stripePaymentId: item.stripe_payment_id,
+            notes: item.notes,
             
             // Also set legacy properties for backward compatibility
             order_number: item.order_number,

@@ -32,6 +32,7 @@ export interface Order {
   zip?: string;
   package?: string;
   stripePaymentId?: string;
+  notes?: string;
   
   // Legacy property names for compatibility
   order_number?: string;

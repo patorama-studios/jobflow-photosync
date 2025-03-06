@@ -35,6 +35,7 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     internal_notes: order.internal_notes || '',
     stripePaymentId: order.stripe_payment_id || '',
     stripe_payment_id: order.stripe_payment_id || '',
+    notes: order.notes || '',
     drivingTimeMin: 15 + Math.floor(Math.random() * 30) // Random driving time
   }));
 }
