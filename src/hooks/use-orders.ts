@@ -1,180 +1,127 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { sampleOrders } from '@/data/sampleOrders';  // Fixed import path
-import { Order, OrderStatus, OrderFilters } from '@/types/orders';
+import { useState, useEffect } from 'react';
+import { Order, OrderFilters, Pagination } from '@/types/orders';
+import { supabase } from '@/integrations/supabase/client';
 
-export function useOrders() {
+export const useOrders = (
+  filters: OrderFilters = {},
+  pagination: { page: number; limit: number } = { page: 1, limit: 10 }
+) => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<OrderFilters>({});
-  const [statistics, setStatistics] = useState({
-    total: 0,
-    scheduled: 0,
-    completed: 0,
-    pending: 0,
-    canceled: 0,
-    revenue: 0,
+  const [paginationInfo, setPaginationInfo] = useState<Pagination>({
+    currentPage: pagination.page,
+    itemsPerPage: pagination.limit,
+    totalItems: 0,
+    totalPages: 0,
   });
 
-  // Fetch orders
   useEffect(() => {
     const fetchOrders = async () => {
       setIsLoading(true);
       try {
-        // In a real implementation, this would fetch from the API
-        // For now, using sample data
-        
-        const mappedOrders: Order[] = sampleOrders.map(order => ({
-          id: order.id.toString(),
-          order_number: order.orderNumber,
-          client: order.client,
-          client_email: order.clientEmail,
-          client_phone: order.clientPhone,
-          address: order.address,
-          city: order.city || '',
-          state: order.state || '',
-          zip: order.zip || '',
-          scheduled_date: order.scheduledDate,
-          scheduled_time: order.scheduledTime,
-          photographer: order.photographer,
-          photographer_payout_rate: order.photographerPayoutRate,
-          price: order.price,
-          property_type: order.propertyType,
-          square_feet: order.squareFeet,
-          status: order.status as OrderStatus,
-          notes: order.internalNotes, // Map internalNotes to notes for compatibility
-          internal_notes: order.internalNotes,
-          customer_notes: order.customerNotes,
-          package: order.package || '',
-          stripe_payment_id: order.stripePaymentId
-        }));
-        
-        setOrders(mappedOrders);
-        setFilteredOrders(mappedOrders);
-        
-        // Calculate statistics
-        const total = mappedOrders.length;
-        const scheduled = mappedOrders.filter(order => order.status === 'scheduled').length;
-        const completed = mappedOrders.filter(order => order.status === 'completed').length;
-        const pending = mappedOrders.filter(order => order.status === 'pending').length;
-        const canceled = mappedOrders.filter(order => order.status === 'canceled').length;
-        const revenue = mappedOrders.reduce((sum, order) => {
-          return order.status === 'completed' ? sum + order.price : sum;
-        }, 0);
+        let query = supabase.from('orders').select('*', { count: 'exact' });
 
-        setStatistics({
-          total,
-          scheduled,
-          completed,
-          pending,
-          canceled,
-          revenue,
-        });
-        
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        setError('Failed to fetch orders');
+        // Apply filters
+        if (filters.status) {
+          if (Array.isArray(filters.status)) {
+            query = query.in('status', filters.status);
+          } else {
+            query = query.eq('status', filters.status);
+          }
+        }
+
+        if (filters.photographer) {
+          query = query.eq('photographer', filters.photographer);
+        }
+
+        if (filters.dateRange) {
+          const { startDate, endDate } = filters.dateRange as { startDate: Date; endDate: Date };
+          query = query.gte('scheduled_date', startDate.toISOString().split('T')[0]);
+          query = query.lte('scheduled_date', endDate.toISOString().split('T')[0]);
+        }
+
+        if (filters.searchQuery) {
+          query = query.or(
+            `client.ilike.%${filters.searchQuery}%,address.ilike.%${filters.searchQuery}%,order_number.ilike.%${filters.searchQuery}%`
+          );
+        }
+
+        // Apply sorting
+        if (filters.sortBy) {
+          const order = filters.sortDirection || 'asc';
+          query = query.order(filters.sortBy, { ascending: order === 'asc' });
+        } else {
+          query = query.order('scheduled_date', { ascending: true });
+        }
+
+        // Apply pagination
+        const from = (pagination.page - 1) * pagination.limit;
+        const to = from + pagination.limit - 1;
+        query = query.range(from, to);
+
+        const { data, error, count } = await query;
+
+        if (error) throw error;
+
+        if (data) {
+          // Convert to Order objects with both new and legacy properties
+          const mappedOrders: Order[] = data.map(item => ({
+            id: item.id,
+            orderNumber: item.order_number,
+            client: item.client,
+            clientEmail: item.client_email,
+            clientPhone: item.client_phone,
+            address: item.address,
+            city: item.city,
+            state: item.state,
+            zip: item.zip,
+            scheduledDate: item.scheduled_date,
+            scheduledTime: item.scheduled_time,
+            photographer: item.photographer,
+            propertyType: item.property_type,
+            squareFeet: item.square_feet,
+            price: item.price,
+            status: item.status as any,
+            photographerPayoutRate: item.photographer_payout_rate,
+            package: item.package,
+            
+            // Also set legacy properties for backward compatibility
+            order_number: item.order_number,
+            scheduled_date: item.scheduled_date,
+            scheduled_time: item.scheduled_time,
+            client_email: item.client_email,
+            client_phone: item.client_phone,
+            property_type: item.property_type,
+            square_feet: item.square_feet,
+            photographer_payout_rate: item.photographer_payout_rate,
+            customer_notes: item.customer_notes,
+            internal_notes: item.internal_notes,
+            stripe_payment_id: item.stripe_payment_id
+          }));
+          
+          setOrders(mappedOrders);
+
+          if (count !== null) {
+            setPaginationInfo({
+              currentPage: pagination.page,
+              itemsPerPage: pagination.limit,
+              totalItems: count,
+              totalPages: Math.ceil(count / pagination.limit),
+            });
+          }
+        }
+      } catch (err: any) {
+        console.error('Error fetching orders:', err);
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [filters, pagination.page, pagination.limit]);
 
-  // Function to update filters
-  const updateFilters = (newFilters: Partial<OrderFilters>) => {
-    setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
-  };
-
-  // Apply filters to orders
-  const applyFilters = useCallback(() => {
-    if (!orders.length) return;
-
-    let result = [...orders];
-
-    // Filter by status
-    if (filters.status && filters.status.length) {
-      const statusFilters = Array.isArray(filters.status) 
-        ? filters.status 
-        : [filters.status as OrderStatus];
-        
-      result = result.filter(order => 
-        statusFilters.includes(order.status as OrderStatus)
-      );
-    }
-
-    // Filter by dateRange
-    if (filters.dateRange) {
-      const { from, to } = filters.dateRange as { from?: Date; to?: Date };
-      
-      if (from) {
-        result = result.filter(order => 
-          new Date(order.scheduled_date) >= from
-        );
-      }
-      
-      if (to) {
-        result = result.filter(order => 
-          new Date(order.scheduled_date) <= to
-        );
-      }
-    }
-
-    // Filter by photographer
-    if (filters.photographer) {
-      result = result.filter(order =>
-        order.photographer.toLowerCase().includes(filters.photographer!.toLowerCase())
-      );
-    }
-
-    // Filter by searchQuery
-    if (filters.searchQuery) {
-      const lowerCaseQuery = filters.searchQuery.toLowerCase();
-      result = result.filter(order =>
-        order.order_number.toLowerCase().includes(lowerCaseQuery) ||
-        order.client.toLowerCase().includes(lowerCaseQuery) ||
-        order.address.toLowerCase().includes(lowerCaseQuery)
-      );
-    }
-
-    setFilteredOrders(result);
-  }, [orders, filters]);
-
-  // Apply sorting to orders
-  const applySorting = useCallback((sortBy?: string, sortDirection: "asc" | "desc" = "asc") => {
-    if (!sortBy) return;
-
-    const sortedOrders = [...filteredOrders].sort((a, b) => {
-      const aValue = a[sortBy as keyof Order];
-      const bValue = b[sortBy as keyof Order];
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-      }
-
-      return 0;
-    });
-
-    setFilteredOrders(sortedOrders);
-  }, [filteredOrders]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  return {
-    orders,
-    filteredOrders,
-    isLoading,
-    error,
-    filters,
-    statistics,
-    updateFilters,
-    applySorting
-  };
-}
+  return { orders, isLoading, error, pagination: paginationInfo };
+};

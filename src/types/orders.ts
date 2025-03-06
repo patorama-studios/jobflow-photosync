@@ -38,6 +38,10 @@ export interface Order {
   photographerPayoutAmount?: number;
   stripePaymentId?: string;
   
+  // Additional properties for older components
+  drivingTimeMin?: number;
+  previousLocation?: string;
+  
   // Legacy property names for compatibility
   order_number?: string;
   scheduled_date?: string;
