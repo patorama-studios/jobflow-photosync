@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.stripe-connect]
 verify_jwt = false
+
+[functions.initialize-storage]
+verify_jwt = false
