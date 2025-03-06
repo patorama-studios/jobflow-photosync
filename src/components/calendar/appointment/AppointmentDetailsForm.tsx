@@ -4,11 +4,11 @@ import { format, addDays } from 'date-fns';
 import { Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 
 interface AppointmentDetailsFormProps {
@@ -38,6 +38,9 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
   });
   
   const [selectedTime, setSelectedTime] = useState<string>(timeStr || "11:00 AM");
+  const [selectedDuration, setSelectedDuration] = useState<string>("45 minutes");
+  const [timeInputOpen, setTimeInputOpen] = useState(false);
+  const [durationInputOpen, setDurationInputOpen] = useState(false);
 
   // Update parent state when local state changes
   useEffect(() => {
@@ -57,10 +60,16 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
 
   const handleTimeChange = (time: string) => {
     setSelectedTime(time);
+    setTimeInputOpen(false);
     if (selectedDate) {
       const formattedDate = format(selectedDate, "MMM dd, yyyy");
       setAppointmentDate(`${formattedDate} ${time}`);
     }
+  };
+
+  const handleDurationChange = (duration: string) => {
+    setSelectedDuration(duration);
+    setDurationInputOpen(false);
   };
 
   // Generate time options in 45-minute increments
@@ -82,9 +91,34 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
   };
 
   const timeOptions = generateTimeOptions();
+  
+  const durationOptions = [
+    "45 minutes",
+    "1.5 hours",
+    "2.25 hours",
+    "3 hours"
+  ];
 
   return (
     <div className="space-y-6">
+      {/* Suggested Dates - Moved to the top */}
+      <div>
+        <h3 className="text-sm font-medium mb-2">Suggested Dates</h3>
+        <div className="flex flex-col gap-2">
+          {[1, 2, 3].map((_, i) => (
+            <Button 
+              key={i}
+              variant="outline" 
+              className="justify-start text-left"
+              onClick={() => handleDateChange(addDays(new Date(), i + 1))}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {format(addDays(new Date(), i + 1), "EEEE, MMM d")} at 11:00 AM
+            </Button>
+          ))}
+        </div>
+      </div>
+      
       <div className="space-y-2">
         <Label htmlFor="date">Appointment Date</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -112,78 +146,105 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
             </PopoverContent>
           </Popover>
           
-          <Select 
-            value={selectedTime} 
-            onValueChange={handleTimeChange}
-          >
-            <SelectTrigger>
-              <div className="flex items-center">
+          <Popover open={timeInputOpen} onOpenChange={setTimeInputOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                role="combobox"
+                aria-expanded={timeInputOpen}
+                className="justify-start text-left"
+              >
                 <Clock className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Select time" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              {timeOptions.map((time) => (
-                <SelectItem key={time} value={time}>{time}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {selectedTime}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0">
+              <Command>
+                <CommandInput placeholder="Search time..." />
+                <CommandList>
+                  <CommandEmpty>No time found.</CommandEmpty>
+                  <CommandGroup>
+                    {timeOptions.map((time) => (
+                      <CommandItem 
+                        key={time} 
+                        value={time}
+                        onSelect={() => handleTimeChange(time)}
+                      >
+                        {time}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       
+      <div className="space-y-2">
+        <Label htmlFor="duration">Duration</Label>
+        <Popover open={durationInputOpen} onOpenChange={setDurationInputOpen}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant="outline" 
+              role="combobox"
+              aria-expanded={durationInputOpen}
+              className="w-full justify-start text-left"
+            >
+              {selectedDuration}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command>
+              <CommandInput placeholder="Search duration..." />
+              <CommandList>
+                <CommandEmpty>No duration found.</CommandEmpty>
+                <CommandGroup>
+                  {durationOptions.map((duration) => (
+                    <CommandItem 
+                      key={duration} 
+                      value={duration}
+                      onSelect={() => handleDurationChange(duration)}
+                    >
+                      {duration}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
       
-        <div className="space-y-2">
-          <Label htmlFor="duration">Duration</Label>
-          <Select defaultValue="45">
-            <SelectTrigger>
-              <SelectValue placeholder="Select duration" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="45">45 minutes</SelectItem>
-              <SelectItem value="90">1.5 hours</SelectItem>
-              <SelectItem value="135">2.25 hours</SelectItem>
-              <SelectItem value="180">3 hours</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea placeholder="Add any notes about this appointment..." className="h-24" />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="notifyClient">Client Notification</Label>
-          <Select defaultValue="email">
-            <SelectTrigger>
-              <SelectValue placeholder="Select notification method" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No notification</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="sms">SMS</SelectItem>
-              <SelectItem value="both">Email & SMS</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <h3 className="text-sm font-medium mb-2">Suggested Dates</h3>
-          <div className="flex flex-col gap-2">
-            {[1, 2, 3].map((_, i) => (
-              <Button 
-                key={i}
-                variant="outline" 
-                className="justify-start text-left"
-                onClick={() => handleDateChange(addDays(new Date(), i + 1))}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(addDays(new Date(), i + 1), "EEEE, MMM d")} at 11:00 AM
-              </Button>
-            ))}
-          </div>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea placeholder="Add any notes about this appointment..." className="h-24" />
+      </div>
       
+      <div className="space-y-2">
+        <Label htmlFor="notifyClient">Client Notification</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full justify-start text-left">
+              Email
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <Command>
+              <CommandInput placeholder="Search notification method..." />
+              <CommandList>
+                <CommandEmpty>No method found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem onSelect={() => {}}>No notification</CommandItem>
+                  <CommandItem onSelect={() => {}}>Email</CommandItem>
+                  <CommandItem onSelect={() => {}}>SMS</CommandItem>
+                  <CommandItem onSelect={() => {}}>Email & SMS</CommandItem>
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
     </div>
   );
 };
