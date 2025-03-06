@@ -12,6 +12,7 @@ export type SettingsCategory =
   | "editor"
   | "downloads"
   | "payments"
+  | "products"
   | "presentation"
   | "header"
   | "theme"

@@ -7,6 +7,7 @@ import { OrganizationSettings } from "./sections/OrganizationSettings";
 import { NotificationEditor } from "./sections/NotificationEditor";
 import { DownloadSettings } from "./sections/DownloadSettings";
 import { PaymentSettings } from "./sections/PaymentSettings";
+import { ProductSettings } from "./sections/ProductSettings";
 import { PresentationSettings } from "./sections/PresentationSettings";
 import { HeaderSettings } from "./sections/HeaderSettings";
 import { ThemeSettings } from "./sections/ThemeSettings";
@@ -26,6 +27,7 @@ export function SettingsPanel({ activeCategory }: SettingsPanelProps) {
       {activeCategory === "editor" && <NotificationEditor />}
       {activeCategory === "downloads" && <DownloadSettings />}
       {activeCategory === "payments" && <PaymentSettings />}
+      {activeCategory === "products" && <ProductSettings />}
       {activeCategory === "presentation" && <PresentationSettings />}
       {activeCategory === "header" && <HeaderSettings />}
       {activeCategory === "theme" && <ThemeSettings />}

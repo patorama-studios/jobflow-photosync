@@ -12,7 +12,8 @@ import {
   Palette, 
   MonitorSmartphone,
   FileText,
-  Paintbrush
+  Paintbrush,
+  Package
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -34,6 +35,7 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
     { category: "editor", label: "Editor", icon: <Edit className="h-4 w-4 mr-2" /> },
     { category: "downloads", label: "Downloads", icon: <Download className="h-4 w-4 mr-2" /> },
     { category: "payments", label: "Payments", icon: <CreditCard className="h-4 w-4 mr-2" /> },
+    { category: "products", label: "Products", icon: <Package className="h-4 w-4 mr-2" /> },
     { category: "presentation", label: "Presentation", icon: <Palette className="h-4 w-4 mr-2" /> },
     { category: "header", label: "Header", icon: <MonitorSmartphone className="h-4 w-4 mr-2" /> },
     { category: "theme", label: "Theme", icon: <Paintbrush className="h-4 w-4 mr-2" /> },
