@@ -80,6 +80,13 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
     }
   };
 
+  // Handle time slot click
+  const handleTimeSlotClick = (time: string) => {
+    if (onTimeSlotClick) {
+      onTimeSlotClick(time);
+    }
+  };
+
   // Count appointments for selected view
   const appointmentCount = useMemo(() => {
     if (view === "day") {
@@ -138,6 +145,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
             <GoogleWeekView 
               date={selectedDate}
               orders={filteredOrders}
+              onTimeSlotClick={handleTimeSlotClick}
             />
           )}
           
@@ -147,6 +155,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
               orders={filteredOrders}
               photographers={samplePhotographers}
               selectedPhotographers={selectedPhotographers}
+              onTimeSlotClick={handleTimeSlotClick}
             />
           )}
           
