@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from "@/components/theme-provider"
@@ -26,11 +25,12 @@ import CompanyDetails from './pages/CompanyDetails'
 
 function App() {
   const queryClient = new QueryClient()
+  const googleMapsApiKey = 'AIzaSyDEWzYsyUXf7OCoVaoLOworw0l9MY6ZkP4'
 
   return (
     <ThemeProvider>
       <NotificationsProvider>
-        <GoogleMapsProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+        <GoogleMapsProvider apiKey={googleMapsApiKey}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <HeaderSettingsProvider>
