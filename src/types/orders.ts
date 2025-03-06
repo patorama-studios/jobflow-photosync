@@ -1,4 +1,3 @@
-
 export interface Order {
   id: string | number;
   orderNumber: string;
@@ -29,6 +28,8 @@ export interface Order {
   package: string;
   drivingTimeMin?: number;
   previousLocation?: string;
+  mediaUploaded?: boolean;
+  mediaLinks?: string[];
 }
 
 export interface OrderFilters {

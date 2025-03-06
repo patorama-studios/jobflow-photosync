@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Table, 
@@ -16,10 +15,10 @@ import {
   GripVertical, 
   Image as ImageIcon, 
   Check, 
-  X 
+  X,
+  MoreHorizontal
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Product, ProductDialog } from "./ProductDialog";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -183,7 +182,7 @@ export function ProductsList() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm">
-                      <DotsHorizontalIcon className="h-4 w-4" />
+                      <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
