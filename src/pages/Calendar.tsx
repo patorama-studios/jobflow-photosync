@@ -40,7 +40,7 @@ const Calendar = () => {
   };
 
   return (
-    <MainLayout showCalendarSubmenu={false}>
+    <MainLayout showCalendarSubmenu={true}>
       <PageTransition>
         <div className="h-[calc(100vh-64px)] w-full">
           <GoogleCalendar 
