@@ -22,6 +22,8 @@ import { HeaderSettingsProvider } from './hooks/useHeaderSettings'
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import NotificationsCenter from './pages/NotificationsCenter';
 import MainLayout from './components/layout/MainLayout'
+import Client from './pages/Client'
+import CompanyDetails from './pages/CompanyDetails'
 
 function App() {
   const queryClient = new QueryClient()
@@ -40,6 +42,8 @@ function App() {
                   <Route path="/dashboard" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
                   <Route path="/orders/*" element={<MainLayout><ProtectedRoute><OrdersPage /></ProtectedRoute></MainLayout>} />
                   <Route path="/customers" element={<MainLayout><ProtectedRoute><Customers /></ProtectedRoute></MainLayout>} />
+                  <Route path="/client/:clientId" element={<MainLayout><ProtectedRoute><Client /></ProtectedRoute></MainLayout>} />
+                  <Route path="/company/:companyId" element={<MainLayout><ProtectedRoute><CompanyDetails /></ProtectedRoute></MainLayout>} />
                   <Route path="/calendar" element={<MainLayout><ProtectedRoute><Calendar /></ProtectedRoute></MainLayout>} />
                   <Route path="/settings/*" element={<MainLayout><ProtectedRoute><SettingsPage /></ProtectedRoute></MainLayout>} />
                   <Route path="/production" element={<MainLayout><ProtectedRoute><Production /></ProtectedRoute></MainLayout>} />

@@ -16,8 +16,8 @@ export interface Order {
   id: string;
   order_number: string;
   client: string;
-  clientEmail?: string; // Add clientEmail property
-  clientPhone?: string; // Add clientPhone property
+  client_email?: string;
+  client_phone?: string;
   address: string;
   city: string;
   state: string;
@@ -32,18 +32,43 @@ export interface Order {
   price: number;
   status: OrderStatus;
   notes?: string;
+  internal_notes?: string;
+  customer_notes?: string;
   photographer_payout_rate?: number;
   photographer_payout_amount?: number;
-  stripePaymentId?: string; // Add stripePaymentId property
+  stripe_payment_id?: string;
+}
+
+// Define interface for Contractor
+export interface Contractor {
+  id: string;
+  name: string;
+  role: string;
+  payoutRate?: number;
+  payoutAmount?: number;
+}
+
+// Define interface for RefundRecord
+export interface RefundRecord {
+  id: string;
+  amount: number;
+  date: string;
+  reason: string;
+  isFullRefund: boolean;
+  status: 'completed' | 'pending' | 'failed';
+  stripeRefundId?: string;
 }
 
 // Define the interface for order filters
 export interface OrderFilters {
-  status?: OrderStatus[];
+  status?: OrderStatus[] | string;
   photographer?: string;
   dateRange?: {
     startDate: Date;
     endDate: Date;
+  } | {
+    from?: Date;
+    to?: Date;
   };
   searchQuery?: string;
   sortBy?: string;

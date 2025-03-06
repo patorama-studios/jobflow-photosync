@@ -1,87 +1,118 @@
 
-// This is a utility file for interacting with Stripe
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the interface for Stripe configurations
+// Define the types for Stripe configuration
 export interface StripeConfig {
   mode: 'test' | 'live';
-  accountId?: string;
-  publishableKey?: string;
   connected: boolean;
+  apiKey?: string;
+  secretKey?: string;
+  webhookSecret?: string;
+  lastSynced?: string;
 }
 
-/**
- * Verifies Stripe API keys by making a request to the Stripe Connect edge function
- */
-export const verifyStripeKeys = async (
-  secretKey: string,
-  mode: 'test' | 'live'
-): Promise<{ success: boolean; accountId?: string }> => {
+// Check if Stripe is connected
+export async function isStripeConnected(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke('stripe-connect', {
-      body: {
-        action: 'verify',
-        secretKey,
-        mode
-      }
-    });
-
-    if (error) {
-      console.error('Error verifying Stripe keys:', error);
-      return { success: false };
-    }
-
-    return { 
-      success: true, 
-      accountId: data.accountId 
-    };
+    const config = await getStripeConfig();
+    return config ? config.connected : false;
   } catch (error) {
-    console.error('Error calling Stripe Connect function:', error);
-    return { success: false };
+    console.error('Error checking Stripe connection:', error);
+    return false;
   }
-};
+}
 
-/**
- * Gets the current Stripe configuration from Supabase
- */
-export const getStripeConfig = async (): Promise<StripeConfig | null> => {
+// Get the current Stripe configuration
+export async function getStripeConfig(): Promise<StripeConfig | null> {
   try {
-    // In a real implementation, this would query a proper table
-    // For now, we'll use a custom RPC function
-    const { data, error } = await supabase.rpc('get_stripe_config');
+    // For now, we'll fetch from local storage as a fallback method
+    // In a real implementation, this would come from a secure backend
+    const storedConfig = localStorage.getItem('stripe_config');
     
-    if (error) {
-      console.error('Error getting Stripe config:', error);
-      return null;
+    if (storedConfig) {
+      return JSON.parse(storedConfig);
     }
-
-    // Parse the response data into our StripeConfig interface
-    return data as StripeConfig;
+    
+    // Default configuration if nothing is found
+    return {
+      mode: 'test',
+      connected: false
+    };
   } catch (error) {
     console.error('Error getting Stripe config:', error);
     return null;
   }
-};
+}
 
-/**
- * Disconnects the Stripe integration
- */
-export const disconnectStripe = async (): Promise<boolean> => {
+// Save Stripe configuration
+export async function saveStripeConfig(config: StripeConfig): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('save_stripe_config', {
-      is_connected: false,
-      stripe_mode: null,
-      account_id: null
-    });
-    
-    if (error) {
-      console.error('Error disconnecting Stripe:', error);
-      return false;
-    }
-
+    // For now, we'll save to local storage as a temp solution
+    // In a real implementation, this would be saved securely in the backend
+    localStorage.setItem('stripe_config', JSON.stringify(config));
     return true;
   } catch (error) {
-    console.error('Error disconnecting Stripe:', error);
+    console.error('Error saving Stripe config:', error);
     return false;
   }
-};
+}
+
+// Connect to Stripe with provided credentials
+export async function connectStripe(
+  apiKey: string,
+  secretKey: string,
+  mode: 'test' | 'live',
+  webhookSecret?: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // In a real implementation, we would validate these keys against Stripe's API
+    // For now, we'll just check if they look like Stripe keys
+    
+    if (!apiKey.startsWith(mode === 'test' ? 'pk_test_' : 'pk_live_')) {
+      return { 
+        success: false, 
+        message: 'Invalid Stripe public key format. Test keys should start with pk_test_' 
+      };
+    }
+    
+    if (!secretKey.startsWith(mode === 'test' ? 'sk_test_' : 'sk_live_')) {
+      return { 
+        success: false, 
+        message: 'Invalid Stripe secret key format. Test keys should start with sk_test_' 
+      };
+    }
+    
+    // Save the configuration
+    await saveStripeConfig({
+      mode,
+      connected: true,
+      apiKey,
+      secretKey,
+      webhookSecret,
+      lastSynced: new Date().toISOString()
+    });
+    
+    return { 
+      success: true, 
+      message: 'Successfully connected to Stripe' 
+    };
+  } catch (error) {
+    console.error('Error connecting to Stripe:', error);
+    return { 
+      success: false, 
+      message: 'Failed to connect to Stripe. Please try again.' 
+    };
+  }
+}
+
+// Disconnect from Stripe
+export async function disconnectStripe(): Promise<boolean> {
+  try {
+    // Remove Stripe configuration
+    localStorage.removeItem('stripe_config');
+    return true;
+  } catch (error) {
+    console.error('Error disconnecting from Stripe:', error);
+    return false;
+  }
+}

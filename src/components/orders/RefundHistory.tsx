@@ -1,22 +1,10 @@
 
 import React from 'react';
 import { format } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefundRecord } from '@/types/orders';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  CreditCard, 
-  AlertCircle, 
-  CheckCircle,
-  Clock
-} from 'lucide-react';
+import { CreditCard, AlertCircle } from 'lucide-react';
 
 interface RefundHistoryProps {
   refunds: RefundRecord[];
@@ -24,94 +12,75 @@ interface RefundHistoryProps {
 }
 
 export function RefundHistory({ refunds, orderTotal }: RefundHistoryProps) {
-  // Sort refunds by date, newest first
-  const sortedRefunds = [...refunds].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
-  // Calculate total refunded amount
-  const totalRefunded = refunds.reduce((sum, refund) => 
-    sum + (refund.status === 'completed' ? refund.amount : 0)
-  , 0);
-
-  // Get payment status based on refunds
-  const getPaymentStatus = () => {
-    if (refunds.length === 0) return 'none';
-    if (totalRefunded >= orderTotal) return 'full';
-    return 'partial';
-  };
-
-  const paymentStatus = getPaymentStatus();
-
+  if (refunds.length === 0) return null;
+  
+  const totalRefundedAmount = refunds.reduce((sum, refund) => sum + refund.amount, 0);
+  const isFullyRefunded = totalRefundedAmount >= orderTotal;
+  
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
           Refund History
+          {isFullyRefunded && (
+            <Badge variant="destructive" className="ml-2">Fully Refunded</Badge>
+          )}
         </CardTitle>
-        <CardDescription>Track refunds issued for this order</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-medium">Total Refunded</h3>
-            <p className="text-2xl font-bold">${totalRefunded.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">
-              of ${orderTotal.toFixed(2)} original payment
-            </p>
-          </div>
-          <div>
-            <Badge 
-              variant={
-                paymentStatus === 'full' ? 'destructive' : 
-                paymentStatus === 'partial' ? 'default' : 'outline'
-              }
-            >
-              {paymentStatus === 'full' ? 'Fully Refunded' : 
-               paymentStatus === 'partial' ? 'Partially Refunded' : 
-               'No Refunds'}
-            </Badge>
-          </div>
-        </div>
-
-        {refunds.length > 0 ? (
-          <div className="space-y-4 mt-4">
-            <Separator />
-            {sortedRefunds.map((refund, index) => (
-              <div key={refund.id} className="py-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {refund.status === 'completed' ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : refund.status === 'failed' ? (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-amber-500" />
-                    )}
-                    <span className="font-medium">
-                      {refund.isFullRefund ? 'Full Refund' : 'Partial Refund'}
-                    </span>
-                  </div>
-                  <span className="font-semibold">${refund.amount.toFixed(2)}</span>
-                </div>
-                <div className="ml-6 mt-1 text-sm text-muted-foreground">
-                  {format(new Date(refund.date), 'MMM d, yyyy h:mm a')}
-                </div>
-                {refund.reason && (
-                  <div className="ml-6 mt-1 text-sm">
-                    Reason: {refund.reason}
-                  </div>
-                )}
-                {index < sortedRefunds.length - 1 && <Separator className="mt-3" />}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 text-muted-foreground">
-            No refunds have been issued for this order.
+        {isFullyRefunded && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium">This order has been fully refunded</p>
+              <p className="text-sm">The customer has received a complete refund of ${orderTotal.toFixed(2)}</p>
+            </div>
           </div>
         )}
+        
+        <div className="space-y-4">
+          {refunds.map((refund, index) => (
+            <div key={refund.id} className="border-b pb-4 last:border-b-0 last:pb-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium">
+                    {refund.isFullRefund ? 'Full Refund' : 'Partial Refund'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(refund.date), 'MMM d, yyyy h:mm a')}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">${refund.amount.toFixed(2)}</p>
+                  <Badge variant={
+                    refund.status === 'completed' ? 'default' :
+                    refund.status === 'pending' ? 'outline' : 'destructive'
+                  } className="mt-1">
+                    {refund.status}
+                  </Badge>
+                </div>
+              </div>
+              
+              {refund.reason && (
+                <div className="mt-2">
+                  <p className="text-sm text-muted-foreground">{refund.reason}</p>
+                </div>
+              )}
+              
+              {refund.stripeRefundId && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Refund ID: {refund.stripeRefundId}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-4 flex justify-between pt-2 border-t">
+          <p className="font-medium">Total Refunded</p>
+          <p className="font-medium">${totalRefundedAmount.toFixed(2)}</p>
+        </div>
       </CardContent>
     </Card>
   );

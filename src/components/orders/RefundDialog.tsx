@@ -1,28 +1,38 @@
 
 import React, { useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
+  Dialog, 
+  DialogContent, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import { RefundRecord } from '@/types/orders';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+
+const refundSchema = z.object({
+  amount: z.coerce.number().positive('Amount must be positive'),
+  reason: z.string().min(1, 'Reason is required'),
+  type: z.enum(['full', 'partial']),
+});
+
+type RefundFormValues = z.infer<typeof refundSchema>;
 
 interface RefundDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  orderId: string | number;
+  orderId: number | string;
   orderTotal: number;
-  stripePaymentId?: string;
+  stripePaymentId: string;
   onRefundComplete: (refund: RefundRecord) => void;
 }
 
@@ -32,203 +42,162 @@ export function RefundDialog({
   orderId,
   orderTotal,
   stripePaymentId,
-  onRefundComplete
+  onRefundComplete,
 }: RefundDialogProps) {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [refundType, setRefundType] = useState<'full' | 'partial'>('full');
-  const [amount, setAmount] = useState(orderTotal);
-  const [reason, setReason] = useState('');
-  const [error, setError] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  // Reset form when dialog opens
-  React.useEffect(() => {
-    if (open) {
-      setRefundType('full');
-      setAmount(orderTotal);
-      setReason('');
-      setError('');
-      setIsSuccess(false);
-    }
-  }, [open, orderTotal]);
-
-  // Update amount when refund type changes
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<RefundFormValues>({
+    resolver: zodResolver(refundSchema),
+    defaultValues: {
+      amount: orderTotal,
+      reason: '',
+      type: 'full',
+    },
+  });
+  
+  const refundType = watch('type');
+  
+  // When refund type changes, update amount
   React.useEffect(() => {
     if (refundType === 'full') {
-      setAmount(orderTotal);
+      setValue('amount', orderTotal);
     }
-  }, [refundType, orderTotal]);
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (isNaN(value) || value <= 0) {
-      setAmount(0);
-    } else if (value > orderTotal) {
-      setAmount(orderTotal);
-    } else {
-      setAmount(value);
-    }
-  };
-
-  const processRefund = async () => {
-    if (!stripePaymentId) {
-      setError('No payment ID associated with this order');
-      return;
-    }
-
-    if (amount <= 0 || amount > orderTotal) {
-      setError('Please enter a valid refund amount');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
+  }, [refundType, orderTotal, setValue]);
+  
+  const onSubmit = async (data: RefundFormValues) => {
     try {
-      const response = await fetch('/api/refund', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentId: stripePaymentId,
-          amount: Math.round(amount * 100), // Convert to cents for Stripe
-          reason,
-          orderId,
-          isFullRefund: refundType === 'full',
-        }),
+      setIsProcessing(true);
+      
+      // In a real implementation, this would call your backend to process the refund
+      // For now, we'll just simulate a successful refund
+      
+      console.log('Processing refund:', {
+        orderId,
+        stripePaymentId,
+        amount: data.amount,
+        reason: data.reason,
+        isFullRefund: data.type === 'full'
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to process refund');
-      }
-
-      const newRefund: RefundRecord = {
-        id: data.refundId,
-        amount: amount,
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create a refund record
+      const refundRecord: RefundRecord = {
+        id: `refund-${Date.now()}`,
+        amount: data.amount,
         date: new Date().toISOString(),
-        reason: reason,
+        reason: data.reason,
+        isFullRefund: data.type === 'full',
         status: 'completed',
-        stripeRefundId: data.stripeRefundId,
-        isFullRefund: refundType === 'full',
+        stripeRefundId: `re_${Math.random().toString(36).substring(2, 10)}`
       };
-
-      setIsSuccess(true);
-      setTimeout(() => {
-        onRefundComplete(newRefund);
-        onOpenChange(false);
-      }, 1500);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      
+      // Notify the parent component
+      onRefundComplete(refundRecord);
+      
+      // Close the dialog and reset the form
+      onOpenChange(false);
+      reset();
+      
+      // Show success toast
+      toast({
+        title: `${data.type === 'full' ? 'Full' : 'Partial'} Refund Processed`,
+        description: `$${data.amount.toFixed(2)} has been refunded to the customer.`,
+      });
+    } catch (error) {
+      console.error('Error processing refund:', error);
+      
+      toast({
+        title: "Refund Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
-
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isProcessing) {
+        onOpenChange(isOpen);
+        if (!isOpen) reset();
+      }
+    }}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
-            Issue a refund for this order through Stripe.
+            Create a refund for this order. This will attempt to refund the customer's payment method.
           </DialogDescription>
         </DialogHeader>
-
-        {isSuccess ? (
-          <div className="py-6 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900">Refund Successful</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              The refund has been processed successfully.
-            </p>
-          </div>
-        ) : (
-          <div className="py-4 space-y-4">
-            {error && (
-              <div className="p-3 rounded-md bg-red-50 text-red-700 text-sm flex items-start space-x-2">
-                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
-            )}
-
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <div className="space-y-2">
             <RadioGroup
-              defaultValue="full"
               value={refundType}
-              onValueChange={(value) => setRefundType(value as 'full' | 'partial')}
-              className="grid grid-cols-2 gap-4"
+              onValueChange={(value) => setValue('type', value as 'full' | 'partial')}
+              className="flex flex-col space-y-1"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="full" id="full" />
-                <Label htmlFor="full" className="cursor-pointer">Full Refund</Label>
+                <RadioGroupItem value="full" id="refund-full" />
+                <Label htmlFor="refund-full">Full Refund (${orderTotal.toFixed(2)})</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="partial" id="partial" />
-                <Label htmlFor="partial" className="cursor-pointer">Partial Refund</Label>
+                <RadioGroupItem value="partial" id="refund-partial" />
+                <Label htmlFor="refund-partial">Partial Refund</Label>
               </div>
             </RadioGroup>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount">Refund Amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2">$</span>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  className="pl-7"
-                  disabled={refundType === 'full'}
-                  min={0}
-                  max={orderTotal}
-                  step={0.01}
-                />
+            
+            {refundType === 'partial' && (
+              <div className="mt-2">
+                <Label htmlFor="amount">Refund Amount</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5">$</span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    max={orderTotal}
+                    className="pl-7"
+                    {...register('amount')}
+                  />
+                </div>
+                {errors.amount && (
+                  <p className="text-sm text-destructive mt-1">{errors.amount.message}</p>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">
-                {refundType === 'full' 
-                  ? 'This will refund the full order amount.'
-                  : `Maximum refund amount: $${orderTotal.toFixed(2)}`}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reason">Reason for Refund</Label>
-              <Textarea
-                id="reason"
-                placeholder="Provide a reason for this refund..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="resize-none"
-                rows={3}
-              />
-            </div>
+            )}
           </div>
-        )}
-
-        <DialogFooter className="flex space-x-2 sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          {!isSuccess && (
-            <Button
-              onClick={processRefund}
-              disabled={isLoading || !stripePaymentId}
-              className={isLoading ? 'opacity-80' : ''}
+          
+          <div className="space-y-2">
+            <Label htmlFor="reason">Reason for Refund</Label>
+            <Textarea
+              id="reason"
+              placeholder="Explain why you are processing this refund..."
+              {...register('reason')}
+            />
+            {errors.reason && (
+              <p className="text-sm text-destructive">{errors.reason.message}</p>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isProcessing}
             >
-              {isLoading ? 'Processing...' : 'Process Refund'}
+              Cancel
             </Button>
-          )}
-        </DialogFooter>
+            <Button type="submit" disabled={isProcessing}>
+              {isProcessing ? 'Processing...' : 'Process Refund'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

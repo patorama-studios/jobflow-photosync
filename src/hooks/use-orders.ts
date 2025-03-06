@@ -1,134 +1,179 @@
-
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Order, OrderFilters } from "@/types/orders";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect, useCallback } from 'react';
+import { sampleOrders } from '@/data/sample-orders';
+import { Order, OrderStatus, OrderFilters } from '@/types/orders';
 
 export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<OrderFilters>({});
+  const [statistics, setStatistics] = useState({
+    total: 0,
+    scheduled: 0,
+    completed: 0,
+    pending: 0,
+    canceled: 0,
+    revenue: 0,
+  });
 
+  // Fetch orders
   useEffect(() => {
-    async function fetchOrders() {
+    const fetchOrders = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
+        // In a real implementation, this would fetch from the API
+        // For now, using sample data
         
-        // Fetch orders from Supabase
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('*')
-          .order('scheduled_date', { ascending: sortDirection === 'asc' });
+        const mappedOrders: Order[] = sampleOrders.map(order => ({
+          id: order.id.toString(),
+          order_number: order.orderNumber,
+          client: order.client,
+          client_email: order.clientEmail,
+          client_phone: order.clientPhone,
+          address: order.address,
+          city: order.city,
+          state: order.state,
+          zip: order.zip,
+          scheduled_date: order.scheduledDate,
+          scheduled_time: order.scheduledTime,
+          photographer: order.photographer,
+          photographer_payout_rate: order.photographerPayoutRate,
+          price: order.price,
+          property_type: order.propertyType,
+          square_feet: order.squareFeet,
+          status: order.status as OrderStatus,
+          notes: order.notes,
+          internal_notes: order.internalNotes,
+          customer_notes: order.customerNotes,
+          package: order.package,
+          stripe_payment_id: order.stripePaymentId
+        }));
         
-        if (ordersError) throw ordersError;
+        setOrders(mappedOrders);
+        setFilteredOrders(mappedOrders);
+        
+        // Calculate statistics
+        const total = mappedOrders.length;
+        const scheduled = mappedOrders.filter(order => order.status === 'scheduled').length;
+        const completed = mappedOrders.filter(order => order.status === 'completed').length;
+        const pending = mappedOrders.filter(order => order.status === 'pending').length;
+        const canceled = mappedOrders.filter(order => order.status === 'canceled').length;
+        const revenue = mappedOrders.reduce((sum, order) => {
+          return order.status === 'completed' ? sum + order.price : sum;
+        }, 0);
 
-        // Fetch additional appointments for all orders
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .from('additional_appointments')
-          .select('*');
-          
-        if (appointmentsError) throw appointmentsError;
-
-        // Fetch custom fields for all orders
-        const { data: customFieldsData, error: customFieldsError } = await supabase
-          .from('custom_fields')
-          .select('*');
-          
-        if (customFieldsError) throw customFieldsError;
-
-        // Map and combine the data
-        const enhancedOrders = ordersData.map((order) => {
-          // Find additional appointments for this order
-          const orderAppointments = appointmentsData?.filter(
-            (app) => app.order_id === order.id
-          ) || [];
-          
-          // Find custom fields for this order
-          const orderFields = customFieldsData?.filter(
-            (field) => field.order_id === order.id
-          ) || [];
-          
-          // Convert custom fields array to object format
-          const customFieldsObject: Record<string, string> = {};
-          orderFields.forEach((field) => {
-            customFieldsObject[field.field_key] = field.field_value;
-          });
-
-          // Return enhanced order with additional data, mapping snake_case to camelCase
-          return {
-            id: order.id,
-            orderNumber: order.order_number,
-            address: order.address,
-            city: order.city,
-            state: order.state,
-            zip: order.zip,
-            client: order.client,
-            clientEmail: order.client_email,
-            clientPhone: order.client_phone,
-            photographer: order.photographer,
-            photographerPayoutRate: order.photographer_payout_rate,
-            price: order.price,
-            propertyType: order.property_type,
-            scheduledDate: order.scheduled_date,
-            scheduledTime: order.scheduled_time,
-            squareFeet: order.square_feet,
-            status: order.status,
-            additionalAppointments: orderAppointments.map(app => ({
-              id: app.id,
-              date: app.date,
-              time: app.time,
-              description: app.description
-            })),
-            customFields: customFieldsObject,
-            customerNotes: order.customer_notes,
-            internalNotes: order.internal_notes,
-            package: order.package
-          } as Order;
+        setStatistics({
+          total,
+          scheduled,
+          completed,
+          pending,
+          canceled,
+          revenue,
         });
-
-        setOrders(enhancedOrders);
+        
       } catch (error) {
         console.error('Error fetching orders:', error);
-        toast({
-          title: "Error fetching orders",
-          description: "Please try again later",
-          variant: "destructive",
-        });
+        setError('Failed to fetch orders');
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
     fetchOrders();
-  }, [toast, sortDirection]);
+  }, []);
 
-  const resetFilters = () => {
-    setQuery("");
-    setStatus("all");
-    setDateRange({});
-    setSortDirection("desc");
+  // Function to update filters
+  const updateFilters = (newFilters: Partial<OrderFilters>) => {
+    setFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
   };
 
-  const filters: OrderFilters = {
-    query,
-    setQuery,
-    status,
-    setStatus,
-    dateRange,
-    setDateRange,
-    sortDirection,
-    setSortDirection,
-    resetFilters,
-  };
+  // Apply filters to orders
+  const applyFilters = useCallback(() => {
+    if (!orders.length) return;
+
+    let result = [...orders];
+
+    // Filter by status
+    if (filters.status && filters.status.length) {
+      const statusFilters = Array.isArray(filters.status) 
+        ? filters.status 
+        : [filters.status as OrderStatus];
+        
+      result = result.filter(order => 
+        statusFilters.includes(order.status as OrderStatus)
+      );
+    }
+
+    // Filter by dateRange
+    if (filters.dateRange) {
+      const { from, to } = filters.dateRange as { from?: Date; to?: Date };
+      
+      if (from) {
+        result = result.filter(order => 
+          new Date(order.scheduled_date) >= from
+        );
+      }
+      
+      if (to) {
+        result = result.filter(order => 
+          new Date(order.scheduled_date) <= to
+        );
+      }
+    }
+
+    // Filter by photographer
+    if (filters.photographer) {
+      result = result.filter(order =>
+        order.photographer.toLowerCase().includes(filters.photographer!.toLowerCase())
+      );
+    }
+
+    // Filter by searchQuery
+    if (filters.searchQuery) {
+      const lowerCaseQuery = filters.searchQuery.toLowerCase();
+      result = result.filter(order =>
+        order.order_number.toLowerCase().includes(lowerCaseQuery) ||
+        order.client.toLowerCase().includes(lowerCaseQuery) ||
+        order.address.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+
+    setFilteredOrders(result);
+  }, [orders, filters]);
+
+  // Apply sorting to orders
+  const applySorting = useCallback((sortBy?: string, sortDirection: "asc" | "desc" = "asc") => {
+    if (!sortBy) return;
+
+    const sortedOrders = [...filteredOrders].sort((a, b) => {
+      const aValue = a[sortBy as keyof Order];
+      const bValue = b[sortBy as keyof Order];
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      return 0;
+    });
+
+    setFilteredOrders(sortedOrders);
+  }, [filteredOrders]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   return {
     orders,
+    filteredOrders,
     isLoading,
+    error,
     filters,
+    statistics,
+    updateFilters,
+    applySorting
   };
 }

@@ -1,8 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, X, User, ShoppingCart, CalendarDays, Settings, Building } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   CommandDialog,
   CommandEmpty,
@@ -10,185 +6,143 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+  CommandSeparator,
+} from "@/components/ui/command"
+import { FileText, Users, Building } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useOrders } from '@/hooks/use-orders';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useCompanies } from '@/hooks/use-companies';
+import { useClients } from '@/hooks/use-clients';
 
-interface SearchResult {
-  id: string;
-  title: string;
-  category: 'orders' | 'customers' | 'calendar' | 'settings' | 'company';
-  url: string;
-  icon: React.ReactNode;
-}
-
-interface GlobalSearchProps {
-  onClose?: () => void;
-}
-
-export const GlobalSearch: React.FC<GlobalSearchProps> = ({ onClose }) => {
+function GlobalSearch() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<
+    {
+      id: string;
+      title: string;
+      description: string;
+      icon: React.ElementType;
+      url: string;
+    }[]
+  >([]);
   const navigate = useNavigate();
   const { orders } = useOrders();
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const isMobile = useIsMobile();
+  const { companies } = useCompanies();
+  const { clients } = useClients();
 
-  // Sample search function
-  const performSearch = (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      return [];
+  useEffect(() => {
+    // Only search if there's a query
+    if (query.trim() === '') {
+      setSearchResults([]);
+      return;
     }
 
-    const searchTerm = searchQuery.toLowerCase();
-    const searchResults: SearchResult[] = [];
+    const lowerCaseQuery = query.toLowerCase();
 
-    // Search orders
-    orders.forEach(order => {
-      if (
-        order.address.toLowerCase().includes(searchTerm) ||
-        order.client.toLowerCase().includes(searchTerm) ||
-        order.orderNumber.toLowerCase().includes(searchTerm)
-      ) {
-        searchResults.push({
-          id: `order-${order.id}`,
-          title: `Order #${order.orderNumber} - ${order.client}`,
-          category: 'orders',
-          url: `/orders/${order.id}`,
-          icon: <ShoppingCart className="w-4 h-4" />,
-        });
-      }
-    });
+    // Filter orders
+    const filteredOrders = orders.filter(
+      (order) =>
+        order.order_number.toLowerCase().includes(lowerCaseQuery) ||
+        order.client.toLowerCase().includes(lowerCaseQuery) ||
+        order.address.toLowerCase().includes(lowerCaseQuery) ||
+        order.photographer?.toLowerCase().includes(lowerCaseQuery)
+    );
 
-    // Add some mock data for other categories
-    if ('customer'.includes(searchTerm) || 'client'.includes(searchTerm)) {
-      searchResults.push({
-        id: 'customers',
-        title: 'Customer Management',
-        category: 'customers',
-        url: '/customers',
-        icon: <User className="w-4 h-4" />,
-      });
-    }
+    const orderResults = filteredOrders.map((order) => ({
+      id: `order-${order.id}`,
+      title: `Order #${order.order_number}`,
+      description: `${order.client} - ${order.address}`,
+      icon: FileText,
+      url: `/orders/${order.id}`,
+    }));
 
-    if ('calendar'.includes(searchTerm) || 'schedule'.includes(searchTerm)) {
-      searchResults.push({
-        id: 'calendar',
-        title: 'Calendar & Scheduling',
-        category: 'calendar',
-        url: '/calendar',
-        icon: <CalendarDays className="w-4 h-4" />,
-      });
-    }
+    // Filter companies
+    const filteredCompanies = companies.filter(
+      (company) =>
+        company.name.toLowerCase().includes(lowerCaseQuery) ||
+        company.email.toLowerCase().includes(lowerCaseQuery) ||
+        company.phone.toLowerCase().includes(lowerCaseQuery)
+    );
 
-    if ('settings'.includes(searchTerm) || 'config'.includes(searchTerm)) {
-      searchResults.push({
-        id: 'settings',
-        title: 'Application Settings',
-        category: 'settings',
-        url: '/settings',
-        icon: <Settings className="w-4 h-4" />,
-      });
-    }
+    const companyResults = filteredCompanies.map((company) => ({
+      id: `company-${company.id}`,
+      title: company.name,
+      description: `${company.email} - ${company.phone}`,
+      icon: Building,
+      url: `/company/${company.id}`,
+    }));
 
-    if ('company'.includes(searchTerm) || 'organization'.includes(searchTerm)) {
-      searchResults.push({
-        id: 'company',
-        title: 'Company Profile',
-        category: 'company',
-        url: '/settings/organization',
-        icon: <Building className="w-4 h-4" />,
-      });
-    }
+    // Filter clients
+    const filteredClients = clients.filter(
+      (client) =>
+        client.name.toLowerCase().includes(lowerCaseQuery) ||
+        client.email.toLowerCase().includes(lowerCaseQuery) ||
+        client.phone.toLowerCase().includes(lowerCaseQuery)
+    );
 
-    return searchResults;
-  };
+    const clientResults = filteredClients.map((client) => ({
+      id: `client-${client.id}`,
+      title: client.name,
+      description: `${client.email} - ${client.phone}`,
+      icon: Users,
+      url: `/client/${client.id}`,
+    }));
 
-  // Handle result selection
-  const handleSelect = (result: SearchResult) => {
+    // Combine results
+    const combinedResults = [...orderResults, ...companyResults, ...clientResults];
+
+    setSearchResults(combinedResults);
+  }, [query, orders, companies, clients, navigate]);
+
+  const onSelectValue = (url: string) => {
     setOpen(false);
-    if (onClose) onClose();
-    navigate(result.url);
+    setQuery("");
+    navigate(url);
   };
-
-  // Update search results when query changes
-  useEffect(() => {
-    const results = performSearch(query);
-    setResults(results);
-  }, [query]);
-
-  // Open command dialog when clicking on search input
-  const handleInputClick = () => {
-    setOpen(true);
-  };
-
-  // Handle keyboard shortcut
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-    
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
 
   return (
     <>
-      <div className={`relative w-full max-w-md ${isMobile ? 'flex-1' : ''} flex items-center`}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="absolute left-1 top-0 bottom-0 h-full" 
-          tabIndex={-1}
-        >
-          <Search className="h-4 w-4" />
-        </Button>
-        
-        <Input
-          placeholder={isMobile ? "Search..." : "Search anything... (Press '/' or Ctrl+K)"}
-          className={`pl-9 pr-4 w-full ${isMobile ? 'h-8 text-sm' : ''}`}
-          onClick={handleInputClick}
-        />
-        
-        {onClose && (
-          <Button 
-            onClick={onClose} 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-1 top-0 bottom-0 h-full"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
+      <button
+        className="group flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 dark:border-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={() => setOpen(true)}
+      >
+        Search
+        <span className="ml-auto w-5 h-5 flex items-center justify-center rounded-md bg-secondary text-secondary-foreground group-hover:bg-muted group-hover:text-muted-foreground">
+          ⌘K
+        </span>
+      </button>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput 
-          placeholder="Search anything..." 
+        <CommandInput
+          placeholder="Type a command or search..."
           value={query}
           onValueChange={setQuery}
         />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          {results.length > 0 && (
-            <CommandGroup heading="Results">
-              {results.map((result) => (
-                <CommandItem
-                  key={result.id}
-                  onSelect={() => handleSelect(result)}
-                  className="flex items-center gap-2"
-                >
-                  {result.icon}
-                  <span>{result.title}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+          {searchResults.length > 0 && (
+            <>
+              <CommandGroup heading="Results">
+                {searchResults.map((result) => (
+                  <CommandItem
+                    key={result.id}
+                    onSelect={() => onSelectValue(result.url)}
+                  >
+                    {result.icon && <result.icon className="mr-2 h-4 w-4" />}
+                    <span>{result.title}</span>
+                    <span className="ml-auto text-muted-foreground text-sm">
+                      {result.description}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandSeparator />
+            </>
           )}
         </CommandList>
       </CommandDialog>
     </>
   );
-};
+}
+
+export default GlobalSearch;
