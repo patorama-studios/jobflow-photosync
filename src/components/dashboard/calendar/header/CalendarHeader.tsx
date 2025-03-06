@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CalendarDays, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -12,8 +12,9 @@ interface CalendarHeaderProps {
   onPrevious: () => void;
   onNext: () => void;
   onToday: () => void;
-  onViewChange: (view: "month" | "week" | "day") => void;
+  onViewChange: (view: "month" | "week" | "day" | "card") => void;
   isMobileView?: boolean;
+  restrictMobileViews?: boolean;
 }
 
 export const CalendarHeader = ({ 
@@ -24,7 +25,8 @@ export const CalendarHeader = ({
   onNext, 
   onToday, 
   onViewChange,
-  isMobileView = false
+  isMobileView = false,
+  restrictMobileViews = false
 }: CalendarHeaderProps) => {
   const formattedDate = React.useMemo(() => {
     if (view === 'month') {
@@ -62,44 +64,68 @@ export const CalendarHeader = ({
           </Button>
         </div>
         
-        <div className={`flex items-center space-x-1 ${isMobileView ? 'ml-2' : 'ml-4'}`}>
-          <Button
-            variant={view === 'day' ? 'default' : 'outline'}
-            size={isMobileView ? 'icon' : 'default'}
-            onClick={() => onViewChange('day')}
-            className={isMobileView ? 'p-2' : ''}
-          >
-            {isMobileView ? (
-              <Clock className="h-4 w-4" />
-            ) : (
-              'Day'
+        {/* View switcher - show limited views on mobile if restrictMobileViews is true */}
+        {(!restrictMobileViews || !isMobileView) && (
+          <div className={`flex items-center space-x-1 ${isMobileView ? 'ml-2' : 'ml-4'}`}>
+            <Button
+              variant={view === 'day' ? 'default' : 'outline'}
+              size={isMobileView ? 'icon' : 'default'}
+              onClick={() => onViewChange('day')}
+              className={isMobileView ? 'p-2' : ''}
+            >
+              {isMobileView ? (
+                <Clock className="h-4 w-4" />
+              ) : (
+                'Day'
+              )}
+            </Button>
+            
+            {(!restrictMobileViews || !isMobileView) && (
+              <>
+                <Button
+                  variant={view === 'week' ? 'default' : 'outline'}
+                  size={isMobileView ? 'icon' : 'default'}
+                  onClick={() => onViewChange('week')}
+                  className={isMobileView ? 'p-2' : ''}
+                >
+                  {isMobileView ? (
+                    <Calendar className="h-4 w-4" />
+                  ) : (
+                    'Week'
+                  )}
+                </Button>
+                
+                <Button
+                  variant={view === 'month' ? 'default' : 'outline'}
+                  size={isMobileView ? 'icon' : 'default'}
+                  onClick={() => onViewChange('month')}
+                  className={isMobileView ? 'p-2' : ''}
+                >
+                  {isMobileView ? (
+                    <CalendarDays className="h-4 w-4" />
+                  ) : (
+                    'Month'
+                  )}
+                </Button>
+                
+                {!isMobileView && (
+                  <Button
+                    variant={view === 'card' ? 'default' : 'outline'}
+                    size={isMobileView ? 'icon' : 'default'}
+                    onClick={() => onViewChange('card')}
+                    className={isMobileView ? 'p-2' : ''}
+                  >
+                    {isMobileView ? (
+                      <CalendarCheck className="h-4 w-4" />
+                    ) : (
+                      'Card'
+                    )}
+                  </Button>
+                )}
+              </>
             )}
-          </Button>
-          <Button
-            variant={view === 'week' ? 'default' : 'outline'}
-            size={isMobileView ? 'icon' : 'default'}
-            onClick={() => onViewChange('week')}
-            className={isMobileView ? 'p-2' : ''}
-          >
-            {isMobileView ? (
-              <Calendar className="h-4 w-4" />
-            ) : (
-              'Week'
-            )}
-          </Button>
-          <Button
-            variant={view === 'month' ? 'default' : 'outline'}
-            size={isMobileView ? 'icon' : 'default'}
-            onClick={() => onViewChange('month')}
-            className={isMobileView ? 'p-2' : ''}
-          >
-            {isMobileView ? (
-              <CalendarDays className="h-4 w-4" />
-            ) : (
-              'Month'
-            )}
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

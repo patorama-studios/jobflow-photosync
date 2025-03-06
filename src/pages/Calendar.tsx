@@ -6,7 +6,7 @@ import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointment
 import { useToast } from '@/components/ui/use-toast';
 import { GoogleCalendar } from '@/components/dashboard/calendar/GoogleCalendar';
 import { Button } from '@/components/ui/button';
-import { Maximize, Minimize, Plus } from 'lucide-react';
+import { Maximize, Minimize, Plus, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Calendar = () => {
@@ -16,6 +16,7 @@ const Calendar = () => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = useState<"day" | "card">("day");
 
   const handleTimeSlotClick = (time: string) => {
     console.log("Time slot clicked:", time);
@@ -64,16 +65,37 @@ const Calendar = () => {
     <MainLayout showCalendarSubmenu={true}>
       <PageTransition>
         <div className="h-[calc(100vh-64px)] relative">
-          {/* Mobile create appointment button */}
+          {/* Mobile create appointment button - with compact header */}
           {isMobile && (
-            <div className="sticky top-0 z-10 bg-background p-4 shadow-sm border-b">
-              <Button 
-                className="w-full flex items-center justify-center gap-2 py-6"
-                onClick={() => setShowCreateAppointment(true)}
-              >
-                <Plus className="h-5 w-5" />
-                Create New Order
-              </Button>
+            <div className="sticky top-0 z-10 bg-background shadow-sm border-b py-2">
+              <div className="flex items-center justify-between px-4">
+                <Button 
+                  className="flex items-center justify-center gap-2 py-2 flex-1 mr-2"
+                  onClick={() => setShowCreateAppointment(true)}
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Order
+                </Button>
+                <div className="flex space-x-1">
+                  <Button
+                    variant={mobileView === 'day' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setMobileView('day')}
+                    className="p-2"
+                  >
+                    <Clock className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={mobileView === 'card' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setMobileView('card')}
+                    className="p-2"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
           
@@ -96,7 +118,7 @@ const Calendar = () => {
           <GoogleCalendar 
             onTimeSlotClick={handleTimeSlotClick}
             onDayClick={handleDayClick}
-            defaultView={isMobile ? "day" : "month"}
+            defaultView={isMobile ? mobileView : "month"}
             isMobileView={isMobile}
           />
           

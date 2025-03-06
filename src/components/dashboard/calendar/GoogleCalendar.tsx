@@ -7,13 +7,14 @@ import { SidebarFilter } from './sidebar/SidebarFilter';
 import { GoogleMonthView } from './views/GoogleMonthView';
 import { GoogleWeekView } from './views/GoogleWeekView';
 import { GoogleDayView } from './views/GoogleDayView';
+import { GoogleCardView } from './views/GoogleCardView';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
 interface GoogleCalendarProps {
   onTimeSlotClick?: (time: string) => void;
   onDayClick?: (date: Date) => void;
-  defaultView?: "month" | "week" | "day";
+  defaultView?: "month" | "week" | "day" | "card";
   isMobileView?: boolean;
 }
 
@@ -46,9 +47,14 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   isMobileView = false
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week" | "day">(defaultView);
+  const [view, setView] = useState<"month" | "week" | "day" | "card">(defaultView);
   const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>([1, 2, 3, 4]);
   const { orders, isLoading } = useSampleOrders();
+
+  // Set view based on props when component mounts or when defaultView changes
+  useEffect(() => {
+    setView(defaultView);
+  }, [defaultView]);
 
   // Filter orders for selected photographers
   const filteredOrders = useMemo(() => {
@@ -70,7 +76,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   const goToPrevious = () => {
     if (view === "month") {
       setSelectedDate(subMonths(selectedDate, 1));
-    } else if (view === "week") {
+    } else if (view === "week" || view === "card") {
       setSelectedDate(subDays(selectedDate, 7));
     } else {
       setSelectedDate(subDays(selectedDate, 1));
@@ -80,7 +86,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   const goToNext = () => {
     if (view === "month") {
       setSelectedDate(addMonths(selectedDate, 1));
-    } else if (view === "week") {
+    } else if (view === "week" || view === "card") {
       setSelectedDate(addDays(selectedDate, 7));
     } else {
       setSelectedDate(addDays(selectedDate, 1));
@@ -101,6 +107,14 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
   const handleTimeSlotClick = (time: string) => {
     if (onTimeSlotClick) {
       onTimeSlotClick(time);
+    }
+  };
+
+  // Handle card click (for card view)
+  const handleCardClick = (date: Date) => {
+    setSelectedDate(date);
+    if (onDayClick) {
+      onDayClick(date);
     }
   };
 
@@ -135,13 +149,14 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
     <div className="flex flex-col h-full">
       <CalendarHeader 
         date={selectedDate}
-        view={view}
+        view={view === "card" ? "week" : view}  // Use week header for card view
         appointmentCount={appointmentCount}
         onPrevious={goToPrevious}
         onNext={goToNext}
         onToday={goToToday}
         onViewChange={setView}
         isMobileView={isMobileView}
+        restrictMobileViews={isMobileView}  // Only show allowed views on mobile
       />
       
       <div className={`flex flex-1 overflow-hidden ${isMobileView ? 'flex-col' : ''}`}>
@@ -153,8 +168,8 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
           />
         )}
         
-        <div className="flex-1 overflow-hidden p-4 relative">
-          {view === "month" && (
+        <div className="flex-1 overflow-hidden overflow-y-auto p-4 relative">
+          {view === "month" && !isMobileView && (
             <GoogleMonthView 
               date={selectedDate}
               orders={filteredOrders}
@@ -162,7 +177,7 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
             />
           )}
           
-          {view === "week" && (
+          {view === "week" && !isMobileView && (
             <GoogleWeekView 
               date={selectedDate}
               orders={filteredOrders}
@@ -177,6 +192,16 @@ export const GoogleCalendar: React.FC<GoogleCalendarProps> = ({
               photographers={samplePhotographers}
               selectedPhotographers={selectedPhotographers}
               onTimeSlotClick={handleTimeSlotClick}
+            />
+          )}
+
+          {view === "card" && (
+            <GoogleCardView
+              date={selectedDate}
+              orders={filteredOrders}
+              photographers={samplePhotographers}
+              selectedPhotographers={selectedPhotographers}
+              onCardClick={handleCardClick}
             />
           )}
           
