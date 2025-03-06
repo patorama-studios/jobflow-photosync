@@ -1,13 +1,16 @@
 
 import { Order } from '@/types/orders';
 
-export interface CalendarOrder extends Omit<Order, 'id'> {
-  id: string;
+export interface CalendarEvent {
+  id: string | number;
+  title: string;
+  start: Date;
+  end: Date;
+  client?: string;
+  photographer?: string;
+  photographerId: number;
   location?: string;
-  // Add the missing properties from Order that are needed
-  orderNumber?: string; 
-  propertyType?: string;
-  scheduledDate?: string;
-  scheduledTime?: string;
-  squareFeet?: number;
+  status?: string;
+  color?: string;
+  orderNumber?: string;
 }

@@ -17,7 +17,7 @@ serve(async (req) => {
 
   try {
     if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set. Please configure it in your environment variables.');
+      throw new Error('OPENAI_API_KEY is not set. Please configure it in your Supabase project secrets.');
     }
 
     const { query, history, context } = await req.json();
