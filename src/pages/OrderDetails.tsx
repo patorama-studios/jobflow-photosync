@@ -1,4 +1,4 @@
-
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { InvoiceItems, ContractorPayout, InvoiceItem } from '@/components/orders/InvoiceItems';
+import { Label } from '@/components/ui/label';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -41,7 +42,8 @@ import {
   Activity,
   Download,
   ExternalLink,
-  Truck
+  Truck,
+  Users
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -55,6 +57,11 @@ const OrderDetails: React.FC = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [orderFulfilled, setOrderFulfilled] = useState(false);
   const [contentLocked, setContentLocked] = useState(false);
+  
+  // Contractor payout state
+  const [customPayoutRate, setCustomPayoutRate] = useState<number | undefined>(undefined);
+  const [showCustomPayoutInput, setShowCustomPayoutInput] = useState(false);
+  const [contractorEditor, setContractorEditor] = useState('');
   
   // New dialog states
   const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
@@ -81,8 +88,28 @@ const OrderDetails: React.FC = () => {
           type: 'service'
         }
       ]);
+      
+      // Initialize custom payout rate with order's rate if available
+      if (order.photographerPayoutRate) {
+        setCustomPayoutRate(order.photographerPayoutRate);
+      }
     }
   }, [order]);
+  
+  // Handle custom payout rate change
+  const handleCustomPayoutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setCustomPayoutRate(isNaN(value) ? undefined : value);
+  };
+  
+  // Save custom payout rate
+  const saveCustomPayoutRate = () => {
+    toast({
+      title: "Payout Rate Updated",
+      description: `Custom payout rate of $${customPayoutRate} has been saved`,
+    });
+    setShowCustomPayoutInput(false);
+  };
   
   if (!order) {
     return (
@@ -257,17 +284,10 @@ const OrderDetails: React.FC = () => {
                       <DollarSign className="h-5 w-5" />
                       Invoicing
                     </CardTitle>
-                    <CardDescription>Manage invoice items and see contractor payout</CardDescription>
+                    <CardDescription>Manage invoice items</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <InvoiceItems items={invoiceItems} onItemsChange={setInvoiceItems} />
-                    
-                    <div className="mt-6">
-                      <ContractorPayout 
-                        items={invoiceItems} 
-                        payoutRate={order.photographerPayoutRate || 0} 
-                      />
-                    </div>
                   </CardContent>
                 </Card>
 
@@ -407,6 +427,121 @@ const OrderDetails: React.FC = () => {
                     </CardContent>
                   </Card>
                 )}
+                
+                {/* Contractor Payout Section - New Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Contractor Payment
+                    </CardTitle>
+                    <CardDescription>Manage contractor payout details</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-medium">Assigned Contractor</h3>
+                          <div className="flex items-center gap-3 mt-2">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src="" alt={order.photographer || 'Contractor'} />
+                              <AvatarFallback>
+                                {order.photographer?.split(' ').map(part => part[0]).join('').slice(0, 2) || 'CN'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{order.photographer || 'Not assigned'}</p>
+                              <p className="text-sm text-muted-foreground">Photographer</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-medium">Editor</h3>
+                          <div className="flex items-center mt-2">
+                            <Input
+                              placeholder="Enter editor name"
+                              value={contractorEditor}
+                              onChange={(e) => setContractorEditor(e.target.value)}
+                              className="w-full max-w-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium">Payout Rate</h3>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex items-center gap-1"
+                              onClick={() => setShowCustomPayoutInput(!showCustomPayoutInput)}
+                            >
+                              <Edit className="h-4 w-4" />
+                              {showCustomPayoutInput ? 'Cancel' : 'Override Rate'}
+                            </Button>
+                          </div>
+                          
+                          {showCustomPayoutInput ? (
+                            <div className="mt-2 space-y-3">
+                              <div className="space-y-2">
+                                <Label htmlFor="custom-payout">Custom Payout Amount ($)</Label>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    id="custom-payout"
+                                    type="number"
+                                    placeholder="Enter amount"
+                                    value={customPayoutRate !== undefined ? customPayoutRate : ''}
+                                    onChange={handleCustomPayoutChange}
+                                    className="w-full max-w-xs"
+                                  />
+                                  <Button onClick={saveCustomPayoutRate}>Save</Button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2">
+                              <div className="bg-muted p-4 rounded-md">
+                                <p className="text-lg font-semibold flex items-center">
+                                  <DollarSign className="h-5 w-5 mr-1" />
+                                  {customPayoutRate !== undefined ? customPayoutRate.toFixed(2) : (order.photographerPayoutRate?.toFixed(2) || 'Not set')}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {customPayoutRate !== undefined ? 'Custom rate' : 'Default rate'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-medium">Total Payout</h3>
+                          <div className="bg-muted p-4 rounded-md mt-2">
+                            <ContractorPayout 
+                              items={invoiceItems} 
+                              payoutRate={customPayoutRate !== undefined ? customPayoutRate : (order.photographerPayoutRate || 0)} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h3 className="font-medium">Payout Notes</h3>
+                      <Textarea 
+                        placeholder="Add notes about this payment..." 
+                        className="mt-2"
+                      />
+                      <div className="mt-3 flex justify-end">
+                        <Button variant="default" size="sm">Save Notes</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Sidebar - 30% */}
@@ -753,62 +888,4 @@ const OrderDetails: React.FC = () => {
         {/* Deliver Order Dialog */}
         <Dialog open={deliverDialogOpen} onOpenChange={setDeliverDialogOpen}>
           <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Deliver Order</DialogTitle>
-              <DialogDescription>
-                Send a delivery notification with the order details.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Recipient Email</h4>
-                <Input
-                  type="email"
-                  placeholder="client@example.com"
-                  value={recipientEmail}
-                  onChange={(e) => setRecipientEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Delivery Message</h4>
-                <Textarea 
-                  placeholder="Your order is ready for delivery..." 
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  className="min-h-[100px]"
-                />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Include Files</h4>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="include-photos" className="rounded border-gray-300" defaultChecked />
-                    <label htmlFor="include-photos">Photos</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="include-videos" className="rounded border-gray-300" defaultChecked />
-                    <label htmlFor="include-videos">Videos</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="include-floor-plans" className="rounded border-gray-300" defaultChecked />
-                    <label htmlFor="include-floor-plans">Floor Plans</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeliverDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={confirmDeliverOrder}>
-                Send Delivery
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </PageTransition>
-  );
-};
-
-export default OrderDetails;
+            <
