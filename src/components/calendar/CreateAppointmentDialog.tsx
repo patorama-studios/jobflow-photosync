@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { OrderDetailsForm } from './appointment/OrderDetailsForm';
 import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
+import { toast } from 'sonner';
 
 interface CreateAppointmentDialogProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   const handleCreateAppointment = () => {
     // In a real app, this would save the appointment
     console.log("Creating appointment with date:", appointmentDate);
+    toast.success("Appointment created successfully!");
     onClose();
   };
 

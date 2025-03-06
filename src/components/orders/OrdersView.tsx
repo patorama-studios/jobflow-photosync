@@ -1,20 +1,8 @@
-
 import React, { useState, useCallback, memo } from "react";
-import { Plus } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useSampleOrders } from "@/hooks/useSampleOrders";
 import { OrdersHeader } from "./OrdersHeader";
 import { OrdersContent } from "./OrdersContent";
-import { OrderCreateForm } from "./OrderCreateForm";
+import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog"; 
 
 export const OrdersView = memo(function OrdersView() {
   const { orders } = useSampleOrders();
@@ -50,17 +38,12 @@ export const OrdersView = memo(function OrdersView() {
         />
       </div>
       
-      <Dialog open={openCreateOrder} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create Order</DialogTitle>
-            <DialogDescription>
-              Make a new order to assign to a customer.
-            </DialogDescription>
-          </DialogHeader>
-          <OrderCreateForm setOpen={setOpenCreateOrder} />
-        </DialogContent>
-      </Dialog>
+      {/* Use the CreateAppointmentDialog component instead of the previous dialog */}
+      <CreateAppointmentDialog
+        isOpen={openCreateOrder}
+        onClose={() => setOpenCreateOrder(false)}
+        selectedDate={new Date()}
+      />
     </div>
   );
 });

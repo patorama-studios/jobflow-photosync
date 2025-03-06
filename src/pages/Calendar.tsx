@@ -82,12 +82,15 @@ const Calendar = () => {
             defaultView="month"
           />
           
-          <CreateAppointmentDialog
-            isOpen={showCreateAppointment}
-            onClose={() => setShowCreateAppointment(false)}
-            selectedDate={selectedDate || new Date()}
-            selectedTime={selectedTime}
-          />
+          {/* Ensure this dialog always appears when showCreateAppointment is true */}
+          {showCreateAppointment && (
+            <CreateAppointmentDialog
+              isOpen={showCreateAppointment}
+              onClose={() => setShowCreateAppointment(false)}
+              selectedDate={selectedDate || new Date()}
+              selectedTime={selectedTime}
+            />
+          )}
         </div>
       </PageTransition>
     </MainLayout>

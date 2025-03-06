@@ -1,7 +1,7 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import CreateOrderForm from './CreateOrderForm';
+import React from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog";
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -11,11 +11,12 @@ interface CreateOrderDialogProps {
 export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Create New Order</DialogTitle>
-        </DialogHeader>
-        <CreateOrderForm onComplete={() => onOpenChange(false)} />
+      <DialogContent className="p-0 bg-transparent border-none shadow-none max-w-4xl">
+        <CreateAppointmentDialog
+          isOpen={open}
+          onClose={() => onOpenChange(false)}
+          selectedDate={new Date()}
+        />
       </DialogContent>
     </Dialog>
   );
