@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -27,7 +26,7 @@ interface IntegrationDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function IntegrationDialog({ integration, onClick, open, onOpenChange }: IntegrationDialogProps) {
+export function IntegrationDialog({ integration, open, onOpenChange }: IntegrationDialogProps) {
   const { name, id, connected, icon, status, lastSynced } = integration;
   const [isConnected, setIsConnected] = useState(connected);
   const [apiKey, setApiKey] = useState("");
@@ -38,7 +37,7 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSyncLoading, setIsSyncLoading] = useState(false);
   const [masterFolderId, setMasterFolderId] = useState("");
-  const [mode, setMode] = useState<'test' | 'live'>('test');
+  const [mode, setMode] = useState<'test' | 'live'>('live'); // Changed to 'live' from 'test'
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -53,10 +52,12 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
     setMasterFolderId("");
     setIsDeleteOpen(false);
     
-    // If this was a real app, we would load existing integration settings from the backend
+    // Load existing integration settings from localStorage
     if (connected && id === 'box') {
-      // Demo: For the purpose of the prototype, we'll set a default folder ID
-      setMasterFolderId("12345");
+      const savedMasterFolderId = localStorage.getItem('box_master_folder_id');
+      if (savedMasterFolderId) {
+        setMasterFolderId(savedMasterFolderId);
+      }
     }
   }, [id, connected, open]);
 
@@ -102,6 +103,17 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
       }
     } else if (id === 'box') {
       try {
+        // Check if authenticated with Box
+        const boxToken = localStorage.getItem('box_access_token');
+        if (!boxToken) {
+          toast({
+            title: "Box Authentication Required",
+            description: "Please authenticate with Box before connecting.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         // Create a Box integration instance
         const boxIntegration = createBoxIntegration();
         
@@ -114,20 +126,12 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
           return;
         }
         
-        // Test the connection by trying to get folder info
+        // Save the master folder ID
+        localStorage.setItem('box_master_folder_id', masterFolderId);
         boxIntegration.setMasterFolder(masterFolderId);
         
-        // In a real implementation, we would call:
-        // await boxIntegration.initializeAutoFolder();
-        // But for the demo, we'll simulate a successful connection
-        
-        // Save integration settings to user profile (in a real app)
-        // await supabase.from('user_integrations').upsert({
-        //   user_id: user.id,
-        //   integration_id: id,
-        //   settings: { masterFolderId },
-        //   is_active: true
-        // });
+        // In a real implementation, we would test the connection by getting folder info
+        // await boxIntegration.getFolderInfo(masterFolderId);
         
         setIsConnected(true);
         toast({
@@ -154,6 +158,12 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
   };
 
   const handleDisconnect = () => {
+    if (id === 'box') {
+      // Clear Box-related data from localStorage
+      localStorage.removeItem('box_master_folder_id');
+      // Don't remove the auth token - that's separate from disconnecting the integration
+    }
+    
     // In a real app, we would delete the integration from the database
     // await supabase.from('user_integrations').delete().eq('user_id', user.id).eq('integration_id', id);
     
@@ -174,6 +184,7 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
   };
 
   const handleSync = () => {
+    // In a real app, we would sync the integration data
     setIsSyncLoading(true);
     
     // Simulate API call
@@ -227,6 +238,7 @@ export function IntegrationDialog({ integration, onClick, open, onOpenChange }: 
                   handleSync={handleSync}
                   handleOpenBox={handleOpenBox}
                   masterFolderId={masterFolderId}
+                  setMasterFolderId={setMasterFolderId}
                 />
               )}
               

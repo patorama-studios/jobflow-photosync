@@ -1,4 +1,3 @@
-
 /**
  * Box Integration Utility
  * 
@@ -26,12 +25,25 @@ export interface BoxFolder {
 export type ProductType = 'Photography' | 'Video' | 'Drone' | 'Floor Plans' | 'Print Material';
 
 /**
- * Default Box credentials with the provided developer token
+ * Get credentials from localStorage or use default developer token
  */
-const DEFAULT_BOX_CREDENTIALS: BoxCredentials = {
-  clientId: '',
-  clientSecret: '',
-  accessToken: 'ciC5vPaP0UwIocR3wtn1S3h5zMNmjS24', // Default developer token
+const getBoxCredentials = (): BoxCredentials => {
+  const accessToken = localStorage.getItem('box_access_token');
+  
+  if (accessToken) {
+    return {
+      clientId: '',
+      clientSecret: '',
+      accessToken,
+    };
+  }
+  
+  // Fall back to default developer token if no token in localStorage
+  return {
+    clientId: '',
+    clientSecret: '',
+    accessToken: 'ciC5vPaP0UwIocR3wtn1S3h5zMNmjS24', // Default developer token
+  };
 };
 
 /**
@@ -53,6 +65,20 @@ export class BoxIntegration {
   setMasterFolder(folderId: string) {
     this.masterFolderId = folderId;
     return this;
+  }
+  
+  /**
+   * Check if user is authenticated with Box
+   */
+  isAuthenticated(): boolean {
+    return !!this.credentials.accessToken;
+  }
+  
+  /**
+   * Get the current master folder ID
+   */
+  getMasterFolderId(): string | null {
+    return this.masterFolderId;
   }
   
   /**
@@ -382,11 +408,11 @@ export class BoxIntegration {
 }
 
 /**
- * Create a Box integration instance with default credentials
+ * Create a Box integration instance with credentials from localStorage or defaults
  */
 export const createBoxIntegration = (credentials?: Partial<BoxCredentials>): BoxIntegration => {
   const defaultCredentials: BoxCredentials = {
-    ...DEFAULT_BOX_CREDENTIALS,
+    ...getBoxCredentials(),
     ...credentials
   };
   
@@ -397,8 +423,14 @@ export const createBoxIntegration = (credentials?: Partial<BoxCredentials>): Box
  * Use this hook to get a Box integration instance
  */
 export const useBoxIntegration = () => {
-  // Initialize the Box integration with default credentials
+  // Initialize the Box integration with credentials from localStorage
   const boxIntegration = createBoxIntegration();
+  
+  // If there's a master folder ID saved in localStorage, set it
+  const masterFolderId = localStorage.getItem('box_master_folder_id');
+  if (masterFolderId) {
+    boxIntegration.setMasterFolder(masterFolderId);
+  }
   
   return boxIntegration;
 };
