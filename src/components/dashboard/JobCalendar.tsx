@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +47,7 @@ interface JobCalendarProps {
 export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClick }: JobCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
-  const { orders } = useSampleOrders();
+  const { orders, isLoading: ordersLoading } = useSampleOrders();
   const { toast } = useToast();
   
   const [viewDates, setViewDates] = useState<Date[]>([]);
@@ -70,6 +71,11 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
   useEffect(() => {
     console.log("JobCalendar component mounted with view:", calendarView);
     
+    if (ordersLoading) {
+      setIsLoading(true);
+      return;
+    }
+    
     // Use requestAnimationFrame for smoother loading transition
     const timer = requestAnimationFrame(() => {
       setIsLoading(false);
@@ -79,7 +85,7 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
       console.log("JobCalendar component unmounted");
       cancelAnimationFrame(timer);
     };
-  }, [calendarView]);
+  }, [calendarView, ordersLoading]);
 
   // Handle date change with error handling
   const handleDateSelect = useCallback((date: Date | undefined) => {
@@ -112,9 +118,12 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
     }
   }, [onTimeSlotClick, selectedDate]);
 
-  if (isLoading) {
+  if (isLoading || ordersLoading) {
     return <CalendarSkeleton />;
   }
+
+  // Log the orders for debugging
+  console.log("Orders in JobCalendar:", orders);
 
   return (
     <Card className="bg-card rounded-lg shadow">

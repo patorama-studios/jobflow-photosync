@@ -9,18 +9,29 @@ import { Calendar as CalendarIcon, Clock, LayoutGrid } from 'lucide-react';
 
 const Calendar = () => {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
 
+  useEffect(() => {
+    // Log when the calendar view changes for debugging
+    console.log("Calendar view changed to:", calendarView);
+  }, [calendarView]);
+
   const handleTimeSlotClick = (time: string) => {
+    console.log("Time slot clicked:", time);
     setSelectedTime(time);
     setShowCreateAppointment(true);
   };
 
   const handleDayClick = (date: Date) => {
+    console.log("Day clicked:", date);
     setSelectedDate(date);
     setShowCreateAppointment(true);
+  };
+
+  const handleViewChange = (value: string) => {
+    setCalendarView(value as "month" | "week" | "day");
   };
 
   return (
@@ -32,7 +43,7 @@ const Calendar = () => {
             <Tabs 
               defaultValue="month" 
               value={calendarView} 
-              onValueChange={(value) => setCalendarView(value as "month" | "week" | "day")}
+              onValueChange={handleViewChange}
               className="w-auto"
             >
               <TabsList>

@@ -1,7 +1,7 @@
 
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Order } from '@/hooks/useSampleOrders';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { Timer, MapPin } from 'lucide-react';
 
 interface WeekViewProps {
@@ -13,11 +13,13 @@ interface WeekViewProps {
 const WeekTimeSlot = memo(({ 
   date,
   hour,
-  onTimeSlotClick 
+  onTimeSlotClick,
+  orders
 }: { 
   date: Date;
   hour: number;
   onTimeSlotClick?: (time: string) => void;
+  orders: Order[];
 }) => {
   const handleClick = () => {
     if (onTimeSlotClick) {
@@ -27,18 +29,50 @@ const WeekTimeSlot = memo(({
     }
   };
 
+  // Find appointments for this time slot
+  const appointmentsForTimeSlot = useMemo(() => {
+    return orders.filter(order => {
+      if (!order.scheduledDate) return false;
+      
+      const orderDate = new Date(order.scheduledDate);
+      if (!isSameDay(orderDate, date)) return false;
+      
+      // Check if the order is scheduled for this hour
+      const timeStr = order.scheduledTime || '';
+      const hourMatch = timeStr.match(/(\d+)(?::(\d+))?\s*(am|pm|AM|PM)/i);
+      
+      if (!hourMatch) return false;
+      
+      let orderHour = parseInt(hourMatch[1], 10);
+      const isPM = /pm/i.test(hourMatch[3]);
+      
+      if (isPM && orderHour !== 12) orderHour += 12;
+      if (!isPM && orderHour === 12) orderHour = 0;
+      
+      return orderHour === hour;
+    });
+  }, [orders, date, hour]);
+
   return (
     <div 
-      className="p-1 border-t border-gray-200 h-8 hover:bg-accent/30 cursor-pointer transition-colors"
+      className="p-1 border-t border-gray-200 h-8 hover:bg-accent/30 cursor-pointer transition-colors relative"
       onClick={handleClick}
-    ></div>
+    >
+      {appointmentsForTimeSlot.length > 0 && (
+        <div className="absolute top-0 left-0 right-0 bottom-0 bg-primary/10 flex items-center justify-center">
+          <span className="text-xs font-medium truncate">
+            {appointmentsForTimeSlot.length} appt{appointmentsForTimeSlot.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+    </div>
   );
 });
 
 WeekTimeSlot.displayName = 'WeekTimeSlot';
 
 export const WeekView = memo(({ dates, orders, onTimeSlotClick }: WeekViewProps) => {
-  const hours = Array.from({ length: 13 }, (_, i) => i + 8);
+  const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8am to 8pm
 
   return (
     <div className="week-view overflow-auto" style={{ height: 'calc(100vh - 250px)' }}>
@@ -66,6 +100,7 @@ export const WeekView = memo(({ dates, orders, onTimeSlotClick }: WeekViewProps)
                 date={date}
                 hour={hour}
                 onTimeSlotClick={onTimeSlotClick}
+                orders={orders}
               />
             ))}
           </React.Fragment>

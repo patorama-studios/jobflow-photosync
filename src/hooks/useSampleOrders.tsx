@@ -1,82 +1,189 @@
 
 import { useState, useEffect } from 'react';
-import { Order as SampleOrder } from '@/data/sampleOrders';
-import { generateSampleOrders } from '@/data/sampleOrders';
+import { supabase } from '@/integrations/supabase/client';
+import { format, addDays, subDays } from 'date-fns';
 
-// Define our Order type to match what's used in the component
-export type Order = {
-  id: number;
+export interface Order {
+  id: string | number;
   orderNumber: string;
   address: string;
   client: string;
+  clientEmail?: string;
+  clientPhone?: string;
   photographer: string;
-  photographerPayoutRate: number;
+  photographerPayoutRate?: number;
   price: number;
   propertyType: string;
   scheduledDate: string;
   scheduledTime: string;
   squareFeet: number;
-  status: 'pending' | 'scheduled' | 'completed';
-  clientEmail?: string;
-  clientPhone?: string;
-  stripePaymentId?: string;
-  additionalAppointments?: Array<{
+  status: string;
+  additionalAppointments?: {
     date: string;
     time: string;
     description: string;
-  }>;
-  customFields?: Record<string, any>;
+  }[];
+  customFields?: Record<string, string>;
   customerNotes?: string;
   internalNotes?: string;
   mediaUploaded?: boolean;
   mediaLinks?: string[];
-  // Fields for Calendar integration
   drivingTimeMin?: number;
   previousLocation?: string;
-  // Duplicate fields with snake_case for compatibility
-  client_email?: string; 
-  client_phone?: string;
-  stripe_payment_id?: string;
-};
+  city?: string;
+  state?: string;
+  zip?: string;
+  package?: string;
+  stripePaymentId?: string;
+}
 
-export const useSampleOrders = () => {
+export function useSampleOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    // Load sample data and convert to our Order type
-    const sampleOrdersData = generateSampleOrders();
-    const mappedOrders: Order[] = sampleOrdersData.map(order => ({
-      id: order.id,
-      orderNumber: order.orderNumber || '',
-      address: order.address,
-      client: order.client,
-      photographer: order.photographer,
-      photographerPayoutRate: order.photographerPayoutRate || 0,
-      price: order.price,
-      propertyType: order.propertyType || '',
-      scheduledDate: order.scheduledDate || '',
-      scheduledTime: order.scheduledTime || '',
-      squareFeet: order.squareFeet || 0,
-      status: order.status as 'pending' | 'scheduled' | 'completed',
-      clientEmail: order.clientEmail,
-      clientPhone: order.clientPhone,
-      stripePaymentId: order.stripePaymentId,
-      additionalAppointments: order.additionalAppointments,
-      customFields: order.customFields,
-      customerNotes: order.customerNotes,
-      internalNotes: order.internalNotes,
-      mediaUploaded: order.mediaUploaded,
-      mediaLinks: order.mediaLinks,
-      drivingTimeMin: order.drivingTimeMin,
-      previousLocation: order.previousLocation,
-      // Add snake_case duplicates for compatibility
-      client_email: order.clientEmail,
-      client_phone: order.clientPhone,
-      stripe_payment_id: order.stripePaymentId
-    }));
-    
-    setOrders(mappedOrders);
+    const fetchOrders = async () => {
+      setIsLoading(true);
+      try {
+        // First try to fetch from Supabase
+        const { data: supabaseOrders, error } = await supabase
+          .from('orders')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching from Supabase:', error);
+          throw new Error(error.message);
+        }
+
+        if (supabaseOrders && supabaseOrders.length > 0) {
+          // Map Supabase orders to our Order format
+          const mappedOrders = supabaseOrders.map((order): Order => ({
+            id: order.id,
+            orderNumber: order.order_number,
+            client: order.client,
+            clientEmail: order.client_email,
+            clientPhone: order.client_phone || '',
+            photographer: order.photographer || '',
+            photographerPayoutRate: order.photographer_payout_rate,
+            price: order.price,
+            propertyType: order.property_type,
+            scheduledDate: order.scheduled_date,
+            scheduledTime: order.scheduled_time,
+            squareFeet: order.square_feet,
+            status: order.status,
+            address: order.address,
+            city: order.city || '',
+            state: order.state || '',
+            zip: order.zip || '',
+            package: order.package || '',
+            customerNotes: order.customer_notes || '',
+            internalNotes: order.internal_notes || '',
+            drivingTimeMin: 15 + Math.floor(Math.random() * 30) // Random driving time
+          }));
+
+          console.log('Fetched orders from Supabase:', mappedOrders);
+          setOrders(mappedOrders);
+        } else {
+          // Fallback to sample data if no Supabase data
+          console.warn('No orders found in Supabase, using fallback data');
+          throw new Error('No orders found');
+        }
+      } catch (err) {
+        console.error('Error in useSampleOrders:', err);
+        // Use local data as fallback
+        const sampleData = generateSampleOrders();
+        setOrders(sampleData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
   }, []);
-  
-  return { orders };
-};
+
+  return { orders, isLoading, error };
+}
+
+// Fallback sample data generator
+function generateSampleOrders(): Order[] {
+  const today = new Date();
+  return [
+    {
+      id: 1,
+      orderNumber: "ORD-2023-001",
+      address: "123 Maple Street, Seattle, WA 98101",
+      client: "John Smith - ABC Realty",
+      photographer: "Alex Johnson",
+      photographerPayoutRate: 95,
+      price: 149,
+      propertyType: "Residential",
+      scheduledDate: format(today, 'yyyy-MM-dd'),
+      scheduledTime: "10:00 AM",
+      squareFeet: 1800,
+      status: "completed",
+      drivingTimeMin: 25,
+      previousLocation: "Office"
+    },
+    {
+      id: 2,
+      orderNumber: "ORD-2023-002",
+      address: "456 Oak Avenue, Seattle, WA 98102",
+      client: "Sarah Johnson - Johnson Properties",
+      photographer: "Maria Garcia",
+      photographerPayoutRate: 120,
+      price: 199,
+      propertyType: "Commercial",
+      scheduledDate: format(addDays(today, 1), 'yyyy-MM-dd'),
+      scheduledTime: "2:00 PM",
+      squareFeet: 2500,
+      status: "scheduled",
+      drivingTimeMin: 20
+    },
+    {
+      id: 3,
+      orderNumber: "ORD-2023-003",
+      address: "789 Pine Boulevard, Bellevue, WA 98004",
+      client: "Michael Williams - Luxury Homes",
+      photographer: "Wei Chen",
+      photographerPayoutRate: 150,
+      price: 249,
+      propertyType: "Residential",
+      scheduledDate: format(addDays(today, 2), 'yyyy-MM-dd'),
+      scheduledTime: "11:30 AM",
+      squareFeet: 3200,
+      status: "scheduled",
+      drivingTimeMin: 35
+    },
+    {
+      id: 4,
+      orderNumber: "ORD-2023-004",
+      address: "321 Cedar Road, Redmond, WA 98052",
+      client: "Emily Davis - Modern Living",
+      photographer: "Priya Patel",
+      photographerPayoutRate: 85,
+      price: 149,
+      propertyType: "Apartment",
+      scheduledDate: format(addDays(today, 3), 'yyyy-MM-dd'),
+      scheduledTime: "9:00 AM",
+      squareFeet: 1200,
+      status: "pending",
+      drivingTimeMin: 15
+    },
+    {
+      id: 5,
+      orderNumber: "ORD-2023-005",
+      address: "654 Birch Lane, Kirkland, WA 98033",
+      client: "David Wilson - Wilson Realty",
+      photographer: "Thomas Wilson",
+      photographerPayoutRate: 110,
+      price: 199,
+      propertyType: "Condo",
+      scheduledDate: format(subDays(today, 1), 'yyyy-MM-dd'),
+      scheduledTime: "3:30 PM",
+      squareFeet: 1600,
+      status: "completed",
+      drivingTimeMin: 30
+    }
+  ];
+}
