@@ -8,7 +8,8 @@ import {
   Mail, 
   Plug, 
   BarChart, 
-  Megaphone
+  Megaphone,
+  CreditCard
 } from 'lucide-react';
 
 type Integration = {
@@ -34,6 +35,13 @@ export function AppsOverview() {
       connected: true,
       status: 'active',
       lastSynced: '2 hours ago'
+    },
+    {
+      id: 'stripe',
+      name: 'Stripe',
+      description: 'Payment processing platform',
+      icon: CreditCard,
+      connected: false
     },
     {
       id: 'google-calendar',

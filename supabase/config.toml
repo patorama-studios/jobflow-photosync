@@ -36,3 +36,7 @@ enabled = true
 
 [functions.process-refund]
 verify_jwt = false
+
+[functions.stripe-connect]
+verify_jwt = false
+

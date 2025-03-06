@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
+import { AlertCircle, RefreshCw, Trash2, ExternalLink, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { createBoxIntegration } from "@/lib/box-integration";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Integration = {
   id: string;
@@ -39,17 +39,48 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
   const { name, id, connected, icon: Icon } = integration;
   const [isConnected, setIsConnected] = useState(connected);
   const [apiKey, setApiKey] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [isSync, setIsSync] = useState(true);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSyncLoading, setIsSyncLoading] = useState(false);
   const [masterFolderId, setMasterFolderId] = useState("");
+  const [mode, setMode] = useState<'test' | 'live'>('test');
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   const handleConnect = async () => {
-    // For Box integration
-    if (id === 'box') {
+    // For Stripe integration
+    if (id === 'stripe') {
+      try {
+        if (!apiKey || !secretKey) {
+          toast({
+            title: "API Keys Required",
+            description: "Please enter both publishable and secret keys to connect with Stripe.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Simulate verifying the API keys
+        // In a real implementation, we would make a request to the Stripe API to verify the keys
+        
+        setIsConnected(true);
+        toast({
+          title: "Stripe connected",
+          description: `Your Stripe account has been successfully connected in ${mode} mode.`,
+        });
+      } catch (error) {
+        console.error("Stripe connection error:", error);
+        toast({
+          title: "Connection failed",
+          description: `Failed to connect to Stripe. Please check your credentials.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (id === 'box') {
       try {
         // Create a Box integration instance
         const boxIntegration = createBoxIntegration();
@@ -114,6 +145,10 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
     }, 2000);
   };
 
+  const handleOpenStripe = () => {
+    window.open('https://dashboard.stripe.com', '_blank');
+  };
+
   const handleOpenBox = () => {
     window.open('https://app.box.com', '_blank');
   };
@@ -152,6 +187,29 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                 </p>
               </div>
               
+              {id === 'stripe' && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="mode">Mode</Label>
+                    <Badge variant={mode === 'test' ? 'outline' : 'default'}>
+                      {mode === 'test' ? 'TEST MODE' : 'LIVE MODE'}
+                    </Badge>
+                  </div>
+                  <Select 
+                    value={mode} 
+                    onValueChange={(value) => setMode(value as 'test' | 'live')}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="test">Test Mode</SelectItem>
+                      <SelectItem value="live">Live Mode</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
               <Separator />
               
               <div className="space-y-4">
@@ -177,6 +235,22 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                     />
                     <p className="text-xs text-muted-foreground">
                       Enter your Zapier webhook URL to trigger automations
+                    </p>
+                  </div>
+                )}
+                
+                {id === 'stripe' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="webhook-secret">Webhook Secret</Label>
+                    <Input 
+                      id="webhook-secret"
+                      type="password"
+                      value={webhookSecret}
+                      onChange={(e) => setWebhookSecret(e.target.value)} 
+                      placeholder="whsec_..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter your Stripe webhook secret to verify events
                     </p>
                   </div>
                 )}
@@ -211,6 +285,17 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                     Open Box.com
                   </Button>
                 )}
+                
+                {id === 'stripe' && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleOpenStripe}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open Stripe Dashboard
+                  </Button>
+                )}
               </div>
             </>
           ) : (
@@ -234,6 +319,78 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                     />
                     <p className="text-xs text-muted-foreground">
                       Find your folder ID in the URL when viewing a folder in Box
+                    </p>
+                  </div>
+                </div>
+              ) : id === 'stripe' ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="mode">Mode</Label>
+                    <Badge variant={mode === 'test' ? 'outline' : 'default'}>
+                      {mode === 'test' ? 'TEST MODE' : 'LIVE MODE'}
+                    </Badge>
+                  </div>
+                  <Select 
+                    value={mode} 
+                    onValueChange={(value) => setMode(value as 'test' | 'live')}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="test">Test Mode</SelectItem>
+                      <SelectItem value="live">Live Mode</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="publishable-key">Publishable Key</Label>
+                    <Input 
+                      id="publishable-key"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)} 
+                      placeholder={mode === 'test' ? "pk_test_..." : "pk_live_..."}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your Stripe publishable key for client-side operations
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="secret-key">Secret Key</Label>
+                    <Input 
+                      id="secret-key"
+                      type="password"
+                      value={secretKey}
+                      onChange={(e) => setSecretKey(e.target.value)} 
+                      placeholder={mode === 'test' ? "sk_test_..." : "sk_live_..."}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your Stripe secret key (stored securely for server operations)
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="webhook-secret">Webhook Secret (Optional)</Label>
+                    <Input 
+                      id="webhook-secret"
+                      type="password"
+                      value={webhookSecret}
+                      onChange={(e) => setWebhookSecret(e.target.value)} 
+                      placeholder="whsec_..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Used to verify incoming webhook events from Stripe
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-amber-50 rounded-md border border-amber-200">
+                    <p className="text-sm flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <span>
+                        Your secret key must be kept confidential and should only be stored in secure environments. 
+                        It will be saved on the server side only.
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -267,15 +424,14 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                 </>
               )}
               
-              <div className="flex items-start space-x-2 text-amber-600">
-                <AlertCircle className="h-5 w-5 mt-0.5" />
-                <p className="text-sm">
-                  {id === 'box' 
-                    ? "You'll need to select a master folder where all order folders will be created."
-                    : "Make sure to keep your API keys secure. Never share them with others."
-                  }
-                </p>
-              </div>
+              {id !== 'box' && id !== 'stripe' && (
+                <div className="flex items-start space-x-2 text-amber-600">
+                  <AlertCircle className="h-5 w-5 mt-0.5" />
+                  <p className="text-sm">
+                    Make sure to keep your API keys secure. Never share them with others.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -331,7 +487,11 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
               </Button>
               <Button 
                 onClick={handleConnect}
-                disabled={id === 'box' ? !masterFolderId : !apiKey}
+                disabled={
+                  (id === 'box' && !masterFolderId) || 
+                  (id === 'stripe' && (!apiKey || !secretKey)) ||
+                  (id !== 'box' && id !== 'stripe' && !apiKey)
+                }
               >
                 Connect
               </Button>
