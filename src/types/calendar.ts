@@ -14,6 +14,12 @@ export interface CalendarEvent {
   color?: string;
   orderNumber?: string;
   order?: Order;
+  
+  // Additional properties to match the Order type
+  scheduledDate?: string;
+  scheduledTime?: string;
+  package?: string;
+  address?: string;
 }
 
 // Adding this type for compatibility with existing files

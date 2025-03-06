@@ -13,30 +13,41 @@ export type OrderStatus =
 
 // Define the interface for an order
 export interface Order {
-  id: string;
-  order_number: string;
+  id: string | number;
+  orderNumber: string;
   client: string;
-  client_email?: string;
-  client_phone?: string;
+  clientEmail?: string;
+  clientPhone?: string;
   address: string;
   city: string;
   state: string;
   zip: string;
-  date_created?: string;
-  scheduled_date: string;
-  scheduled_time: string;
+  dateCreated?: string;
+  scheduledDate: string;
+  scheduledTime: string;
   photographer: string;
   package: string;
-  property_type: string;
-  square_feet: number;
+  propertyType: string;
+  squareFeet: number;
   price: number;
   status: OrderStatus;
   notes?: string;
-  internal_notes?: string;
-  customer_notes?: string;
+  internalNotes?: string;
+  customerNotes?: string;
+  photographerPayoutRate?: number;
+  photographerPayoutAmount?: number;
+  stripePaymentId?: string;
+  
+  // Legacy property names for compatibility
+  order_number?: string;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  client_email?: string;
+  client_phone?: string;
+  property_type?: string;
+  square_feet?: number;
   photographer_payout_rate?: number;
   photographer_payout_amount?: number;
-  stripe_payment_id?: string;
 }
 
 // Define interface for Contractor

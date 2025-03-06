@@ -123,7 +123,11 @@ function generateSampleOrders(): Order[] {
       squareFeet: 1800,
       status: "completed",
       drivingTimeMin: 25,
-      previousLocation: "Office"
+      previousLocation: "Office",
+      city: "Seattle",
+      state: "WA",
+      zip: "98101",
+      package: "Basic Photography Package"
     },
     {
       id: 2,
@@ -138,7 +142,11 @@ function generateSampleOrders(): Order[] {
       scheduledTime: "2:00 PM",
       squareFeet: 2500,
       status: "scheduled",
-      drivingTimeMin: 20
+      drivingTimeMin: 20,
+      city: "Seattle",
+      state: "WA",
+      zip: "98102",
+      package: "Premium Photography Package"
     },
     {
       id: 3,
@@ -153,7 +161,11 @@ function generateSampleOrders(): Order[] {
       scheduledTime: "11:30 AM",
       squareFeet: 3200,
       status: "scheduled",
-      drivingTimeMin: 35
+      drivingTimeMin: 35,
+      city: "Bellevue",
+      state: "WA",
+      zip: "98004",
+      package: "Deluxe Photography Package"
     },
     {
       id: 4,
@@ -168,7 +180,11 @@ function generateSampleOrders(): Order[] {
       scheduledTime: "9:00 AM",
       squareFeet: 1200,
       status: "pending",
-      drivingTimeMin: 15
+      drivingTimeMin: 15,
+      city: "Redmond",
+      state: "WA",
+      zip: "98052",
+      package: "Basic Photography Package"
     },
     {
       id: 5,
@@ -183,7 +199,11 @@ function generateSampleOrders(): Order[] {
       scheduledTime: "3:30 PM",
       squareFeet: 1600,
       status: "completed",
-      drivingTimeMin: 30
+      drivingTimeMin: 30,
+      city: "Kirkland",
+      state: "WA",
+      zip: "98033",
+      package: "Premium Photography Package"
     }
   ];
 }

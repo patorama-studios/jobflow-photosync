@@ -95,9 +95,9 @@ export function GoogleCalendar({
 
     // Convert orders to calendar events
     const calendarEvents = orders.map((order) => {
-      const startDate = new Date(order.scheduled_date);
+      const startDate = new Date(order.scheduledDate);
       // Set the hours from the scheduled_time (format: "HH:MM AM/PM")
-      const timeMatch = order.scheduled_time.match(/(\d+):(\d+)\s*([AP]M)/i);
+      const timeMatch = order.scheduledTime.match(/(\d+):(\d+)\s*([AP]M)/i);
       if (timeMatch) {
         let hours = parseInt(timeMatch[1]);
         const minutes = parseInt(timeMatch[2]);
@@ -114,17 +114,22 @@ export function GoogleCalendar({
 
       return {
         id: order.id,
-        title: order.package,
+        title: order.package || "",
         start: startDate,
         end: endDate,
         client: order.client,
         photographer: order.photographer,
         photographerId: orders.findIndex((o) => o.photographer === order.photographer) + 1,
-        location: order.address + ', ' + order.city,
+        location: (order.address || "") + ', ' + (order.city || ""),
         status: order.status,
         color: photographerColors[order.photographer],
-        orderNumber: order.order_number || `ORD-${Math.floor(Math.random() * 10000)}`,
-        order: order
+        orderNumber: order.orderNumber || `ORD-${Math.floor(Math.random() * 10000)}`,
+        order: order,
+        // Additional properties to match with CalendarEvent type
+        scheduledDate: order.scheduledDate,
+        scheduledTime: order.scheduledTime,
+        package: order.package,
+        address: order.address
       };
     });
 
@@ -195,7 +200,7 @@ export function GoogleCalendar({
 
   // Get the filtered orders for the selected date
   const filteredOrders = orders.filter(order => {
-    const orderDate = new Date(order.scheduled_date);
+    const orderDate = new Date(order.scheduledDate);
     return orderDate.toDateString() === date.toDateString();
   });
 
