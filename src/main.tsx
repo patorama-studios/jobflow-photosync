@@ -1,8 +1,8 @@
-
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
+import { ThemeProvider } from './components/theme-provider.tsx'
 
 // Apply theme and font immediately to prevent layout shifts
 const applyThemeAndFont = () => {
@@ -46,11 +46,13 @@ const mountApp = () => {
       throw new Error("Root element not found");
     }
     
-    // Create and mount root
+    // Create and mount root with BrowserRouter
     const root = createRoot(rootElement);
     root.render(
       <BrowserRouter>
-        <App />
+        <ThemeProvider defaultTheme="light">
+          <App />
+        </ThemeProvider>
       </BrowserRouter>
     );
   } catch (error) {
@@ -70,12 +72,7 @@ const mountApp = () => {
 // Use native browser API if available, else use setTimeout
 if (navigator.onLine) {
   // Only optimize startup if we're online
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(mountApp, { timeout: 2000 }); // Add timeout to ensure it runs
-  } else {
-    // Use queueMicrotask for better performance than setTimeout
-    queueMicrotask(mountApp);
-  }
+  mountApp(); // Call immediately to fix the blank screen issue
 } else {
   // If offline, mount immediately
   mountApp();

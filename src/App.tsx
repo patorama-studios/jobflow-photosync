@@ -6,20 +6,22 @@ import { ClientsView } from './components/clients/ClientsView';
 import { OrdersView } from './components/orders/OrdersView';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import Home from './pages/Home';
 
 function App() {
   return (
-    <Router>
+    <ErrorBoundary>
       <Routes>
-        {/* Make sure we have a proper route for the Calendar page */}
+        {/* Add Home page as an explicit route */}
+        <Route path="/" element={<Home />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/clients" element={<ClientsView />} />
         <Route path="/orders" element={<OrdersView />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/" element={<Dashboard />} />
       </Routes>
-    </Router>
+    </ErrorBoundary>
   );
 }
 
