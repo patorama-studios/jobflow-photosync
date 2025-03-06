@@ -14,7 +14,7 @@ import { useOrders } from '@/hooks/use-orders';
 import { useCompanies } from '@/hooks/use-companies';
 import { useClients } from '@/hooks/use-clients';
 
-function GlobalSearch() {
+export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<
@@ -144,5 +144,3 @@ function GlobalSearch() {
     </>
   );
 }
-
-export default GlobalSearch;

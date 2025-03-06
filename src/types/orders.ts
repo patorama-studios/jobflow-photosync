@@ -46,6 +46,7 @@ export interface Contractor {
   role: string;
   payoutRate?: number;
   payoutAmount?: number;
+  notes?: string; // Added notes field to fix type errors
 }
 
 // Define interface for RefundRecord

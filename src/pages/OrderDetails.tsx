@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { InvoiceItems, InvoiceItem } from '@/components/orders/InvoiceItems';
 import { ContractorPayouts } from '@/components/orders/ContractorPayouts';
 import { Label } from '@/components/ui/label';
-import { Contractor, RefundRecord, Order } from '@/types/orders';
+import { Contractor, RefundRecord } from '@/types/orders';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -50,6 +50,9 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import { RefundDialog } from '@/components/orders/RefundDialog';
 import { RefundHistory } from '@/components/orders/RefundHistory';
+
+// Import Order type from useSampleOrders to match the expected structure
+import { Order } from '@/hooks/useSampleOrders';
 
 const OrderDetails: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -80,7 +83,8 @@ const OrderDetails: React.FC = () => {
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [refundHistory, setRefundHistory] = useState<RefundRecord[]>([]);
 
-  const order = orders.find(o => o.id === orderId);
+  // Find order by string comparison (fix type issue)
+  const order = orders.find(o => String(o.id) === orderId);
 
   useEffect(() => {
     // Initialize invoice items when order is loaded
@@ -102,9 +106,9 @@ const OrderDetails: React.FC = () => {
             id: '1',
             name: order.photographer,
             role: 'photographer',
-            payoutRate: order.photographer_payout_rate,
-            payoutAmount: order.photographer_payout_rate 
-              ? (order.price * order.photographer_payout_rate / 100) 
+            payoutRate: order.photographerPayoutRate,
+            payoutAmount: order.photographerPayoutRate 
+              ? (order.price * order.photographerPayoutRate / 100) 
               : undefined
           }
         ]);
@@ -240,7 +244,7 @@ const OrderDetails: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Orders
           </Button>
-          <h1 className="text-3xl font-semibold">Order {order.order_number}</h1>
+          <h1 className="text-3xl font-semibold">Order {order.orderNumber}</h1>
           <Badge 
             className="ml-4"
             variant={
@@ -330,68 +334,68 @@ const OrderDetails: React.FC = () => {
                       <Calendar className="h-5 w-5" />
                       Appointment
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="font-medium">Date & Time</h3>
-                        <p className="flex items-center gap-1 text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(order.scheduled_date), 'MMMM d, yyyy')}
-                        </p>
-                        <p className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          {order.scheduled_time}
-                        </p>
-                      </div>
-                      <div>
-                        <h3 className="font-medium">Location</h3>
-                        <p className="flex items-center gap-1 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          {order.address}
-                        </p>
-                      </div>
-                    </div>
-                    
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <h3 className="font-medium">Assigned Photographer</h3>
+                      <h3 className="font-medium">Date & Time</h3>
                       <p className="flex items-center gap-1 text-muted-foreground">
-                        <User className="h-4 w-4" />
-                        {order.photographer}
+                        <Calendar className="h-4 w-4" />
+                        {format(new Date(order.scheduledDate), 'MMMM d, yyyy')}
+                      </p>
+                      <p className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        {order.scheduledTime}
                       </p>
                     </div>
-                    
-                    <div className="pt-2 flex flex-wrap gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-1"
-                        onClick={handleEditAppointment}
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit Appointment
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-1"
-                        onClick={handleRescheduleAppointment}
-                      >
-                        <Calendar className="h-4 w-4" />
-                        Reschedule
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-1 text-destructive"
-                        onClick={handleCancelAppointment}
-                      >
-                        <X className="h-4 w-4" />
-                        Cancel Appointment
-                      </Button>
+                    <div>
+                      <h3 className="font-medium">Location</h3>
+                      <p className="flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        {order.address}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium">Assigned Photographer</h3>
+                    <p className="flex items-center gap-1 text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      {order.photographer}
+                    </p>
+                  </div>
+                  
+                  <div className="pt-2 flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={handleEditAppointment}
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit Appointment
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={handleRescheduleAppointment}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Reschedule
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1 text-destructive"
+                      onClick={handleCancelAppointment}
+                    >
+                      <X className="h-4 w-4" />
+                      Cancel Appointment
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
                 {/* Upload Media Section */}
                 <Card>
@@ -545,8 +549,8 @@ const OrderDetails: React.FC = () => {
                     
                     <div>
                       <h3 className="text-sm font-medium">Contact Details</h3>
-                      <p className="text-sm text-muted-foreground">Email: {order.client_email || 'client@example.com'}</p>
-                      <p className="text-sm text-muted-foreground">Phone: {order.client_phone || '(555) 123-4567'}</p>
+                      <p className="text-sm text-muted-foreground">Email: {order.clientEmail || 'client@example.com'}</p>
+                      <p className="text-sm text-muted-foreground">Phone: {order.clientPhone || '(555) 123-4567'}</p>
                     </div>
                     
                     <Separator />
@@ -556,8 +560,8 @@ const OrderDetails: React.FC = () => {
                         <FileText className="h-4 w-4" /> 
                         Internal Notes
                       </h3>
-                      {order.internal_notes ? (
-                        <p className="text-sm text-muted-foreground">{order.internal_notes}</p>
+                      {order.internalNotes ? (
+                        <p className="text-sm text-muted-foreground">{order.internalNotes}</p>
                       ) : (
                         <div className="pt-1">
                           <Textarea 
@@ -579,15 +583,15 @@ const OrderDetails: React.FC = () => {
                   <CardContent className="space-y-3">
                     <div>
                       <h3 className="text-sm font-medium">Order Number</h3>
-                      <p className="text-sm">{order.order_number}</p>
+                      <p className="text-sm">{order.orderNumber}</p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium">Property Type</h3>
-                      <p className="text-sm">{order.property_type} ({order.square_feet} sq ft)</p>
+                      <p className="text-sm">{order.propertyType} ({order.squareFeet} sq ft)</p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium">Created Date</h3>
-                      <p className="text-sm">{format(new Date(order.scheduled_date), 'MMMM d, yyyy')}</p>
+                      <p className="text-sm">{format(new Date(order.scheduledDate), 'MMMM d, yyyy')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -722,14 +726,14 @@ const OrderDetails: React.FC = () => {
                 <h4 className="text-sm font-medium">Appointment Date</h4>
                 <Input
                   type="date"
-                  defaultValue={format(new Date(order.scheduled_date), 'yyyy-MM-dd')}
+                  defaultValue={format(new Date(order.scheduledDate), 'yyyy-MM-dd')}
                 />
               </div>
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Appointment Time</h4>
                 <Input
                   type="time"
-                  defaultValue={order.scheduled_time.replace(/\s?(AM|PM)/i, '')}
+                  defaultValue={order.scheduledTime.replace(/\s?(AM|PM)/i, '')}
                 />
               </div>
               <div className="space-y-2">
@@ -766,14 +770,14 @@ const OrderDetails: React.FC = () => {
                 <h4 className="text-sm font-medium">New Date</h4>
                 <Input
                   type="date"
-                  defaultValue={format(new Date(order.scheduled_date), 'yyyy-MM-dd')}
+                  defaultValue={format(new Date(order.scheduledDate), 'yyyy-MM-dd')}
                 />
               </div>
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">New Time</h4>
                 <Input
                   type="time"
-                  defaultValue={order.scheduled_time.replace(/\s?(AM|PM)/i, '')}
+                  defaultValue={order.scheduledTime.replace(/\s?(AM|PM)/i, '')}
                 />
               </div>
               <div className="space-y-2">
@@ -845,7 +849,7 @@ const OrderDetails: React.FC = () => {
                 <Input
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
-                  placeholder={order.client_email || "client@example.com"}
+                  placeholder={order.clientEmail || "client@example.com"}
                 />
               </div>
               <div className="space-y-2">
@@ -875,9 +879,9 @@ const OrderDetails: React.FC = () => {
         <RefundDialog
           open={refundDialogOpen}
           onOpenChange={setRefundDialogOpen}
-          orderId={order.id}
+          orderId={order.id.toString()}
           orderTotal={calculateTotalOrderAmount()}
-          stripePaymentId={order.stripe_payment_id || "pi_mock_123456789"}
+          stripePaymentId={order.stripePaymentId || "pi_mock_123456789"}
           onRefundComplete={handleRefundComplete}
         />
       </div>

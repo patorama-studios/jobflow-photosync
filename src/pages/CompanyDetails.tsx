@@ -6,11 +6,28 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { PageTransition } from '@/components/layout/PageTransition';
 
+// Define company type to match what CompanyDetailsView expects
+interface Company {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  website: string;
+  createdAt: string;
+  status: string;
+  totalOrders: number;
+  activeOrders: number;
+}
+
 const CompanyDetailsPage = () => {
   const { companyId } = useParams<{ companyId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [companyData, setCompanyData] = useState(null);
+  const [companyData, setCompanyData] = useState<Company | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -90,7 +107,8 @@ const CompanyDetailsPage = () => {
             <div className="h-64 bg-muted rounded-md"></div>
           </div>
         ) : (
-          <CompanyDetailsView company={companyData} />
+          // Pass companyId instead of company object
+          <CompanyDetailsView companyId={companyId} />
         )}
       </div>
     </PageTransition>

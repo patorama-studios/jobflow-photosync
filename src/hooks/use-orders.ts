@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useCallback } from 'react';
-import { sampleOrders } from '@/data/sample-orders';
+import { sampleOrders } from '@/data/sampleOrders';  // Fixed import path
 import { Order, OrderStatus, OrderFilters } from '@/types/orders';
 
 export function useOrders() {

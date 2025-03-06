@@ -6,11 +6,22 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { PageTransition } from '@/components/layout/PageTransition';
 
+// Define client type to match what ClientDetailsView expects
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  createdAt: string;
+  status: 'active' | 'inactive';
+}
+
 const ClientPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [clientData, setClientData] = useState(null);
+  const [clientData, setClientData] = useState<Client | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,7 +95,8 @@ const ClientPage = () => {
             <div className="h-64 bg-muted rounded-md"></div>
           </div>
         ) : (
-          <ClientDetailsView client={clientData} />
+          // Pass clientId instead of client object
+          <ClientDetailsView clientId={clientId} />
         )}
       </div>
     </PageTransition>

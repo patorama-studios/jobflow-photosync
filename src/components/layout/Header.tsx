@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Bell, LogOut, User, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
-import { GlobalSearch } from './GlobalSearch';
+import GlobalSearch from './GlobalSearch';  // Fixed import
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
