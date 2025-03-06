@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { OrderDetailsForm } from './appointment/OrderDetailsForm';
 import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CreateAppointmentDialogProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   selectedTime
 }) => {
   console.log("Dialog props:", { isOpen, selectedDate, selectedTime });
+  const isMobile = useIsMobile();
   
   // Format the date safely - handle potential invalid date errors
   const formattedDate = selectedDate ? format(selectedDate, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy");
@@ -56,7 +58,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl p-0 gap-0 h-[90vh] flex flex-col">
+      <DialogContent className={`max-w-4xl p-0 gap-0 ${isMobile ? 'h-[80vh]' : 'h-[90vh]'} flex flex-col overflow-hidden`}>
         <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b shrink-0">
           <DialogTitle className="text-xl">Create Appointment</DialogTitle>
           <div className="flex items-center">
@@ -67,12 +69,14 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
           </div>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
+        <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-6 overflow-y-auto`}>
           {/* Left Column - Order Details */}
-          <OrderDetailsForm />
+          <div className="p-6 overflow-y-auto">
+            <OrderDetailsForm />
+          </div>
           
           {/* Right Column - Appointment Details */}
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto border-t md:border-t-0 md:border-l">
             <AppointmentDetailsForm 
               appointmentDate={appointmentDate}
               setAppointmentDate={setAppointmentDate}

@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import { format, addDays, addMonths, subMonths, isToday } from 'date-fns';
+import { format } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CalendarDays } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface CalendarHeaderProps {
   date: Date;
@@ -12,95 +13,93 @@ interface CalendarHeaderProps {
   onNext: () => void;
   onToday: () => void;
   onViewChange: (view: "month" | "week" | "day") => void;
+  isMobileView?: boolean;
 }
 
-export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
-  date,
-  view,
-  appointmentCount,
-  onPrevious,
-  onNext,
-  onToday,
+export const CalendarHeader = ({ 
+  date, 
+  view, 
+  appointmentCount, 
+  onPrevious, 
+  onNext, 
+  onToday, 
   onViewChange,
-}) => {
-  const getTitle = () => {
-    if (view === "day") {
-      return format(date, 'EEEE, d MMMM yyyy');
-    } else if (view === "week") {
-      const endOfWeek = addDays(date, 6);
-      const sameMonth = date.getMonth() === endOfWeek.getMonth();
-      
-      if (sameMonth) {
-        return `${format(date, 'd')} - ${format(endOfWeek, 'd MMMM yyyy')}`;
-      } else {
-        return `${format(date, 'd MMMM')} - ${format(endOfWeek, 'd MMMM yyyy')}`;
-      }
-    } else {
+  isMobileView = false
+}: CalendarHeaderProps) => {
+  const formattedDate = React.useMemo(() => {
+    if (view === 'month') {
       return format(date, 'MMMM yyyy');
+    } else if (view === 'week') {
+      return `Week of ${format(date, 'MMM d, yyyy')}`;
+    } else {
+      return format(date, 'EEEE, MMMM d, yyyy');
     }
-  };
+  }, [date, view]);
 
   return (
-    <div className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-t-md">
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-2 h-9"
-          onClick={onToday}
-        >
-          Today
-        </Button>
-        
+    <div className={`border-b p-4 ${isMobileView ? 'grid gap-2' : 'flex justify-between items-center'}`}>
+      <div className={`flex items-center ${isMobileView ? 'justify-between' : ''}`}>
+        <h2 className="text-xl font-semibold flex items-center">
+          {formattedDate}
+          {appointmentCount > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {appointmentCount} {appointmentCount === 1 ? 'appointment' : 'appointments'}
+            </Badge>
+          )}
+        </h2>
+      </div>
+      
+      <div className={`flex items-center space-x-1 ${isMobileView ? 'justify-between mt-2' : ''}`}>
         <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="icon" onClick={onPrevious}>
+          <Button variant="outline" size="icon" onClick={onPrevious}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onNext}>
+          <Button variant="outline" onClick={onToday}>
+            Today
+          </Button>
+          <Button variant="outline" size="icon" onClick={onNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
         
-        <h2 className="text-lg font-semibold">{getTitle()}</h2>
-        
-        {appointmentCount > 0 && (
-          <span className="text-sm text-muted-foreground">
-            {appointmentCount} Appointment{appointmentCount !== 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center bg-white rounded-md border">
-          <Button 
-            variant={view === "month" ? "default" : "ghost"} 
-            size="sm" 
-            className={`rounded-r-none ${view === "month" ? "" : "hover:bg-gray-100"}`}
-            onClick={() => onViewChange("month")}
+        <div className={`flex items-center space-x-1 ${isMobileView ? 'ml-2' : 'ml-4'}`}>
+          <Button
+            variant={view === 'day' ? 'default' : 'outline'}
+            size={isMobileView ? 'icon' : 'default'}
+            onClick={() => onViewChange('day')}
+            className={isMobileView ? 'p-2' : ''}
           >
-            Month
+            {isMobileView ? (
+              <Clock className="h-4 w-4" />
+            ) : (
+              'Day'
+            )}
           </Button>
-          <Button 
-            variant={view === "week" ? "default" : "ghost"} 
-            size="sm" 
-            className={`rounded-none ${view === "week" ? "" : "hover:bg-gray-100"}`}
-            onClick={() => onViewChange("week")}
+          <Button
+            variant={view === 'week' ? 'default' : 'outline'}
+            size={isMobileView ? 'icon' : 'default'}
+            onClick={() => onViewChange('week')}
+            className={isMobileView ? 'p-2' : ''}
           >
-            Week
+            {isMobileView ? (
+              <Calendar className="h-4 w-4" />
+            ) : (
+              'Week'
+            )}
           </Button>
-          <Button 
-            variant={view === "day" ? "default" : "ghost"} 
-            size="sm" 
-            className={`rounded-l-none ${view === "day" ? "" : "hover:bg-gray-100"}`}
-            onClick={() => onViewChange("day")}
+          <Button
+            variant={view === 'month' ? 'default' : 'outline'}
+            size={isMobileView ? 'icon' : 'default'}
+            onClick={() => onViewChange('month')}
+            className={isMobileView ? 'p-2' : ''}
           >
-            Day
+            {isMobileView ? (
+              <CalendarDays className="h-4 w-4" />
+            ) : (
+              'Month'
+            )}
           </Button>
         </div>
-        
-        <Button variant="ghost" size="icon" onClick={() => window.location.reload()}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );

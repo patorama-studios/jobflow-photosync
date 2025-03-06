@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -5,7 +6,8 @@ import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointment
 import { useToast } from '@/components/ui/use-toast';
 import { GoogleCalendar } from '@/components/dashboard/calendar/GoogleCalendar';
 import { Button } from '@/components/ui/button';
-import { Maximize, Minimize } from 'lucide-react';
+import { Maximize, Minimize, Plus } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Calendar = () => {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false);
@@ -13,6 +15,7 @@ const Calendar = () => {
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleTimeSlotClick = (time: string) => {
     console.log("Time slot clicked:", time);
@@ -61,24 +64,40 @@ const Calendar = () => {
     <MainLayout showCalendarSubmenu={true}>
       <PageTransition>
         <div className="h-[calc(100vh-64px)] relative">
-          {/* Fullscreen toggle button */}
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="absolute top-2 right-2 z-10"
-            onClick={toggleFullScreen}
-          >
-            {isFullScreen ? (
-              <Minimize className="h-4 w-4" />
-            ) : (
-              <Maximize className="h-4 w-4" />
-            )}
-          </Button>
+          {/* Mobile create appointment button */}
+          {isMobile && (
+            <div className="sticky top-0 z-10 bg-background p-4 shadow-sm border-b">
+              <Button 
+                className="w-full flex items-center justify-center gap-2 py-6"
+                onClick={() => setShowCreateAppointment(true)}
+              >
+                <Plus className="h-5 w-5" />
+                Create New Order
+              </Button>
+            </div>
+          )}
+          
+          {/* Fullscreen toggle button - only show on desktop */}
+          {!isMobile && (
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="absolute top-2 right-2 z-10"
+              onClick={toggleFullScreen}
+            >
+              {isFullScreen ? (
+                <Minimize className="h-4 w-4" />
+              ) : (
+                <Maximize className="h-4 w-4" />
+              )}
+            </Button>
+          )}
           
           <GoogleCalendar 
             onTimeSlotClick={handleTimeSlotClick}
             onDayClick={handleDayClick}
-            defaultView="month"
+            defaultView={isMobile ? "day" : "month"}
+            isMobileView={isMobile}
           />
           
           <CreateAppointmentDialog

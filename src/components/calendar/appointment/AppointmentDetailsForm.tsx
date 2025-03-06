@@ -41,6 +41,8 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
   const [selectedDuration, setSelectedDuration] = useState<string>("45 minutes");
   const [timeInputOpen, setTimeInputOpen] = useState(false);
   const [durationInputOpen, setDurationInputOpen] = useState(false);
+  const [timeInputValue, setTimeInputValue] = useState(timeStr);
+  const [durationInputValue, setDurationInputValue] = useState("45 minutes");
 
   // Update parent state when local state changes
   useEffect(() => {
@@ -60,6 +62,7 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
 
   const handleTimeChange = (time: string) => {
     setSelectedTime(time);
+    setTimeInputValue(time);
     setTimeInputOpen(false);
     if (selectedDate) {
       const formattedDate = format(selectedDate, "MMM dd, yyyy");
@@ -69,6 +72,7 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
 
   const handleDurationChange = (duration: string) => {
     setSelectedDuration(duration);
+    setDurationInputValue(duration);
     setDurationInputOpen(false);
   };
 
@@ -101,7 +105,7 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Suggested Dates - Moved to the top */}
+      {/* Suggested Dates - at the top */}
       <div>
         <h3 className="text-sm font-medium mb-2">Suggested Dates</h3>
         <div className="flex flex-col gap-2">
@@ -146,31 +150,72 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
             </PopoverContent>
           </Popover>
           
-          <Popover open={timeInputOpen} onOpenChange={setTimeInputOpen}>
+          <div className="relative">
+            <Popover open={timeInputOpen} onOpenChange={setTimeInputOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative">
+                  <Input
+                    placeholder="Select time"
+                    value={timeInputValue}
+                    onChange={(e) => setTimeInputValue(e.target.value)}
+                    onClick={() => setTimeInputOpen(true)}
+                    className="w-full pr-10"
+                  />
+                  <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search time..." />
+                  <CommandList>
+                    <CommandEmpty>No time found.</CommandEmpty>
+                    <CommandGroup>
+                      {timeOptions.map((time) => (
+                        <CommandItem 
+                          key={time} 
+                          value={time}
+                          onSelect={() => handleTimeChange(time)}
+                        >
+                          {time}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="duration">Duration</Label>
+        <div className="relative">
+          <Popover open={durationInputOpen} onOpenChange={setDurationInputOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                role="combobox"
-                aria-expanded={timeInputOpen}
-                className="justify-start text-left"
-              >
-                <Clock className="mr-2 h-4 w-4" />
-                {selectedTime}
-              </Button>
+              <div className="relative">
+                <Input
+                  placeholder="Select duration"
+                  value={durationInputValue}
+                  onChange={(e) => setDurationInputValue(e.target.value)}
+                  onClick={() => setDurationInputOpen(true)}
+                  className="w-full"
+                />
+              </div>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0">
               <Command>
-                <CommandInput placeholder="Search time..." />
+                <CommandInput placeholder="Search duration..." />
                 <CommandList>
-                  <CommandEmpty>No time found.</CommandEmpty>
+                  <CommandEmpty>No duration found.</CommandEmpty>
                   <CommandGroup>
-                    {timeOptions.map((time) => (
+                    {durationOptions.map((duration) => (
                       <CommandItem 
-                        key={time} 
-                        value={time}
-                        onSelect={() => handleTimeChange(time)}
+                        key={duration} 
+                        value={duration}
+                        onSelect={() => handleDurationChange(duration)}
                       >
-                        {time}
+                        {duration}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -179,41 +224,6 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
             </PopoverContent>
           </Popover>
         </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="duration">Duration</Label>
-        <Popover open={durationInputOpen} onOpenChange={setDurationInputOpen}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
-              role="combobox"
-              aria-expanded={durationInputOpen}
-              className="w-full justify-start text-left"
-            >
-              {selectedDuration}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[200px] p-0">
-            <Command>
-              <CommandInput placeholder="Search duration..." />
-              <CommandList>
-                <CommandEmpty>No duration found.</CommandEmpty>
-                <CommandGroup>
-                  {durationOptions.map((duration) => (
-                    <CommandItem 
-                      key={duration} 
-                      value={duration}
-                      onSelect={() => handleDurationChange(duration)}
-                    >
-                      {duration}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
       </div>
       
       <div className="space-y-2">
