@@ -22,6 +22,7 @@ import ProductionOrderDetails from './pages/ProductionOrderDetails';
 import ProductionUpload from './pages/ProductionUpload';
 import Learning from './pages/Learning';
 import NotificationsCenter from './pages/NotificationsCenter';
+import Debug from './pages/Debug';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -155,6 +156,13 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
+                {/* Debug route - only available in development */}
+                {import.meta.env.DEV && (
+                  <Route 
+                    path="/debug" 
+                    element={<Debug />} 
+                  />
+                )}
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
