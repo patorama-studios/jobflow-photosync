@@ -20,6 +20,7 @@ interface BoxConnectedViewProps {
   handleOpenBox: () => void;
   masterFolderId: string;
   setMasterFolderId: (id: string) => void;
+  handleDisconnect: () => void;
 }
 
 export function BoxConnectedView({
@@ -30,11 +31,18 @@ export function BoxConnectedView({
   handleSync,
   handleOpenBox,
   masterFolderId,
-  setMasterFolderId
+  setMasterFolderId,
+  handleDisconnect
 }: BoxConnectedViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempFolderId, setTempFolderId] = useState(masterFolderId || "");
   const { toast } = useToast();
+  
+  // Get authentication time
+  const authTime = localStorage.getItem('box_auth_time');
+  const formattedAuthTime = authTime 
+    ? new Date(authTime).toLocaleString() 
+    : 'Unknown';
   
   const handleStartEditing = () => {
     setTempFolderId(masterFolderId || "");
@@ -85,6 +93,15 @@ export function BoxConnectedView({
     <>
       <IntegrationStatus lastSynced={lastSynced} />
       
+      <div className="p-3 bg-green-50 border border-green-200 rounded-md mb-4">
+        <p className="text-sm text-green-800">
+          <span className="font-medium">Authentication status:</span> Connected
+        </p>
+        <p className="text-xs text-green-600">
+          Last authenticated: {formattedAuthTime}
+        </p>
+      </div>
+      
       <Separator />
       
       <div className="space-y-2">
@@ -125,7 +142,7 @@ export function BoxConnectedView({
                 <Folder className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Master Folder</p>
-                  <p className="text-xs text-muted-foreground">ID: {masterFolderId}</p>
+                  <p className="text-xs text-muted-foreground">ID: {masterFolderId || "Not set"}</p>
                 </div>
               </div>
               <Button 
@@ -157,6 +174,16 @@ export function BoxConnectedView({
         handleSync={handleSync}
         handleOpenService={handleOpenBox}
       />
+      
+      <div className="mt-4">
+        <Button 
+          variant="outline" 
+          className="w-full text-red-500 hover:text-red-700 hover:bg-red-50"
+          onClick={handleDisconnect}
+        >
+          Disconnect Box Integration
+        </Button>
+      </div>
     </>
   );
 }

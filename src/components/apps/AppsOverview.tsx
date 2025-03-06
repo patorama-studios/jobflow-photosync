@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IntegrationCard } from './IntegrationCard';
 import { IntegrationDialog } from './IntegrationDialog';
 import { 
@@ -15,9 +15,9 @@ import { Integration } from './types';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function AppsOverview() {
-  const [open, setOpen] = React.useState(false);
-  const [selectedIntegration, setSelectedIntegration] = React.useState<Integration | null>(null);
-  const [integrations, setIntegrations] = React.useState<Integration[]>([]);
+  const [open, setOpen] = useState(false);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
   const { user } = useAuth();
 
   // Load integration status from localStorage on component mount
@@ -28,49 +28,56 @@ export function AppsOverview() {
         name: 'Box.com',
         description: 'Cloud content management & file sharing',
         icon: Box,
-        connected: false
+        connected: false,
+        status: 'inactive'
       },
       {
         id: 'stripe',
         name: 'Stripe',
         description: 'Payment processing platform',
         icon: CreditCard,
-        connected: false
+        connected: false,
+        status: 'inactive'
       },
       {
         id: 'google-calendar',
         name: 'Google Calendar',
         description: 'Sync events and appointments',
         icon: CalendarIcon,
-        connected: false
+        connected: false,
+        status: 'inactive'
       },
       {
         id: 'microsoft-365',
         name: 'Microsoft 365',
         description: 'Outlook calendar and email integration',
         icon: Mail,
-        connected: false
+        connected: false,
+        status: 'inactive'
       },
       {
         id: 'zapier',
         name: 'Zapier',
         description: 'Connect with thousands of apps',
         icon: Plug,
-        connected: false
+        connected: false,
+        status: 'inactive'
       },
       {
         id: 'xero',
         name: 'Xero',
         description: 'Accounting & invoicing platform',
         icon: BarChart,
-        connected: false
+        connected: false,
+        status: 'inactive'
       },
       {
         id: 'go-high-level',
         name: 'Go High Level',
         description: 'All-in-one marketing platform',
         icon: Megaphone,
-        connected: false
+        connected: false,
+        status: 'inactive'
       }
     ];
     
@@ -79,13 +86,24 @@ export function AppsOverview() {
     const boxMasterFolder = localStorage.getItem('box_master_folder_id');
     const isBoxConnected = !!(boxToken && boxMasterFolder);
     
+    // Get authentication time for last synced info
+    const boxAuthTime = localStorage.getItem('box_auth_time');
+    const lastSyncedTime = boxAuthTime 
+      ? new Date(boxAuthTime).toLocaleString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      : '2 hours ago';
+    
     const updatedIntegrations = defaultIntegrations.map(integration => {
       if (integration.id === 'box' && isBoxConnected) {
         return {
           ...integration,
           connected: true,
           status: 'active' as const,
-          lastSynced: '2 hours ago'
+          lastSynced: lastSyncedTime
         };
       }
       return integration;

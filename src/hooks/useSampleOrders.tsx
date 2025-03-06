@@ -33,6 +33,10 @@ export type Order = {
   // Fields for Calendar integration
   drivingTimeMin?: number;
   previousLocation?: string;
+  // Duplicate fields with snake_case for compatibility
+  client_email?: string; 
+  client_phone?: string;
+  stripe_payment_id?: string;
 };
 
 export const useSampleOrders = () => {
@@ -64,7 +68,11 @@ export const useSampleOrders = () => {
       mediaUploaded: order.mediaUploaded,
       mediaLinks: order.mediaLinks,
       drivingTimeMin: order.drivingTimeMin,
-      previousLocation: order.previousLocation
+      previousLocation: order.previousLocation,
+      // Add snake_case duplicates for compatibility
+      client_email: order.clientEmail,
+      client_phone: order.clientPhone,
+      stripe_payment_id: order.stripePaymentId
     }));
     
     setOrders(mappedOrders);

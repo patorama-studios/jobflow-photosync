@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -163,6 +162,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
       // Clear Box-related data from localStorage
       localStorage.removeItem('box_master_folder_id');
       localStorage.removeItem('box_access_token');
+      localStorage.removeItem('box_auth_time');
     }
     
     // In a real app, we would delete the integration from the database
@@ -240,6 +240,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                   handleOpenBox={handleOpenBox}
                   masterFolderId={masterFolderId}
                   setMasterFolderId={setMasterFolderId}
+                  handleDisconnect={handleDisconnect}
                 />
               )}
               
