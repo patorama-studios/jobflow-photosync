@@ -34,15 +34,15 @@ export function ClientTable() {
       if (newClient && newClient.id) {
         // Short delay to allow the toast to be seen and state to update
         setTimeout(() => {
-          navigate(`/client/${newClient.id}`);
+          navigate(`/customers/${newClient.id}`);
         }, 200);
       }
       
-      return Promise.resolve();
+      return true; // Return success to the dialog
     } catch (error: any) {
       console.error("Error adding client:", error);
       // Error toast is already shown in the addClient function
-      return Promise.reject(error);
+      return false; // Return failure to the dialog
     }
   };
 

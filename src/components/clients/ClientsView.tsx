@@ -16,7 +16,7 @@ export function ClientsView() {
 
   useEffect(() => {
     updateSettings({
-      title: "Customers",
+      pageTitle: "Customers",
       description: "Manage your customers and clients",
     });
   }, [updateSettings]);
@@ -47,7 +47,7 @@ export function ClientsView() {
         </Button>
       </div>
 
-      <ClientTable clients={clients} isLoading={isLoading} />
+      <ClientTable />
 
       <AddClientDialog
         open={addClientOpen}

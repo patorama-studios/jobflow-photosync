@@ -22,7 +22,7 @@ export function ClientTableRow({ client }: ClientTableRowProps) {
       </TableCell>
       <TableCell>
         <div>
-          <Link to={`/client/${client.id}`} className="font-medium hover:underline">
+          <Link to={`/customers/${client.id}`} className="font-medium hover:underline">
             {client.name}
           </Link>
         </div>
@@ -31,7 +31,7 @@ export function ClientTableRow({ client }: ClientTableRowProps) {
         <div>
           {client.company && client.company_id ? (
             <Link 
-              to={`/company/${client.company_id}`}
+              to={`/companies/${client.company_id}`}
               className="text-sm font-medium text-primary flex items-center hover:underline"
             >
               <Building className="h-3 w-3 mr-1" />
@@ -70,7 +70,7 @@ export function ClientTableRow({ client }: ClientTableRowProps) {
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link to={`/client/${client.id}`}>View</Link>
+            <Link to={`/customers/${client.id}`}>View</Link>
           </Button>
           <Button variant="outline" size="sm">
             <MessageSquare className="h-4 w-4 mr-2" />
