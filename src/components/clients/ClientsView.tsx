@@ -16,8 +16,12 @@ export function ClientsView() {
 
   useEffect(() => {
     updateSettings({
-      pageTitle: "Customers",
-      description: "Manage your customers and clients",
+      color: '#ffffff',
+      height: 65,
+      logoUrl: '',
+      showCompanyName: false,
+      title: "Customers",
+      description: "Manage your customers and clients"
     });
   }, [updateSettings]);
 

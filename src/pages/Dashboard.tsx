@@ -11,8 +11,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     updateSettings({
-      pageTitle: "Dashboard",
-      description: "Overview of your business performance",
+      color: '#ffffff',
+      height: 65,
+      logoUrl: '',
+      showCompanyName: false,
+      title: "Dashboard",
+      description: "Overview of your business performance"
     });
   }, [updateSettings]);
 

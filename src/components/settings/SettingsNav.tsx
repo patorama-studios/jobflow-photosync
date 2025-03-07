@@ -14,7 +14,8 @@ import {
   FileText,
   Paintbrush,
   Package,
-  Puzzle
+  Puzzle,
+  Users
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -31,6 +32,7 @@ interface SettingsNavItem {
 export const SettingsNav = memo(function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavProps) {
   const navItems: SettingsNavItem[] = [
     { category: "user", label: "User Settings", icon: <User className="h-4 w-4 mr-2" /> },
+    { category: "team", label: "My Team", icon: <Users className="h-4 w-4 mr-2" /> },
     { category: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4 mr-2" /> },
     { category: "organization", label: "Organization", icon: <Building2 className="h-4 w-4 mr-2" /> },
     { category: "editor", label: "Editor", icon: <Edit className="h-4 w-4 mr-2" /> },

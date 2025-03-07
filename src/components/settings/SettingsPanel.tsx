@@ -13,6 +13,9 @@ import { HeaderSettings } from "./sections/HeaderSettings";
 import { ThemeSettings } from "./sections/ThemeSettings";
 import { LegalSettings } from "./sections/LegalSettings";
 import { AppsSettings } from "./sections/AppsSettings";
+import { TeamSettings } from "./sections/TeamSettings";
+import { PhotographerAvailability } from "./sections/PhotographerAvailability";
+import { TeamNotificationPreferences } from "./sections/TeamNotificationPreferences";
 import { Card } from "@/components/ui/card";
 
 interface SettingsPanelProps {
@@ -23,7 +26,8 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
   return (
     <Card className="p-6">
       {activeCategory === "user" && <UserSettings />}
-      {activeCategory === "notifications" && <NotificationPreferences />}
+      {activeCategory === "team" && <TeamSettings />}
+      {activeCategory === "notifications" && <TeamNotificationPreferences />}
       {activeCategory === "organization" && <OrganizationSettings />}
       {activeCategory === "editor" && <NotificationEditor />}
       {activeCategory === "downloads" && <DownloadSettings />}

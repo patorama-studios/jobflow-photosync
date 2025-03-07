@@ -6,6 +6,8 @@ export interface HeaderSettings {
   height: number;
   logoUrl: string;
   showCompanyName: boolean;
+  title?: string | null;
+  description?: string | null;
 }
 
 interface HeaderSettingsContextType {
@@ -23,7 +25,9 @@ const defaultSettings: HeaderSettings = {
   color: '#ffffff',
   height: 65,
   logoUrl: '',
-  showCompanyName: false
+  showCompanyName: false,
+  title: null,
+  description: null
 };
 
 const HeaderSettingsContext = createContext<HeaderSettingsContextType | undefined>(undefined);
