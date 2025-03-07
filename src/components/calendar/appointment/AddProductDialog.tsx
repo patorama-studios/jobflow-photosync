@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -8,8 +8,6 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { 
   Form,
   FormControl,
@@ -18,6 +16,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +27,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, { message: "Price must be a positive number" })
 });
 
+// Create a type from the schema
 type ProductFormValues = z.infer<typeof productSchema>;
 
 interface AddProductDialogProps {
@@ -50,7 +50,12 @@ export const AddProductDialog: React.FC<AddProductDialogProps> = ({
   });
 
   const handleSubmit = (values: ProductFormValues) => {
-    onProductAdded(values);
+    // Since we're using the zodResolver and our schema requires name and price,
+    // TypeScript knows these values will be present
+    onProductAdded({
+      name: values.name,
+      price: values.price
+    });
     form.reset();
     onOpenChange(false);
   };
