@@ -35,7 +35,7 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   addressDetails, 
   onAddressSelect 
 }) => {
-  const { isLoaded, error } = useGoogleMaps();
+  const { isLoaded, error, retryLoading } = useGoogleMaps();
   const isMobile = useIsMobile();
   const [manualEntry, setManualEntry] = useState<boolean>(false);
   
@@ -120,6 +120,12 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
           {error && (
             <div className="text-sm text-destructive">
               Google Maps API could not be loaded. Please enter address manually.
+              <button 
+                onClick={retryLoading}
+                className="ml-2 text-primary hover:underline"
+              >
+                Retry
+              </button>
             </div>
           )}
           {!error && (

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { OrderDetailsForm } from './appointment/OrderDetailsForm';
-import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
+import BlockAppointmentForm from './appointment/BlockAppointmentForm';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
@@ -30,6 +30,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   selectedTime
 }) => {
   const isMobile = useIsMobile();
+  const [mode, setMode] = useState<'appointment' | 'block'>('appointment');
   
   // Format the date safely - handle potential invalid date errors
   const formattedDate = selectedDate ? format(selectedDate, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy");
@@ -50,9 +51,15 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   }, [selectedDate, selectedTime, initialAppointmentTime]);
 
   const handleCreateAppointment = () => {
-    // In a real app, this would save the appointment
-    console.log("Creating appointment with date:", appointmentDate);
-    toast.success("Appointment created successfully!");
+    if (mode === 'appointment') {
+      // In a real app, this would save the appointment
+      console.log("Creating appointment with date:", appointmentDate);
+      toast.success("Appointment created successfully!");
+    } else {
+      // In a real app, this would save the time block
+      console.log("Creating time block for date:", appointmentDate);
+      toast.success("Time block created successfully!");
+    }
     onClose();
   };
 
@@ -64,24 +71,41 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={`max-w-2xl p-0 gap-0 ${isMobile ? 'h-[85vh]' : 'h-[90vh]'} flex flex-col overflow-hidden`}>
         <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b shrink-0">
-          <DialogTitle className="text-xl">Create Appointment</DialogTitle>
+          <DialogTitle className="text-xl">
+            {mode === 'appointment' ? 'Create Appointment' : 'Create Time Block'}
+          </DialogTitle>
           <div className="flex items-center">
-            <Button variant="ghost" className="text-primary">Switch to Block</Button>
+            <Button 
+              variant="ghost" 
+              className="text-primary"
+              onClick={() => setMode(mode === 'appointment' ? 'block' : 'appointment')}
+            >
+              Switch to {mode === 'appointment' ? 'Block' : 'Appointment'}
+            </Button>
             <Button variant="ghost" size="icon" onClick={onClose} className="ml-2">
               <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
         
-        <GoogleMapsProvider apiKey={googleMapsApiKey} defaultRegion="au">
-          <div className="flex-1 overflow-y-auto p-4">
-            <OrderDetailsForm />
-          </div>
-        </GoogleMapsProvider>
+        <div className="flex-1 overflow-y-auto p-4">
+          {mode === 'appointment' ? (
+            <GoogleMapsProvider apiKey={googleMapsApiKey} defaultRegion="au">
+              <OrderDetailsForm />
+            </GoogleMapsProvider>
+          ) : (
+            <BlockAppointmentForm 
+              initialDate={selectedDate}
+              initialTime={selectedTime}
+            />
+          )}
+        </div>
         
         <DialogFooter className="px-6 py-4 border-t mt-auto shrink-0">
           <Button variant="outline" onClick={onClose} className="mr-2">Close</Button>
-          <Button onClick={handleCreateAppointment}>Create Appointment</Button>
+          <Button onClick={handleCreateAppointment}>
+            {mode === 'appointment' ? 'Create Appointment' : 'Create Block'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
