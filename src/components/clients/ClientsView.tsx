@@ -1,27 +1,15 @@
 
 import { useState } from "react";
-import { 
-  Plus, 
-  Download, 
-  Upload, 
-  Building,
-  LayoutGrid,
-  LayoutList
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ClientTable } from "@/components/clients/ClientTable";
-import { CompanyList } from "@/components/clients/CompanyList";
+import { ClientsHeader } from "@/components/clients/header/ClientsHeader";
+import { ClientsTabContent } from "@/components/clients/tabs/ClientsTabContent";
 import { AddCompanyDialog } from "@/components/clients/AddCompanyDialog";
-import { useClients } from "@/hooks/use-clients";
 import { useCompanies } from "@/hooks/use-companies";
+import { useClients } from "@/hooks/use-clients";
 import { exportToCSV } from "@/utils/csv-export";
 import { toast } from "sonner";
 
 export function ClientsView() {
   const [activeTab, setActiveTab] = useState("clients");
-  const [companyViewMode, setCompanyViewMode] = useState<'table' | 'card'>('table');
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   
   const { clients } = useClients();
@@ -118,79 +106,17 @@ export function ClientsView() {
   
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Clients</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage all your clients, teams and companies
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleImport}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import
-          </Button>
-          {/* We're removing the Add Client button here since ClientTable has its own */}
-          {activeTab === "companies" && (
-            <Button 
-              size="sm"
-              onClick={() => setAddCompanyOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Company
-            </Button>
-          )}
-        </div>
-      </div>
+      <ClientsHeader 
+        activeTab={activeTab}
+        onImport={handleImport}
+        onExport={handleExport}
+        onAddCompany={() => setAddCompanyOpen(true)}
+      />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="clients" className="flex items-center gap-2">
-            <span>Clients</span>
-          </TabsTrigger>
-          <TabsTrigger value="companies" className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            <span>Companies</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="clients">
-          <ClientTable />
-        </TabsContent>
-        
-        <TabsContent value="companies">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle>Company Management</CardTitle>
-                <div className="flex gap-2">
-                  <Button 
-                    variant={companyViewMode === 'table' ? 'default' : 'outline'} 
-                    size="icon"
-                    onClick={() => setCompanyViewMode('table')}
-                  >
-                    <LayoutList className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant={companyViewMode === 'card' ? 'default' : 'outline'} 
-                    size="icon"
-                    onClick={() => setCompanyViewMode('card')}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CompanyList viewMode={companyViewMode} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <ClientsTabContent 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
       
       <AddCompanyDialog 
         open={addCompanyOpen} 

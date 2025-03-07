@@ -74,7 +74,7 @@ export function loadGoogleMapsScript(options: {
       window[callbackName as keyof Window] = function() {
         delete window[callbackName as keyof Window];
         resolve();
-      } as any; // Use type assertion to fix the TS error
+      } as unknown as never; // Fixed: Use unknown as an intermediate step to never
       
       // Construct the URL with parameters
       const libraries = options.libraries ? options.libraries.join(',') : 'places';
