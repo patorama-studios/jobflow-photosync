@@ -9,6 +9,7 @@ import { Order } from "@/types/order-types";
 import TableHeader from './TableHeader';
 import OrderTableFooter from './TableFooter';
 import OrderRow from './OrderRow';
+import { AlertCircle } from 'lucide-react';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -17,28 +18,33 @@ interface OrdersTableProps {
 
 const OrdersTable = memo(({ orders, onRowClick }: OrdersTableProps) => {
   return (
-    <Table>
-      <TableCaption>A list of your recent orders.</TableCaption>
-      <TableHeader />
-      <TableBody>
-        {orders.length > 0 ? (
-          orders.map((order) => (
-            <OrderRow 
-              key={order.id} 
-              order={order} 
-              onRowClick={onRowClick} 
-            />
-          ))
-        ) : (
-          <tr>
-            <td colSpan={6} className="text-center py-6 px-4">
-              No orders found
-            </td>
-          </tr>
-        )}
-      </TableBody>
-      <OrderTableFooter count={orders.length} />
-    </Table>
+    <div className="w-full overflow-auto">
+      <Table>
+        <TableHeader />
+        <TableBody>
+          {orders.length > 0 ? (
+            orders.map((order) => (
+              <OrderRow 
+                key={order.id} 
+                order={order} 
+                onRowClick={onRowClick} 
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6} className="h-24 text-center">
+                <div className="flex flex-col items-center justify-center text-muted-foreground py-6">
+                  <AlertCircle className="h-8 w-8 mb-2 opacity-40" />
+                  <p>No orders found</p>
+                  <p className="text-sm">Try adjusting your filters or create a new order</p>
+                </div>
+              </td>
+            </tr>
+          )}
+        </TableBody>
+        <OrderTableFooter count={orders.length} />
+      </Table>
+    </div>
   );
 });
 

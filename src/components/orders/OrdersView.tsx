@@ -1,11 +1,12 @@
+
 import React, { useState, useCallback, memo } from "react";
-import { useSampleOrders } from "@/hooks/useSampleOrders";
 import { OrdersHeader } from "./OrdersHeader";
 import { OrdersContent } from "./OrdersContent";
 import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog"; 
+import { useOrders } from "@/hooks/use-orders";
 
 export const OrdersView = memo(function OrdersView() {
-  const { orders } = useSampleOrders();
+  const { orders, isLoading } = useOrders();
   
   const [view, setView] = useState<"list" | "grid">("list");
   const [openCreateOrder, setOpenCreateOrder] = useState(false);
@@ -23,22 +24,22 @@ export const OrdersView = memo(function OrdersView() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto space-y-8">
       <OrdersHeader
         view={view}
         onChangeView={handleViewChange}
         onOpenCreateOrder={openCreateOrderDialog}
-        orders={orders}
+        orders={orders || []}
       />
       
       <div className="space-y-4">
         <OrdersContent 
           view={view} 
           onViewChange={handleViewChange}
+          isLoading={isLoading}
         />
       </div>
       
-      {/* Use the CreateAppointmentDialog component instead of the previous dialog */}
       <CreateAppointmentDialog
         isOpen={openCreateOrder}
         onClose={() => setOpenCreateOrder(false)}

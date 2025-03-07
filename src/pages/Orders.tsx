@@ -21,7 +21,7 @@ const OrdersPage = memo(() => {
       <Routes>
         <Route path="/" element={
           <PageTransition>
-            <div className="container mx-auto py-6">
+            <div className="py-6">
               <h1 className="text-3xl font-semibold mb-6">Orders & Appointments</h1>
               <OrdersView />
             </div>

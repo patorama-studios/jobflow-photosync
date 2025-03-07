@@ -15,10 +15,10 @@ const OrderRow = memo(({ order, onRowClick }: OrderRowProps) => (
     className="cursor-pointer hover:bg-accent/50"
     onClick={() => onRowClick(order.id)}
   >
-    <TableCell>{order.orderNumber || order.id}</TableCell>
+    <TableCell>{order.orderNumber || order.order_number}</TableCell>
     <TableCell>{order.client}</TableCell>
-    <TableCell>{order.scheduledDate}</TableCell>
-    <TableCell>${order.price}</TableCell>
+    <TableCell>{new Date(order.scheduledDate || order.scheduled_date).toLocaleDateString()}</TableCell>
+    <TableCell>${order.price?.toFixed(2)}</TableCell>
     <TableCell>
       <Badge variant="secondary">{order.status || "pending"}</Badge>
     </TableCell>
