@@ -64,3 +64,4 @@ RewriteRule ^ /index.html [L]
 
 # Disable ETags for better caching
 FileETag None
+
