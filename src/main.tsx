@@ -73,7 +73,6 @@ const mountApp = () => {
     const root = createRoot(rootElement);
     
     console.log('Rendering app...');
-    // Render App - Don't wrap with BrowserRouter since it's already in AppProviders
     root.render(<App />);
     
     console.log('App render completed');

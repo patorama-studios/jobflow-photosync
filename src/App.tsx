@@ -15,6 +15,7 @@ const queryClient = createQueryClient();
 function App() {
   // Initialize performance monitoring
   useEffect(() => {
+    console.log("App component mounted");
     const cleanupPerformance = initializePerformance();
     return () => {
       cleanupPerformance();
@@ -23,13 +24,15 @@ function App() {
 
   return (
     <AppProviders queryClient={queryClient}>
-      <Routes>
-        {routes.map((route, index) => (
-          <Route key={index} path={route.path} element={route.element} />
-        ))}
-      </Routes>
-      <Toaster />
-      <Sonner />
+      <div className="app-container">
+        <Routes>
+          {routes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
+        </Routes>
+        <Toaster />
+        <Sonner />
+      </div>
     </AppProviders>
   );
 }
