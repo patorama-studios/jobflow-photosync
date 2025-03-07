@@ -13,7 +13,7 @@ interface OrderRowProps {
 const OrderRow = memo(({ order, onRowClick }: OrderRowProps) => (
   <TableRow 
     className="cursor-pointer hover:bg-accent/50"
-    onClick={() => onRowClick(order.id)}
+    onClick={() => onRowClick(order.orderNumber || order.order_number || order.id)}
   >
     <TableCell>{order.orderNumber || order.order_number}</TableCell>
     <TableCell>{order.client}</TableCell>
@@ -26,7 +26,10 @@ const OrderRow = memo(({ order, onRowClick }: OrderRowProps) => (
       className="text-right"
       onClick={(e) => e.stopPropagation()} // Prevent row click when clicking on actions
     >
-      <OrderActions orderId={order.id.toString()} />
+      <OrderActions 
+        orderId={order.id.toString()}
+        orderNumber={order.orderNumber || order.order_number}
+      />
     </TableCell>
   </TableRow>
 ));

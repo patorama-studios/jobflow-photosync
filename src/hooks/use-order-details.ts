@@ -38,12 +38,21 @@ export function useOrderDetails(orderId: string | number): UseOrderDetailsResult
       setError(null);
 
       try {
-        // Convert orderId to string to fix the type mismatch
-        const { data, error } = await supabase
+        let query = supabase
           .from('orders')
-          .select('*')
-          .eq('id', String(orderId))
-          .single();
+          .select('*');
+        
+        // Check if orderId is a UUID (36 chars with hyphens) or a simple number
+        if (typeof orderId === 'string' && 
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) {
+          // It's a UUID
+          query = query.eq('id', orderId);
+        } else {
+          // It's a number or another format, use order_number instead
+          query = query.eq('order_number', String(orderId));
+        }
+        
+        const { data, error } = await query.single();
 
         if (error) {
           console.error('Error fetching order details:', error);

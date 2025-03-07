@@ -14,14 +14,17 @@ import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react";
 
 interface OrderActionsProps {
   orderId: string;
+  orderNumber?: string;
 }
 
-export function OrderActions({ orderId }: OrderActionsProps) {
+export function OrderActions({ orderId, orderNumber }: OrderActionsProps) {
   const navigate = useNavigate();
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/orders/${orderId}`);
+    // Use orderNumber if available (for compatibility), otherwise use orderId
+    const identifier = orderNumber || orderId;
+    navigate(`/orders/${identifier}`);
   };
 
   return (
