@@ -10,6 +10,11 @@ type PageLoadingProps = {
 export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15 }) => {
   const [loadingTime, setLoadingTime] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Track refresh attempts to prevent loops
+  const [refreshAttempts, setRefreshAttempts] = useState(() => {
+    const stored = sessionStorage.getItem('refreshAttempts');
+    return stored ? parseInt(stored, 10) : 0;
+  });
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -19,32 +24,50 @@ export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15
     return () => clearInterval(interval);
   }, []);
 
-  // Force refresh after specified time
+  // Store refresh attempts in session storage
   useEffect(() => {
-    if (loadingTime >= forceRefreshAfter && !isRefreshing) {
+    sessionStorage.setItem('refreshAttempts', refreshAttempts.toString());
+  }, [refreshAttempts]);
+
+  // Handle force refresh logic
+  useEffect(() => {
+    // Only auto-refresh if we haven't tried too many times
+    if (loadingTime >= forceRefreshAfter && !isRefreshing && refreshAttempts < 2) {
       console.log(`Loading timeout reached (${forceRefreshAfter}s), refreshing page...`);
       setIsRefreshing(true);
+      
       // Small delay before refreshing to show the refreshing state
       const timeoutId = setTimeout(() => {
+        setRefreshAttempts(prev => prev + 1);
         window.location.reload();
       }, 1500);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [loadingTime, forceRefreshAfter, isRefreshing]);
+  }, [loadingTime, forceRefreshAfter, isRefreshing, refreshAttempts]);
   
   const handleManualRefresh = () => {
     setIsRefreshing(true);
+    setRefreshAttempts(prev => prev + 1);
     window.location.reload();
   };
+
+  // Break refresh loop and redirect
+  const handleBreakLoop = () => {
+    sessionStorage.removeItem('refreshAttempts');
+    window.location.href = '/login';
+  };
   
-  // Different display states based on loading time
+  // Different display states based on loading time and refresh attempts
   let statusMessage = "Loading content...";
   let detailMessage = "Please wait while we prepare your experience";
   
   if (isRefreshing) {
     statusMessage = "Refreshing page...";
     detailMessage = "This will only take a moment";
+  } else if (refreshAttempts >= 2) {
+    statusMessage = "Having trouble loading...";
+    detailMessage = "We're experiencing some difficulties";
   } else if (loadingTime > 10) {
     statusMessage = "Still loading...";
     detailMessage = "This is taking longer than expected";
@@ -67,7 +90,8 @@ export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15
         {loadingTime > 2 && !isRefreshing && <span> ({loadingTime}s)</span>}
       </p>
       
-      {loadingTime > 4 && !isRefreshing && (
+      {/* Don't show refresh button if we're in a refresh loop */}
+      {loadingTime > 4 && !isRefreshing && refreshAttempts < 2 && (
         <Button 
           onClick={handleManualRefresh}
           className="mt-4"
@@ -77,7 +101,18 @@ export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15
         </Button>
       )}
       
-      {loadingTime > 8 && !isRefreshing && (
+      {/* Show break loop button if we've refreshed too many times */}
+      {refreshAttempts >= 2 && (
+        <Button 
+          onClick={handleBreakLoop}
+          className="mt-4"
+          variant="destructive"
+        >
+          Go to Login
+        </Button>
+      )}
+      
+      {(loadingTime > 8 || refreshAttempts >= 2) && (
         <div className="mt-6 max-w-md p-4 bg-muted/50 rounded-lg text-sm">
           <p className="font-medium mb-2">Having trouble?</p>
           <ul className="list-disc pl-5 space-y-1">

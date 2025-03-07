@@ -7,46 +7,37 @@ import PageLoading from '../loading/PageLoading';
 export const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
   const location = useLocation();
-  const [checkCount, setCheckCount] = useState(0);
-
-  // Enhanced debugging
+  const [localLoading, setLocalLoading] = useState(true);
+  
+  // Enhanced debugging with proper logging
   useEffect(() => {
     console.log('ProtectedRoute rendering for path:', location.pathname, {
-      isLoading,
+      isAuthLoading: isLoading,
       hasSession: !!session,
-      checkCount
+      localLoading
     });
     
-    // Increment check count to track how many render cycles we've gone through
-    if (isLoading) {
-      setCheckCount(prev => prev + 1);
-    } else {
-      setCheckCount(0); // Reset when no longer loading
-    }
-  }, [isLoading, session, location.pathname, checkCount]);
+    // Set a timeout to prevent infinite loading
+    const timer = setTimeout(() => {
+      setLocalLoading(false);
+    }, 3000); // Wait max 3 seconds before forcing decision
+    
+    return () => clearTimeout(timer);
+  }, [isLoading, session, location.pathname, localLoading]);
 
-  // Force resolution for stuck loading states
-  useEffect(() => {
-    // If loading state is stuck for too long (more than 10 render cycles)
-    if (isLoading && checkCount > 10) {
-      console.warn('Loading state appears to be stuck, forcing navigation to login');
-      // In a real app, we might want to show an error message and redirect to login
-    }
-  }, [isLoading, checkCount]);
-
-  // Loading state
-  if (isLoading) {
-    return <PageLoading forceRefreshAfter={7} />;
+  // If still in initial auth loading state within reasonable time, show loading
+  if (isLoading && localLoading) {
+    return <PageLoading forceRefreshAfter={10} />;
   }
 
-  // Redirect to login if not authenticated
-  if (!session) {
+  // Redirect to login if definitely not authenticated
+  if (!isLoading && !session) {
     console.log('ProtectedRoute - No session, redirecting to login from:', location.pathname);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // User is authenticated, render the protected content
-  console.log('ProtectedRoute - Successfully authenticated for path:', location.pathname);
+  // Either authenticated or forcing decision after timeout
+  console.log('ProtectedRoute - Rendering protected content for:', location.pathname);
   return <>{children}</>;
 });
 
