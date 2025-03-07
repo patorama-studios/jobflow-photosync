@@ -3,15 +3,26 @@ import React from 'react';
 import { Upload, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useHeaderSettings } from '@/hooks/useHeaderSettings';
+
+interface HeaderSettings {
+  height: number;
+  color: string;
+  logoUrl: string;
+  showCompanyName: boolean;
+}
 
 interface LogoUploadSectionProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
+  settings: HeaderSettings;
+  updateSettings: (newSettings: Partial<HeaderSettings>) => void;
 }
 
-export function LogoUploadSection({ fileInputRef }: LogoUploadSectionProps) {
+export function LogoUploadSection({ 
+  fileInputRef, 
+  settings, 
+  updateSettings 
+}: LogoUploadSectionProps) {
   const { toast } = useToast();
-  const { settings, updateSettings } = useHeaderSettings();
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -21,10 +32,10 @@ export function LogoUploadSection({ fileInputRef }: LogoUploadSectionProps) {
     const reader = new FileReader();
     reader.onload = (event) => {
       const logoUrl = event.target?.result as string;
-      updateSettings({ ...settings, logoUrl });
+      updateSettings({ logoUrl });
       toast({
-        title: "Logo uploaded",
-        description: "Your company logo has been updated",
+        title: "Logo selected",
+        description: "Click Save to update your company logo",
       });
     };
     reader.readAsDataURL(file);
@@ -66,7 +77,7 @@ export function LogoUploadSection({ fileInputRef }: LogoUploadSectionProps) {
           {settings.logoUrl && (
             <Button 
               variant="outline" 
-              onClick={() => updateSettings({ ...settings, logoUrl: '' })}
+              onClick={() => updateSettings({ logoUrl: '' })}
               className="text-destructive hover:text-destructive"
             >
               Remove Logo

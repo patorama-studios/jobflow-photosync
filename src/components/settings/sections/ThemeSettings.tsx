@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { Label } from '@/components/ui/label';
@@ -7,40 +7,59 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import { FontSelector } from './theme/FontSelector';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 export function ThemeSettings() {
   const { theme, setTheme } = useTheme();
-  const { value: themeSettings, setValue: saveThemeSettings } = useAppSettings('themeSettings', {
+  const { value: savedThemeSettings, setValue: saveThemeSettings } = useAppSettings('themeSettings', {
     fontSize: 16,
     enableAnimations: true,
     uiDensity: 'comfortable'
   });
   
+  // Local state to track changes before saving
+  const [themeSettings, setThemeSettings] = useState(savedThemeSettings);
+  const [hasChanges, setHasChanges] = useState(false);
+  
   useEffect(() => {
-    document.documentElement.style.fontSize = `${themeSettings.fontSize}px`;
-  }, [themeSettings.fontSize]);
+    // Apply current settings to document
+    document.documentElement.style.fontSize = `${savedThemeSettings.fontSize}px`;
+  }, [savedThemeSettings.fontSize]);
+  
+  // Update local state when saved settings change
+  useEffect(() => {
+    setThemeSettings(savedThemeSettings);
+  }, [savedThemeSettings]);
 
   const handleFontSizeChange = (values: number[]) => {
-    saveThemeSettings({
+    setThemeSettings({
       ...themeSettings,
       fontSize: values[0]
     });
+    setHasChanges(true);
   };
 
   const handleAnimationsToggle = (enabled: boolean) => {
-    saveThemeSettings({
+    setThemeSettings({
       ...themeSettings,
       enableAnimations: enabled
     });
+    setHasChanges(true);
   };
 
   const handleDensityChange = (density: string) => {
-    saveThemeSettings({
+    setThemeSettings({
       ...themeSettings,
       uiDensity: density
     });
+    setHasChanges(true);
+  };
+  
+  const handleSaveSettings = () => {
+    saveThemeSettings(themeSettings);
+    setHasChanges(false);
   };
 
   return (
@@ -141,6 +160,18 @@ export function ThemeSettings() {
           checked={themeSettings.enableAnimations}
           onCheckedChange={handleAnimationsToggle}
         />
+      </div>
+      
+      <Separator />
+      
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSaveSettings} 
+          disabled={!hasChanges}
+        >
+          Save Theme Settings
+        </Button>
       </div>
     </div>
   );

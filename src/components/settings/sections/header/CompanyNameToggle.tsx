@@ -1,14 +1,26 @@
 
 import React, { useCallback, memo } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 
-export const CompanyNameToggle = memo(function CompanyNameToggle() {
-  const { settings, updateSettings } = useHeaderSettings();
+interface HeaderSettings {
+  height: number;
+  color: string;
+  logoUrl: string;
+  showCompanyName: boolean;
+}
 
+interface CompanyNameToggleProps {
+  settings: HeaderSettings;
+  updateSettings: (newSettings: Partial<HeaderSettings>) => void;
+}
+
+export const CompanyNameToggle = memo(function CompanyNameToggle({ 
+  settings, 
+  updateSettings 
+}: CompanyNameToggleProps) {
   const handleCompanyNameToggle = useCallback((checked: boolean) => {
-    updateSettings({ ...settings, showCompanyName: checked });
-  }, [settings, updateSettings]);
+    updateSettings({ showCompanyName: checked });
+  }, [updateSettings]);
 
   return (
     <div className="space-y-2">

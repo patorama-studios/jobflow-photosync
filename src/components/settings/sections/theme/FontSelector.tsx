@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Select,
   SelectContent,
@@ -29,21 +29,39 @@ const fontOptions: FontOption[] = [
   { name: 'Poppins', value: 'Poppins', category: 'sans-serif' },
 ];
 
-export function FontSelector() {
+interface FontSelectorProps {
+  onFontChange?: (font: string) => void;
+  saveImmediately?: boolean;
+}
+
+export function FontSelector({ onFontChange, saveImmediately = false }: FontSelectorProps) {
   const { value: fontSettings, setValue: saveFontSettings } = useAppSettings('fontSettings', { font: 'Inter' });
+  const [selectedFont, setSelectedFont] = useState(fontSettings.font);
   
   useEffect(() => {
     // Apply the font to the body element
     document.body.style.fontFamily = `${fontSettings.font}, sans-serif`;
   }, [fontSettings.font]);
   
+  useEffect(() => {
+    setSelectedFont(fontSettings.font);
+  }, [fontSettings.font]);
+  
   const handleFontChange = (font: string) => {
-    saveFontSettings({ font });
+    setSelectedFont(font);
+    
+    if (onFontChange) {
+      onFontChange(font);
+    }
+    
+    if (saveImmediately) {
+      saveFontSettings({ font });
+    }
   };
   
   return (
-    <Select value={fontSettings.font} onValueChange={handleFontChange}>
-      <SelectTrigger className="w-full" style={{ fontFamily: `${fontSettings.font}, sans-serif` }}>
+    <Select value={selectedFont} onValueChange={handleFontChange}>
+      <SelectTrigger className="w-full" style={{ fontFamily: `${selectedFont}, sans-serif` }}>
         <SelectValue placeholder="Select a font" />
       </SelectTrigger>
       <SelectContent>

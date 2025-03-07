@@ -3,11 +3,20 @@ import React from 'react';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 
-export function HeaderColorSelector() {
-  const { settings, updateSettings } = useHeaderSettings();
+interface HeaderSettings {
+  height: number;
+  color: string;
+  logoUrl: string;
+  showCompanyName: boolean;
+}
 
+interface HeaderColorSelectorProps {
+  settings: HeaderSettings;
+  updateSettings: (newSettings: Partial<HeaderSettings>) => void;
+}
+
+export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSelectorProps) {
   // Predefined colors
   const colors = [
     { name: 'Default', value: 'hsl(var(--background))' },
@@ -20,7 +29,7 @@ export function HeaderColorSelector() {
   ];
 
   const handleColorChange = (color: string) => {
-    updateSettings({ ...settings, color });
+    updateSettings({ color });
   };
 
   return (

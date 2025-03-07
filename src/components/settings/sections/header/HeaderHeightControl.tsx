@@ -1,13 +1,22 @@
 
 import React from 'react';
 import { Slider } from '@/components/ui/slider';
-import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 
-export function HeaderHeightControl() {
-  const { settings, updateSettings } = useHeaderSettings();
+interface HeaderSettings {
+  height: number;
+  color: string;
+  logoUrl: string;
+  showCompanyName: boolean;
+}
 
+interface HeaderHeightControlProps {
+  settings: HeaderSettings;
+  updateSettings: (newSettings: Partial<HeaderSettings>) => void;
+}
+
+export function HeaderHeightControl({ settings, updateSettings }: HeaderHeightControlProps) {
   const handleHeightChange = (values: number[]) => {
-    updateSettings({ ...settings, height: values[0] });
+    updateSettings({ height: values[0] });
   };
 
   return (
