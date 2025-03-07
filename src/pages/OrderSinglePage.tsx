@@ -5,15 +5,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { useOrderDetails } from '@/hooks/use-order-details';
-import { OrderHeader } from '@/components/orders/single/OrderHeader';
 import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
 import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
 import { ProductionTab } from '@/components/orders/single/ProductionTab';
 import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
-import { Loader2, FileText, DollarSign, Camera, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Upload } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Avatar } from '@/components/ui/avatar';
 
 const OrderSinglePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -89,64 +90,108 @@ const OrderSinglePage = () => {
     <MainLayout>
       <PageTransition>
         <div className="container mx-auto py-6">
-          {/* Back button */}
-          <Button 
-            variant="outline" 
-            className="mb-4" 
-            onClick={handleBackClick}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Orders
-          </Button>
+          {/* Header section */}
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-gray-700">Order #{order.orderNumber}</h1>
+                <div className="flex items-center mt-2 text-gray-500">
+                  <button 
+                    onClick={handleBackClick}
+                    className="flex items-center hover:text-primary transition-colors"
+                  >
+                    <span>All Orders</span>
+                  </button>
+                  <span className="mx-2">></span>
+                  <span>Order #{order.orderNumber}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
+                  Update Order
+                </Button>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500 mb-1">Team Members</div>
+                  <div className="flex -space-x-2">
+                    <Avatar className="border-2 border-white h-8 w-8 bg-green-500" />
+                    <Avatar className="border-2 border-white h-8 w-8 bg-blue-700" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <Separator className="my-4" />
+          </div>
           
-          <OrderHeader 
-            order={order}
-            onDeliver={handleDeliver}
-            isDelivering={isDelivering}
-          />
-          
+          {/* Tabs section */}
           <Tabs 
             defaultValue="details" 
             value={activeTab} 
             onValueChange={setActiveTab}
-            className="mt-6"
+            className="mt-2"
           >
-            <TabsList className="grid grid-cols-4 w-full mb-6">
-              <TabsTrigger value="details" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Order Details</span>
-                <span className="sm:hidden">Details</span>
-              </TabsTrigger>
-              <TabsTrigger value="invoicing" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                <span className="hidden sm:inline">Invoicing</span>
-                <span className="sm:hidden">Invoicing</span>
-              </TabsTrigger>
-              <TabsTrigger value="production" className="flex items-center gap-2">
-                <Camera className="h-4 w-4" />
-                <span className="hidden sm:inline">Production & Delivery</span>
-                <span className="sm:hidden">Production</span>
-              </TabsTrigger>
-              <TabsTrigger value="communication" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Communication</span>
-                <span className="sm:hidden">Comms</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex justify-between items-center">
+              <TabsList className="h-12 p-0 bg-transparent space-x-8">
+                <TabsTrigger 
+                  value="details" 
+                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
+                >
+                  Summary
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="activity" 
+                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
+                >
+                  Activity
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="communication" 
+                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
+                >
+                  Communication
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="invoicing" 
+                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
+                >
+                  Invoice
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="production" 
+                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
+                >
+                  Files
+                </TabsTrigger>
+              </TabsList>
+              
+              <Button className="bg-blue-500 hover:bg-blue-600">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Job
+              </Button>
+            </div>
             
-            <TabsContent value="details" className="mt-4">
+            <Separator className="mb-6 mt-0" />
+            
+            <TabsContent value="details" className="mt-6">
               <OrderDetailsTab order={order} />
             </TabsContent>
             
-            <TabsContent value="invoicing" className="mt-4">
+            <TabsContent value="activity" className="mt-6">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-medium mb-4">Activity History</h3>
+                <p className="text-gray-500">No recent activity for this order.</p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="invoicing" className="mt-6">
               <InvoicingTab order={order} />
             </TabsContent>
             
-            <TabsContent value="production" className="mt-4">
+            <TabsContent value="production" className="mt-6">
               <ProductionTab order={order} />
             </TabsContent>
             
-            <TabsContent value="communication" className="mt-4">
+            <TabsContent value="communication" className="mt-6">
               <CommunicationTab order={order} />
             </TabsContent>
           </Tabs>
