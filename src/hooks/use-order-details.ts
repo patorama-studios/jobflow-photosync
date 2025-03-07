@@ -22,7 +22,7 @@ interface UseOrderDetailsResult {
   confirmDelete: () => void;
 }
 
-export function useOrderDetails(orderId: string | number): UseOrderDetailsResult {
+export function useOrderDetails(orderId?: string | number): UseOrderDetailsResult {
   const [order, setOrder] = useState<Order | null | undefined>(null);
   const [editedOrder, setEditedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -36,6 +36,7 @@ export function useOrderDetails(orderId: string | number): UseOrderDetailsResult
       setIsLoading(true);
       setError(null);
 
+      console.log("Loading order details for ID:", orderId);
       const { order: fetchedOrder, error: fetchError } = await fetchOrderDetails(orderId);
       
       if (fetchError) {

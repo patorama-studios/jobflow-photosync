@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Edit, Trash2 } from 'lucide-react';
@@ -19,6 +18,8 @@ import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog
 
 const OrderDetails = () => {
   const { id } = useParams<{ id: string }>();
+  console.log("OrderDetails - Order ID from params:", id);
+  
   const { 
     order, 
     editedOrder, 

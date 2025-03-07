@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react';
 
 const OrderSinglePage = () => {
   const { id } = useParams<{ id: string }>();
+  console.log("Order ID from params:", id);
   const { order, isLoading, error } = useOrderDetails(id);
   const [activeTab, setActiveTab] = useState('details');
   const [isDelivering, setIsDelivering] = useState(false);
