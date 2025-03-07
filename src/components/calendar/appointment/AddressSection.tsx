@@ -98,8 +98,14 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
               Google Maps API could not be loaded. Please enter address manually.
             </div>
           )}
-          {/* If error, force manual entry - fixed error by removing the return statement */}
-          {error && setManualEntry(true)}
+          {/* Fix the error by using a useEffect or conditional rendering instead of inline execution */}
+          {error && (
+            <React.Fragment>
+              {React.useEffect(() => {
+                setManualEntry(true);
+              }, [error])}
+            </React.Fragment>
+          )}
         </div>
       )}
       

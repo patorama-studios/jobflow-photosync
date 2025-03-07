@@ -118,17 +118,20 @@ export function verifyComponentUsage(code: string): { valid: boolean; issues: st
     // Very simple extraction, would need more robust parsing for real usage
     const components = statement.replace(/import\s+/, '').replace(/\s+from.*/, '');
     
-    if (components.includes('{')) {
-      const matches = components.match(/{([^}]*)}/);
-      if (matches && matches[1]) {
-        matches[1].split(',').forEach(comp => {
-          const trimmed = comp.trim().split(' as ')[0];
-          if (trimmed) importedComponents.add(trimmed);
-        });
+    // Fix: Check if components is truthy and has replace method
+    if (components && typeof components === 'string') {
+      if (components.includes('{')) {
+        const matches = components.match(/{([^}]*)}/);
+        if (matches && matches[1]) {
+          matches[1].split(',').forEach(comp => {
+            const trimmed = comp.trim().split(' as ')[0];
+            if (trimmed) importedComponents.add(trimmed);
+          });
+        }
+      } else {
+        const defaultImport = components.trim();
+        if (defaultImport) importedComponents.add(defaultImport);
       }
-    } else if (components) { // Fixed: Check if components is truthy
-      const defaultImport = components.trim();
-      if (defaultImport) importedComponents.add(defaultImport);
     }
   });
 
