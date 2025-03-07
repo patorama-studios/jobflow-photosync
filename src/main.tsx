@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { installGlobalErrorMonitoring } from './utils/pre-commit-check.ts'
-import { BrowserRouter } from 'react-router-dom'
 
 // Apply theme and font immediately to prevent layout shifts
 const applyThemeAndFont = () => {
@@ -74,11 +73,8 @@ const mountApp = () => {
     const root = createRoot(rootElement);
     
     console.log('Rendering app...');
-    root.render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+    // Render App - Don't wrap with BrowserRouter since it's already in AppProviders
+    root.render(<App />);
     
     console.log('App render completed');
     
