@@ -101,7 +101,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
   };
 
   const handleCompanySelect = (companyId: string) => {
-    if (companyId === "") {
+    if (companyId === "none") {
       form.setValue("company", "");
       form.setValue("company_id", "");
       return;
@@ -185,7 +185,7 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
                   <Select
                     onValueChange={(value) => handleCompanySelect(value)}
                     defaultValue={field.value}
-                    value={field.value}
+                    value={field.value || "none"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -193,11 +193,11 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No company</SelectItem>
+                      <SelectItem value="none">No company</SelectItem>
                       {isLoadingCompanies ? (
-                        <SelectItem value="" disabled>Loading companies...</SelectItem>
+                        <SelectItem value="loading" disabled>Loading companies...</SelectItem>
                       ) : companies.length === 0 ? (
-                        <SelectItem value="" disabled>No companies available</SelectItem>
+                        <SelectItem value="no-companies" disabled>No companies available</SelectItem>
                       ) : (
                         companies.map((company) => (
                           <SelectItem key={company.id} value={company.id}>
