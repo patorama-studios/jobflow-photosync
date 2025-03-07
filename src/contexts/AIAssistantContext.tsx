@@ -32,15 +32,12 @@ export const AIAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     try {
       // Get only the last 10 messages to stay within token limits
-      const messageHistory = messages.slice(-10);
+      const messageHistory = [...messages.slice(-10)];
       
-      // Ensure messageHistory is properly initialized before sending
-      const historyToSend = Array.isArray(messageHistory) ? messageHistory : [];
-
       const { data, error } = await supabase.functions.invoke('ai-assistant', {
         body: {
           query: message,
-          history: historyToSend,
+          history: messageHistory,
           context: context || ""
         }
       });

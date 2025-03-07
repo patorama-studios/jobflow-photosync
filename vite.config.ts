@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => ({
   // Enable asset optimizations
   build: {
     // Use esbuild minification for faster builds
-    minify: mode === 'production' ? 'esbuild' : false, // Changed from terser to esbuild for better module compatibility
+    minify: mode === 'production' ? 'esbuild' : false,
     // Enable reportCompressedSize for better size analysis in production
     reportCompressedSize: mode === 'production',
     // Enable asset compression
@@ -44,9 +44,8 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        // Ensure proper module format for JavaScript
+        // Use standard JS extension for maximum compatibility
         format: 'es',
-        // Use .js extension for better compatibility
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
