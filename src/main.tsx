@@ -42,7 +42,39 @@ window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error);
   // Increment error count for monitoring
   window.__CONSOLE_ERROR_COUNT__ = (window.__CONSOLE_ERROR_COUNT__ || 0) + 1;
+  
+  // Add fallback UI for critical errors
+  if (document.body.children.length === 0 || 
+      (document.getElementById('root') && document.getElementById('root').children.length === 0)) {
+    displayFallbackUI('Application failed to render properly: ' + event.error.message);
+  }
 });
+
+// Display fallback UI for critical errors
+function displayFallbackUI(message) {
+  const fallbackElement = document.createElement('div');
+  fallbackElement.style.padding = '20px';
+  fallbackElement.style.maxWidth = '600px';
+  fallbackElement.style.margin = '40px auto';
+  fallbackElement.style.borderRadius = '8px';
+  fallbackElement.style.backgroundColor = '#f8f9fa';
+  fallbackElement.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+  fallbackElement.innerHTML = `
+    <h2 style="color: #e11d48; margin-bottom: 10px;">Application Error</h2>
+    <p style="margin-bottom: 15px;">${message}</p>
+    <p style="margin-bottom: 15px;">Please try refreshing the page. If the problem persists, contact support.</p>
+    <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" 
+            onclick="window.location.reload()">
+      Refresh Page
+    </button>
+  `;
+  
+  if (document.getElementById('root')) {
+    document.getElementById('root').appendChild(fallbackElement);
+  } else {
+    document.body.appendChild(fallbackElement);
+  }
+}
 
 // Install global error monitoring in non-blocking way
 setTimeout(() => {
@@ -92,15 +124,7 @@ const mountApp = () => {
     console.error("Error mounting app:", error);
     
     // Display more visible error message
-    const errorElement = document.createElement('div');
-    errorElement.className = 'error-container';
-    errorElement.innerHTML = `
-      <h2 style="color: #e11d48; font-size: 24px;">Application Error</h2>
-      <p style="font-size: 16px;">Sorry, there was a problem loading the application. Please try refreshing the page.</p>
-      <p style="font-size: 14px; color: #666;">Technical details: ${error instanceof Error ? error.message : String(error)}</p>
-      <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 16px; cursor: pointer;" onclick="window.location.reload()">Refresh Page</button>
-    `;
-    document.body.appendChild(errorElement);
+    displayFallbackUI(error instanceof Error ? error.message : String(error));
   }
 };
 

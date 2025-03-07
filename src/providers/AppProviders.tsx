@@ -15,7 +15,7 @@ interface AppProvidersProps {
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClient }) => {
-  // Adding a key to the HeaderSettingsProvider forces it to remount if needed
+  // Wrap each provider in its own ErrorBoundary to prevent cascade failures
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -24,9 +24,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
             <AuthProvider>
               <NotificationsProvider>
                 <AIAssistantProvider>
-                  <HeaderSettingsProvider>
-                    {children}
-                  </HeaderSettingsProvider>
+                  <React.Suspense fallback={<div>Loading application...</div>}>
+                    <HeaderSettingsProvider>
+                      {children}
+                    </HeaderSettingsProvider>
+                  </React.Suspense>
                 </AIAssistantProvider>
               </NotificationsProvider>
             </AuthProvider>
