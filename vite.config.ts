@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   // Configure for SPA routing in production
-  base: "./",
+  base: "/",
   // Add caching for improved performance
   cacheDir: '.vite-cache',
   plugins: [

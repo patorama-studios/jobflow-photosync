@@ -1,3 +1,4 @@
+
 # Enable URL rewriting
 RewriteEngine On
 
@@ -22,9 +23,9 @@ RewriteRule ^ /index.html [L]
   # JavaScript files - Use application/javascript for all JS/TS files
   AddType application/javascript .js
   AddType application/javascript .mjs
-  AddType application/javascript .tsx
   AddType application/javascript .jsx
   AddType application/javascript .ts
+  AddType application/javascript .tsx
   
   # Ensure JS/TS files are properly served
   <FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
@@ -56,7 +57,7 @@ RewriteRule ^ /index.html [L]
 </IfModule>
 
 # Force Content-Type for JavaScript modules and assets
-<FilesMatch "\.(js|mjs|tsx|jsx)$">
+<FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
   <IfModule mod_headers.c>
     Header set Content-Type "application/javascript"
   </IfModule>
@@ -67,7 +68,7 @@ FileETag None
 
 # Allow cross-origin access to JavaScript files
 <IfModule mod_headers.c>
-  <FilesMatch "\.(js|mjs|tsx|jsx)$">
+  <FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
     Header set Access-Control-Allow-Origin "*"
   </FilesMatch>
 </IfModule>
