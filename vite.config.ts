@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -34,14 +35,7 @@ export default defineConfig(({ mode }) => ({
   // Enable asset optimizations
   build: {
     // Use esbuild minification for faster builds
-    minify: mode === 'production' ? 'terser' : 'esbuild',
-    terserOptions: {
-      compress: {
-        drop_console: false, // Keep console logs for debugging deployment issues
-        drop_debugger: mode === 'production',
-        pure_funcs: mode === 'production' ? ['console.debug'] : [],
-      },
-    },
+    minify: mode === 'production' ? 'esbuild' : false, // Changed from terser to esbuild for better module compatibility
     // Enable reportCompressedSize for better size analysis in production
     reportCompressedSize: mode === 'production',
     // Enable asset compression
@@ -50,11 +44,11 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        // Add proper MIME types to ensure JavaScript modules are served correctly
-        // Set JavaScript output format to ensure correct MIME types
+        // Ensure proper module format for JavaScript
         format: 'es',
-        entryFileNames: 'assets/[name].[hash].mjs',
-        chunkFileNames: 'assets/[name].[hash].mjs',
+        // Use .js extension for better compatibility
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: (id) => {
           // Core libraries
@@ -119,7 +113,7 @@ export default defineConfig(({ mode }) => ({
   // Reduce build size by excluding dev-only code in production
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode),
-    __DEV__: mode !== 'production',
+    '__DEV__': mode !== 'production',
   },
   // Improved esbuild configuration
   esbuild: {

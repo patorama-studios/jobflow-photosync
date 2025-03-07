@@ -8,7 +8,7 @@ RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
 RewriteRule ^ - [L]
 
 # If the requested resource doesn't exist, rewrite to index.html
-RewriteRule ^ /index.html
+RewriteRule ^ /index.html [L]
 
 # Set security headers
 <IfModule mod_headers.c>
@@ -20,14 +20,14 @@ RewriteRule ^ /index.html
 
 # Set proper MIME types for JavaScript modules and other assets
 <IfModule mod_mime.c>
-  # Essential JavaScript MIME types
+  # JavaScript files - Add both for maximum compatibility
   AddType application/javascript .js
   AddType application/javascript .mjs
-  AddType text/javascript .js
-  AddType text/javascript .mjs
   
-  # JavaScript modules
-  AddType application/javascript .js .mjs
+  # Ensure ES modules are properly served
+  <FilesMatch "\.m?js$">
+    ForceType application/javascript
+  </FilesMatch>
   
   # JSON
   AddType application/json .json
@@ -53,9 +53,12 @@ RewriteRule ^ /index.html
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/x-javascript
 </IfModule>
 
-# Set correct Content-Type header for JavaScript modules
+# Force Content-Type for JavaScript modules - critical for ES modules to work
 <FilesMatch "\.(js|mjs)$">
   <IfModule mod_headers.c>
     Header set Content-Type "application/javascript"
   </IfModule>
 </FilesMatch>
+
+# Disable ETags for better caching
+FileETag None
