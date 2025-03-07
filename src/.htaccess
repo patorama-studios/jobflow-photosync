@@ -5,6 +5,7 @@
   AddType application/javascript .ts
   AddType application/javascript .jsx
   AddType application/javascript .js
+  ForceType application/javascript
 </IfModule>
 
 # If requested directly, attempt to serve or pass through

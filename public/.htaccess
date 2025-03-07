@@ -20,16 +20,16 @@ RewriteRule ^ /index.html [L]
 
 # Set proper MIME types for JavaScript modules and other assets
 <IfModule mod_mime.c>
-  # JavaScript files - Use application/javascript for all JS/TS files
+  # JavaScript files - Force application/javascript for all JS files
   AddType application/javascript .js
   AddType application/javascript .mjs
   AddType application/javascript .jsx
   AddType application/javascript .ts
   AddType application/javascript .tsx
   
-  # Ensure JS/TS files are properly served
-  <FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
-    Header set Content-Type "application/javascript"
+  # Ensure JS files are properly served
+  <FilesMatch "\.(js|mjs)$">
+    ForceType application/javascript
   </FilesMatch>
   
   # JSON
@@ -56,10 +56,18 @@ RewriteRule ^ /index.html [L]
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json application/x-javascript
 </IfModule>
 
-# Force Content-Type for JavaScript modules and assets
-<FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
+# Force Content-Type for JavaScript modules and assets (more strict)
+<FilesMatch "\.js$">
   <IfModule mod_headers.c>
-    Header set Content-Type "application/javascript"
+    Header set Content-Type "application/javascript" "expr=-z %{CONTENT_TYPE}"
+    Header set Cache-Control "max-age=31536000"
+  </IfModule>
+</FilesMatch>
+
+<FilesMatch "\.mjs$">
+  <IfModule mod_headers.c>
+    Header set Content-Type "application/javascript" "expr=-z %{CONTENT_TYPE}"
+    Header set Cache-Control "max-age=31536000"
   </IfModule>
 </FilesMatch>
 
@@ -68,7 +76,7 @@ FileETag None
 
 # Allow cross-origin access to JavaScript files
 <IfModule mod_headers.c>
-  <FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
+  <FilesMatch "\.(js|mjs)$">
     Header set Access-Control-Allow-Origin "*"
   </FilesMatch>
 </IfModule>
