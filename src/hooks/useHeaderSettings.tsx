@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAppSettings } from './useAppSettings';
 
 export interface HeaderSettings {
   color: string;
@@ -33,42 +34,29 @@ const defaultSettings: HeaderSettings = {
 const HeaderSettingsContext = createContext<HeaderSettingsContextType | undefined>(undefined);
 
 export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const { value: persistedSettings, setValue: saveSettings, isLoading } = useAppSettings('headerSettings', defaultSettings);
   const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
   const [title, setTitle] = useState<string | null>(null);
   const [showBackButton, setShowBackButton] = useState(false);
-  // Initialize with a no-op function instead of navigate
   const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => {
     console.log('Back button action not set');
   });
 
-  // Load settings from localStorage on first render
+  // Load settings when persisted settings are available
   useEffect(() => {
-    const savedSettings = localStorage.getItem('headerSettings');
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (e) {
-        console.error("Failed to parse header settings:", e);
-        // Use default settings if parse fails
-      }
+    if (!isLoading) {
+      setSettings(persistedSettings as HeaderSettings);
     }
-  }, []);
-
-  // Save settings to localStorage whenever they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('headerSettings', JSON.stringify(settings));
-    } catch (e) {
-      console.error("Failed to save header settings:", e);
-    }
-  }, [settings]);
+  }, [persistedSettings, isLoading]);
 
   const updateSettings = useCallback((newSettings: Partial<HeaderSettings>) => {
-    setSettings(prev => ({
-      ...prev,
+    const updatedSettings = {
+      ...settings,
       ...newSettings
-    }));
-  }, []);
+    };
+    setSettings(updatedSettings);
+    saveSettings(updatedSettings);
+  }, [settings, saveSettings]);
 
   const onBackButtonClick = useCallback(() => {
     backButtonAction();

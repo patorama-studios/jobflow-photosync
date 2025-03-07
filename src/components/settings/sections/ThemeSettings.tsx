@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { useTheme } from '@/components/theme-provider';
 import { Label } from '@/components/ui/label';
@@ -8,15 +8,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { FontSelector } from './theme/FontSelector';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 export function ThemeSettings() {
   const { theme, setTheme } = useTheme();
-  const [fontSize, setFontSize] = useState(16);
-  const [enableAnimations, setEnableAnimations] = useState(true);
+  const { value: themeSettings, setValue: saveThemeSettings } = useAppSettings('themeSettings', {
+    fontSize: 16,
+    enableAnimations: true,
+    uiDensity: 'comfortable'
+  });
   
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${themeSettings.fontSize}px`;
+  }, [themeSettings.fontSize]);
+
   const handleFontSizeChange = (values: number[]) => {
-    setFontSize(values[0]);
-    document.documentElement.style.fontSize = `${values[0]}px`;
+    saveThemeSettings({
+      ...themeSettings,
+      fontSize: values[0]
+    });
+  };
+
+  const handleAnimationsToggle = (enabled: boolean) => {
+    saveThemeSettings({
+      ...themeSettings,
+      enableAnimations: enabled
+    });
+  };
+
+  const handleDensityChange = (density: string) => {
+    saveThemeSettings({
+      ...themeSettings,
+      uiDensity: density
+    });
   };
 
   return (
@@ -72,11 +96,11 @@ export function ThemeSettings() {
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label>Font Size</Label>
-            <span className="text-sm font-medium">{fontSize}px</span>
+            <span className="text-sm font-medium">{themeSettings.fontSize}px</span>
           </div>
           <Slider
             id="font-size"
-            value={[fontSize]}
+            value={[themeSettings.fontSize]}
             min={12}
             max={24}
             step={1}
@@ -91,7 +115,7 @@ export function ThemeSettings() {
       <div className="space-y-2">
         <h4 className="text-md font-medium">Interface Density</h4>
         <Label htmlFor="ui-density">Control the spacing and density of the UI elements</Label>
-        <Select defaultValue="comfortable">
+        <Select value={themeSettings.uiDensity} onValueChange={handleDensityChange}>
           <SelectTrigger id="ui-density" className="w-full">
             <SelectValue placeholder="Select density" />
           </SelectTrigger>
@@ -114,8 +138,8 @@ export function ThemeSettings() {
           </p>
         </div>
         <Switch 
-          checked={enableAnimations}
-          onCheckedChange={setEnableAnimations}
+          checked={themeSettings.enableAnimations}
+          onCheckedChange={handleAnimationsToggle}
         />
       </div>
     </div>

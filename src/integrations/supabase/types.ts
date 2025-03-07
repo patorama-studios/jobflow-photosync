@@ -44,6 +44,36 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_global: boolean | null
+          key: string
+          updated_at: string | null
+          user_id: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_global?: boolean | null
+          key: string
+          updated_at?: string | null
+          user_id?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_global?: boolean | null
+          key?: string
+          updated_at?: string | null
+          user_id?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       client_notes: {
         Row: {
           client_id: string
