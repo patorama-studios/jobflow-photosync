@@ -11,6 +11,7 @@ import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
 import { ProductionTab } from '@/components/orders/single/ProductionTab';
 import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
 import { Loader2, FileText, DollarSign, Camera, MessageSquare, Clipboard, Home } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const OrderSinglePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,10 +26,17 @@ const OrderSinglePage = () => {
     try {
       // Mock delivery action for now
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('Content delivered successfully!');
+      toast({
+        title: "Success",
+        description: "Content delivered successfully!",
+      });
     } catch (error) {
       console.error('Error delivering content:', error);
-      toast.error('Failed to deliver content. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to deliver content. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsDelivering(false);
     }
