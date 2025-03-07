@@ -23,6 +23,7 @@ const ProductionUpload = lazy(() => import('../pages/ProductionUpload'));
 const Learning = lazy(() => import('../pages/Learning'));
 const NotificationsCenter = lazy(() => import('../pages/NotificationsCenter'));
 const Debug = lazy(() => import('../pages/Debug'));
+const ClientDetails = lazy(() => import('../pages/ClientDetails'));
 
 // Simplified public route wrapper with no auth check
 const PublicRoute = ({ element }: { element: React.ReactNode }) => (
@@ -54,6 +55,7 @@ export const routes = [
   { path: '/orders/:id', element: <ProtectedSuspenseRoute element={<OrderDetails />} /> },
   { path: '/customers', element: <ProtectedSuspenseRoute element={<Customers />} /> },
   { path: '/customers/:clientId', element: <ProtectedSuspenseRoute element={<CustomerDetails />} /> },
+  { path: '/clients/:clientId', element: <ProtectedSuspenseRoute element={<ClientDetails />} /> },
   { path: '/companies/:id', element: <ProtectedSuspenseRoute element={<CompanyDetails />} /> },
   { path: '/production', element: <ProtectedSuspenseRoute element={<Production />} /> },
   { path: '/production/board', element: <ProtectedSuspenseRoute element={<ProductionBoard />} /> },

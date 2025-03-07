@@ -22,7 +22,7 @@ export function ClientTableRow({ client }: ClientTableRowProps) {
       </TableCell>
       <TableCell>
         <div>
-          <Link to={`/customers/${client.id}`} className="font-medium hover:underline">
+          <Link to={`/clients/${client.id}`} className="font-medium hover:underline">
             {client.name}
           </Link>
         </div>
@@ -70,7 +70,7 @@ export function ClientTableRow({ client }: ClientTableRowProps) {
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link to={`/customers/${client.id}`}>View</Link>
+            <Link to={`/clients/${client.id}`}>View</Link>
           </Button>
           <Button variant="outline" size="sm">
             <MessageSquare className="h-4 w-4 mr-2" />
