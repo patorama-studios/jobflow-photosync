@@ -2,27 +2,11 @@
 import React, { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
-import { GoogleMapsTypes } from '@/lib/google-maps';
 
 interface AddressMapProps {
   lat: number;
   lng: number;
   address: string;
-}
-
-// Declare the Google Maps types to fix the build errors
-declare global {
-  interface Window {
-    google: {
-      maps: GoogleMapsTypes & {
-        Map: new (element: HTMLElement, options: any) => any;
-        Marker: new (options: any) => any;
-        Animation: {
-          DROP: number;
-        };
-      };
-    };
-  }
 }
 
 export const AddressMap: React.FC<AddressMapProps> = ({ lat, lng, address }) => {

@@ -16,6 +16,7 @@ interface SchedulingAssistantProps {
   address: string;
   photographer?: string;
   onSelectSlot: (date: Date, time: string) => void;
+  onSuggestedTimesUpdate?: (times: string[]) => void;
   lat?: number;
   lng?: number;
 }
@@ -32,6 +33,7 @@ export const SchedulingAssistant: React.FC<SchedulingAssistantProps> = ({
   address,
   photographer,
   onSelectSlot,
+  onSuggestedTimesUpdate,
   lat,
   lng
 }) => {
@@ -55,6 +57,12 @@ export const SchedulingAssistant: React.FC<SchedulingAssistantProps> = ({
       
       setSuggestions(suggestedSlots);
       
+      // Update parent component with suggested times
+      if (onSuggestedTimesUpdate && suggestedSlots.length > 0) {
+        const suggestedTimes = suggestedSlots.map(slot => slot.time);
+        onSuggestedTimesUpdate(suggestedTimes.slice(0, 3));
+      }
+      
       if (suggestedSlots.length === 0) {
         toast.warning("No optimal time slots found. Try different parameters.");
       }
@@ -67,11 +75,11 @@ export const SchedulingAssistant: React.FC<SchedulingAssistantProps> = ({
   };
 
   useEffect(() => {
-    // Clear suggestions when address changes
-    if (isOpen) {
+    // Load suggestions automatically when component mounts and address is provided
+    if (address && lat && lng) {
       loadSuggestions();
     }
-  }, [isOpen, address, photographer]);
+  }, [address, photographer, lat, lng]);
 
   const handleSelectSlot = (suggestion: Suggestion) => {
     onSelectSlot(suggestion.date, suggestion.time);
@@ -85,11 +93,11 @@ export const SchedulingAssistant: React.FC<SchedulingAssistantProps> = ({
         <Button 
           variant="outline" 
           size="sm" 
-          className="flex items-center text-xs mt-2"
+          className="flex items-center text-xs"
           disabled={!address}
         >
           <Calendar className="mr-2 h-3 w-3" />
-          Get smart scheduling suggestions
+          View all smart scheduling suggestions
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">

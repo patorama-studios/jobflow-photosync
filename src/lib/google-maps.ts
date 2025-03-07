@@ -19,6 +19,11 @@ export interface GoogleMapsTypes {
   event: {
     clearInstanceListeners: (instance: any) => void;
   };
+  Map: new (element: HTMLElement, options: any) => any;
+  Marker: new (options: any) => any;
+  Animation: {
+    DROP: number;
+  };
 }
 
 export interface Autocomplete {
@@ -164,12 +169,8 @@ export function retryLoadGoogleMaps(options: {
 // Add window augmentation to include google maps
 declare global {
   interface Window {
-    google?: {
-      maps: GoogleMapsTypes & {
-        event: {
-          clearInstanceListeners: (instance: any) => void;
-        }
-      };
+    google: {
+      maps: GoogleMapsTypes;
       [key: string]: any; // For the callback function
     };
   }

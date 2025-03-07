@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { GoogleMapsInput } from './address/GoogleMapsInput';
 import { ManualAddressForm } from './address/ManualAddressForm';
 import { AddressDisplay } from './address/AddressDisplay';
-import { SchedulingAssistant } from './scheduling/SchedulingAssistant';
+import { SchedulingSection } from './scheduling/SchedulingSection';
 
 interface AddressDetails {
   formattedAddress: string;
@@ -32,17 +32,33 @@ interface AddressSectionProps {
     lng: number;
   }) => void;
   onScheduleSelect?: (date: Date, time: string) => void;
+  selectedDate?: Date;
+  selectedTime?: string;
 }
 
 export const AddressSection: React.FC<AddressSectionProps> = ({ 
   addressDetails, 
   selectedPhotographer,
   onAddressSelect,
-  onScheduleSelect
+  onScheduleSelect,
+  selectedDate = new Date(),
+  selectedTime = "9:00 AM"
 }) => {
   const { error } = useGoogleMaps();
   const isMobile = useIsMobile();
   const [manualEntry, setManualEntry] = useState<boolean>(false);
+  const [date, setDate] = useState<Date>(selectedDate);
+  const [time, setTime] = useState<string>(selectedTime);
+  
+  // Update state when props change
+  useEffect(() => {
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+    if (selectedTime) {
+      setTime(selectedTime);
+    }
+  }, [selectedDate, selectedTime]);
   
   const handleManualAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,55 +90,68 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
     }
   }, [error]);
 
-  const handleScheduleSelect = (date: Date, time: string) => {
+  const handleDateChange = (newDate: Date) => {
+    setDate(newDate);
     if (onScheduleSelect) {
-      onScheduleSelect(date, time);
+      onScheduleSelect(newDate, time);
+    }
+  };
+  
+  const handleTimeChange = (newTime: string) => {
+    setTime(newTime);
+    if (onScheduleSelect) {
+      onScheduleSelect(date, newTime);
     }
   };
 
   return (
-    <div>
-      <p className="text-sm font-medium mb-2">Address</p>
-      
-      <GoogleMapsInput 
-        addressDetails={addressDetails} 
-        onAddressSelect={onAddressSelect} 
-      />
-      
-      {!error && (
-        <div className="mt-2">
-          <button
-            type="button"
-            onClick={() => setManualEntry(!manualEntry)}
-            className="text-xs text-primary hover:underline"
-          >
-            {manualEntry ? "Use address search" : "Enter address manually"}
-          </button>
-        </div>
-      )}
-      
-      {/* Manual address entry form */}
-      {(manualEntry || error) && (
-        <ManualAddressForm 
-          addressDetails={addressDetails}
-          onAddressChange={handleManualAddressInput}
-        />
-      )}
-      
-      {/* Display the address details */}
-      {addressDetails.formattedAddress && !manualEntry && (
-        <AddressDisplay 
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm font-medium mb-2">Address</p>
+        
+        <GoogleMapsInput 
           addressDetails={addressDetails} 
-          isMobile={isMobile}
+          onAddressSelect={onAddressSelect} 
         />
-      )}
+        
+        {!error && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setManualEntry(!manualEntry)}
+              className="text-xs text-primary hover:underline"
+            >
+              {manualEntry ? "Use address search" : "Enter address manually"}
+            </button>
+          </div>
+        )}
+        
+        {/* Manual address entry form */}
+        {(manualEntry || error) && (
+          <ManualAddressForm 
+            addressDetails={addressDetails}
+            onAddressChange={handleManualAddressInput}
+          />
+        )}
+        
+        {/* Display the address details with map */}
+        {addressDetails.formattedAddress && !manualEntry && (
+          <AddressDisplay 
+            addressDetails={addressDetails} 
+            isMobile={isMobile}
+          />
+        )}
+      </div>
       
-      {/* Show the scheduling assistant when we have an address */}
-      {addressDetails.formattedAddress && onScheduleSelect && (
-        <SchedulingAssistant
+      {/* Date and Time section */}
+      {onScheduleSelect && (
+        <SchedulingSection
+          date={date}
+          time={time}
           address={addressDetails.formattedAddress}
           photographer={selectedPhotographer}
-          onSelectSlot={handleScheduleSelect}
+          onDateChange={handleDateChange}
+          onTimeChange={handleTimeChange}
           lat={addressDetails.lat}
           lng={addressDetails.lng}
         />

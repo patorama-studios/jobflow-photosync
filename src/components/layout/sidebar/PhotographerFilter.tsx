@@ -1,25 +1,39 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
-
-type Photographer = {
-  id: number;
-  name: string;
-  color: string;
-};
+import { usePhotographers } from "@/hooks/use-photographers";
 
 type PhotographerFilterProps = {
-  photographers: Photographer[];
   selectedPhotographers: number[];
   onToggle: (id: number) => void;
   isMobile?: boolean;
 };
 
 export function PhotographerFilter({ 
-  photographers, 
   selectedPhotographers, 
   onToggle,
   isMobile = false
 }: PhotographerFilterProps) {
+  const { photographers, isLoading } = usePhotographers();
+
+  if (isLoading) {
+    return (
+      <div className="mb-4">
+        <h3 className={`text-sm font-medium mb-3 ${!isMobile && 'px-3'}`}>Photographers</h3>
+        <div className="space-y-2 animate-pulse">
+          {[1, 2, 3, 4].map((i) => (
+            <div 
+              key={i} 
+              className={`flex items-center space-x-2 py-1 ${!isMobile && 'px-3'}`}
+            >
+              <div className="h-4 w-4 bg-muted rounded" />
+              <div className="h-4 w-24 bg-muted rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-4">
       <h3 className={`text-sm font-medium mb-3 ${!isMobile && 'px-3'}`}>Photographers</h3>

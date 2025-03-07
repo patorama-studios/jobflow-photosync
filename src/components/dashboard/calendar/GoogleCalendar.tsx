@@ -13,6 +13,9 @@ import { CalendarEventComponent } from './components/CalendarEventComponent';
 import { TimeSlotWrapper } from './components/TimeSlotWrapper';
 import { DatePickerButton } from './components/DatePickerButton';
 import { convertOrdersToEvents, convertOrdersToTypedOrders } from '@/utils/calendar-event-converter';
+import { DayView } from './views/DayView';
+import { CardView } from './views/CardView';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define the props for the GoogleCalendar component
 interface GoogleCalendarProps {
@@ -48,12 +51,45 @@ export function GoogleCalendar({
     handleDeleteEvent,
     handleDateChange
   } = calendarState;
+  const [viewMode, setViewMode] = useState<"month" | "week" | "day" | "card">(defaultView);
+  const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
+  const [isLoadingSupabase, setIsLoadingSupabase] = useState(true);
+
+  // Fetch orders from Supabase
+  useEffect(() => {
+    async function fetchOrdersFromSupabase() {
+      try {
+        setIsLoadingSupabase(true);
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          setSupabaseOrders(data as Order[]);
+        }
+      } catch (err) {
+        console.error('Error fetching orders from Supabase:', err);
+        // Fall back to sample orders (already loaded)
+      } finally {
+        setIsLoadingSupabase(false);
+      }
+    }
+    
+    fetchOrdersFromSupabase();
+  }, []);
+
+  // Determine which orders to use
+  const activeOrders = supabaseOrders.length > 0 ? supabaseOrders : orders;
 
   // Convert orders to calendar events
   useEffect(() => {
-    const calendarEvents = convertOrdersToEvents(orders);
+    const calendarEvents = convertOrdersToEvents(activeOrders);
     setEvents(calendarEvents);
-  }, [orders, setEvents]);
+  }, [activeOrders, setEvents]);
 
   // Filter events based on selected photographers
   const filteredEvents = selectedPhotographers.length > 0
@@ -66,11 +102,85 @@ export function GoogleCalendar({
   };
 
   // Get the filtered orders for the selected date
-  const typedOrders = convertOrdersToTypedOrders(orders);
+  const typedOrders = convertOrdersToTypedOrders(activeOrders);
   const filteredOrders = typedOrders.filter(order => {
+    // Filter by photographer if needed
+    if (selectedPhotographers.length > 0) {
+      const photographerMatch = photographers.some(p => 
+        selectedPhotographers.includes(p.id) && order.photographer === p.name
+      );
+      if (!photographerMatch) return false;
+    }
+    
+    // Always filter by date
     const orderDate = new Date(order.scheduledDate);
     return orderDate.toDateString() === date.toDateString();
   });
+
+  // Get photographer names from the events for filtering
+  const photographers = Array.from(new Set(events.map(event => ({
+    id: event.photographerId,
+    name: event.photographer
+  })))).filter(p => p.name); // Filter out empty photographer names
+
+  // Render different views based on viewMode
+  const renderCalendarView = () => {
+    switch (viewMode) {
+      case 'day':
+        return (
+          <DayView 
+            date={date} 
+            orders={activeOrders} 
+            onTimeSlotClick={onTimeSlotClick} 
+          />
+        );
+      case 'card':
+        return (
+          <CardView
+            selectedDate={date}
+            orders={activeOrders}
+            onDayClick={onDayClick}
+          />
+        );
+      default:
+        return (
+          <Calendar
+            localizer={localizer}
+            events={filteredEvents}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: '100%' }}
+            onSelectEvent={handleSelectEvent}
+            onSelectSlot={handleSelectSlot}
+            selectable
+            components={{
+              event: CalendarEventComponent,
+              timeSlotWrapper: TimeSlotWrapper,
+              toolbar: CalendarToolbar,
+            }}
+            date={date}
+            onNavigate={calendarState.setDate}
+            view={viewMode}
+            onView={(view) => setViewMode(view as any)}
+            eventPropGetter={(event) => ({
+              style: {
+                backgroundColor: event.color,
+              },
+            })}
+            dayPropGetter={(date) => {
+              const today = new Date();
+              return {
+                className: date.getDate() === today.getDate() &&
+                  date.getMonth() === today.getMonth() &&
+                  date.getFullYear() === today.getFullYear()
+                  ? 'rbc-today'
+                  : '',
+              };
+            }}
+          />
+        );
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -83,42 +193,41 @@ export function GoogleCalendar({
             onDateChange={handleDateChange}
           />
         </div>
+        
+        <div className="flex space-x-1">
+          <Button
+            variant={viewMode === 'month' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('month')}
+          >
+            Month
+          </Button>
+          <Button
+            variant={viewMode === 'week' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('week')}
+          >
+            Week
+          </Button>
+          <Button
+            variant={viewMode === 'day' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('day')}
+          >
+            Day
+          </Button>
+          <Button
+            variant={viewMode === 'card' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('card')}
+          >
+            Card
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 relative" ref={calendarRef}>
-        <Calendar
-          localizer={localizer}
-          events={filteredEvents}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: '100%' }}
-          onSelectEvent={handleSelectEvent}
-          onSelectSlot={handleSelectSlot}
-          selectable
-          components={{
-            event: CalendarEventComponent,
-            timeSlotWrapper: TimeSlotWrapper,
-            toolbar: CalendarToolbar,
-          }}
-          date={date}
-          onNavigate={calendarState.setDate}
-          defaultView={defaultView}
-          eventPropGetter={(event) => ({
-            style: {
-              backgroundColor: event.color,
-            },
-          })}
-          dayPropGetter={(date) => {
-            const today = new Date();
-            return {
-              className: date.getDate() === today.getDate() &&
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear()
-                ? 'rbc-today'
-                : '',
-            };
-          }}
-        />
+        {renderCalendarView()}
 
         {isPopoverOpen && selectedEvent && (
           <div
