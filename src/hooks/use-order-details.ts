@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Order } from '@/types/order-types';
 import { fetchOrderDetails, saveOrderChanges, deleteOrder } from '@/services/order-service';
+import { useNavigate } from 'react-router-dom';
 
 interface UseOrderDetailsResult {
   order: Order | null | undefined;
@@ -30,6 +31,7 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [refundsForOrder, setRefundsForOrder] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadOrderDetails = async () => {
@@ -111,10 +113,12 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
       
       if (deleteError) {
         setError(deleteError);
+      } else if (success) {
+        // Redirect to orders page after successful deletion
+        navigate('/orders');
       }
       
       setIsDeleteDialogOpen(false);
-      // Redirect or handle post-deletion logic would be handled by the component
     } catch (err: any) {
       console.error('Error deleting order:', err);
       setError(err.message || 'An unexpected error occurred while deleting');

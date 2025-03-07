@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -12,11 +12,21 @@ import { ProductionTab } from '@/components/orders/single/ProductionTab';
 import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
 import { Loader2, FileText, DollarSign, Camera, MessageSquare, Clipboard, Home } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
 
 const OrderSinglePage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   console.log("Order ID from params:", id);
-  const { order, isLoading, error } = useOrderDetails(id);
+  const { 
+    order, 
+    isLoading, 
+    error, 
+    isDeleteDialogOpen, 
+    setIsDeleteDialogOpen, 
+    handleDeleteClick, 
+    confirmDelete 
+  } = useOrderDetails(id);
   const [activeTab, setActiveTab] = useState('details');
   const [isDelivering, setIsDelivering] = useState(false);
 
@@ -40,6 +50,11 @@ const OrderSinglePage = () => {
     } finally {
       setIsDelivering(false);
     }
+  };
+
+  // Handle delete confirmation
+  const handleConfirmDelete = () => {
+    confirmDelete();
   };
 
   if (isLoading) {
@@ -150,6 +165,12 @@ const OrderSinglePage = () => {
               <CommunicationTab order={order} />
             </TabsContent>
           </Tabs>
+          
+          <DeleteOrderDialog
+            isOpen={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            onConfirmDelete={handleConfirmDelete}
+          />
         </div>
       </PageTransition>
     </MainLayout>

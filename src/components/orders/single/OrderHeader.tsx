@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ExternalLink, Download, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Send } from "lucide-react";
 import { Order } from '@/types/order-types';
-import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/utils';
+import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
 
 interface OrderHeaderProps {
   order: Order;
@@ -15,43 +16,38 @@ interface OrderHeaderProps {
 export const OrderHeader: React.FC<OrderHeaderProps> = ({ 
   order, 
   onDeliver,
-  isDelivering 
+  isDelivering
 }) => {
-  const isDelivered = order.status === 'delivered';
-  const fullAddress = [order.address, order.city, order.state, order.zip].filter(Boolean).join(', ');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+
+  // Format date for display
+  const formattedDate = order.scheduledDate ? formatDate(new Date(order.scheduledDate)) : 'No date scheduled';
   
+  // Determine status badge color
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'in progress': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'scheduled': return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      case 'canceled': return 'bg-red-100 text-red-800 hover:bg-red-200';
+      default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
   return (
-    <div className="bg-background border rounded-lg p-6 shadow-sm">
-      <div className="flex flex-col md:flex-row justify-between gap-4">
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{order.orderNumber || order.order_number}</h1>
-            <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{order.orderNumber}</h1>
+            <Badge className={getStatusColor(order.status || '')} variant="outline">
+              {order.status || 'Unknown'}
+            </Badge>
           </div>
-          <h2 className="text-xl mt-1">{fullAddress}</h2>
-          <p className="text-muted-foreground mt-1">
-            {order.client} | {order.scheduledDate || order.scheduled_date} {order.scheduledTime || order.scheduled_time}
-          </p>
+          <p className="text-gray-500">{order.address}, {order.city}, {order.state} {order.zip}</p>
         </div>
         
-        <div className="flex flex-wrap gap-2">
-          {/* Download link button */}
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/delivery/${order.id}`} className="flex items-center gap-1">
-              <Download className="h-4 w-4" />
-              Download Page
-            </Link>
-          </Button>
-          
-          {/* Property website button */}
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/property/${order.id}`} className="flex items-center gap-1" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-              Property Website
-            </Link>
-          </Button>
-          
-          {/* Deliver/Re-deliver button */}
+        <div className="flex gap-2">
           <Button 
             variant="default" 
             size="sm" 
@@ -59,35 +55,51 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
             disabled={isDelivering}
             className="flex items-center gap-1"
           >
-            {isDelivering ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                {isDelivered ? 'Re-delivering...' : 'Delivering...'}
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4" />
-                {isDelivered ? 'Re-deliver Content' : 'Deliver Content'}
-              </>
-            )}
+            <Send className="w-4 h-4 mr-1" />
+            {isDelivering ? 'Sending...' : 'Deliver Content'}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-1 text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Delete
           </Button>
         </div>
       </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <p className="text-sm text-gray-500">Client</p>
+          <p className="font-medium">{order.client}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Photographer</p>
+          <p className="font-medium">{order.photographer || 'Not assigned'}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Date</p>
+          <p className="font-medium">{formattedDate}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Price</p>
+          <p className="font-medium">${order.price}</p>
+        </div>
+      </div>
+
+      <DeleteOrderDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirmDelete={() => {
+          // This will trigger the delete action and navigate to /orders
+          // The navigation is handled in the useOrderDetails hook
+          if (order.id) {
+            window.location.href = '/orders';
+          }
+        }}
+      />
     </div>
   );
 };
-
-function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (status?.toLowerCase()) {
-    case 'completed':
-    case 'delivered':
-      return 'default';
-    case 'pending':
-    case 'scheduled':
-      return 'secondary';
-    case 'canceled':
-      return 'destructive';
-    default:
-      return 'outline';
-  }
-}
