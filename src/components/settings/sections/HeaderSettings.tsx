@@ -13,30 +13,40 @@ import { useToast } from '@/hooks/use-toast';
 export function HeaderSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { settings: savedSettings, updateSettings: saveSettings } = useHeaderSettings();
-  const [localSettings, setLocalSettings] = useState(savedSettings);
+  const [localSettings, setLocalSettings] = useState({ ...savedSettings });
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
+  const initialLoadDone = useRef(false);
   
-  // Only load initial settings once
+  // Only load initial settings once to prevent loops
   useEffect(() => {
-    setLocalSettings(savedSettings);
-  }, []); // Empty dependency array to run only once
+    if (!initialLoadDone.current) {
+      setLocalSettings({ ...savedSettings });
+      initialLoadDone.current = true;
+    }
+  }, []);
   
   const updateLocalSettings = (newSettingsPartial: Partial<typeof savedSettings>) => {
     setLocalSettings(prev => {
       const newSettings = { ...prev, ...newSettingsPartial };
-      setHasChanges(JSON.stringify(newSettings) !== JSON.stringify(savedSettings));
+      // Only update hasChanges if the settings actually changed
+      const isChanged = JSON.stringify(newSettings) !== JSON.stringify(savedSettings);
+      if (hasChanges !== isChanged) {
+        setHasChanges(isChanged);
+      }
       return newSettings;
     });
   };
   
   const handleSave = () => {
-    saveSettings(localSettings);
-    setHasChanges(false);
-    toast({
-      title: "Settings saved",
-      description: "Header settings have been updated",
-    });
+    if (hasChanges) {
+      saveSettings(localSettings);
+      setHasChanges(false);
+      toast({
+        title: "Settings saved",
+        description: "Header settings have been updated",
+      });
+    }
   };
 
   return (

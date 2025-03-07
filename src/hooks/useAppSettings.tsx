@@ -10,9 +10,11 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const [lastSavedValue, setLastSavedValue] = useState<string>('');
 
   // Fetch settings from Supabase on component mount
   useEffect(() => {
+    let isMounted = true;
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
@@ -25,29 +27,50 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
 
         if (error) throw error;
         
-        if (data) {
-          // Ensure we're setting an object type for AppSettingsValue
-          setValue(typeof data.value === 'object' ? data.value : JSON.parse(String(data.value)));
-        } else {
-          // If no settings found, use default and save it
-          await saveSettings(defaultValue, false);
-          setValue(defaultValue);
+        if (isMounted) {
+          if (data) {
+            // Ensure we're setting an object type for AppSettingsValue
+            const parsedValue = typeof data.value === 'object' ? data.value : JSON.parse(String(data.value));
+            setValue(parsedValue);
+            setLastSavedValue(JSON.stringify(parsedValue));
+          } else {
+            // If no settings found, use default and save it
+            await saveSettings(defaultValue, false);
+            setValue(defaultValue);
+            setLastSavedValue(JSON.stringify(defaultValue));
+          }
         }
       } catch (err) {
         console.error('Error fetching app settings:', err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-        // Fallback to default values if fetch fails
-        setValue(defaultValue);
+        if (isMounted) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+          // Fallback to default values if fetch fails
+          setValue(defaultValue);
+          setLastSavedValue(JSON.stringify(defaultValue));
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchSettings();
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
   }, [key, defaultValue]);
 
   // Save settings to Supabase
   const saveSettings = useCallback(async (newValue: AppSettingsValue, showToast = true) => {
+    // Avoid unnecessary saves if the value hasn't changed
+    const newValueString = JSON.stringify(newValue);
+    if (newValueString === lastSavedValue) {
+      return;
+    }
+    
     try {
       setIsLoading(true);
 
@@ -84,6 +107,7 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
       if (result.error) throw result.error;
       
       setValue(newValue);
+      setLastSavedValue(newValueString);
       
       if (showToast) {
         toast({
@@ -105,7 +129,7 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
     } finally {
       setIsLoading(false);
     }
-  }, [key, toast]);
+  }, [key, toast, lastSavedValue]);
 
   return {
     value,

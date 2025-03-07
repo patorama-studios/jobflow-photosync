@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -25,13 +25,17 @@ export type SettingsCategory =
 export function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");
   const { updateSettings } = useHeaderSettings();
+  const hasSetHeader = useRef(false);
 
   // Only update the header settings once when the component mounts
   useEffect(() => {
-    updateSettings({
-      title: "Settings",
-      description: "Manage your account and application preferences"
-    });
+    if (!hasSetHeader.current) {
+      updateSettings({
+        title: "Settings",
+        description: "Manage your account and application preferences"
+      });
+      hasSetHeader.current = true;
+    }
   }, [updateSettings]);
   
   return (

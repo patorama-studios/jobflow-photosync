@@ -42,21 +42,35 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
     console.log('Back button action not set');
   });
 
-  // Load settings when persisted settings are available
+  // Load settings when persisted settings are available and only once
   useEffect(() => {
-    if (!isLoading) {
-      setSettings(persistedSettings as HeaderSettings);
+    if (!isLoading && persistedSettings) {
+      setSettings(previousSettings => {
+        // Only update if different to prevent infinite loops
+        if (JSON.stringify(previousSettings) !== JSON.stringify(persistedSettings)) {
+          return persistedSettings as HeaderSettings;
+        }
+        return previousSettings;
+      });
     }
   }, [persistedSettings, isLoading]);
 
+  // Memoize updateSettings to prevent it from changing on every render
   const updateSettings = useCallback((newSettings: Partial<HeaderSettings>) => {
-    const updatedSettings = {
-      ...settings,
-      ...newSettings
-    };
-    setSettings(updatedSettings);
-    saveSettings(updatedSettings);
-  }, [settings, saveSettings]);
+    setSettings(prevSettings => {
+      const updatedSettings = {
+        ...prevSettings,
+        ...newSettings
+      };
+      
+      // Only save if there are actual changes to prevent loops
+      if (JSON.stringify(updatedSettings) !== JSON.stringify(prevSettings)) {
+        saveSettings(updatedSettings);
+        return updatedSettings;
+      }
+      return prevSettings;
+    });
+  }, [saveSettings]);
 
   const onBackButtonClick = useCallback(() => {
     backButtonAction();
