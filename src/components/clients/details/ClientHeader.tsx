@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavigateFunction } from "react-router-dom";
 import { 
   ChevronLeft, 
   Building, 
@@ -15,7 +15,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Customer } from "@/components/clients/mock-data";
 import { mockCompanies } from "@/components/clients/mock-data";
-import { NavigateFunction } from "react-router-dom";
 import { useDialog } from "@/hooks/use-dialog";
 import { EditClientDialog } from "@/components/clients/details/EditClientDialog";
 
@@ -24,9 +23,18 @@ interface ClientHeaderProps {
   contentLocked: boolean;
   navigate: NavigateFunction;
   onClientUpdated?: () => void;
+  onResetPassword?: () => void;
+  onPhotoUpload?: () => void;
 }
 
-export function ClientHeader({ client, contentLocked, navigate, onClientUpdated }: ClientHeaderProps) {
+export function ClientHeader({ 
+  client, 
+  contentLocked, 
+  navigate, 
+  onClientUpdated,
+  onResetPassword,
+  onPhotoUpload
+}: ClientHeaderProps) {
   const { open, setOpen } = useDialog();
   
   // Get company info if the client has a company
@@ -51,7 +59,10 @@ export function ClientHeader({ client, contentLocked, navigate, onClientUpdated 
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
+          <Avatar 
+            className="h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={onPhotoUpload}
+          >
             <AvatarImage src={client.photoUrl} alt={client.name} />
             <AvatarFallback className="text-lg">{client.name.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -89,14 +100,12 @@ export function ClientHeader({ client, contentLocked, navigate, onClientUpdated 
           <Pencil className="h-4 w-4 mr-2" />
           Edit Details
         </Button>
-        <Button variant="outline" size="sm">
-          <KeyRound className="h-4 w-4 mr-2" />
-          Reset Password
-        </Button>
-        <Button variant="outline" size="sm">
-          <MessageSquare className="h-4 w-4 mr-2" />
-          Add Note
-        </Button>
+        {onResetPassword && (
+          <Button variant="outline" size="sm" onClick={onResetPassword}>
+            <KeyRound className="h-4 w-4 mr-2" />
+            Reset Password
+          </Button>
+        )}
       </div>
       
       <EditClientDialog 

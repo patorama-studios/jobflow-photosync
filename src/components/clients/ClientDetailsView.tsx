@@ -14,6 +14,10 @@ import { ClientOrders } from "@/components/clients/tabs/ClientOrders";
 import { ClientSettings } from "@/components/clients/details/ClientSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ClientNotes } from "./details/ClientNotes";
+import { useClientPhoto } from "@/hooks/use-client-photo";
+import { useDialog } from "@/hooks/use-dialog";
+import { PhotoUploadDialog } from "./details/PhotoUploadDialog";
 
 interface ClientDetailsViewProps {
   clientId?: string;
@@ -24,8 +28,10 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [client, setClient] = useState(mockCustomers[0]);
   const [loading, setLoading] = useState(true);
+  const { open: photoDialogOpen, setOpen: setPhotoDialogOpen } = useDialog();
   
   const { downloadSettings, handleSaveDownloadSettings } = useClientDownloadSettings();
+  const { photoUrl, fetchClientPhoto } = useClientPhoto(clientId || '');
 
   // Fetch client data from Supabase
   const fetchClientData = async () => {
@@ -63,6 +69,9 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
         };
         
         setClient(clientData);
+        
+        // Also fetch the client photo
+        fetchClientPhoto();
       } else {
         navigate("/clients");
       }
@@ -72,6 +81,43 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle password reset for client
+  const handleResetPassword = async () => {
+    if (!client.email) {
+      toast.error("Client has no email address");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${window.location.origin}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: client.email }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send password reset email');
+      }
+      
+      toast.success("Password reset email sent successfully");
+    } catch (error: any) {
+      console.error("Error sending password reset:", error);
+      toast.error(`Failed to send password reset: ${error.message}`);
+    }
+  };
+
+  // Handle photo update
+  const handlePhotoUpdated = (newPhotoUrl: string) => {
+    setClient(prev => ({
+      ...prev,
+      photoUrl: newPhotoUrl
+    }));
   };
 
   // Fetch client when clientId changes
@@ -90,6 +136,8 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
         contentLocked={downloadSettings.contentLocked}
         navigate={navigate}
         onClientUpdated={fetchClientData}
+        onResetPassword={handleResetPassword}
+        onPhotoUpload={() => setPhotoDialogOpen(true)}
       />
 
       <ClientInfoCard client={client} />
@@ -119,7 +167,14 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
         </TabsList>
         
         <TabsContent value="overview">
-          <ClientOverview client={client} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ClientOverview client={client} />
+            </div>
+            <div className="lg:col-span-1">
+              <ClientNotes clientId={client.id} />
+            </div>
+          </div>
         </TabsContent>
         
         <TabsContent value="teams">
@@ -127,7 +182,7 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
         </TabsContent>
         
         <TabsContent value="billing">
-          <ClientBilling client={client} />
+          <ClientBilling client={client} clientId={client.id} />
         </TabsContent>
         
         <TabsContent value="orders">
@@ -141,6 +196,15 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
           />
         </TabsContent>
       </Tabs>
+      
+      <PhotoUploadDialog
+        open={photoDialogOpen}
+        onOpenChange={setPhotoDialogOpen}
+        clientId={client.id}
+        clientName={client.name}
+        onPhotoUpdated={handlePhotoUpdated}
+        currentPhotoUrl={client.photoUrl}
+      />
     </div>
   );
 }

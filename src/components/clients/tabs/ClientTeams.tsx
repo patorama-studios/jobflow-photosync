@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Customer, TeamMember } from "@/components/clients/mock-data";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useClientTeams } from "@/hooks/use-client-teams";
 
 interface ClientTeamsProps {
   client: Customer;
@@ -25,9 +26,25 @@ export function ClientTeams({ client }: ClientTeamsProps) {
   const [team, setTeam] = useState<TeamMember[]>(client.team || []);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [potentialMemberSearch, setPotentialMemberSearch] = useState("");
+  
+  const { allClients, isLoading } = useClientTeams();
+  
+  // Filter potential members
+  const filteredPotentialMembers = potentialMemberSearch.trim() === "" 
+    ? allClients
+    : allClients.filter(member => 
+        member.name.toLowerCase().includes(potentialMemberSearch.toLowerCase()) ||
+        member.email.toLowerCase().includes(potentialMemberSearch.toLowerCase())
+      );
   
   // Mock function to add a team member
   const addTeamMember = (member: TeamMember) => {
+    // Check if member already exists in team
+    if (team.find(m => m.id === member.id)) {
+      return;
+    }
+    
     setTeam([...team, member]);
     setShowAddDialog(false);
   };
@@ -36,24 +53,6 @@ export function ClientTeams({ client }: ClientTeamsProps) {
   const removeTeamMember = (memberId: string) => {
     setTeam(team.filter(member => member.id !== memberId));
   };
-  
-  // Mock data for potential team members to add
-  const potentialMembers: TeamMember[] = [
-    {
-      id: '601',
-      name: 'Jennifer Lee',
-      email: 'jennifer@example.com',
-      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
-      role: 'Admin'
-    },
-    {
-      id: '602',
-      name: 'Thomas Wright',
-      email: 'thomas@example.com',
-      photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-      role: 'Finance'
-    }
-  ];
 
   return (
     <div className="space-y-6">
@@ -92,28 +91,39 @@ export function ClientTeams({ client }: ClientTeamsProps) {
                 <div className="py-4">
                   <div className="relative mb-4">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input className="pl-10" placeholder="Search clients..." />
+                    <Input 
+                      className="pl-10" 
+                      placeholder="Search clients..."
+                      value={potentialMemberSearch}
+                      onChange={(e) => setPotentialMemberSearch(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {potentialMembers.map((member) => (
-                      <div 
-                        key={member.id} 
-                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
-                        onClick={() => addTeamMember(member)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={member.photoUrl} alt={member.name} />
-                            <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{member.name}</p>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
+                    {isLoading ? (
+                      <div className="p-4 text-center text-muted-foreground">Loading clients...</div>
+                    ) : filteredPotentialMembers.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground">No matching clients found</div>
+                    ) : (
+                      filteredPotentialMembers.map((member) => (
+                        <div 
+                          key={member.id} 
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
+                          onClick={() => addTeamMember(member)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={member.photoUrl} alt={member.name} />
+                              <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{member.name}</p>
+                              <p className="text-sm text-muted-foreground">{member.email}</p>
+                            </div>
                           </div>
+                          <Button variant="ghost" size="sm">Add</Button>
                         </div>
-                        <Button variant="ghost" size="sm">Add</Button>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
                 <DialogFooter>

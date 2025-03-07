@@ -27,9 +27,17 @@ interface ProductOverridesProps {
   productOverrides: ProductOverride[];
   onAddProductOverride?: (override: Omit<ProductOverride, 'id' | 'created_at'>) => Promise<any>;
   isLoading?: boolean;
+  clientId?: string;
+  customAddComponent?: React.ReactNode;
 }
 
-export function ProductOverrides({ productOverrides, onAddProductOverride, isLoading = false }: ProductOverridesProps) {
+export function ProductOverrides({ 
+  productOverrides, 
+  onAddProductOverride, 
+  isLoading = false,
+  clientId,
+  customAddComponent
+}: ProductOverridesProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newOverride, setNewOverride] = useState({
     name: '',
@@ -54,7 +62,7 @@ export function ProductOverrides({ productOverrides, onAddProductOverride, isLoa
     
     try {
       await onAddProductOverride({
-        client_id: '', // Will be added by the hook
+        client_id: clientId || '', // Will be added by the hook
         name: newOverride.name,
         standard_price: standardPrice,
         override_price: overridePrice,
@@ -89,7 +97,9 @@ export function ProductOverrides({ productOverrides, onAddProductOverride, isLoa
         ) : productOverrides.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-muted-foreground mb-4">No product overrides configured for this client.</p>
-            {onAddProductOverride && (
+            {customAddComponent ? (
+              customAddComponent
+            ) : onAddProductOverride && (
               <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add First Product Override
@@ -126,69 +136,71 @@ export function ProductOverrides({ productOverrides, onAddProductOverride, isLoa
           </div>
         )}
         
-        {onAddProductOverride && (
+        {productOverrides.length > 0 && (
           <div className="mt-4 flex justify-end">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product Override
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Product Override</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit}>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="name">Product Name</Label>
-                      <Input 
-                        id="name" 
-                        value={newOverride.name}
-                        onChange={e => setNewOverride({...newOverride, name: e.target.value})}
-                        placeholder="Premium Photography Package"
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="standard_price">Standard Price ($)</Label>
-                      <Input 
-                        id="standard_price" 
-                        type="number"
-                        value={newOverride.standard_price}
-                        onChange={e => setNewOverride({...newOverride, standard_price: e.target.value})}
-                        placeholder="1200"
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="override_price">Override Price ($)</Label>
-                      <Input 
-                        id="override_price" 
-                        type="number"
-                        value={newOverride.override_price}
-                        onChange={e => setNewOverride({...newOverride, override_price: e.target.value})}
-                        placeholder="1000"
-                        required
-                      />
-                    </div>
-                    
-                    {newOverride.standard_price && newOverride.override_price && (
-                      <div className="text-sm text-muted-foreground">
-                        Calculated discount: {calculateDiscount(
-                          Number(newOverride.standard_price), 
-                          Number(newOverride.override_price)
-                        )}
+            {customAddComponent || (onAddProductOverride && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product Override
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Product Override</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="name">Product Name</Label>
+                        <Input 
+                          id="name" 
+                          value={newOverride.name}
+                          onChange={e => setNewOverride({...newOverride, name: e.target.value})}
+                          placeholder="Premium Photography Package"
+                          required
+                        />
                       </div>
-                    )}
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit">Add Override</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+                      <div className="grid gap-2">
+                        <Label htmlFor="standard_price">Standard Price ($)</Label>
+                        <Input 
+                          id="standard_price" 
+                          type="number"
+                          value={newOverride.standard_price}
+                          onChange={e => setNewOverride({...newOverride, standard_price: e.target.value})}
+                          placeholder="1200"
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="override_price">Override Price ($)</Label>
+                        <Input 
+                          id="override_price" 
+                          type="number"
+                          value={newOverride.override_price}
+                          onChange={e => setNewOverride({...newOverride, override_price: e.target.value})}
+                          placeholder="1000"
+                          required
+                        />
+                      </div>
+                      
+                      {newOverride.standard_price && newOverride.override_price && (
+                        <div className="text-sm text-muted-foreground">
+                          Calculated discount: {calculateDiscount(
+                            Number(newOverride.standard_price), 
+                            Number(newOverride.override_price)
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Add Override</Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            ))}
           </div>
         )}
       </CardContent>
