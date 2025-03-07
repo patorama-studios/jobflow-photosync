@@ -33,11 +33,18 @@ const ProtectedSuspenseRoute = ({ element }: { element: React.ReactNode }) => (
   </ProtectedRoute>
 );
 
+// Simplified public route wrapper
+const PublicSuspenseRoute = ({ element }: { element: React.ReactNode }) => (
+  <React.Suspense fallback={<PageLoading />}>
+    {element}
+  </React.Suspense>
+);
+
 // Routes configuration - public routes first, then protected
 export const routes = [
-  // Public routes
+  // Public routes - these should not check auth state
   { path: '/login', element: <Login /> },
-  { path: '/', element: <Home /> },
+  { path: '/', element: <Home /> }, 
   { path: '/index', element: <Home /> },
   
   // Protected routes
@@ -58,7 +65,7 @@ export const routes = [
   
   // Debug route (development only)
   ...(import.meta.env.DEV ? [
-    { path: '/debug', element: <React.Suspense fallback={<PageLoading />}><Debug /></React.Suspense> }
+    { path: '/debug', element: <PublicSuspenseRoute element={<Debug />} /> }
   ] : []),
   
   // 404 route - must be last

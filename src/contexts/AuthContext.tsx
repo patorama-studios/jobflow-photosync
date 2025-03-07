@@ -39,15 +39,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     console.log('AuthContext initializing...');
+    let authStateSubscription: { data: { subscription: { unsubscribe: () => void } } };
     
     const initializeAuth = async () => {
       try {
-        console.log('Getting session...');
+        console.log('Getting initial session...');
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log('Session retrieved:', !!currentSession);
+        console.log('Session retrieved:', currentSession ? 'Yes' : 'No');
+        
+        if (currentSession) {
+          console.log('User found in session:', currentSession.user?.id);
+        }
         
         setSession(currentSession);
         setUser(currentSession?.user || null);
+        
+        // Set up auth state change listener
+        authStateSubscription = supabase.auth.onAuthStateChange((_event, newSession) => {
+          console.log('Auth state changed:', { hasSession: !!newSession });
+          setSession(newSession);
+          setUser(newSession?.user || null);
+          setIsLoading(false);
+        });
+        
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
@@ -56,24 +70,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    // Initialize auth and clean up subscription when component unmounts
     initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        console.log('Auth state changed:', { hasSession: !!newSession });
-        setSession(newSession);
-        setUser(newSession?.user || null);
-        setIsLoading(false);
-      }
-    );
-
+    
     return () => {
-      subscription.unsubscribe();
+      console.log('Cleaning up auth subscription');
+      if (authStateSubscription) {
+        authStateSubscription.data.subscription.unsubscribe();
+      }
     };
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      console.log('User signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const activateUser = async (email: string) => {

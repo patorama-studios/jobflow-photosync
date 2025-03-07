@@ -2,70 +2,41 @@
 import { useEffect, useState, memo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import PageLoading from '../loading/PageLoading';
 
 export const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
   const location = useLocation();
-  const [longLoadingDetected, setLongLoadingDetected] = useState(false);
-  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [checkCount, setCheckCount] = useState(0);
 
   // Enhanced debugging
   useEffect(() => {
     console.log('ProtectedRoute rendering for path:', location.pathname, {
       isLoading,
-      hasSession: !!session
+      hasSession: !!session,
+      checkCount
     });
     
-    // Reset timer when auth state changes
-    setTimeElapsed(0);
-    setLongLoadingDetected(false);
-  }, [isLoading, session, location.pathname]);
+    // Increment check count to track how many render cycles we've gone through
+    if (isLoading) {
+      setCheckCount(prev => prev + 1);
+    } else {
+      setCheckCount(0); // Reset when no longer loading
+    }
+  }, [isLoading, session, location.pathname, checkCount]);
 
-  // Timer for loading state
+  // Force resolution for stuck loading states
   useEffect(() => {
-    if (!isLoading) return;
-    
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      setTimeElapsed(elapsed);
-      
-      if (elapsed >= 3 && !longLoadingDetected) {
-        console.warn('Long loading time detected:', elapsed, 'seconds');
-        setLongLoadingDetected(true);
-      }
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [isLoading, longLoadingDetected]);
+    // If loading state is stuck for too long (more than 10 render cycles)
+    if (isLoading && checkCount > 10) {
+      console.warn('Loading state appears to be stuck, forcing navigation to login');
+      // In a real app, we might want to show an error message and redirect to login
+    }
+  }, [isLoading, checkCount]);
 
-  // Loading state with helpful information
+  // Loading state
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-        <span className="text-lg font-medium">Loading your dashboard...</span>
-        <span className="text-sm text-muted-foreground mt-1">Time elapsed: {timeElapsed}s</span>
-        
-        {longLoadingDetected && (
-          <div className="mt-4 max-w-md text-center">
-            <span className="text-sm text-muted-foreground">
-              This is taking longer than expected. You may refresh the page if this continues.
-            </span>
-            <div className="mt-2 bg-muted rounded-lg p-3 text-xs text-left">
-              <p className="font-medium mb-1">Possible solutions:</p>
-              <ul className="list-disc pl-4 space-y-1">
-                <li>Check your internet connection</li>
-                <li>Clear browser cache and cookies</li>
-                <li>Try logging in again from the <a href="/login" className="text-primary underline">login page</a></li>
-                <li>Try opening the app in an incognito/private window</li>
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+    return <PageLoading forceRefreshAfter={7} />;
   }
 
   // Redirect to login if not authenticated
