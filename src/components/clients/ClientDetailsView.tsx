@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Users, CreditCard, Package, Settings, ShoppingCart } from "lucide-react";
@@ -12,6 +12,8 @@ import { ClientTeams } from "@/components/clients/tabs/ClientTeams";
 import { ClientBilling } from "@/components/clients/tabs/ClientBilling";
 import { ClientOrders } from "@/components/clients/tabs/ClientOrders";
 import { ClientSettings } from "@/components/clients/details/ClientSettings";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ClientDetailsViewProps {
   clientId?: string;
@@ -21,20 +23,65 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [client, setClient] = useState(mockCustomers[0]);
+  const [loading, setLoading] = useState(true);
   
   const { downloadSettings, handleSaveDownloadSettings } = useClientDownloadSettings();
 
-  // Fetch client data when clientId changes
-  useState(() => {
-    if (clientId) {
-      const foundClient = mockCustomers.find(c => c.id === clientId);
-      if (foundClient) {
-        setClient(foundClient);
+  // Fetch client data from Supabase
+  const fetchClientData = async () => {
+    if (!clientId) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("id", clientId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching client:", error);
+        toast.error("Failed to load client data");
+        navigate("/clients");
+        return;
+      }
+
+      if (data) {
+        // Convert Supabase data to the format expected by our components
+        const clientData = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || "",
+          company: data.company || "",
+          status: data.status,
+          photoUrl: data.photo_url || "",
+          createdDate: new Date(data.created_at).toLocaleDateString(),
+          totalJobs: data.total_jobs || 0,
+          outstandingJobs: data.outstanding_jobs || 0,
+          outstandingPayment: data.outstanding_payment || 0
+        };
+        
+        setClient(clientData);
       } else {
         navigate("/clients");
       }
+    } catch (err) {
+      console.error("Error in fetchClientData:", err);
+      toast.error("An error occurred while loading client data");
+    } finally {
+      setLoading(false);
     }
-  });
+  };
+
+  // Fetch client when clientId changes
+  useEffect(() => {
+    fetchClientData();
+  }, [clientId]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-40">Loading client data...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -42,6 +89,7 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
         client={client} 
         contentLocked={downloadSettings.contentLocked}
         navigate={navigate}
+        onClientUpdated={fetchClientData}
       />
 
       <ClientInfoCard client={client} />

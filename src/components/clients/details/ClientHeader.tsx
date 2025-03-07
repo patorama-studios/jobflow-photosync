@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, 
   Building, 
@@ -16,14 +16,19 @@ import { Badge } from "@/components/ui/badge";
 import { Customer } from "@/components/clients/mock-data";
 import { mockCompanies } from "@/components/clients/mock-data";
 import { NavigateFunction } from "react-router-dom";
+import { useDialog } from "@/hooks/use-dialog";
+import { EditClientDialog } from "@/components/clients/details/EditClientDialog";
 
 interface ClientHeaderProps {
   client: Customer;
   contentLocked: boolean;
   navigate: NavigateFunction;
+  onClientUpdated?: () => void;
 }
 
-export function ClientHeader({ client, contentLocked, navigate }: ClientHeaderProps) {
+export function ClientHeader({ client, contentLocked, navigate, onClientUpdated }: ClientHeaderProps) {
+  const { open, setOpen } = useDialog();
+  
   // Get company info if the client has a company
   const getCompanyInfo = () => {
     if (client.company) {
@@ -35,10 +40,14 @@ export function ClientHeader({ client, contentLocked, navigate }: ClientHeaderPr
   
   const company = getCompanyInfo();
 
+  const handleBackClick = () => {
+    navigate("/clients");
+  };
+
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate("/clients")}>
+        <Button variant="outline" size="icon" onClick={handleBackClick}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-4">
@@ -76,7 +85,7 @@ export function ClientHeader({ client, contentLocked, navigate }: ClientHeaderPr
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
           <Pencil className="h-4 w-4 mr-2" />
           Edit Details
         </Button>
@@ -89,6 +98,13 @@ export function ClientHeader({ client, contentLocked, navigate }: ClientHeaderPr
           Add Note
         </Button>
       </div>
+      
+      <EditClientDialog 
+        open={open} 
+        onOpenChange={setOpen} 
+        client={client} 
+        onClientUpdated={onClientUpdated}
+      />
     </div>
   );
 }

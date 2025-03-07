@@ -4,7 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ClientDetailsView } from "@/components/clients/ClientDetailsView";
 import { useParams } from "react-router-dom";
 
-const ClientDetails = () => {
+const CustomerDetails = () => {
   const { clientId } = useParams<{ clientId: string }>();
   
   return (
@@ -16,4 +16,4 @@ const ClientDetails = () => {
   );
 };
 
-export default ClientDetails;
+export default CustomerDetails;
