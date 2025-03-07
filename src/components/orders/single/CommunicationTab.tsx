@@ -29,7 +29,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({ order }) => 
       id: 2,
       sender: order.client,
       role: 'Client',
-      message: 'Thanks for the reminder! I'll be there.',
+      message: "Thanks for the reminder! I'll be there.",
       timestamp: '2023-05-10T15:15:00Z',
       isInternal: false
     }
@@ -48,7 +48,7 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({ order }) => 
       id: 2,
       sender: order.photographer,
       role: 'Photographer',
-      message: 'Noted. I'll bring the wide angle lens for better coverage.',
+      message: "Noted. I'll bring the wide angle lens for better coverage.",
       timestamp: '2023-05-09T10:30:00Z',
       isInternal: true
     }
