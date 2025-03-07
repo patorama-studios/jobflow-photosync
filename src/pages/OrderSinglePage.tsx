@@ -102,7 +102,7 @@ const OrderSinglePage = () => {
                   >
                     <span>All Orders</span>
                   </button>
-                  <span className="mx-2">></span>
+                  <span className="mx-2">&gt;</span>
                   <span>Order #{order.orderNumber}</span>
                 </div>
               </div>
