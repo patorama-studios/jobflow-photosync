@@ -10,10 +10,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script type="module">
-      // Dynamic base URL detection for subdomain deployments
-      // This helps fix routing issues when deployed to a subdomain
-      window.PUBLIC_URL = window.location.origin;
+    <script>
+      // Handle base URL for proper routing in all environments
+      (function() {
+        // This fixes routing in both development and production environments
+        window.PUBLIC_URL = window.location.origin;
+        
+        // Log environment info for debugging
+        console.log('App initializing at:', window.location.href);
+        console.log('Base URL set to:', window.PUBLIC_URL);
+        
+        // Handle potential 404 redirects (common with SPA hosting)
+        if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
+          console.log('Non-root path detected, will use client-side routing');
+        }
+      })();
     </script>
   </head>
   <body>

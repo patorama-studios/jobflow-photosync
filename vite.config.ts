@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
-  // Add base path configuration for subdomain deployments
+  // Ensure base path works for all deployment scenarios
   base: '/',
   // Add caching for improved performance
   cacheDir: '.vite-cache',
