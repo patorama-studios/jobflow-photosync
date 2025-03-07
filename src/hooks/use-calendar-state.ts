@@ -6,6 +6,25 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 
+// Add this new function to handle event actions including reschedule
+export function useEventActions() {
+  const { toast } = useToast();
+  
+  const rescheduleEvent = (event: CalendarEvent, newStart: Date, newEnd: Date) => {
+    console.log('Rescheduling event:', event, 'to', newStart, newEnd);
+    toast({
+      title: "Event rescheduled",
+      description: `${event.title} has been rescheduled.`,
+    });
+    // In a real app, you would update the event in your database here
+    return { ...event, start: newStart, end: newEnd };
+  };
+
+  return {
+    rescheduleEvent
+  };
+}
+
 export function useCalendarState() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
