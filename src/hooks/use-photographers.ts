@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -41,7 +42,7 @@ export function usePhotographers() {
             id: index + 1,
             name: profile.full_name || profile.username || `Photographer ${index + 1}`,
             color: getColorForIndex(index),
-            email: profile.email,
+            email: profile.full_name ? `${profile.full_name.toLowerCase().replace(/\s+/g, '.')}@example.com` : undefined,
             payoutRate: 100 // Default payout rate
           }));
           

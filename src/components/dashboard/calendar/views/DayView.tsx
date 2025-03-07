@@ -14,7 +14,7 @@ interface DayViewProps {
 
 export const DayView: React.FC<DayViewProps> = ({ date, orders, onTimeSlotClick }) => {
   const { photographers } = usePhotographers();
-  const { timeSlots, generateHours } = useDayViewState();
+  const dayViewState = useDayViewState();
   const [ordersGroupedByPhotographer, setOrdersGroupedByPhotographer] = useState<
     Record<string, { name: string, color: string, orders: Order[] }>
   >({});
@@ -69,7 +69,7 @@ export const DayView: React.FC<DayViewProps> = ({ date, orders, onTimeSlotClick 
   }, [orders, date, photographers]);
 
   // Generate hours (timeslots)
-  const hours = generateHours();
+  const hours = dayViewState.generateHours();
 
   // Handle time slot click
   const handleTimeSlotClick = (time: string) => {
@@ -163,4 +163,4 @@ export const DayView: React.FC<DayViewProps> = ({ date, orders, onTimeSlotClick 
       </div>
     </div>
   );
-};
+}

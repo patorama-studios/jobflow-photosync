@@ -16,6 +16,7 @@ import { convertOrdersToEvents, convertOrdersToTypedOrders } from '@/utils/calen
 import { DayView } from './views/DayView';
 import { CardView } from './views/CardView';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Define the props for the GoogleCalendar component
 interface GoogleCalendarProps {
@@ -69,10 +70,48 @@ export function GoogleCalendar({
         }
         
         if (data && data.length > 0) {
-          setSupabaseOrders(data as Order[]);
+          // Map the data to our Order type
+          const mappedOrders: Order[] = data.map(order => ({
+            id: order.id,
+            orderNumber: order.order_number,
+            order_number: order.order_number,
+            address: order.address,
+            city: order.city,
+            state: order.state,
+            zip: order.zip,
+            client: order.client,
+            customerName: order.client,
+            propertyAddress: order.address,
+            clientEmail: order.client_email,
+            client_email: order.client_email,
+            clientPhone: order.client_phone,
+            client_phone: order.client_phone,
+            photographer: order.photographer,
+            photographerPayoutRate: order.photographer_payout_rate,
+            photographer_payout_rate: order.photographer_payout_rate,
+            price: order.price,
+            propertyType: order.property_type,
+            property_type: order.property_type,
+            scheduledDate: order.scheduled_date,
+            scheduled_date: order.scheduled_date,
+            scheduledTime: order.scheduled_time,
+            scheduled_time: order.scheduled_time,
+            squareFeet: order.square_feet,
+            square_feet: order.square_feet,
+            status: order.status,
+            package: order.package,
+            customerNotes: order.customer_notes,
+            customer_notes: order.customer_notes,
+            internalNotes: order.internal_notes,
+            internal_notes: order.internal_notes,
+            notes: order.notes,
+          }));
+          
+          setSupabaseOrders(mappedOrders);
         }
       } catch (err) {
         console.error('Error fetching orders from Supabase:', err);
+        toast.error('Error loading orders from database');
         // Fall back to sample orders (already loaded)
       } finally {
         setIsLoadingSupabase(false);

@@ -1,21 +1,27 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePhotographers } from "@/hooks/use-photographers";
+import { Photographer } from "@/hooks/use-photographers";
 
 type PhotographerFilterProps = {
   selectedPhotographers: number[];
   onToggle: (id: number) => void;
   isMobile?: boolean;
+  photographers?: Photographer[];
 };
 
 export function PhotographerFilter({ 
   selectedPhotographers, 
   onToggle,
-  isMobile = false
+  isMobile = false,
+  photographers: propPhotographers
 }: PhotographerFilterProps) {
-  const { photographers, isLoading } = usePhotographers();
+  const { photographers: hookPhotographers, isLoading } = usePhotographers();
+  
+  // Use photographers from props if provided, otherwise use from hook
+  const photographers = propPhotographers || hookPhotographers;
 
-  if (isLoading) {
+  if (isLoading && !propPhotographers) {
     return (
       <div className="mb-4">
         <h3 className={`text-sm font-medium mb-3 ${!isMobile && 'px-3'}`}>Photographers</h3>
