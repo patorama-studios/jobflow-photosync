@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
+import { GoogleMapsTypes } from '@/lib/google-maps';
 
 interface AddressMapProps {
   lat: number;
@@ -9,10 +10,25 @@ interface AddressMapProps {
   address: string;
 }
 
+// Declare the Google Maps types to fix the build errors
+declare global {
+  interface Window {
+    google: {
+      maps: GoogleMapsTypes & {
+        Map: new (element: HTMLElement, options: any) => any;
+        Marker: new (options: any) => any;
+        Animation: {
+          DROP: number;
+        };
+      };
+    };
+  }
+}
+
 export const AddressMap: React.FC<AddressMapProps> = ({ lat, lng, address }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const googleMapRef = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
+  const googleMapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const { isLoaded } = useGoogleMaps();
 
   useEffect(() => {
@@ -24,7 +40,7 @@ export const AddressMap: React.FC<AddressMapProps> = ({ lat, lng, address }) => 
       
       if (!googleMapRef.current) {
         // Initialize the map if not already created
-        googleMapRef.current = new google.maps.Map(mapRef.current, {
+        googleMapRef.current = new window.google.maps.Map(mapRef.current, {
           center,
           zoom: 15,
           mapTypeControl: false,
@@ -42,11 +58,11 @@ export const AddressMap: React.FC<AddressMapProps> = ({ lat, lng, address }) => 
       }
 
       // Add a marker
-      markerRef.current = new google.maps.Marker({
+      markerRef.current = new window.google.maps.Marker({
         position: center,
         map: googleMapRef.current,
         title: address,
-        animation: google.maps.Animation.DROP
+        animation: window.google.maps.Animation.DROP
       });
 
       console.log("Map initialized with coordinates:", lat, lng);
