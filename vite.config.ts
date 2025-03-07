@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
-  // Configure for SPA routing in production
-  base: '/',
+  // Configure for SPA routing in production - use empty string for relative paths
+  base: '',
   // Add caching for improved performance
   cacheDir: '.vite-cache',
   plugins: [
@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => ({
         // Use ES module format for better compatibility
         format: 'es',
         // Simplify output naming for easier debugging and better compatibility
-        entryFileNames: 'main.js',
+        entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: (id) => {

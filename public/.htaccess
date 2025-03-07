@@ -22,12 +22,12 @@ RewriteRule ^ /index.html [L]
 <IfModule mod_mime.c>
   # JavaScript files - Add both for maximum compatibility
   AddType application/javascript .js
-  AddType text/javascript .js
   AddType application/javascript .mjs
-  AddType text/javascript .mjs
+  AddType application/javascript .tsx
+  AddType application/javascript .jsx
   
   # Ensure JS files are properly served
-  <FilesMatch "\.js$">
+  <FilesMatch "\.(js|mjs|tsx|jsx)$">
     Header set Content-Type "application/javascript"
   </FilesMatch>
   
@@ -52,11 +52,11 @@ RewriteRule ^ /index.html [L]
 
 # Enable GZIP compression
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/x-javascript
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json application/x-javascript
 </IfModule>
 
 # Force Content-Type for JavaScript modules and assets
-<FilesMatch "\.(js|mjs)$">
+<FilesMatch "\.(js|mjs|tsx|jsx)$">
   <IfModule mod_headers.c>
     Header set Content-Type "application/javascript"
   </IfModule>
@@ -67,7 +67,7 @@ FileETag None
 
 # Allow cross-origin access to JavaScript files
 <IfModule mod_headers.c>
-  <FilesMatch "\.(js|mjs)$">
+  <FilesMatch "\.(js|mjs|tsx|jsx)$">
     Header set Access-Control-Allow-Origin "*"
   </FilesMatch>
 </IfModule>
