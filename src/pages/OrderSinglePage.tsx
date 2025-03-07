@@ -10,10 +10,7 @@ import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
 import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
 import { ProductionTab } from '@/components/orders/single/ProductionTab';
 import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FileText, DollarSign, Camera, MessageSquare, Clipboard, Home } from 'lucide-react';
 
 const OrderSinglePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -75,15 +72,62 @@ const OrderSinglePage = () => {
             onValueChange={setActiveTab}
             className="mt-6"
           >
-            <TabsList className="grid grid-cols-4 w-full mb-6">
-              <TabsTrigger value="details">Order Details</TabsTrigger>
-              <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
-              <TabsTrigger value="production">Production & Delivery</TabsTrigger>
-              <TabsTrigger value="communication">Communication</TabsTrigger>
+            <TabsList className="grid grid-cols-5 w-full mb-6">
+              <TabsTrigger value="details" className="flex items-center gap-2">
+                <Clipboard className="h-4 w-4" />
+                <span className="hidden sm:inline">Overview</span>
+                <span className="sm:hidden">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="property" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">Property</span>
+                <span className="sm:hidden">Property</span>
+              </TabsTrigger>
+              <TabsTrigger value="invoicing" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                <span className="hidden sm:inline">Invoicing</span>
+                <span className="sm:hidden">Invoice</span>
+              </TabsTrigger>
+              <TabsTrigger value="production" className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                <span className="hidden sm:inline">Production</span>
+                <span className="sm:hidden">Prod</span>
+              </TabsTrigger>
+              <TabsTrigger value="communication" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Communication</span>
+                <span className="sm:hidden">Comms</span>
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="details" className="mt-4">
               <OrderDetailsTab order={order} />
+            </TabsContent>
+            
+            <TabsContent value="property" className="mt-4">
+              <div className="space-y-6">
+                <div className="border rounded-lg p-6">
+                  <h3 className="text-lg font-medium mb-4">Property Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Address</p>
+                      <p className="font-medium">{order.address}</p>
+                      <p>{order.city}, {order.state} {order.zip}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Property Type</p>
+                      <p className="font-medium">{order.propertyType || order.property_type}</p>
+                      <p>{order.squareFeet || order.square_feet} sq ft</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="border rounded-lg p-6">
+                  <h3 className="text-lg font-medium mb-4">Property Access Information</h3>
+                  <p className="text-muted-foreground">
+                    {order.notes || 'No access information provided.'}
+                  </p>
+                </div>
+              </div>
             </TabsContent>
             
             <TabsContent value="invoicing" className="mt-4">
