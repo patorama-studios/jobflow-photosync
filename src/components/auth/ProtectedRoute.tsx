@@ -1,5 +1,5 @@
 
-import { useEffect, useState, memo, useCallback } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
