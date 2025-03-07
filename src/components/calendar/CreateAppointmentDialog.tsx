@@ -14,7 +14,6 @@ import { OrderDetailsForm } from './appointment/OrderDetailsForm';
 import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
 
 interface CreateAppointmentDialogProps {
@@ -39,7 +38,6 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   const [appointmentDate, setAppointmentDate] = useState<string>(
     `${formattedDate} ${initialAppointmentTime}`
   );
-  const [activeTab, setActiveTab] = useState<string>("order");
 
   // Update appointment date when selectedDate or selectedTime changes
   useEffect(() => {
@@ -63,7 +61,7 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`max-w-4xl p-0 gap-0 ${isMobile ? 'h-[85vh]' : 'h-[90vh]'} flex flex-col overflow-hidden`}>
+      <DialogContent className={`max-w-2xl p-0 gap-0 ${isMobile ? 'h-[85vh]' : 'h-[90vh]'} flex flex-col overflow-hidden`}>
         <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b shrink-0">
           <DialogTitle className="text-xl">Create Appointment</DialogTitle>
           <div className="flex items-center">
@@ -75,44 +73,9 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
         </DialogHeader>
         
         <GoogleMapsProvider apiKey={googleMapsApiKey} defaultRegion="au">
-          {isMobile ? (
-            // Mobile Layout with Tabs
-            <div className="flex-1 overflow-hidden flex flex-col">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-                <TabsList className="grid grid-cols-2 sticky top-0 z-10">
-                  <TabsTrigger value="order">Order Details</TabsTrigger>
-                  <TabsTrigger value="appointment">Appointment</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="order" className="flex-1 overflow-y-auto p-4">
-                  <OrderDetailsForm />
-                </TabsContent>
-                
-                <TabsContent value="appointment" className="flex-1 overflow-y-auto p-4">
-                  <AppointmentDetailsForm 
-                    appointmentDate={appointmentDate}
-                    setAppointmentDate={setAppointmentDate}
-                  />
-                </TabsContent>
-              </Tabs>
-            </div>
-          ) : (
-            // Desktop Layout
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
-              {/* Left Column - Order Details */}
-              <div className="p-6 overflow-y-auto">
-                <OrderDetailsForm />
-              </div>
-              
-              {/* Right Column - Appointment Details */}
-              <div className="p-6 overflow-y-auto border-t md:border-t-0 md:border-l">
-                <AppointmentDetailsForm 
-                  appointmentDate={appointmentDate}
-                  setAppointmentDate={setAppointmentDate}
-                />
-              </div>
-            </div>
-          )}
+          <div className="flex-1 overflow-y-auto p-4">
+            <OrderDetailsForm />
+          </div>
         </GoogleMapsProvider>
         
         <DialogFooter className="px-6 py-4 border-t mt-auto shrink-0">

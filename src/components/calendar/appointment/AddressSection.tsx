@@ -39,6 +39,20 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   const isMobile = useIsMobile();
   const [manualEntry, setManualEntry] = useState<boolean>(false);
   
+  // Handle address selection from Google Maps
+  const handleAddressSelect = (address: any) => {
+    // Call the parent's onAddressSelect with the address
+    onAddressSelect(address);
+    
+    // Log the result for debugging
+    console.log("Address selected:", address);
+    
+    // Show a success message
+    if (address.formattedAddress) {
+      toast.success("Address loaded successfully");
+    }
+  };
+  
   const handleManualAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -65,21 +79,24 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   useEffect(() => {
     if (error) {
       setManualEntry(true);
+      toast.error("Google Maps could not be loaded. Please enter address manually.");
     }
   }, [error]);
 
   return (
     <div>
       <p className="text-sm font-medium mb-2">Address</p>
-      <p className="text-sm text-muted-foreground mb-1">Search Address</p>
       
       {isLoaded ? (
         <>
-          <GoogleAddressAutocomplete 
-            onAddressSelect={onAddressSelect}
-            placeholder="Search an address..." 
-            defaultValue={addressDetails.formattedAddress}
-          />
+          <div className="mb-2">
+            <GoogleAddressAutocomplete 
+              onAddressSelect={handleAddressSelect}
+              placeholder="Search an address..." 
+              defaultValue={addressDetails.formattedAddress}
+              className="w-full"
+            />
+          </div>
           <div className="mt-2">
             <button
               type="button"
@@ -105,11 +122,17 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
               Google Maps API could not be loaded. Please enter address manually.
             </div>
           )}
+          {!error && (
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+              <span className="text-sm text-muted-foreground">Loading Google Maps...</span>
+            </div>
+          )}
         </div>
       )}
       
       {/* Manual address entry form */}
-      {manualEntry && (
+      {(manualEntry || error) && (
         <div className="mt-4 space-y-4">
           <div>
             <p className="text-sm font-medium mb-1">Street Address</p>

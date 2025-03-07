@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useClients } from '@/hooks/use-clients';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ChevronDown, ChevronUp, Home, Calendar, ShoppingCart, FileText } from 'lucide-react';
 
 // Import our component sections
 import { AddressSection } from './AddressSection';
@@ -14,6 +15,7 @@ import { OrderFormSection } from './OrderFormSection';
 import { NewCustomerDialog } from './NewCustomerDialog';
 import { AddCustomItemDialog } from './AddCustomItemDialog';
 import { AddProductDialog } from './AddProductDialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface CustomItem {
   id: string;
@@ -30,6 +32,9 @@ interface Product {
 export const OrderDetailsForm: React.FC = () => {
   const { clients } = useClients();
   const isMobile = useIsMobile();
+
+  // Track open sections with state
+  const [openSection, setOpenSection] = useState<string>("address");
 
   // Address state
   const [addressDetails, setAddressDetails] = useState({
@@ -66,13 +71,7 @@ export const OrderDetailsForm: React.FC = () => {
   // Product search state
   const [searchProduct, setSearchProduct] = useState('');
   const [showAddProductDialog, setShowAddProductDialog] = useState(false);
-  const [products, setProducts] = useState<Product[]>([
-    { id: 'p1', name: 'Standard Photography Package', price: 149 },
-    { id: 'p2', name: 'Premium Photography Package', price: 249 },
-    { id: 'p3', name: 'Virtual Tour Package', price: 199 },
-    { id: 'p4', name: 'Drone Photography', price: 299 },
-    { id: 'p5', name: 'Twilight Photography', price: 179 }
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
   
   // Filter products based on search term
   const filteredProducts = products.filter(product => 
@@ -163,52 +162,94 @@ export const OrderDetailsForm: React.FC = () => {
     <div className={`${isMobile ? 'space-y-4' : 'bg-muted/20 max-h-[calc(100vh-200px)] overflow-y-auto p-6'}`}>
       <h2 className="text-xl font-semibold mb-6">Create New Order</h2>
       
-      <div className="space-y-6">
-        {/* Address Section */}
-        <AddressSection 
-          addressDetails={addressDetails}
-          onAddressSelect={handleAddressSelect}
-        />
-        
-        {/* Customer Section */}
-        <CustomerSection 
-          searchCustomer={searchCustomer}
-          setSearchCustomer={setSearchCustomer}
-          selectedCustomer={selectedCustomer}
-          filteredClients={filteredClients}
-          handleCustomerSelect={handleCustomerSelect}
-          openNewCustomerDialog={() => setShowNewCustomerDialog(true)}
-        />
+      <Accordion type="single" collapsible defaultValue="address" className="w-full">
+        {/* Address and Customer Section */}
+        <AccordionItem value="address" className="border rounded-md mb-4 overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 flex items-center">
+            <div className="flex items-center">
+              <Home className="mr-2 h-5 w-5 text-primary" />
+              <span className="font-medium">Address & Customer</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 py-3 border-t bg-card">
+            <div className="space-y-6">
+              <AddressSection 
+                addressDetails={addressDetails}
+                onAddressSelect={handleAddressSelect}
+              />
+              
+              <CustomerSection 
+                searchCustomer={searchCustomer}
+                setSearchCustomer={setSearchCustomer}
+                selectedCustomer={selectedCustomer}
+                filteredClients={filteredClients}
+                handleCustomerSelect={handleCustomerSelect}
+                openNewCustomerDialog={() => setShowNewCustomerDialog(true)}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-        {/* Photographer Section */}
-        <PhotographerSection 
-          selectedPhotographer={selectedPhotographer}
-          onSelectPhotographer={handlePhotographerSelect}
-        />
-        
-        {/* Order Notes Section */}
-        <OrderNotesSection />
-        
+        {/* Time and Date Section */}
+        <AccordionItem value="timedate" className="border rounded-md mb-4 overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 flex items-center">
+            <div className="flex items-center">
+              <Calendar className="mr-2 h-5 w-5 text-primary" />
+              <span className="font-medium">Time & Date</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 py-3 border-t bg-card">
+            <PhotographerSection 
+              selectedPhotographer={selectedPhotographer}
+              onSelectPhotographer={handlePhotographerSelect}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
         {/* Products Section */}
-        <ProductsSection 
-          searchProduct={searchProduct}
-          setSearchProduct={setSearchProduct}
-          filteredProducts={filteredProducts}
-          handleProductSelect={handleProductSelect}
-          openAddProductDialog={() => setShowAddProductDialog(true)}
-        />
-        
-        {/* Custom Items Section */}
-        <CustomItemsSection 
-          customItems={customItems}
-          openAddItemDialog={() => setShowAddItemDialog(true)}
-        />
-        
-        {/* Order Form Section */}
-        <OrderFormSection />
-      </div>
+        <AccordionItem value="products" className="border rounded-md mb-4 overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 flex items-center">
+            <div className="flex items-center">
+              <ShoppingCart className="mr-2 h-5 w-5 text-primary" />
+              <span className="font-medium">Products</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 py-3 border-t bg-card">
+            <div className="space-y-6">
+              <ProductsSection 
+                searchProduct={searchProduct}
+                setSearchProduct={setSearchProduct}
+                filteredProducts={filteredProducts}
+                handleProductSelect={handleProductSelect}
+                openAddProductDialog={() => setShowAddProductDialog(true)}
+              />
+              
+              <CustomItemsSection 
+                customItems={customItems}
+                openAddItemDialog={() => setShowAddItemDialog(true)}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* New Customer Dialog */}
+        {/* Custom Fields and Notes Section */}
+        <AccordionItem value="notes" className="border rounded-md mb-4 overflow-hidden">
+          <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 flex items-center">
+            <div className="flex items-center">
+              <FileText className="mr-2 h-5 w-5 text-primary" />
+              <span className="font-medium">Custom Fields & Notes</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 py-3 border-t bg-card">
+            <div className="space-y-6">
+              <OrderFormSection />
+              <OrderNotesSection />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {/* Dialogs */}
       <NewCustomerDialog 
         open={showNewCustomerDialog}
         onOpenChange={setShowNewCustomerDialog}
@@ -217,7 +258,6 @@ export const OrderDetailsForm: React.FC = () => {
         handleCreateCustomer={handleCreateCustomer}
       />
 
-      {/* Add Custom Item Dialog */}
       <AddCustomItemDialog 
         open={showAddItemDialog}
         onOpenChange={setShowAddItemDialog}
@@ -226,7 +266,6 @@ export const OrderDetailsForm: React.FC = () => {
         handleAddCustomItem={handleAddCustomItem}
       />
 
-      {/* Add Product Dialog */}
       <AddProductDialog
         open={showAddProductDialog}
         onOpenChange={setShowAddProductDialog}
