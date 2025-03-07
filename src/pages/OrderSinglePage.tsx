@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -123,7 +122,7 @@ const OrderSinglePage = () => {
             <Separator className="my-4" />
           </div>
           
-          {/* Tabs section */}
+          {/* Tabs section - Updated tab labels */}
           <Tabs 
             defaultValue="details" 
             value={activeTab} 
@@ -139,28 +138,22 @@ const OrderSinglePage = () => {
                   Summary
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="activity" 
+                  value="invoicing" 
                   className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
                 >
-                  Activity
+                  Invoicing
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="production" 
+                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
+                >
+                  Production &amp; Delivery
                 </TabsTrigger>
                 <TabsTrigger 
                   value="communication" 
                   className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
                 >
                   Communication
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="invoicing" 
-                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
-                >
-                  Invoice
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="production" 
-                  className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
-                >
-                  Files
                 </TabsTrigger>
               </TabsList>
               
