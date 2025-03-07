@@ -7,6 +7,7 @@ import { HeaderSettingsProvider } from '../hooks/useHeaderSettings';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { AIAssistantProvider } from '../contexts/AIAssistantContext';
 import { AuthProvider } from '../contexts/AuthContext';
+import { NotificationsProvider } from '../contexts/NotificationsContext';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -21,9 +22,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
           <Router>
             <AuthProvider>
               <AIAssistantProvider>
-                <HeaderSettingsProvider>
-                  {children}
-                </HeaderSettingsProvider>
+                <NotificationsProvider>
+                  <HeaderSettingsProvider>
+                    {children}
+                  </HeaderSettingsProvider>
+                </NotificationsProvider>
               </AIAssistantProvider>
             </AuthProvider>
           </Router>
