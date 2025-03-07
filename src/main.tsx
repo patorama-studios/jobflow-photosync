@@ -37,31 +37,49 @@ const applyThemeAndFont = () => {
 // Execute theme application immediately
 applyThemeAndFont();
 
-// Install global error monitoring early but with improved performance
+// Install global error monitoring in non-blocking way
 setTimeout(() => {
-  installGlobalErrorMonitoring();
+  try {
+    installGlobalErrorMonitoring();
+    console.log('Error monitoring initialized');
+  } catch (err) {
+    console.error('Failed to initialize error monitoring:', err);
+  }
 }, 0);
 
-// Immediate mount function to fix loading issues
+// Improved mount function
 const mountApp = () => {
   try {
+    // Add console logs for debugging
+    console.log('Starting app mount...');
+    
     // Get root element
     const rootElement = document.getElementById("root");
     if (!rootElement) {
       throw new Error("Root element not found");
     }
     
-    // Create and mount root in one step
-    createRoot(rootElement).render(<App />);
+    console.log('Root element found, creating React root');
     
-    // Defer non-critical verification to avoid blocking main thread
+    // Create and mount root
+    const root = createRoot(rootElement);
+    
+    console.log('Rendering app...');
+    root.render(<App />);
+    
+    console.log('App render completed');
+    
+    // Defer non-critical verification
     setTimeout(() => {
       if ((window as any).__CONSOLE_ERROR_COUNT__ > 0) {
         console.warn(`[App] ${(window as any).__CONSOLE_ERROR_COUNT__} errors were detected during startup`);
+      } else {
+        console.log('No startup errors detected');
       }
     }, 2000);
   } catch (error) {
     console.error("Error mounting app:", error);
+    
     // Display more visible error message
     const errorElement = document.createElement('div');
     errorElement.className = 'error-container';
@@ -75,7 +93,8 @@ const mountApp = () => {
   }
 };
 
-// Mount immediately to fix loading issues
+// Call mount immediately
+console.log('Initializing application...');
 mountApp();
 
 // Optimize service worker registration

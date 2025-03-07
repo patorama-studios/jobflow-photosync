@@ -33,7 +33,7 @@ const ProtectedSuspenseRoute = ({ element }: { element: React.ReactNode }) => (
   </ProtectedRoute>
 );
 
-// Routes configuration
+// Routes configuration - public routes first, then protected
 export const routes = [
   // Public routes
   { path: '/login', element: <Login /> },
@@ -61,6 +61,6 @@ export const routes = [
     { path: '/debug', element: <React.Suspense fallback={<PageLoading />}><Debug /></React.Suspense> }
   ] : []),
   
-  // 404 route
+  // 404 route - must be last
   { path: '*', element: <NotFound /> }
 ];

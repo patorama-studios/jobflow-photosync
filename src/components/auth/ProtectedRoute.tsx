@@ -8,46 +8,58 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
   const { session, isLoading } = useAuth();
   const location = useLocation();
   const [longLoadingDetected, setLongLoadingDetected] = useState(false);
+  const [timeElapsed, setTimeElapsed] = useState(0);
 
-  // Debug logging in development mode only
+  // Enhanced debugging
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ProtectedRoute - Auth state:', { 
-        isLoading, 
-        hasSession: !!session, 
-        path: location.pathname 
-      });
-    }
+    console.log('ProtectedRoute rendering for path:', location.pathname, {
+      isLoading,
+      hasSession: !!session
+    });
+    
+    // Reset timer when auth state changes
+    setTimeElapsed(0);
+    setLongLoadingDetected(false);
   }, [isLoading, session, location.pathname]);
 
-  // Long loading detection
+  // Timer for loading state
   useEffect(() => {
     if (!isLoading) return;
     
-    const timeoutId = setTimeout(() => {
-      setLongLoadingDetected(true);
-    }, 1000); // Reduced from 1.5 seconds to 1 second for faster feedback
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      setTimeElapsed(elapsed);
+      
+      if (elapsed >= 3 && !longLoadingDetected) {
+        console.warn('Long loading time detected:', elapsed, 'seconds');
+        setLongLoadingDetected(true);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [isLoading, longLoadingDetected]);
 
-    return () => clearTimeout(timeoutId);
-  }, [isLoading]);
-
-  // Enhanced loading UI with more helpful information
+  // Loading state with helpful information
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
         <span className="text-lg font-medium">Loading your dashboard...</span>
+        <span className="text-sm text-muted-foreground mt-1">Time elapsed: {timeElapsed}s</span>
+        
         {longLoadingDetected && (
           <div className="mt-4 max-w-md text-center">
             <span className="text-sm text-muted-foreground">
               This is taking longer than expected. You may refresh the page if this continues.
             </span>
-            <div className="mt-2 bg-muted rounded-lg p-2 text-xs text-left">
-              <p>Possible solutions:</p>
-              <ul className="list-disc pl-4 mt-1">
+            <div className="mt-2 bg-muted rounded-lg p-3 text-xs text-left">
+              <p className="font-medium mb-1">Possible solutions:</p>
+              <ul className="list-disc pl-4 space-y-1">
                 <li>Check your internet connection</li>
-                <li>Clear browser cache</li>
-                <li>Try logging in again</li>
+                <li>Clear browser cache and cookies</li>
+                <li>Try logging in again from the <a href="/login" className="text-primary underline">login page</a></li>
+                <li>Try opening the app in an incognito/private window</li>
               </ul>
             </div>
           </div>
@@ -56,18 +68,14 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
     );
   }
 
+  // Redirect to login if not authenticated
   if (!session) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ProtectedRoute - No session, redirecting to login from:', location.pathname);
-    }
+    console.log('ProtectedRoute - No session, redirecting to login from:', location.pathname);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // User is authenticated and loaded, render the protected content
-  if (process.env.NODE_ENV === 'development') {
-    console.log('ProtectedRoute - Authenticated, rendering content for:', location.pathname);
-  }
-  
+  // User is authenticated, render the protected content
+  console.log('ProtectedRoute - Successfully authenticated for path:', location.pathname);
   return <>{children}</>;
 });
 

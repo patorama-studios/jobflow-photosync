@@ -38,14 +38,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
 
   useEffect(() => {
+    console.log('AuthContext initializing...');
+    
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user || null);
+        console.log('Getting session...');
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('Session retrieved:', !!currentSession);
+        
+        setSession(currentSession);
+        setUser(currentSession?.user || null);
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
+        console.log('Auth initialization complete, setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -53,9 +59,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user || null);
+      (_event, newSession) => {
+        console.log('Auth state changed:', { hasSession: !!newSession });
+        setSession(newSession);
+        setUser(newSession?.user || null);
         setIsLoading(false);
       }
     );
