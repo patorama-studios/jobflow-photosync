@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { GoogleAddressAutocomplete } from '@/components/ui/google-address-autocomplete';
@@ -61,6 +61,13 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
     });
   };
 
+  // Use useEffect to handle setting manualEntry when there's an error
+  useEffect(() => {
+    if (error) {
+      setManualEntry(true);
+    }
+  }, [error]);
+
   return (
     <div>
       <p className="text-sm font-medium mb-2">Address</p>
@@ -97,14 +104,6 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
             <div className="text-sm text-destructive">
               Google Maps API could not be loaded. Please enter address manually.
             </div>
-          )}
-          {/* Fix the error by using a useEffect or conditional rendering instead of inline execution */}
-          {error && (
-            <React.Fragment>
-              {React.useEffect(() => {
-                setManualEntry(true);
-              }, [error])}
-            </React.Fragment>
           )}
         </div>
       )}
