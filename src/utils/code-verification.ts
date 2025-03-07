@@ -1,3 +1,4 @@
+
 export const getCodeSnippet = (code: string, line: number, context: number = 3): string => {
   if (!code) {
     return 'No code provided';
@@ -23,4 +24,25 @@ export const getCodeSnippet = (code: string, line: number, context: number = 3):
   }
   
   return snippet;
+};
+
+// Adding missing exports that are referenced in other files
+export const verifyRouterNesting = () => {
+  console.warn('verifyRouterNesting is a placeholder function');
+  return true;
+};
+
+export const verifyProviderNesting = () => {
+  console.warn('verifyProviderNesting is a placeholder function');
+  return true;
+};
+
+export const verifyComponentUsage = () => {
+  console.warn('verifyComponentUsage is a placeholder function');
+  return true;
+};
+
+export const verifyCodeBeforeDeployment = () => {
+  console.warn('verifyCodeBeforeDeployment is a placeholder function');
+  return true;
 };

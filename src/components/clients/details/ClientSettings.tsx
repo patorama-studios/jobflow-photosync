@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { ContentDownloadSettings } from "@/components/clients/ContentDownloadSettings";
+import { ContentDownloadSettings } from "@/components/clients/settings";
 
 interface ClientSettingsProps {
   downloadSettings: {
