@@ -14,7 +14,6 @@ import { ClientOrders } from "@/components/clients/tabs/ClientOrders";
 import { ClientSettings } from "@/components/clients/details/ClientSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ClientNotes } from "./details/ClientNotes";
 import { useClientPhoto } from "@/hooks/use-client-photo";
 import { useDialog } from "@/hooks/use-dialog";
 import { PhotoUploadDialog } from "./details/PhotoUploadDialog";
@@ -167,14 +166,7 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
         </TabsList>
         
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <ClientOverview client={client} />
-            </div>
-            <div className="lg:col-span-1">
-              <ClientNotes clientId={client.id} />
-            </div>
-          </div>
+          <ClientOverview client={client} />
         </TabsContent>
         
         <TabsContent value="teams">

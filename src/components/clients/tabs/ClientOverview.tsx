@@ -23,16 +23,14 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { Customer } from "@/components/clients/mock-data";
+import { ClientNotes } from "../details/ClientNotes";
 
 interface ClientOverviewProps {
   client: Customer;
 }
 
 export function ClientOverview({ client }: ClientOverviewProps) {
-  const [notes, setNotes] = useState(client.notes || "");
-  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -135,20 +133,7 @@ export function ClientOverview({ client }: ClientOverviewProps) {
         </div>
         
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Internal Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea 
-                className="min-h-[150px]" 
-                placeholder="Add notes about this client..." 
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-              <Button className="mt-4 w-full">Save Notes</Button>
-            </CardContent>
-          </Card>
+          <ClientNotes clientId={client.id} />
           
           <Card>
             <CardHeader>

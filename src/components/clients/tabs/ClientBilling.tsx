@@ -39,6 +39,7 @@ export function ClientBilling({ client, clientId }: ClientBillingProps) {
     await createProductOverride(clientId, product.id, overridePrice);
     // Refresh product overrides
     addProductOverride({
+      client_id: clientId, // Add the client_id here to fix the TypeScript error
       name: product.name,
       standard_price: product.price,
       override_price: overridePrice,
