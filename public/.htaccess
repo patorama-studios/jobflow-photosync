@@ -18,12 +18,44 @@ RewriteRule ^ /index.html
   Header set Cache-Control "max-age=604800"
 </IfModule>
 
-# Set MIME types
+# Set proper MIME types for JavaScript modules and other assets
 <IfModule mod_mime.c>
+  # Essential JavaScript MIME types
+  AddType application/javascript .js
+  AddType application/javascript .mjs
+  AddType text/javascript .js
+  AddType text/javascript .mjs
+  
+  # JavaScript modules
+  AddType application/javascript .js .mjs
+  
+  # JSON
+  AddType application/json .json
+  
+  # WebAssembly
+  AddType application/wasm .wasm
+  
+  # Web fonts
+  AddType font/woff .woff
+  AddType font/woff2 .woff2
+  AddType application/vnd.ms-fontobject .eot
+  AddType font/ttf .ttf
+  AddType font/collection .ttc
+  AddType font/otf .otf
+  
+  # Images
   AddType image/webp .webp
+  AddType image/svg+xml .svg
 </IfModule>
 
 # Enable GZIP compression
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/x-javascript
 </IfModule>
+
+# Set correct Content-Type header for JavaScript modules
+<FilesMatch "\.(js|mjs)$">
+  <IfModule mod_headers.c>
+    Header set Content-Type "application/javascript"
+  </IfModule>
+</FilesMatch>

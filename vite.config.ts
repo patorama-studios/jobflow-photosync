@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -51,6 +50,12 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
+        // Add proper MIME types to ensure JavaScript modules are served correctly
+        // Set JavaScript output format to ensure correct MIME types
+        format: 'es',
+        entryFileNames: 'assets/[name].[hash].mjs',
+        chunkFileNames: 'assets/[name].[hash].mjs',
+        assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: (id) => {
           // Core libraries
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
