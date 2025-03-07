@@ -38,7 +38,9 @@ const applyThemeAndFont = () => {
 applyThemeAndFont();
 
 // Install global error monitoring early but with improved performance
-installGlobalErrorMonitoring();
+setTimeout(() => {
+  installGlobalErrorMonitoring();
+}, 0);
 
 // Immediate mount function to fix loading issues
 const mountApp = () => {
@@ -49,33 +51,25 @@ const mountApp = () => {
       throw new Error("Root element not found");
     }
     
-    // Create and mount root
-    const root = createRoot(rootElement);
-    
-    root.render(
-      <App />
-    );
+    // Create and mount root in one step
+    createRoot(rootElement).render(<App />);
     
     // Defer non-critical verification to avoid blocking main thread
     setTimeout(() => {
       if ((window as any).__CONSOLE_ERROR_COUNT__ > 0) {
         console.warn(`[App] ${(window as any).__CONSOLE_ERROR_COUNT__} errors were detected during startup`);
       }
-      
-      // Check for missing Router context
-      if (typeof window !== 'undefined' && !window.__REACT_ROUTER_HISTORY__) {
-        console.warn('[App] React Router context not found after mount');
-      }
     }, 2000);
   } catch (error) {
     console.error("Error mounting app:", error);
-    // Display error message on the page
+    // Display more visible error message
     const errorElement = document.createElement('div');
     errorElement.className = 'error-container';
     errorElement.innerHTML = `
-      <h2>Application Error</h2>
-      <p>Sorry, there was a problem loading the application. Please try refreshing the page.</p>
-      <p>Technical details: ${error instanceof Error ? error.message : String(error)}</p>
+      <h2 style="color: #e11d48; font-size: 24px;">Application Error</h2>
+      <p style="font-size: 16px;">Sorry, there was a problem loading the application. Please try refreshing the page.</p>
+      <p style="font-size: 14px; color: #666;">Technical details: ${error instanceof Error ? error.message : String(error)}</p>
+      <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 16px; cursor: pointer;" onclick="window.location.reload()">Refresh Page</button>
     `;
     document.body.appendChild(errorElement);
   }
