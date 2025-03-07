@@ -29,7 +29,6 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
   selectedDate,
   selectedTime
 }) => {
-  console.log("Dialog props:", { isOpen, selectedDate, selectedTime });
   const isMobile = useIsMobile();
   
   // Format the date safely - handle potential invalid date errors

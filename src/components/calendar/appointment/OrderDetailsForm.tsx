@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useClients } from '@/hooks/use-clients';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Import our new component sections
+// Import our component sections
 import { AddressSection } from './AddressSection';
 import { CustomerSection } from './CustomerSection';
 import { PhotographerSection } from './PhotographerSection';
@@ -13,8 +13,15 @@ import { CustomItemsSection } from './CustomItemsSection';
 import { OrderFormSection } from './OrderFormSection';
 import { NewCustomerDialog } from './NewCustomerDialog';
 import { AddCustomItemDialog } from './AddCustomItemDialog';
+import { AddProductDialog } from './AddProductDialog';
 
 interface CustomItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
+interface Product {
   id: string;
   name: string;
   price: number;
@@ -45,6 +52,9 @@ export const OrderDetailsForm: React.FC = () => {
     company: ''
   });
 
+  // Photographer state
+  const [selectedPhotographer, setSelectedPhotographer] = useState<string | undefined>(undefined);
+
   // Custom items state
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
@@ -55,25 +65,15 @@ export const OrderDetailsForm: React.FC = () => {
 
   // Product search state
   const [searchProduct, setSearchProduct] = useState('');
-
-  // Sample products for demonstration
-  const products = [
+  const [showAddProductDialog, setShowAddProductDialog] = useState(false);
+  const [products, setProducts] = useState<Product[]>([
     { id: 'p1', name: 'Standard Photography Package', price: 149 },
     { id: 'p2', name: 'Premium Photography Package', price: 249 },
     { id: 'p3', name: 'Virtual Tour Package', price: 199 },
     { id: 'p4', name: 'Drone Photography', price: 299 },
     { id: 'p5', name: 'Twilight Photography', price: 179 }
-  ];
+  ]);
   
-  // Sample photographers for demonstration
-  const photographers = [
-    { id: 'ph1', name: 'Maria Garcia' },
-    { id: 'ph2', name: 'Alex Johnson' },
-    { id: 'ph3', name: 'Wei Chen' },
-    { id: 'ph4', name: 'David Smith' },
-    { id: 'ph5', name: 'Sophia Patel' }
-  ];
-
   // Filter products based on search term
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchProduct.toLowerCase())
@@ -144,6 +144,21 @@ export const OrderDetailsForm: React.FC = () => {
     setSearchProduct('');
   };
 
+  const handleAddProduct = (product: { name: string; price: number }) => {
+    const newProduct = {
+      id: `prod-${Date.now()}`,
+      name: product.name,
+      price: product.price
+    };
+    setProducts([...products, newProduct]);
+    console.log('Added new product:', newProduct);
+  };
+
+  const handlePhotographerSelect = (photographerId: string) => {
+    setSelectedPhotographer(photographerId);
+    console.log('Selected photographer:', photographerId);
+  };
+
   return (
     <div className={`${isMobile ? 'space-y-4' : 'bg-muted/20 max-h-[calc(100vh-200px)] overflow-y-auto p-6'}`}>
       <h2 className="text-xl font-semibold mb-6">Create New Order</h2>
@@ -166,7 +181,10 @@ export const OrderDetailsForm: React.FC = () => {
         />
 
         {/* Photographer Section */}
-        <PhotographerSection photographers={photographers} />
+        <PhotographerSection 
+          selectedPhotographer={selectedPhotographer}
+          onSelectPhotographer={handlePhotographerSelect}
+        />
         
         {/* Order Notes Section */}
         <OrderNotesSection />
@@ -177,6 +195,7 @@ export const OrderDetailsForm: React.FC = () => {
           setSearchProduct={setSearchProduct}
           filteredProducts={filteredProducts}
           handleProductSelect={handleProductSelect}
+          openAddProductDialog={() => setShowAddProductDialog(true)}
         />
         
         {/* Custom Items Section */}
@@ -205,6 +224,13 @@ export const OrderDetailsForm: React.FC = () => {
         newItem={newItem}
         setNewItem={setNewItem}
         handleAddCustomItem={handleAddCustomItem}
+      />
+
+      {/* Add Product Dialog */}
+      <AddProductDialog
+        open={showAddProductDialog}
+        onOpenChange={setShowAddProductDialog}
+        onProductAdded={handleAddProduct}
       />
     </div>
   );

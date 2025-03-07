@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface Product {
   id: string;
@@ -14,17 +15,31 @@ interface ProductsSectionProps {
   setSearchProduct: React.Dispatch<React.SetStateAction<string>>;
   filteredProducts: Product[];
   handleProductSelect: (product: any) => void;
+  openAddProductDialog: () => void;
 }
 
 export const ProductsSection: React.FC<ProductsSectionProps> = ({
   searchProduct,
   setSearchProduct,
   filteredProducts,
-  handleProductSelect
+  handleProductSelect,
+  openAddProductDialog
 }) => {
   return (
     <div>
-      <p className="text-sm font-medium mb-2">Products</p>
+      <div className="flex justify-between items-center mb-2">
+        <p className="text-sm font-medium">Products</p>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 px-2 text-xs"
+          onClick={openAddProductDialog}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          Add Product
+        </Button>
+      </div>
+      
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input 

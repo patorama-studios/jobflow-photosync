@@ -8,6 +8,7 @@ import { GoogleCalendar } from '@/components/dashboard/calendar/GoogleCalendar';
 import { Button } from '@/components/ui/button';
 import { Maximize, Minimize, Plus, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 
 const Calendar = () => {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false);
@@ -17,6 +18,18 @@ const Calendar = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState<"day" | "card">("day");
+  const { updateSettings } = useHeaderSettings();
+
+  useEffect(() => {
+    updateSettings({
+      color: '#ffffff',
+      height: 65,
+      logoUrl: '',
+      showCompanyName: false,
+      title: "Calendar",
+      description: "Schedule and manage appointments"
+    });
+  }, [updateSettings]);
 
   const handleTimeSlotClick = (time: string) => {
     console.log("Time slot clicked:", time);
