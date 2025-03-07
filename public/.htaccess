@@ -22,11 +22,13 @@ RewriteRule ^ /index.html [L]
 <IfModule mod_mime.c>
   # JavaScript files - Add both for maximum compatibility
   AddType application/javascript .js
+  AddType text/javascript .js
   AddType application/javascript .mjs
+  AddType text/javascript .mjs
   
   # Ensure ES modules are properly served
   <FilesMatch "\.m?js$">
-    ForceType application/javascript
+    Header set Content-Type "application/javascript"
   </FilesMatch>
   
   # JSON
@@ -53,7 +55,7 @@ RewriteRule ^ /index.html [L]
   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/x-javascript
 </IfModule>
 
-# Force Content-Type for JavaScript modules - critical for ES modules to work
+# Force Content-Type for JavaScript modules and assets
 <FilesMatch "\.(js|mjs)$">
   <IfModule mod_headers.c>
     Header set Content-Type "application/javascript"

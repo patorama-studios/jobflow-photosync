@@ -44,11 +44,12 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        // Use standard JS extension for maximum compatibility
-        format: 'es',
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]',
+        // Use common JS format for better compatibility
+        format: 'iife',
+        // Use .js extension without modules for production compatibility
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: (id) => {
           // Core libraries
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
