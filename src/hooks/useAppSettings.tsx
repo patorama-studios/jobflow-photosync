@@ -26,7 +26,8 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
         if (error) throw error;
         
         if (data) {
-          setValue(data.value);
+          // Ensure we're setting an object type for AppSettingsValue
+          setValue(typeof data.value === 'object' ? data.value : JSON.parse(String(data.value)));
         } else {
           // If no settings found, use default and save it
           await saveSettings(defaultValue, false);

@@ -54,4 +54,6 @@ const OrdersPage = memo(() => {
 });
 
 OrdersPage.displayName = 'OrdersPage';
+
+// Make sure to export as default to fix potential import issues
 export default OrdersPage;
