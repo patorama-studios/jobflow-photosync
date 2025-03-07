@@ -20,7 +20,7 @@ RewriteRule ^ /index.html [L]
 
 # Set proper MIME types for JavaScript modules and other assets
 <IfModule mod_mime.c>
-  # JavaScript files - Add both for maximum compatibility
+  # JavaScript files - Use only application/javascript for all JS files
   AddType application/javascript .js
   AddType application/javascript .mjs
   AddType application/javascript .tsx

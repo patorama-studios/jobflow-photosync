@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
-  // Configure for SPA routing in production - use empty string for relative paths
-  base: '',
+  // Configure for SPA routing in production - use root path for production builds
+  base: '/',
   // Add caching for improved performance
   cacheDir: '.vite-cache',
   plugins: [
