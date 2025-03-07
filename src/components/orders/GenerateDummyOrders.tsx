@@ -6,29 +6,44 @@ import { Label } from '@/components/ui/label';
 import { generateDummyOrders } from '@/utils/generate-dummy-orders';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function GenerateDummyOrders() {
   const [count, setCount] = useState<number>(10);
   const [loading, setLoading] = useState<boolean>(false);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   const handleGenerate = async () => {
     try {
       setLoading(true);
       const orders = await generateDummyOrders(count);
-      toast({
-        title: 'Orders Generated',
-        description: `Successfully created ${orders.length} dummy orders.`,
-      });
+      
+      // Use sonner toast for success
+      toast.success(`Successfully created ${orders.length} dummy orders.`);
+      
       // Reload the page to show the new orders
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('Failed to generate orders:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate dummy orders. Check console for details.',
-        variant: 'destructive',
-      });
+      
+      // Get more detailed error message if available
+      let errorMessage = 'Failed to generate dummy orders.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // @ts-ignore - might be from Supabase error
+        errorMessage = error.message || errorMessage;
+        // @ts-ignore - might have details from Supabase
+        if (error.details) {
+          // @ts-ignore
+          errorMessage += ` Details: ${error.details}`;
+        }
+      }
+      
+      // Use sonner toast for error
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

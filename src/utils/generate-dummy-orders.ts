@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 export async function generateDummyOrders(count: number = 10) {
   const cities = ['Austin', 'San Francisco', 'New York', 'Chicago', 'Miami', 'Seattle', 'Denver', 'Boston'];
   const photographers = ['Maria Garcia', 'Alex Johnson', 'Wei Chen', 'Sarah Williams', 'Carlos Rodriguez'];
+  // Update statuses to match the constraint in database
   const statuses = ['scheduled', 'pending', 'completed', 'cancelled'];
   const packages = ['basic', 'standard', 'premium', 'ultra'];
   const propertyTypes = ['residential', 'commercial', 'industrial', 'land'];
@@ -60,16 +61,21 @@ export async function generateDummyOrders(count: number = 10) {
     orders.push(order);
   }
   
-  // Insert orders into Supabase and return the result
-  const { data, error } = await supabase
-    .from('orders')
-    .insert(orders)
-    .select();
+  try {
+    // Insert orders into Supabase and return the result
+    const { data, error } = await supabase
+      .from('orders')
+      .insert(orders)
+      .select();
+      
+    if (error) {
+      console.error('Error generating dummy orders:', error);
+      throw error;
+    }
     
-  if (error) {
+    return data;
+  } catch (error) {
     console.error('Error generating dummy orders:', error);
     throw error;
   }
-  
-  return data;
 }
