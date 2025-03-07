@@ -5,6 +5,8 @@ import { ThemeProvider } from '../components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HeaderSettingsProvider } from '../hooks/useHeaderSettings';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { AIAssistantProvider } from '../contexts/AIAssistantContext';
+import { AuthProvider } from '../contexts/AuthContext';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -17,9 +19,13 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
           <Router>
-            <HeaderSettingsProvider>
-              {children}
-            </HeaderSettingsProvider>
+            <AuthProvider>
+              <AIAssistantProvider>
+                <HeaderSettingsProvider>
+                  {children}
+                </HeaderSettingsProvider>
+              </AIAssistantProvider>
+            </AuthProvider>
           </Router>
         </ThemeProvider>
       </QueryClientProvider>
