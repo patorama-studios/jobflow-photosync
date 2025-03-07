@@ -189,6 +189,51 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          date: string
+          id: string
+          order_number: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          date?: string
+          id?: string
+          order_number?: string | null
+          status: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          order_number?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "billing_summary"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address: string
@@ -267,6 +312,96 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          card_type: string
+          client_id: string
+          created_at: string
+          expiry_date: string
+          id: string
+          is_default: boolean
+          last_four: string
+        }
+        Insert: {
+          card_type: string
+          client_id: string
+          created_at?: string
+          expiry_date: string
+          id?: string
+          is_default?: boolean
+          last_four: string
+        }
+        Update: {
+          card_type?: string
+          client_id?: string
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          is_default?: boolean
+          last_four?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "billing_summary"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "payment_methods_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_overrides: {
+        Row: {
+          client_id: string
+          created_at: string
+          discount: string
+          id: string
+          name: string
+          override_price: number
+          standard_price: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          discount: string
+          id?: string
+          name: string
+          override_price: number
+          standard_price: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          discount?: string
+          id?: string
+          name?: string
+          override_price?: number
+          standard_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_overrides_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "billing_summary"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "product_overrides_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -296,7 +431,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      billing_summary: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          outstanding_payment: number | null
+          total_billed: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_current_user_profile: {

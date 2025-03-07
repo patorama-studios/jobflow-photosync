@@ -7,75 +7,58 @@ import {
   InvoiceHistory, 
   BillingSummary 
 } from "./billing";
-import { Invoice, ProductOverride } from "./billing/types";
+import { useBillingData } from "./billing/hooks/useBillingData";
 
 interface ClientBillingProps {
   client: Customer;
 }
 
 export function ClientBilling({ client }: ClientBillingProps) {
-  // Mock invoices data
-  const invoices: Invoice[] = [
-    {
-      id: 'INV-001',
-      date: 'Aug 15, 2023',
-      amount: 1200,
-      status: 'Paid',
-      orderNumber: client.orders?.[0]?.orderNumber || 'ORD-2023-001'
-    },
-    {
-      id: 'INV-002',
-      date: 'Jul 30, 2023',
-      amount: 950,
-      status: 'Paid',
-      orderNumber: client.orders?.[1]?.orderNumber || 'ORD-2023-025'
-    },
-    {
-      id: 'INV-003',
-      date: 'Jul 10, 2023',
-      amount: 1500,
-      status: 'Pending',
-      orderNumber: client.orders?.[2]?.orderNumber || 'ORD-2023-078'
-    }
-  ];
-  
-  // Mock product overrides
-  const productOverrides: ProductOverride[] = [
-    {
-      id: 'PO-001',
-      name: 'Premium Photography Package',
-      standardPrice: 1200,
-      overridePrice: 1000,
-      discount: '16.67%'
-    },
-    {
-      id: 'PO-002',
-      name: '3D Virtual Tour',
-      standardPrice: 800,
-      overridePrice: 650,
-      discount: '18.75%'
-    }
-  ];
+  // Use our billing data hook
+  const { 
+    invoices, 
+    productOverrides, 
+    paymentMethods, 
+    billingSummary,
+    isLoading,
+    addInvoice,
+    addProductOverride,
+    addPaymentMethod
+  } = useBillingData(client.id);
 
-  // Total billed is the sum of all invoices
-  const totalBilled = 4350; // Hardcoded for now, could be calculated from invoices
-  const lastPaymentAmount = 950;
-  const lastPaymentDate = 'Jul 30, 2023';
+  // Calculate the number of open invoices
+  const openInvoiceCount = invoices.filter(inv => inv.status !== 'Paid').length;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PaymentMethods client={client} />
-        <ProductOverrides productOverrides={productOverrides} />
+        <PaymentMethods 
+          paymentMethods={paymentMethods} 
+          client={client} 
+          onAddPaymentMethod={addPaymentMethod}
+          isLoading={isLoading}
+        />
+        <ProductOverrides 
+          productOverrides={productOverrides} 
+          onAddProductOverride={addProductOverride} 
+          isLoading={isLoading}
+        />
       </div>
       
-      <InvoiceHistory invoices={invoices} />
+      <InvoiceHistory 
+        invoices={invoices} 
+        onAddInvoice={addInvoice}
+        isLoading={isLoading}
+      />
       
       <BillingSummary 
-        totalBilled={totalBilled}
-        lastPaymentAmount={lastPaymentAmount}
-        lastPaymentDate={lastPaymentDate}
-        outstandingPayment={client.outstandingPayment}
+        totalBilled={billingSummary?.total_billed || 0}
+        lastPaymentAmount={billingSummary?.last_payment_amount || 0}
+        lastPaymentDate={billingSummary?.last_payment_date}
+        outstandingPayment={billingSummary?.outstanding_payment || client.outstandingPayment || 0}
+        invoiceCount={invoices.length}
+        openInvoiceCount={openInvoiceCount}
+        isLoading={isLoading}
       />
     </div>
   );
