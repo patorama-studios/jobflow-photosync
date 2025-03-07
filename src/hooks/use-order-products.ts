@@ -27,14 +27,15 @@ export const useOrderProducts = (orderId?: string | number) => {
       const { data, error } = await supabase
         .from('order_products')
         .select('*')
-        .eq('order_id', orderId);
+        .eq('order_id', String(orderId));
         
       if (error) {
         console.error('Error fetching order products:', error);
         throw error;
       }
       
-      return data || [];
+      // Cast the data to ensure it matches our OrderProduct type
+      return (data || []) as OrderProduct[];
     },
     enabled: !!orderId,
   });
