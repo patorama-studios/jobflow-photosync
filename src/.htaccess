@@ -1,0 +1,21 @@
+
+# Enable TypeScript/JSX files to be served correctly
+<IfModule mod_mime.c>
+  AddType application/javascript .tsx
+  AddType application/javascript .ts
+  AddType application/javascript .jsx
+  AddType application/javascript .js
+</IfModule>
+
+# If requested directly, attempt to serve or pass through
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Allow direct access to the files if they exist
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+  
+  # Otherwise redirect to the root
+  RewriteRule ^ /index.html [L]
+</IfModule>

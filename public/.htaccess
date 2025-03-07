@@ -1,4 +1,3 @@
-
 # Enable URL rewriting
 RewriteEngine On
 
@@ -20,14 +19,15 @@ RewriteRule ^ /index.html [L]
 
 # Set proper MIME types for JavaScript modules and other assets
 <IfModule mod_mime.c>
-  # JavaScript files - Use only application/javascript for all JS files
+  # JavaScript files - Use application/javascript for all JS/TS files
   AddType application/javascript .js
   AddType application/javascript .mjs
   AddType application/javascript .tsx
   AddType application/javascript .jsx
+  AddType application/javascript .ts
   
-  # Ensure JS files are properly served
-  <FilesMatch "\.(js|mjs|tsx|jsx)$">
+  # Ensure JS/TS files are properly served
+  <FilesMatch "\.(js|mjs|tsx|jsx|ts)$">
     Header set Content-Type "application/javascript"
   </FilesMatch>
   
