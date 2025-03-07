@@ -15,6 +15,7 @@ import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
 
 interface CreateAppointmentDialogProps {
   isOpen: boolean;
@@ -57,6 +58,9 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
     onClose();
   };
 
+  // Google Maps API key - in a production app, should come from environment variables
+  const googleMapsApiKey = "AIzaSyA_1tNuz5ro9bZbQKJ9zgsB-oX1FMfd-I8"; // Example key, replace with actual key
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className={`max-w-4xl p-0 gap-0 ${isMobile ? 'h-[85vh]' : 'h-[90vh]'} flex flex-col overflow-hidden`}>
@@ -70,44 +74,46 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
           </div>
         </DialogHeader>
         
-        {isMobile ? (
-          // Mobile Layout with Tabs
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="grid grid-cols-2 sticky top-0 z-10">
-                <TabsTrigger value="order">Order Details</TabsTrigger>
-                <TabsTrigger value="appointment">Appointment</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="order" className="flex-1 overflow-y-auto p-4">
+        <GoogleMapsProvider apiKey={googleMapsApiKey} defaultRegion="au">
+          {isMobile ? (
+            // Mobile Layout with Tabs
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+                <TabsList className="grid grid-cols-2 sticky top-0 z-10">
+                  <TabsTrigger value="order">Order Details</TabsTrigger>
+                  <TabsTrigger value="appointment">Appointment</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="order" className="flex-1 overflow-y-auto p-4">
+                  <OrderDetailsForm />
+                </TabsContent>
+                
+                <TabsContent value="appointment" className="flex-1 overflow-y-auto p-4">
+                  <AppointmentDetailsForm 
+                    appointmentDate={appointmentDate}
+                    setAppointmentDate={setAppointmentDate}
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
+          ) : (
+            // Desktop Layout
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
+              {/* Left Column - Order Details */}
+              <div className="p-6 overflow-y-auto">
                 <OrderDetailsForm />
-              </TabsContent>
+              </div>
               
-              <TabsContent value="appointment" className="flex-1 overflow-y-auto p-4">
+              {/* Right Column - Appointment Details */}
+              <div className="p-6 overflow-y-auto border-t md:border-t-0 md:border-l">
                 <AppointmentDetailsForm 
                   appointmentDate={appointmentDate}
                   setAppointmentDate={setAppointmentDate}
                 />
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : (
-          // Desktop Layout
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
-            {/* Left Column - Order Details */}
-            <div className="p-6 overflow-y-auto">
-              <OrderDetailsForm />
+              </div>
             </div>
-            
-            {/* Right Column - Appointment Details */}
-            <div className="p-6 overflow-y-auto border-t md:border-t-0 md:border-l">
-              <AppointmentDetailsForm 
-                appointmentDate={appointmentDate}
-                setAppointmentDate={setAppointmentDate}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </GoogleMapsProvider>
         
         <DialogFooter className="px-6 py-4 border-t mt-auto shrink-0">
           <Button variant="outline" onClick={onClose} className="mr-2">Close</Button>

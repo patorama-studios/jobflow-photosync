@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { getDefaultRegion, GoogleMapsTypes } from '@/lib/google-maps';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Address {
   formattedAddress: string;
@@ -42,10 +43,17 @@ export const GoogleAddressAutocomplete = memo(({
   const autocompleteRef = useRef<any | null>(null);
   const [inputValue, setInputValue] = useState(defaultValue);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Initialize autocomplete once when the component mounts
   useEffect(() => {
-    if (!window.google || !window.google.maps || !window.google.maps.places || !inputRef.current || isInitialized) return;
+    if (!window.google || !window.google.maps || !window.google.maps.places || !inputRef.current || isInitialized) {
+      if (!window.google?.maps?.places && !isInitialized) {
+        setError("Google Maps API not available");
+        console.error("Google Maps Places API not available");
+      }
+      return;
+    }
     
     try {
       // Get the default region (Australia) or use provided region
@@ -65,7 +73,10 @@ export const GoogleAddressAutocomplete = memo(({
         if (!autocompleteRef.current) return;
         
         const place = autocompleteRef.current.getPlace();
-        if (!place.address_components || !place.geometry?.location) return;
+        if (!place.address_components || !place.geometry?.location) {
+          toast.error("Incomplete address selected. Please try a different address.");
+          return;
+        }
         
         // Extract address components
         let streetNumber = '';
@@ -123,6 +134,7 @@ export const GoogleAddressAutocomplete = memo(({
       };
     } catch (err) {
       console.error('Error initializing Google Places Autocomplete:', err);
+      setError("Failed to initialize address search");
       return undefined;
     }
   }, [onAddressSelect, region, isInitialized]);
@@ -142,7 +154,7 @@ export const GoogleAddressAutocomplete = memo(({
         ref={inputRef}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-        placeholder={placeholder}
+        placeholder={error ? `${error} - ${placeholder}` : placeholder}
         className={cn("pl-9", className)}
         required={required}
         disabled={disabled}

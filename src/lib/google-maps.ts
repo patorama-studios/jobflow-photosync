@@ -41,15 +41,21 @@ export interface Autocomplete {
 
 // Helper to get preferred region
 export function getDefaultRegion(): string {
-  return 'au'; // Default to Australia
+  return localStorage.getItem('google_maps_region') || 'au'; // Default to Australia
 }
 
 // Store the current region
-let currentRegion = 'au';
+let currentRegion = getDefaultRegion();
 
 // Set the default region
 export function setDefaultRegion(region: string): void {
   currentRegion = region;
+  localStorage.setItem('google_maps_region', region);
+}
+
+// Check if Google Maps script is already loaded
+export function isGoogleMapsLoaded(): boolean {
+  return !!window.google && !!window.google.maps && !!window.google.maps.places;
 }
 
 // Load the Google Maps script dynamically
@@ -60,8 +66,27 @@ export function loadGoogleMapsScript(options: {
 }): Promise<void> {
   return new Promise((resolve, reject) => {
     // If already loaded, resolve immediately
-    if (window.google && window.google.maps) {
+    if (isGoogleMapsLoaded()) {
       resolve();
+      return;
+    }
+    
+    // Check if script is already being loaded
+    if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
+      // Wait for it to load
+      const checkGoogleMaps = setInterval(() => {
+        if (isGoogleMapsLoaded()) {
+          clearInterval(checkGoogleMaps);
+          resolve();
+        }
+      }, 100);
+      
+      // Set a timeout to prevent infinite waiting
+      setTimeout(() => {
+        clearInterval(checkGoogleMaps);
+        reject(new Error('Google Maps loading timed out'));
+      }, 10000);
+      
       return;
     }
     

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { loadGoogleMapsScript, setDefaultRegion, getDefaultRegion } from '@/lib/google-maps';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface GoogleMapsContextType {
   isLoaded: boolean;
@@ -47,13 +47,17 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({
     setDefaultRegion(currentRegion);
     
     if (!apiKey) {
-      setError(new Error('Google Maps API key is missing'));
+      const err = new Error('Google Maps API key is missing');
+      setError(err);
       setIsLoading(false);
-      toast({
-        title: "API Key Missing",
-        description: "Google Maps API key is required for address features.",
-        variant: "destructive"
-      });
+      console.error(err);
+      return;
+    }
+    
+    // First check if Google Maps is already loaded
+    if (window.google && window.google.maps && window.google.maps.places) {
+      setIsLoaded(true);
+      setIsLoading(false);
       return;
     }
     
@@ -65,11 +69,6 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({
       .catch((err) => {
         setError(err);
         setIsLoading(false);
-        toast({
-          title: "Google Maps Error",
-          description: "Failed to load Google Maps. Address features may not work properly.",
-          variant: "destructive"
-        });
         console.error('Google Maps loading error:', err);
       });
   }, [apiKey, currentRegion]);
