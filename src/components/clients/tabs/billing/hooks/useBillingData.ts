@@ -25,7 +25,12 @@ export const useBillingData = (clientId: string) => {
         .order('date', { ascending: false });
 
       if (invoicesError) throw invoicesError;
-      setInvoices(invoicesData || []);
+      // Ensure the status is one of the allowed values
+      const typedInvoices = (invoicesData || []).map(invoice => ({
+        ...invoice,
+        status: invoice.status as 'Paid' | 'Pending' | 'Overdue'
+      }));
+      setInvoices(typedInvoices);
 
       // Fetch product overrides
       const { data: overridesData, error: overridesError } = await supabase
@@ -81,11 +86,17 @@ export const useBillingData = (clientId: string) => {
 
       if (error) throw error;
       
-      setInvoices(prev => [data, ...prev]);
+      // Ensure the status is typed correctly
+      const typedInvoice = {
+        ...data,
+        status: data.status as 'Paid' | 'Pending' | 'Overdue'
+      };
+      
+      setInvoices(prev => [typedInvoice, ...prev]);
       toast.success("Invoice added successfully");
       fetchBillingData(); // Refresh all data to update summary
       
-      return data;
+      return typedInvoice;
     } catch (err: any) {
       console.error("Error adding invoice:", err);
       toast.error(`Failed to add invoice: ${err.message || 'Unknown error'}`);

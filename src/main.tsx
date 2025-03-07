@@ -47,11 +47,12 @@ setTimeout(() => {
   }
 }, 0);
 
-// Improved mount function
+// Improved mount function with debugging for deployment issues
 const mountApp = () => {
   try {
     // Add console logs for debugging
-    console.log('Starting app mount...');
+    console.log('Starting app mount...', window.location.href);
+    console.log('Environment:', import.meta.env.MODE);
     
     // Get root element
     const rootElement = document.getElementById("root");
@@ -68,6 +69,9 @@ const mountApp = () => {
     root.render(<App />);
     
     console.log('App render completed');
+    
+    // Show a simple initialization message in the console
+    console.log('%c✨ Patorama Studios App Initialized ✨', 'color: #3b82f6; font-weight: bold; font-size: 14px;');
     
     // Defer non-critical verification
     setTimeout(() => {

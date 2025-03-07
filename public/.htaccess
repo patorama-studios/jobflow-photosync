@@ -1,0 +1,29 @@
+
+# Enable URL rewriting
+RewriteEngine On
+
+# If an existing asset or directory is requested, serve it
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+RewriteRule ^ - [L]
+
+# If the requested resource doesn't exist, rewrite to index.html
+RewriteRule ^ /index.html
+
+# Set security headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set Cache-Control "max-age=604800"
+</IfModule>
+
+# Set MIME types
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+</IfModule>
+
+# Enable GZIP compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>

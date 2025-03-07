@@ -1,7 +1,7 @@
 
-export * from "./PaymentMethods";
-export * from "./ProductOverrides";
-export * from "./InvoiceHistory";
-export * from "./BillingSummary";
+export { PaymentMethods } from "./PaymentMethods";
+export { ProductOverrides } from "./ProductOverrides";
+export { InvoiceHistory } from "./InvoiceHistory";
+export { BillingSummary } from "./BillingSummary";
 export * from "./types";
 export * from "./hooks/useBillingData";

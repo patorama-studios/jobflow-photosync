@@ -8,7 +8,19 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { CheckCircle, AlertCircle, FileCode, LayoutDashboard, RefreshCcw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
-interface VerificationResult {
+// Define our own version of VerificationResult to match the expected structure
+interface FileIssue {
+  message: string;
+  line?: number;
+  severity: string;
+}
+
+interface FileIssues {
+  file: string;
+  issues: FileIssue[];
+}
+
+interface LocalVerificationResult {
   valid: boolean;
   issues: string[];
 }
@@ -26,15 +38,15 @@ const PageChecker: React.FC = () => {
       const html = document.documentElement.outerHTML;
       
       // Run verifications
-      const routerCheck = verifyRouterNesting(html);
-      const providerCheck = verifyProviderNesting(html);
-      const componentCheck = verifyComponentUsage(html);
+      const routerCheck = verifyRouterNesting();
+      const providerCheck = verifyProviderNesting();
+      const componentCheck = verifyComponentUsage();
       
       // Combine issues
       const allIssues = [
-        ...routerCheck.issues,
-        ...providerCheck.issues,
-        ...componentCheck.issues
+        ...routerCheck.issues.flatMap(issue => issue.issues.map(i => `${issue.file}: ${i.message}`)),
+        ...providerCheck.issues.flatMap(issue => issue.issues.map(i => `${issue.file}: ${i.message}`)),
+        ...componentCheck.issues.flatMap(issue => issue.issues.map(i => `${issue.file}: ${i.message}`))
       ];
       
       setPageIssues(allIssues);
@@ -104,16 +116,31 @@ const PageChecker: React.FC = () => {
 export function CodeVerifier() {
   const [code, setCode] = useState('');
   const [results, setResults] = useState<{ 
-    router: VerificationResult; 
-    provider: VerificationResult;
-    component: VerificationResult;
+    router: LocalVerificationResult; 
+    provider: LocalVerificationResult;
+    component: LocalVerificationResult;
   } | null>(null);
 
   const verifyCode = () => {
-    const routerCheck = verifyRouterNesting(code);
-    const providerCheck = verifyProviderNesting(code);
-    const componentCheck = verifyComponentUsage(code);
-    setResults({ router: routerCheck, provider: providerCheck, component: componentCheck });
+    // Convert the complex verification results to our simplified format
+    const simplifyResults = (result: any): LocalVerificationResult => {
+      return {
+        valid: result.valid,
+        issues: result.issues.flatMap((issue: any) => 
+          issue.issues.map((i: any) => `${issue.file}: ${i.message}`)
+        )
+      };
+    };
+    
+    const routerCheck = verifyRouterNesting();
+    const providerCheck = verifyProviderNesting();
+    const componentCheck = verifyComponentUsage();
+    
+    setResults({ 
+      router: simplifyResults(routerCheck), 
+      provider: simplifyResults(providerCheck), 
+      component: simplifyResults(componentCheck) 
+    });
   };
 
   const allValid = results && 
@@ -129,8 +156,8 @@ export function CodeVerifier() {
       // Get the page's HTML for basic checks
       const html = document.documentElement.outerHTML;
       
-      const routerCheck = verifyRouterNesting(html);
-      const providerCheck = verifyProviderNesting(html);
+      const routerCheck = verifyRouterNesting();
+      const providerCheck = verifyProviderNesting();
       
       if (!routerCheck.valid) {
         console.warn('[CodeVerifier] Router issues detected:', routerCheck.issues);

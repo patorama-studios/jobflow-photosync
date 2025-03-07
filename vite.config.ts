@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
+  // Add base path configuration for subdomain deployments
+  base: '/',
   // Add caching for improved performance
   cacheDir: '.vite-cache',
   plugins: [
@@ -36,9 +38,9 @@ export default defineConfig(({ mode }) => ({
     minify: mode === 'production' ? 'terser' : 'esbuild',
     terserOptions: {
       compress: {
-        drop_console: mode === 'production',
+        drop_console: false, // Keep console logs for debugging deployment issues
         drop_debugger: mode === 'production',
-        pure_funcs: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
+        pure_funcs: mode === 'production' ? ['console.debug'] : [],
       },
     },
     // Enable reportCompressedSize for better size analysis in production
