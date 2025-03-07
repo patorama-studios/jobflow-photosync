@@ -1,8 +1,10 @@
 
-import React, { useState } from 'react';
-import { useClients } from '@/hooks/use-clients';
+import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ChevronDown, ChevronUp, Home, Calendar, ShoppingCart, FileText } from 'lucide-react';
+import { Home, Calendar, ShoppingCart, FileText } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useOrderForm } from '@/hooks/use-order-form';
+import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
 
 // Import our component sections
 import { AddressSection } from './AddressSection';
@@ -15,148 +17,14 @@ import { OrderFormSection } from './OrderFormSection';
 import { NewCustomerDialog } from './NewCustomerDialog';
 import { AddCustomItemDialog } from './AddCustomItemDialog';
 import { AddProductDialog } from './AddProductDialog';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-
-interface CustomItem {
-  id: string;
-  name: string;
-  price: number;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-}
 
 export const OrderDetailsForm: React.FC = () => {
-  const { clients } = useClients();
   const isMobile = useIsMobile();
-
-  // Track open sections with state
-  const [openSection, setOpenSection] = useState<string>("address");
-
-  // Address state
-  const [addressDetails, setAddressDetails] = useState({
-    formattedAddress: '',
-    streetAddress: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    lat: 0,
-    lng: 0
-  });
-
-  // Customer state
-  const [searchCustomer, setSearchCustomer] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    email: '',
-    company: ''
-  });
-
-  // Photographer state
-  const [selectedPhotographer, setSelectedPhotographer] = useState<string | undefined>(undefined);
-
-  // Custom items state
-  const [customItems, setCustomItems] = useState<CustomItem[]>([]);
-  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    price: 0
-  });
-
-  // Product search state
-  const [searchProduct, setSearchProduct] = useState('');
-  const [showAddProductDialog, setShowAddProductDialog] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const orderForm = useOrderForm();
   
-  // Filter products based on search term
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchProduct.toLowerCase())
-  );
-
-  // Filter clients based on search term
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchCustomer.toLowerCase()) ||
-    (client.email && client.email.toLowerCase().includes(searchCustomer.toLowerCase()))
-  );
-
-  const handleAddressSelect = (address: {
-    formattedAddress: string;
-    streetAddress: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    lat: number;
-    lng: number;
-  }) => {
-    setAddressDetails({
-      formattedAddress: address.formattedAddress,
-      streetAddress: address.streetAddress,
-      city: address.city,
-      state: address.state,
-      postalCode: address.postalCode,
-      lat: address.lat,
-      lng: address.lng
-    });
-    
-    console.log('Selected address:', address);
-  };
-
-  const handleCustomerSelect = (client: any) => {
-    setSelectedCustomer(client);
-    setSearchCustomer('');
-  };
-
-  const handleCreateCustomer = () => {
-    // In a real app, this would create a new customer in the database
-    console.log('Creating new customer:', newCustomer);
-    setSelectedCustomer({
-      id: `new-${Date.now()}`,
-      name: newCustomer.name,
-      email: newCustomer.email,
-      company: newCustomer.company
-    });
-    setShowNewCustomerDialog(false);
-    setNewCustomer({ name: '', email: '', company: '' });
-  };
-
-  const handleAddCustomItem = () => {
-    if (newItem.name && newItem.price > 0) {
-      setCustomItems([...customItems, { 
-        id: `item-${Date.now()}`, 
-        name: newItem.name, 
-        price: newItem.price 
-      }]);
-      setNewItem({ name: '', price: 0 });
-      setShowAddItemDialog(false);
-    }
-  };
-
-  const handleProductSelect = (product: any) => {
-    console.log('Selected product:', product);
-    // In a real app, this would add the product to the order
-    setSearchProduct('');
-  };
-
-  const handleAddProduct = (product: { name: string; price: number }) => {
-    const newProduct = {
-      id: `prod-${Date.now()}`,
-      name: product.name,
-      price: product.price
-    };
-    setProducts([...products, newProduct]);
-    console.log('Added new product:', newProduct);
-  };
-
-  const handlePhotographerSelect = (photographerId: string) => {
-    setSelectedPhotographer(photographerId);
-    console.log('Selected photographer:', photographerId);
-  };
+  // Get Google Maps API key from environment or use a default one for development
+  // Note: In production, this should be loaded from an environment variable
+  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "AIzaSyDcwGyRxRbcNGWOFQVT87A1xkbTuoiRRwE";
 
   return (
     <div className={`${isMobile ? 'space-y-4' : 'bg-muted/20 max-h-[calc(100vh-200px)] overflow-y-auto p-6'}`}>
@@ -173,18 +41,20 @@ export const OrderDetailsForm: React.FC = () => {
           </AccordionTrigger>
           <AccordionContent className="px-4 py-3 border-t bg-card">
             <div className="space-y-6">
-              <AddressSection 
-                addressDetails={addressDetails}
-                onAddressSelect={handleAddressSelect}
-              />
+              <GoogleMapsProvider apiKey={googleMapsApiKey} defaultRegion="au">
+                <AddressSection 
+                  addressDetails={orderForm.addressDetails}
+                  onAddressSelect={orderForm.handleAddressSelect}
+                />
+              </GoogleMapsProvider>
               
               <CustomerSection 
-                searchCustomer={searchCustomer}
-                setSearchCustomer={setSearchCustomer}
-                selectedCustomer={selectedCustomer}
-                filteredClients={filteredClients}
-                handleCustomerSelect={handleCustomerSelect}
-                openNewCustomerDialog={() => setShowNewCustomerDialog(true)}
+                searchCustomer={orderForm.searchCustomer}
+                setSearchCustomer={orderForm.setSearchCustomer}
+                selectedCustomer={orderForm.selectedCustomer}
+                filteredClients={orderForm.filteredClients}
+                handleCustomerSelect={orderForm.handleCustomerSelect}
+                openNewCustomerDialog={() => orderForm.setShowNewCustomerDialog(true)}
               />
             </div>
           </AccordionContent>
@@ -200,8 +70,8 @@ export const OrderDetailsForm: React.FC = () => {
           </AccordionTrigger>
           <AccordionContent className="px-4 py-3 border-t bg-card">
             <PhotographerSection 
-              selectedPhotographer={selectedPhotographer}
-              onSelectPhotographer={handlePhotographerSelect}
+              selectedPhotographer={orderForm.selectedPhotographer}
+              onSelectPhotographer={orderForm.handlePhotographerSelect}
             />
           </AccordionContent>
         </AccordionItem>
@@ -217,16 +87,16 @@ export const OrderDetailsForm: React.FC = () => {
           <AccordionContent className="px-4 py-3 border-t bg-card">
             <div className="space-y-6">
               <ProductsSection 
-                searchProduct={searchProduct}
-                setSearchProduct={setSearchProduct}
-                filteredProducts={filteredProducts}
-                handleProductSelect={handleProductSelect}
-                openAddProductDialog={() => setShowAddProductDialog(true)}
+                searchProduct={orderForm.searchProduct}
+                setSearchProduct={orderForm.setSearchProduct}
+                filteredProducts={orderForm.filteredProducts}
+                handleProductSelect={orderForm.handleProductSelect}
+                openAddProductDialog={() => orderForm.setShowAddProductDialog(true)}
               />
               
               <CustomItemsSection 
-                customItems={customItems}
-                openAddItemDialog={() => setShowAddItemDialog(true)}
+                customItems={orderForm.customItems}
+                openAddItemDialog={() => orderForm.setShowAddItemDialog(true)}
               />
             </div>
           </AccordionContent>
@@ -251,25 +121,25 @@ export const OrderDetailsForm: React.FC = () => {
 
       {/* Dialogs */}
       <NewCustomerDialog 
-        open={showNewCustomerDialog}
-        onOpenChange={setShowNewCustomerDialog}
-        newCustomer={newCustomer}
-        setNewCustomer={setNewCustomer}
-        handleCreateCustomer={handleCreateCustomer}
+        open={orderForm.showNewCustomerDialog}
+        onOpenChange={orderForm.setShowNewCustomerDialog}
+        newCustomer={orderForm.newCustomer}
+        setNewCustomer={orderForm.setNewCustomer}
+        handleCreateCustomer={orderForm.handleCreateCustomer}
       />
 
       <AddCustomItemDialog 
-        open={showAddItemDialog}
-        onOpenChange={setShowAddItemDialog}
-        newItem={newItem}
-        setNewItem={setNewItem}
-        handleAddCustomItem={handleAddCustomItem}
+        open={orderForm.showAddItemDialog}
+        onOpenChange={orderForm.setShowAddItemDialog}
+        newItem={orderForm.newItem}
+        setNewItem={orderForm.setNewItem}
+        handleAddCustomItem={orderForm.handleAddCustomItem}
       />
 
       <AddProductDialog
-        open={showAddProductDialog}
-        onOpenChange={setShowAddProductDialog}
-        onProductAdded={handleAddProduct}
+        open={orderForm.showAddProductDialog}
+        onOpenChange={orderForm.setShowAddProductDialog}
+        onProductAdded={orderForm.handleAddProduct}
       />
     </div>
   );
