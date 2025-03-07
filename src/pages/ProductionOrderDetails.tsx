@@ -1,6 +1,6 @@
 
 import { PageTransition } from "@/components/layout/PageTransition";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { OrderDetailsView } from "@/components/production/OrderDetailsView";
 import { useParams } from "react-router-dom";
 
@@ -8,11 +8,11 @@ const ProductionOrderDetails = () => {
   const { orderId } = useParams();
   
   return (
-    <PageTransition>
-      <SidebarLayout>
+    <MainLayout>
+      <PageTransition>
         <OrderDetailsView orderId={orderId} />
-      </SidebarLayout>
-    </PageTransition>
+      </PageTransition>
+    </MainLayout>
   );
 };
 

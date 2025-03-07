@@ -3,6 +3,7 @@ import React, { lazy, Suspense, memo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { OrdersView } from '@/components/orders/OrdersView';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 // Lazy load the OrderDetails component
 const OrderDetails = lazy(() => import('./OrderDetails'));
@@ -16,21 +17,23 @@ const OrderDetailsLoader = () => (
 
 const OrdersPage = memo(() => {
   return (
-    <Routes>
-      <Route path="/" element={
-        <PageTransition>
-          <div className="container mx-auto py-6">
-            <h1 className="text-3xl font-semibold mb-6">Orders & Appointments</h1>
-            <OrdersView />
-          </div>
-        </PageTransition>
-      } />
-      <Route path=":orderId" element={
-        <Suspense fallback={<OrderDetailsLoader />}>
-          <OrderDetails />
-        </Suspense>
-      } />
-    </Routes>
+    <MainLayout>
+      <Routes>
+        <Route path="/" element={
+          <PageTransition>
+            <div className="container mx-auto py-6">
+              <h1 className="text-3xl font-semibold mb-6">Orders & Appointments</h1>
+              <OrdersView />
+            </div>
+          </PageTransition>
+        } />
+        <Route path=":orderId" element={
+          <Suspense fallback={<OrderDetailsLoader />}>
+            <OrderDetails />
+          </Suspense>
+        } />
+      </Routes>
+    </MainLayout>
   );
 });
 

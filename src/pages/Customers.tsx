@@ -1,15 +1,15 @@
 
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { ClientsView } from "@/components/clients/ClientsView";
 
 const Customers = () => {
   return (
-    <SidebarLayout>
+    <MainLayout>
       <PageTransition>
         <ClientsView />
       </PageTransition>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

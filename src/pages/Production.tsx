@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 const Production = () => {
   return (
-    <SidebarLayout>
+    <MainLayout>
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Production Dashboard</h1>
         
@@ -38,7 +38,7 @@ const Production = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

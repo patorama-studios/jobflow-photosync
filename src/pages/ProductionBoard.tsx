@@ -1,15 +1,15 @@
 
 import { PageTransition } from "@/components/layout/PageTransition";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { ProductionBoardView } from "@/components/production/ProductionBoardView";
 
 const ProductionBoard = () => {
   return (
-    <PageTransition>
-      <SidebarLayout>
+    <MainLayout>
+      <PageTransition>
         <ProductionBoardView />
-      </SidebarLayout>
-    </PageTransition>
+      </PageTransition>
+    </MainLayout>
   );
 };
 
