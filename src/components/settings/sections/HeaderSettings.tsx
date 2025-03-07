@@ -1,5 +1,5 @@
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { LogoUploadSection } from './header/LogoUploadSection';
@@ -12,7 +12,23 @@ import { useToast } from '@/hooks/use-toast';
 
 export function HeaderSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { settings: savedSettings, updateSettings: saveSettings } = useHeaderSettings();
+  // Use try/catch to handle potential context errors
+  let headerSettings;
+  try {
+    headerSettings = useHeaderSettings();
+  } catch (error) {
+    console.error("Error using HeaderSettings:", error);
+    return (
+      <div className="p-4 border border-red-300 bg-red-50 rounded-md">
+        <h3 className="text-lg font-medium text-red-800">Header Settings Error</h3>
+        <p className="text-sm text-red-600">
+          Could not load header settings. Please refresh the page and try again.
+        </p>
+      </div>
+    );
+  }
+  
+  const { settings: savedSettings, updateSettings: saveSettings } = headerSettings;
   const [localSettings, setLocalSettings] = useState({ ...savedSettings });
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
@@ -24,9 +40,9 @@ export function HeaderSettings() {
       setLocalSettings({ ...savedSettings });
       initialLoadDone.current = true;
     }
-  }, []);
+  }, [savedSettings]);
   
-  const updateLocalSettings = (newSettingsPartial: Partial<typeof savedSettings>) => {
+  const updateLocalSettings = useCallback((newSettingsPartial: Partial<typeof savedSettings>) => {
     setLocalSettings(prev => {
       const newSettings = { ...prev, ...newSettingsPartial };
       // Only update hasChanges if the settings actually changed
@@ -36,9 +52,9 @@ export function HeaderSettings() {
       }
       return newSettings;
     });
-  };
+  }, [savedSettings, hasChanges]);
   
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (hasChanges) {
       saveSettings(localSettings);
       setHasChanges(false);
@@ -47,7 +63,7 @@ export function HeaderSettings() {
         description: "Header settings have been updated",
       });
     }
-  };
+  }, [hasChanges, localSettings, saveSettings, toast]);
 
   return (
     <div className="space-y-6">

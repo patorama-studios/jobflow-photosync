@@ -31,7 +31,15 @@ const defaultSettings: HeaderSettings = {
   description: null
 };
 
+// Create the context with a meaningful default value that throws a helpful error
 const HeaderSettingsContext = createContext<HeaderSettingsContextType | undefined>(undefined);
+
+// Create a custom console error wrapper function for debugging
+const logProviderError = () => {
+  console.error(
+    'HeaderSettingsProvider not found! Make sure HeaderSettingsProvider is mounted higher in the component tree.'
+  );
+};
 
 export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const { value: persistedSettings, setValue: saveSettings, isLoading } = useAppSettings('headerSettings', defaultSettings);
@@ -76,6 +84,14 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
     backButtonAction();
   }, [backButtonAction]);
 
+  // Log when provider is mounted for debugging
+  useEffect(() => {
+    console.log('HeaderSettingsProvider mounted');
+    return () => {
+      console.log('HeaderSettingsProvider unmounted');
+    };
+  }, []);
+
   return (
     <HeaderSettingsContext.Provider 
       value={{ 
@@ -97,7 +113,32 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
 export const useHeaderSettings = () => {
   const context = useContext(HeaderSettingsContext);
   if (!context) {
+    logProviderError();
     throw new Error('useHeaderSettings must be used within a HeaderSettingsProvider');
   }
   return context;
+};
+
+// Add a dummy provider for testing purposes
+export const MockHeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const mockUpdateSettings = () => {};
+  const mockOnClick = () => {};
+  const mockSetAction = () => {};
+  
+  return (
+    <HeaderSettingsContext.Provider
+      value={{
+        settings: defaultSettings,
+        updateSettings: mockUpdateSettings,
+        title: null,
+        showBackButton: false,
+        onBackButtonClick: mockOnClick,
+        setTitle: () => {},
+        setShowBackButton: () => {},
+        setBackButtonAction: mockSetAction
+      }}
+    >
+      {children}
+    </HeaderSettingsContext.Provider>
+  );
 };

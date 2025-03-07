@@ -29,12 +29,18 @@ export function SettingsPage() {
 
   // Only update the header settings once when the component mounts
   useEffect(() => {
+    console.log("Settings page mounted with header provider available");
     if (!hasSetHeader.current) {
-      updateSettings({
-        title: "Settings",
-        description: "Manage your account and application preferences"
-      });
-      hasSetHeader.current = true;
+      try {
+        updateSettings({
+          title: "Settings",
+          description: "Manage your account and application preferences"
+        });
+        hasSetHeader.current = true;
+        console.log("Header settings updated in Settings page");
+      } catch (error) {
+        console.error("Failed to update header settings:", error);
+      }
     }
   }, [updateSettings]);
   

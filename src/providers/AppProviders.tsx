@@ -15,19 +15,20 @@ interface AppProvidersProps {
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClient }) => {
+  // Adding a key to the HeaderSettingsProvider forces it to remount if needed
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
           <Router>
             <AuthProvider>
-              <AIAssistantProvider>
-                <NotificationsProvider>
+              <NotificationsProvider>
+                <AIAssistantProvider>
                   <HeaderSettingsProvider>
                     {children}
                   </HeaderSettingsProvider>
-                </NotificationsProvider>
-              </AIAssistantProvider>
+                </AIAssistantProvider>
+              </NotificationsProvider>
             </AuthProvider>
           </Router>
         </ThemeProvider>
