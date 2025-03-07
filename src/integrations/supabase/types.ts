@@ -342,6 +342,202 @@ export type Database = {
           },
         ]
       }
+      order_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          order_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+          order_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_activities_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_communication: {
+        Row: {
+          created_at: string
+          id: string
+          is_internal: boolean
+          message: string
+          order_id: string
+          recipient_role: string | null
+          sender_id: string | null
+          sender_role: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message: string
+          order_id: string
+          recipient_role?: string | null
+          sender_id?: string | null
+          sender_role: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message?: string
+          order_id?: string
+          recipient_role?: string | null
+          sender_id?: string | null
+          sender_role?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_communication_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          name: string
+          order_id: string
+          paid_date: string | null
+          product_id: string | null
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          name: string
+          order_id: string
+          paid_date?: string | null
+          product_id?: string | null
+          role: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          name?: string
+          order_id?: string
+          paid_date?: string | null
+          product_id?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payouts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_payouts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "order_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_products: {
+        Row: {
+          assigned_editor: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          order_id: string
+          price: number
+          product_id: string | null
+          quantity: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_editor?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          order_id: string
+          price: number
+          product_id?: string | null
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_editor?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          order_id?: string
+          price?: number
+          product_id?: string | null
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_products_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           address: string
@@ -365,6 +561,7 @@ export type Database = {
           square_feet: number
           state: string
           status: string
+          stripe_payment_id: string | null
           updated_at: string
           zip: string
         }
@@ -390,6 +587,7 @@ export type Database = {
           square_feet: number
           state: string
           status: string
+          stripe_payment_id?: string | null
           updated_at?: string
           zip: string
         }
@@ -415,6 +613,7 @@ export type Database = {
           square_feet?: number
           state?: string
           status?: string
+          stripe_payment_id?: string | null
           updated_at?: string
           zip?: string
         }
