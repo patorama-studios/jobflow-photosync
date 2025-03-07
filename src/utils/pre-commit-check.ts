@@ -1,5 +1,5 @@
 
-import { verifyCodeBeforeDeployment } from './code-verification';
+import { verifyCodeBeforeDeployment, VerificationResult } from './code-verification';
 
 /**
  * Pre-commit check to verify code before allowing commits
@@ -10,7 +10,7 @@ export async function runPreCommitCheck(filesToCheck: Record<string, string>): P
   
   try {
     // Wrap in a microtask to prevent blocking UI
-    const verification = await Promise.resolve().then(() => 
+    const verification: VerificationResult = await Promise.resolve().then(() => 
       verifyCodeBeforeDeployment(filesToCheck)
     );
     
@@ -18,7 +18,7 @@ export async function runPreCommitCheck(filesToCheck: Record<string, string>): P
       console.error('Code verification failed:');
       verification.issues.forEach(issue => {
         console.error(`File: ${issue.file}`);
-        issue.issues.forEach(i => console.error(`- ${i}`));
+        issue.issues.forEach(i => console.error(`- ${i.message}`));
       });
       return false;
     }

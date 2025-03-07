@@ -26,23 +26,41 @@ export const getCodeSnippet = (code: string, line: number, context: number = 3):
   return snippet;
 };
 
-// Adding missing exports that are referenced in other files
-export const verifyRouterNesting = () => {
+export interface VerificationIssue {
+  code: string;
+  message: string;
+  line?: number;
+  column?: number;
+  severity: 'error' | 'warning' | 'info';
+}
+
+export interface FileIssues {
+  file: string;
+  issues: VerificationIssue[];
+}
+
+export interface VerificationResult {
+  valid: boolean;
+  issues: FileIssues[];
+}
+
+// Updated function signatures to match TypeScript requirements
+export const verifyRouterNesting = (): VerificationResult => {
   console.warn('verifyRouterNesting is a placeholder function');
-  return true;
+  return { valid: true, issues: [] };
 };
 
-export const verifyProviderNesting = () => {
+export const verifyProviderNesting = (): VerificationResult => {
   console.warn('verifyProviderNesting is a placeholder function');
-  return true;
+  return { valid: true, issues: [] };
 };
 
-export const verifyComponentUsage = () => {
+export const verifyComponentUsage = (): VerificationResult => {
   console.warn('verifyComponentUsage is a placeholder function');
-  return true;
+  return { valid: true, issues: [] };
 };
 
-export const verifyCodeBeforeDeployment = () => {
-  console.warn('verifyCodeBeforeDeployment is a placeholder function');
-  return true;
+export const verifyCodeBeforeDeployment = (filesToCheck?: Record<string, string>): VerificationResult => {
+  console.warn('verifyCodeBeforeDeployment is a placeholder function', filesToCheck ? `Checking ${Object.keys(filesToCheck).length} files` : '');
+  return { valid: true, issues: [] };
 };
