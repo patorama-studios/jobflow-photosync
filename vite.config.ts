@@ -44,8 +44,8 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        // Use common JS format for better compatibility
-        format: 'iife',
+        // Use ES module format for better compatibility
+        format: 'es',
         // Simplify output naming for easier debugging and better compatibility
         entryFileNames: 'main.js',
         chunkFileNames: 'assets/[name].[hash].js',

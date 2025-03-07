@@ -28,7 +28,7 @@ RewriteRule ^ /index.html [L]
   
   # Ensure JS files are properly served
   <FilesMatch "\.js$">
-    Header set Content-Type "text/javascript"
+    Header set Content-Type "application/javascript"
   </FilesMatch>
   
   # JSON
@@ -58,10 +58,16 @@ RewriteRule ^ /index.html [L]
 # Force Content-Type for JavaScript modules and assets
 <FilesMatch "\.(js|mjs)$">
   <IfModule mod_headers.c>
-    Header set Content-Type "text/javascript"
+    Header set Content-Type "application/javascript"
   </IfModule>
 </FilesMatch>
 
 # Disable ETags for better caching
 FileETag None
 
+# Allow cross-origin access to JavaScript files
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|mjs)$">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+</IfModule>
