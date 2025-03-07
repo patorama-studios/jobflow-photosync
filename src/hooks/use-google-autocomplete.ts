@@ -28,6 +28,7 @@ export function useGoogleAutocomplete({
     console.log("Selected place:", place);
     
     if (!place.address_components || !place.geometry?.location) {
+      console.error("Incomplete place data received:", place);
       toast.error("Incomplete address selected. Please try a different address.");
       return;
     }
@@ -37,12 +38,22 @@ export function useGoogleAutocomplete({
     if (addressData) {
       setInputValue(addressData.formattedAddress);
       onAddressSelect(addressData);
+    } else {
+      console.error("Failed to parse address data from place:", place);
+      toast.error("Could not process the selected address. Please try again or enter manually.");
     }
   }, [onAddressSelect]);
   
   const initializeAutocomplete = useCallback(() => {
     // Skip if component is already initialized or input ref isn't available
-    if (!inputRef.current || isInitialized || !window.google?.maps?.places) {
+    if (!inputRef.current || isInitialized) {
+      return;
+    }
+    
+    // Check if Google Maps API is loaded
+    if (!window.google?.maps?.places) {
+      console.error("Google Maps Places API not loaded");
+      setError("Google Maps not loaded");
       return;
     }
     
@@ -80,14 +91,14 @@ export function useGoogleAutocomplete({
   useEffect(() => {
     const cleanup = initializeAutocomplete();
     return cleanup;
-  }, [initializeAutocomplete]);
+  }, [initializeAutocomplete, window.google?.maps?.places]);
   
   // Update input value when defaultValue changes
   useEffect(() => {
     if (defaultValue !== inputValue) {
       setInputValue(defaultValue);
     }
-  }, [defaultValue, inputValue]);
+  }, [defaultValue]);
   
   // Handle manual input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +107,7 @@ export function useGoogleAutocomplete({
   
   // Allow focusing the input to show suggestions and re-initialize if needed
   const handleInputFocus = () => {
-    if (!isInitialized && inputRef.current && window.google?.maps?.places) {
+    if (!isInitialized && window.google?.maps?.places) {
       initializeAutocomplete();
     }
   };

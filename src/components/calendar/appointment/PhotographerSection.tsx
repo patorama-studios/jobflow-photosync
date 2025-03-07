@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useContractors } from '@/hooks/use-contractors';
+import { usePhotographers } from '@/hooks/use-photographers';
 import { Loader2 } from 'lucide-react';
 
 interface PhotographerSectionProps {
@@ -20,7 +20,7 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
   scheduledDate,
   scheduledTime
 }) => {
-  const { contractors, isLoading } = useContractors();
+  const { photographers, isLoading } = usePhotographers();
   const [searchQuery, setSearchQuery] = useState('');
   const [date, setDate] = useState<Date | undefined>(scheduledDate);
   const [time, setTime] = useState<string | undefined>(scheduledTime);
@@ -31,16 +31,15 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
     if (scheduledTime) setTime(scheduledTime);
   }, [scheduledDate, scheduledTime]);
   
-  // Filter contractors to only include photographers and apply search
-  const photographers = contractors.filter(contractor => 
-    contractor.role?.toLowerCase() === 'photographer' && 
-    (searchQuery === '' || 
-     contractor.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Filter photographers based on search query
+  const filteredPhotographers = photographers.filter(photographer => 
+    searchQuery === '' || 
+    photographer.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handlePhotographerSelect = (photographer: any) => {
     if (onSelectPhotographer) {
-      onSelectPhotographer(photographer.id);
+      onSelectPhotographer(photographer.id.toString());
     }
     setSearchQuery('');
   };
@@ -61,8 +60,8 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
     }
   };
 
-  const selectedPhotographerData = contractors.find(
-    contractor => contractor.id === selectedPhotographer
+  const selectedPhotographerData = photographers.find(
+    photographer => photographer.id.toString() === selectedPhotographer
   );
 
   return (
@@ -84,17 +83,17 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm text-muted-foreground">Loading photographers...</span>
           </div>
-        ) : searchQuery && photographers.length > 0 ? (
-          <div className="mt-1 border rounded-md shadow-sm bg-background max-h-40 overflow-y-auto z-10 absolute">
-            {photographers.map((photographer) => (
+        ) : searchQuery && filteredPhotographers.length > 0 ? (
+          <div className="mt-1 border rounded-md shadow-sm bg-background max-h-40 overflow-y-auto z-50 absolute">
+            {filteredPhotographers.map((photographer) => (
               <div 
                 key={photographer.id}
                 className="p-2 hover:bg-muted/50 cursor-pointer"
                 onClick={() => handlePhotographerSelect(photographer)}
               >
                 <p className="font-medium">{photographer.name}</p>
-                {photographer.notes && (
-                  <p className="text-sm text-muted-foreground">{photographer.notes}</p>
+                {photographer.email && (
+                  <p className="text-sm text-muted-foreground">{photographer.email}</p>
                 )}
               </div>
             ))}
@@ -104,8 +103,8 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
         {selectedPhotographerData && (
           <div className="mt-2 p-2 bg-primary/5 rounded text-sm">
             <p className="font-medium">{selectedPhotographerData.name}</p>
-            {selectedPhotographerData.notes && (
-              <p className="text-muted-foreground">{selectedPhotographerData.notes}</p>
+            {selectedPhotographerData.email && (
+              <p className="text-muted-foreground">{selectedPhotographerData.email}</p>
             )}
           </div>
         )}

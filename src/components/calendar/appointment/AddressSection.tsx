@@ -41,25 +41,23 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   selectedPhotographer,
   onAddressSelect,
   onScheduleSelect,
-  selectedDate = new Date(),
-  selectedTime = "9:00 AM"
+  selectedDate,
+  selectedTime
 }) => {
   const { error } = useGoogleMaps();
   const isMobile = useIsMobile();
   const [manualEntry, setManualEntry] = useState<boolean>(false);
-  const [date, setDate] = useState<Date>(selectedDate);
-  const [time, setTime] = useState<string>(selectedTime);
+  const [date, setDate] = useState<Date>(selectedDate || new Date());
+  const [time, setTime] = useState<string>(selectedTime || "9:00 AM");
   
-  // Update state when props change
+  // Update manual entry when error changes
   useEffect(() => {
-    if (selectedDate) {
-      setDate(selectedDate);
+    if (error) {
+      setManualEntry(true);
+      toast.error("Google Maps could not be loaded. Please enter address manually.");
     }
-    if (selectedTime) {
-      setTime(selectedTime);
-    }
-  }, [selectedDate, selectedTime]);
-  
+  }, [error]);
+
   const handleManualAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -81,14 +79,6 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
       ...updatedField
     });
   };
-
-  // Use useEffect to handle setting manualEntry when there's an error
-  useEffect(() => {
-    if (error) {
-      setManualEntry(true);
-      toast.error("Google Maps could not be loaded. Please enter address manually.");
-    }
-  }, [error]);
 
   const handleDateChange = (newDate: Date) => {
     setDate(newDate);
@@ -158,4 +148,4 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
       )}
     </div>
   );
-};
+}

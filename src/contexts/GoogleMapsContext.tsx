@@ -68,12 +68,17 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({
     
     try {
       console.log(`Loading Google Maps API (attempt ${loadAttempts + 1})...`);
+      
+      // Use a default API key for development if one isn't provided
+      const effectiveApiKey = apiKey || 'AIzaSyDcwGyRxRbcNGWOFQVT87A1xkbTuoiRRwE';
+      
       await retryLoadGoogleMaps({ 
-        apiKey, 
+        apiKey: effectiveApiKey, 
         libraries: ['places'], 
         region: currentRegion,
         maxAttempts: 3
       });
+      
       console.log("Google Maps API loaded successfully");
       setIsLoaded(true);
       setIsLoading(false);
