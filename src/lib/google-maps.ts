@@ -67,16 +67,19 @@ export function loadGoogleMapsScript(options: {
   return new Promise((resolve, reject) => {
     // If already loaded, resolve immediately
     if (isGoogleMapsLoaded()) {
+      console.log("Google Maps already loaded, resolving promise");
       resolve();
       return;
     }
     
     // Check if script is already being loaded
     if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
+      console.log("Google Maps script is already being loaded, waiting...");
       // Wait for it to load
       const checkGoogleMaps = setInterval(() => {
         if (isGoogleMapsLoaded()) {
           clearInterval(checkGoogleMaps);
+          console.log("Google Maps finished loading while waiting");
           resolve();
         }
       }, 100);
@@ -84,6 +87,7 @@ export function loadGoogleMapsScript(options: {
       // Set a timeout to prevent infinite waiting
       setTimeout(() => {
         clearInterval(checkGoogleMaps);
+        console.error("Google Maps loading timed out after waiting");
         reject(new Error('Google Maps loading timed out'));
       }, 10000);
       
@@ -91,12 +95,14 @@ export function loadGoogleMapsScript(options: {
     }
     
     try {
+      console.log("Starting to load Google Maps script...");
       // Create script element
       const script = document.createElement('script');
       const callbackName = `googleMapsCallback_${Date.now()}`;
       
       // Set callback for when script loads
       window[callbackName as keyof Window] = function() {
+        console.log("Google Maps callback triggered");
         delete window[callbackName as keyof Window];
         resolve();
       } as unknown as never; // Fixed: Use unknown as an intermediate step to never
@@ -108,6 +114,8 @@ export function loadGoogleMapsScript(options: {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${options.apiKey}&libraries=${libraries}&region=${region}&callback=${callbackName}`;
       script.async = true;
       script.defer = true;
+      
+      // Add error handling
       script.onerror = (error) => {
         console.error('Google Maps script loading error:', error);
         reject(new Error('Failed to load Google Maps API'));
@@ -115,6 +123,7 @@ export function loadGoogleMapsScript(options: {
       
       // Add to document
       document.head.appendChild(script);
+      console.log(`Google Maps script added to document (region: ${region}, libraries: ${libraries})`);
     } catch (error) {
       console.error('Error setting up Google Maps script:', error);
       reject(error);

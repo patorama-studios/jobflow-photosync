@@ -126,7 +126,7 @@ export function verifyComponentUsage(code: string): { valid: boolean; issues: st
           if (trimmed) importedComponents.add(trimmed);
         });
       }
-    } else {
+    } else if (components) { // Fixed: Check if components is truthy
       const defaultImport = components.trim();
       if (defaultImport) importedComponents.add(defaultImport);
     }

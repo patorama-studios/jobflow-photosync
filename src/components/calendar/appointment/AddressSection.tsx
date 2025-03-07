@@ -71,6 +71,7 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
           <GoogleAddressAutocomplete 
             onAddressSelect={onAddressSelect}
             placeholder="Search an address..." 
+            defaultValue={addressDetails.formattedAddress}
           />
           <div className="mt-2">
             <button
@@ -97,8 +98,8 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
               Google Maps API could not be loaded. Please enter address manually.
             </div>
           )}
-          {/* If error, force manual entry */}
-          {error && (setManualEntry(true))}
+          {/* If error, force manual entry - fixed error by removing the return statement */}
+          {error && setManualEntry(true)}
         </div>
       )}
       

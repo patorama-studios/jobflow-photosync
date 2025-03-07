@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, memo } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { getDefaultRegion, GoogleMapsTypes } from '@/lib/google-maps';
+import { getDefaultRegion } from '@/lib/google-maps';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -47,11 +47,15 @@ export const GoogleAddressAutocomplete = memo(({
   
   // Initialize autocomplete once when the component mounts
   useEffect(() => {
-    if (!window.google || !window.google.maps || !window.google.maps.places || !inputRef.current || isInitialized) {
-      if (!window.google?.maps?.places && !isInitialized) {
-        setError("Google Maps API not available");
-        console.error("Google Maps Places API not available");
-      }
+    // Check if Google Maps API is loaded
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      console.error("Google Maps Places API not available");
+      setError("Google Maps API not available");
+      return;
+    }
+
+    // Skip if component is already initialized or input ref isn't available
+    if (!inputRef.current || isInitialized) {
       return;
     }
     
@@ -67,12 +71,15 @@ export const GoogleAddressAutocomplete = memo(({
       });
       
       setIsInitialized(true);
+      console.log("Google Maps Places Autocomplete initialized successfully");
       
       // Add listener for place selection
       const listener = autocompleteRef.current.addListener('place_changed', () => {
         if (!autocompleteRef.current) return;
         
         const place = autocompleteRef.current.getPlace();
+        console.log("Selected place:", place);
+        
         if (!place.address_components || !place.geometry?.location) {
           toast.error("Incomplete address selected. Please try a different address.");
           return;
@@ -146,6 +153,31 @@ export const GoogleAddressAutocomplete = memo(({
     }
   }, [defaultValue]);
   
+  // Handle manual input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  // Allow focusing the input to show suggestions
+  const handleInputFocus = () => {
+    // Ensure autocomplete is set up correctly
+    if (!isInitialized && inputRef.current && window.google?.maps?.places) {
+      try {
+        // Re-initialize if needed
+        const preferredRegion = region || getDefaultRegion();
+        autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+          types: ['address'],
+          fields: ['address_components', 'formatted_address', 'geometry'],
+          componentRestrictions: { country: preferredRegion }
+        });
+        setIsInitialized(true);
+        console.log("Autocomplete re-initialized on focus");
+      } catch (err) {
+        console.error("Error re-initializing autocomplete:", err);
+      }
+    }
+  };
+  
   return (
     <div className="relative w-full">
       <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
@@ -153,7 +185,8 @@ export const GoogleAddressAutocomplete = memo(({
         id={id}
         ref={inputRef}
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={handleInputChange}
+        onFocus={handleInputFocus}
         placeholder={error ? `${error} - ${placeholder}` : placeholder}
         className={cn("pl-9", className)}
         required={required}
@@ -161,6 +194,11 @@ export const GoogleAddressAutocomplete = memo(({
         aria-label="Address search"
         autoComplete="off"
       />
+      {error && (
+        <div className="text-sm text-destructive mt-1">
+          {error}. You may need to enter the address manually.
+        </div>
+      )}
     </div>
   );
 });
