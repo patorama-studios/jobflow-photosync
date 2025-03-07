@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { AddressMap } from './AddressMap';
 
 interface AddressDisplayProps {
   addressDetails: {
@@ -8,6 +9,8 @@ interface AddressDisplayProps {
     city: string;
     state: string;
     postalCode: string;
+    lat: number;
+    lng: number;
   };
   isMobile: boolean;
 }
@@ -40,6 +43,15 @@ export const AddressDisplay: React.FC<AddressDisplayProps> = ({
             <p>{addressDetails.postalCode}</p>
           </div>
         </div>
+      )}
+      
+      {/* Add map display when we have coordinates */}
+      {addressDetails.lat && addressDetails.lng && (
+        <AddressMap 
+          lat={addressDetails.lat} 
+          lng={addressDetails.lng} 
+          address={addressDetails.formattedAddress} 
+        />
       )}
     </div>
   );

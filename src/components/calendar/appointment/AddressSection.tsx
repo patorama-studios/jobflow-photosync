@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { GoogleMapsInput } from './address/GoogleMapsInput';
 import { ManualAddressForm } from './address/ManualAddressForm';
 import { AddressDisplay } from './address/AddressDisplay';
+import { SchedulingAssistant } from './scheduling/SchedulingAssistant';
 
 interface AddressDetails {
   formattedAddress: string;
@@ -19,6 +20,7 @@ interface AddressDetails {
 
 interface AddressSectionProps {
   addressDetails: AddressDetails;
+  selectedPhotographer?: string;
   onAddressSelect: (address: {
     formattedAddress: string;
     streetAddress: string;
@@ -29,11 +31,14 @@ interface AddressSectionProps {
     lat: number;
     lng: number;
   }) => void;
+  onScheduleSelect?: (date: Date, time: string) => void;
 }
 
 export const AddressSection: React.FC<AddressSectionProps> = ({ 
   addressDetails, 
-  onAddressSelect 
+  selectedPhotographer,
+  onAddressSelect,
+  onScheduleSelect
 }) => {
   const { error } = useGoogleMaps();
   const isMobile = useIsMobile();
@@ -69,6 +74,12 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
     }
   }, [error]);
 
+  const handleScheduleSelect = (date: Date, time: string) => {
+    if (onScheduleSelect) {
+      onScheduleSelect(date, time);
+    }
+  };
+
   return (
     <div>
       <p className="text-sm font-medium mb-2">Address</p>
@@ -78,7 +89,7 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
         onAddressSelect={onAddressSelect} 
       />
       
-      {error || (
+      {!error && (
         <div className="mt-2">
           <button
             type="button"
@@ -103,6 +114,17 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
         <AddressDisplay 
           addressDetails={addressDetails} 
           isMobile={isMobile}
+        />
+      )}
+      
+      {/* Show the scheduling assistant when we have an address */}
+      {addressDetails.formattedAddress && onScheduleSelect && (
+        <SchedulingAssistant
+          address={addressDetails.formattedAddress}
+          photographer={selectedPhotographer}
+          onSelectSlot={handleScheduleSelect}
+          lat={addressDetails.lat}
+          lng={addressDetails.lng}
         />
       )}
     </div>

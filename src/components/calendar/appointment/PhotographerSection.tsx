@@ -8,14 +8,28 @@ import { Loader2 } from 'lucide-react';
 interface PhotographerSectionProps {
   selectedPhotographer?: string;
   onSelectPhotographer?: (photographerId: string) => void;
+  onDateTimeSelect?: (date: Date, time: string) => void;
+  scheduledDate?: Date;
+  scheduledTime?: string;
 }
 
 export const PhotographerSection: React.FC<PhotographerSectionProps> = ({ 
   selectedPhotographer,
-  onSelectPhotographer 
+  onSelectPhotographer,
+  onDateTimeSelect,
+  scheduledDate,
+  scheduledTime
 }) => {
   const { contractors, isLoading } = useContractors();
   const [searchQuery, setSearchQuery] = useState('');
+  const [date, setDate] = useState<Date | undefined>(scheduledDate);
+  const [time, setTime] = useState<string | undefined>(scheduledTime);
+  
+  // Update local state when props change
+  useEffect(() => {
+    if (scheduledDate) setDate(scheduledDate);
+    if (scheduledTime) setTime(scheduledTime);
+  }, [scheduledDate, scheduledTime]);
   
   // Filter contractors to only include photographers and apply search
   const photographers = contractors.filter(contractor => 
@@ -29,6 +43,22 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
       onSelectPhotographer(photographer.id);
     }
     setSearchQuery('');
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value ? new Date(e.target.value) : undefined;
+    setDate(newDate);
+    if (newDate && time && onDateTimeSelect) {
+      onDateTimeSelect(newDate, time);
+    }
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value;
+    setTime(newTime);
+    if (date && newTime && onDateTimeSelect) {
+      onDateTimeSelect(date, newTime);
+    }
   };
 
   const selectedPhotographerData = contractors.find(
@@ -84,8 +114,18 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
       <div>
         <p className="text-sm font-medium mb-2">Date & Time</p>
         <div className="grid grid-cols-2 gap-2">
-          <Input type="date" placeholder="Select date" />
-          <Input type="time" placeholder="Select time" />
+          <Input 
+            type="date" 
+            placeholder="Select date" 
+            value={date ? date.toISOString().split('T')[0] : ''}
+            onChange={handleDateChange}
+          />
+          <Input 
+            type="time" 
+            placeholder="Select time" 
+            value={time || ''}
+            onChange={handleTimeChange}
+          />
         </div>
       </div>
     </div>
