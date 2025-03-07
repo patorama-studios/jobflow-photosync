@@ -30,7 +30,7 @@ export const OrdersContent = memo(function OrdersContent({
   } = useOrdersFiltering(orders || []);
 
   const handleRowClick = useCallback((orderId: string | number) => {
-    navigate(`/orders/${orderId}`);
+    navigate(`/order/${orderId}`);
   }, [navigate]);
 
   if (isLoading) {

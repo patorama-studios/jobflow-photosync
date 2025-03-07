@@ -24,7 +24,7 @@ export function OrderActions({ orderId, orderNumber }: OrderActionsProps) {
     e.stopPropagation();
     // Use orderNumber if available (for compatibility), otherwise use orderId
     const identifier = orderNumber || orderId;
-    navigate(`/orders/${identifier}`);
+    navigate(`/order/${identifier}`);
   };
 
   return (
