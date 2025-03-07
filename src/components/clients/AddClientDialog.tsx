@@ -46,7 +46,7 @@ type ClientFormValues = z.infer<typeof clientFormSchema>;
 interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onClientAdded: (client: Omit<Client, 'id' | 'created_at'>) => Promise<void>;
+  onClientAdded: (client: Omit<Client, 'id' | 'created_at'>) => Promise<boolean>;
 }
 
 export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClientDialogProps) {
@@ -83,15 +83,19 @@ export function AddClientDialog({ open, onOpenChange, onClientAdded }: AddClient
         outstanding_payment: 0,
       };
       
-      await onClientAdded(newClient);
+      // Call the parent handler and wait for success or failure
+      const success = await onClientAdded(newClient);
       
-      // Reset form AFTER the client has been successfully added
-      // This ensures that the form state is clean for next use
-      form.reset();
-      
-      // Close the dialog AFTER the client has been successfully added
-      // This prevents issues with half-completed actions
-      onOpenChange(false);
+      if (success) {
+        // Reset form AFTER the client has been successfully added
+        form.reset();
+        
+        // Close the dialog AFTER the client has been successfully added
+        onOpenChange(false);
+      } else {
+        // If the parent handler returns false, don't close the dialog
+        toast.error("Failed to add client. Please try again.");
+      }
     } catch (error: any) {
       console.error("Error submitting form:", error);
       toast.error("Failed to add client: " + (error.message || "Unknown error"));

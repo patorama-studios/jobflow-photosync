@@ -1,4 +1,4 @@
-
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { JobCalendar } from "@/components/dashboard/JobCalendar";
 import { StatsCards } from "@/components/dashboard/StatsCards";
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 
 const Dashboard = () => {
   return (
-    <PageTransition>
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <SidebarLayout>
+      <PageTransition>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
@@ -271,7 +272,8 @@ const Dashboard = () => {
           </table>
         </div>
       </div>
-    </PageTransition>
+      </PageTransition>
+    </SidebarLayout>
   );
 };
 
