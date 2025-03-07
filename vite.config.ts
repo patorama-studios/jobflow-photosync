@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   // Configure for SPA routing in production
-  base: '/',
+  base: './',
   // Add caching for improved performance
   cacheDir: '.vite-cache',
   plugins: [
@@ -46,10 +46,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         // Use common JS format for better compatibility
         format: 'iife',
-        // Use .js extension without modules for production compatibility
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Simplify output naming for easier debugging and better compatibility
+        entryFileNames: 'main.js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: (id) => {
           // Core libraries
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {

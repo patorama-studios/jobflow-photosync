@@ -26,9 +26,9 @@ RewriteRule ^ /index.html [L]
   AddType application/javascript .mjs
   AddType text/javascript .mjs
   
-  # Ensure ES modules are properly served
-  <FilesMatch "\.m?js$">
-    Header set Content-Type "application/javascript"
+  # Ensure JS files are properly served
+  <FilesMatch "\.js$">
+    Header set Content-Type "text/javascript"
   </FilesMatch>
   
   # JSON
@@ -58,7 +58,7 @@ RewriteRule ^ /index.html [L]
 # Force Content-Type for JavaScript modules and assets
 <FilesMatch "\.(js|mjs)$">
   <IfModule mod_headers.c>
-    Header set Content-Type "application/javascript"
+    Header set Content-Type "text/javascript"
   </IfModule>
 </FilesMatch>
 
