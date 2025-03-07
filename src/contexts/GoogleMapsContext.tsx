@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { loadGoogleMapsScript, setDefaultRegion, getDefaultRegion } from '@/lib/google-maps';
+import { loadGoogleMapsScript, setDefaultRegion, getDefaultRegion, retryLoadGoogleMaps } from '@/lib/google-maps';
 import { toast } from 'sonner';
 
 interface GoogleMapsContextType {
@@ -68,10 +68,11 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({
     
     try {
       console.log(`Loading Google Maps API (attempt ${loadAttempts + 1})...`);
-      await loadGoogleMapsScript({ 
+      await retryLoadGoogleMaps({ 
         apiKey, 
         libraries: ['places'], 
-        region: currentRegion 
+        region: currentRegion,
+        maxAttempts: 3
       });
       console.log("Google Maps API loaded successfully");
       setIsLoaded(true);
@@ -82,7 +83,7 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({
       setIsLoading(false);
       
       // Show a toast notification about the failure
-      toast.error("Failed to load Google Maps. Address search may not work correctly.");
+      toast.error("Failed to load Google Maps. Address search may not work correctly. You can enter addresses manually.");
     }
   };
   

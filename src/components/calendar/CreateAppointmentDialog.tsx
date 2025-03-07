@@ -56,8 +56,9 @@ export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = (
     onClose();
   };
 
-  // Google Maps API key - in a production app, should come from environment variables
-  const googleMapsApiKey = "AIzaSyA_1tNuz5ro9bZbQKJ9zgsB-oX1FMfd-I8"; // Example key, replace with actual key
+  // Get Google Maps API key from environment or use a default one for development
+  // Note: In production, this should be loaded from an environment variable
+  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "AIzaSyDcwGyRxRbcNGWOFQVT87A1xkbTuoiRRwE";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

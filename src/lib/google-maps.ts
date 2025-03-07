@@ -58,7 +58,7 @@ export function isGoogleMapsLoaded(): boolean {
   return !!window.google && !!window.google.maps && !!window.google.maps.places;
 }
 
-// Load the Google Maps script dynamically
+// Load the Google Maps script dynamically with better error handling
 export function loadGoogleMapsScript(options: { 
   apiKey: string;
   libraries?: string[];
@@ -129,6 +129,36 @@ export function loadGoogleMapsScript(options: {
       reject(error);
     }
   });
+}
+
+// Retry loading Google Maps if it fails
+export function retryLoadGoogleMaps(options: { 
+  apiKey: string;
+  libraries?: string[];
+  region?: string;
+  maxAttempts?: number;
+}): Promise<void> {
+  const maxAttempts = options.maxAttempts || 3;
+  let attempts = 0;
+  
+  const attemptLoad = (): Promise<void> => {
+    attempts++;
+    console.log(`Attempt ${attempts} to load Google Maps...`);
+    
+    return loadGoogleMapsScript(options).catch(error => {
+      if (attempts < maxAttempts) {
+        console.log(`Retrying Google Maps load, attempt ${attempts + 1}/${maxAttempts}`);
+        return new Promise(resolve => {
+          setTimeout(() => resolve(attemptLoad()), 2000); // Wait 2 seconds before retrying
+        });
+      } else {
+        console.error(`Failed to load Google Maps after ${maxAttempts} attempts`);
+        throw error;
+      }
+    });
+  };
+  
+  return attemptLoad();
 }
 
 // Add window augmentation to include google maps

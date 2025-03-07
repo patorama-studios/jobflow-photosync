@@ -63,8 +63,8 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
                 onClick={() => handlePhotographerSelect(photographer)}
               >
                 <p className="font-medium">{photographer.name}</p>
-                {photographer.email && (
-                  <p className="text-sm text-muted-foreground">{photographer.email}</p>
+                {photographer.notes && (
+                  <p className="text-sm text-muted-foreground">{photographer.notes}</p>
                 )}
               </div>
             ))}
@@ -74,8 +74,8 @@ export const PhotographerSection: React.FC<PhotographerSectionProps> = ({
         {selectedPhotographerData && (
           <div className="mt-2 p-2 bg-primary/5 rounded text-sm">
             <p className="font-medium">{selectedPhotographerData.name}</p>
-            {selectedPhotographerData.email && (
-              <p className="text-muted-foreground">{selectedPhotographerData.email}</p>
+            {selectedPhotographerData.notes && (
+              <p className="text-muted-foreground">{selectedPhotographerData.notes}</p>
             )}
           </div>
         )}
