@@ -37,6 +37,13 @@ const applyThemeAndFont = () => {
 // Execute theme application immediately
 applyThemeAndFont();
 
+// Set up a global error handler
+window.addEventListener('error', (event) => {
+  console.error('Global error caught:', event.error);
+  // Increment error count for monitoring
+  window.__CONSOLE_ERROR_COUNT__ = (window.__CONSOLE_ERROR_COUNT__ || 0) + 1;
+});
+
 // Install global error monitoring in non-blocking way
 setTimeout(() => {
   try {

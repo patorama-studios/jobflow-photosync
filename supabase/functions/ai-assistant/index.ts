@@ -20,7 +20,15 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not set. Please configure it in your Supabase project secrets.');
     }
 
-    const { query, history, context } = await req.json();
+    const requestData = await req.json();
+    const { query, history, context } = requestData || {};
+    
+    if (!query) {
+      throw new Error('Query parameter is required');
+    }
+
+    // Ensure history is an array
+    const messageHistory = Array.isArray(history) ? history : [];
 
     // Base system instructions
     const systemPrompt = `
@@ -46,7 +54,7 @@ serve(async (req) => {
     // Create merged messages array with conversation history
     const messages = [
       { role: "system", content: systemPrompt },
-      ...history,
+      ...messageHistory,
       { role: "user", content: query }
     ];
 

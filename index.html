@@ -24,6 +24,15 @@
         if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
           console.log('Non-root path detected, will use client-side routing');
         }
+        
+        // Initialize error tracking
+        window.__CONSOLE_ERROR_COUNT__ = 0;
+        
+        // Set up a simple global error handler
+        window.addEventListener('unhandledrejection', function(event) {
+          console.error('Unhandled Promise Rejection:', event.reason);
+          window.__CONSOLE_ERROR_COUNT__ = window.__CONSOLE_ERROR_COUNT__ + 1;
+        });
       })();
     </script>
   </head>
