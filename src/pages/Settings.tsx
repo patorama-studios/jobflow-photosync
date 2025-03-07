@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
 import { useEffect } from "react";
 
@@ -39,7 +39,7 @@ export function SettingsPage() {
   }, [updateSettings]);
   
   return (
-    <SidebarLayout>
+    <MainLayout>
       <PageTransition>
         <div className="w-full p-6">
           <div className="mb-8">
@@ -60,7 +60,7 @@ export function SettingsPage() {
           </div>
         </div>
       </PageTransition>
-    </SidebarLayout>
+    </MainLayout>
   );
 }
 
