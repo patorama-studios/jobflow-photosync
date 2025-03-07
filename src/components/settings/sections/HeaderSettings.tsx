@@ -17,9 +17,10 @@ export function HeaderSettings() {
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
   
+  // Only load initial settings once
   useEffect(() => {
     setLocalSettings(savedSettings);
-  }, [savedSettings]);
+  }, []); // Empty dependency array to run only once
   
   const updateLocalSettings = (newSettingsPartial: Partial<typeof savedSettings>) => {
     setLocalSettings(prev => {
