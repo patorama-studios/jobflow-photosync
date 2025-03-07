@@ -35,12 +35,10 @@ const ProtectedSuspenseRoute = ({ element }: { element: React.ReactNode }) => (
 
 // Routes configuration
 export const routes = [
-  // Redirects
-  { path: '/', element: <Navigate to="/calendar" replace /> },
-  { path: '/index', element: <Navigate to="/calendar" replace /> },
-  
   // Public routes
   { path: '/login', element: <Login /> },
+  { path: '/', element: <Home /> },
+  { path: '/index', element: <Home /> },
   
   // Protected routes
   { path: '/dashboard', element: <ProtectedSuspenseRoute element={<Dashboard />} /> },
