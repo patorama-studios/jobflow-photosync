@@ -4,7 +4,6 @@ import { OrdersHeader } from "./OrdersHeader";
 import { OrdersContent } from "./OrdersContent";
 import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog"; 
 import { useOrders } from "@/hooks/use-orders";
-import { GenerateDummyOrders } from "./GenerateDummyOrders";
 
 export const OrdersView = memo(function OrdersView() {
   const { orders, isLoading } = useOrders();
@@ -32,9 +31,6 @@ export const OrdersView = memo(function OrdersView() {
         onOpenCreateOrder={openCreateOrderDialog}
         orders={orders || []}
       />
-      
-      {/* Add the GenerateDummyOrders component */}
-      <GenerateDummyOrders />
       
       <div className="space-y-4">
         <OrdersContent 

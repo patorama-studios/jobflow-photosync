@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Product as UIProduct } from '@/components/settings/products/types/product-types';
@@ -19,7 +19,7 @@ export function useProducts() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -27,6 +27,7 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -40,9 +41,9 @@ export function useProducts() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const saveProduct = async (product: Partial<Product>) => {
+  const saveProduct = useCallback(async (product: Partial<Product>) => {
     try {
       setIsLoading(true);
       
@@ -62,7 +63,7 @@ export function useProducts() {
       if (error) throw error;
       
       // Refresh the products list
-      await fetchProducts();
+      fetchProducts();
       
       toast.success(`Product ${product.id ? 'updated' : 'created'} successfully`);
       return data;
@@ -73,10 +74,39 @@ export function useProducts() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchProducts]);
+
+  // Delete product (soft delete by setting is_active to false)
+  const deleteProduct = useCallback(async (productId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId);
+      
+      if (error) throw error;
+      
+      // Remove from local state to update UI immediately
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      
+      toast.success('Product deleted successfully');
+      return true;
+    } catch (err: any) {
+      console.error("Error deleting product:", err);
+      toast.error(`Failed to delete product: ${err.message || 'Unknown error'}`);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Function to map UI product model to database model
-  const saveUIProduct = async (uiProduct: UIProduct) => {
+  const saveUIProduct = useCallback(async (uiProduct: UIProduct) => {
     try {
       const dbProduct: Partial<Product> = {
         id: uiProduct.id,
@@ -109,9 +139,9 @@ export function useProducts() {
       toast.error(`Failed to save product: ${err.message || 'Unknown error'}`);
       throw err;
     }
-  };
+  }, [saveProduct]);
 
-  const createProductOverride = async (
+  const createProductOverride = useCallback(async (
     clientId: string, 
     productId: string, 
     overridePrice: number
@@ -150,12 +180,12 @@ export function useProducts() {
       toast.error(`Failed to create override: ${err.message || 'Unknown error'}`);
       throw err;
     }
-  };
+  }, [products]);
 
   // Initialize by fetching products
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   return {
     products,
@@ -163,6 +193,7 @@ export function useProducts() {
     error,
     refetch: fetchProducts,
     saveProduct,
+    deleteProduct,
     saveUIProduct,
     createProductOverride
   };

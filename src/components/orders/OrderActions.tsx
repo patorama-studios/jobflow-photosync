@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash, Loader2 } from "lucide-react";
 import { DeleteOrderDialog } from "./details/DeleteOrderDialog";
 import { deleteOrder } from "@/services/order-service";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ interface OrderActionsProps {
 export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActionsProps) {
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -42,21 +43,29 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
 
   const confirmDelete = async () => {
     try {
+      setIsDeleting(true);
       const { success, error } = await deleteOrder(orderId);
       
       if (error) {
         toast.error(`Failed to delete order: ${error}`);
-      } else if (success) {
+        return false;
+      } 
+      
+      if (success) {
         toast.success("Order deleted successfully");
         if (onOrderDeleted) {
           onOrderDeleted();
         }
+        return true;
       }
+      
+      return false;
     } catch (err) {
       console.error("Error during delete operation:", err);
       toast.error("An unexpected error occurred while deleting the order");
+      return false;
     } finally {
-      setIsDeleteDialogOpen(false);
+      setIsDeleting(false);
     }
   };
 
@@ -64,9 +73,13 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MoreHorizontal className="h-4 w-4" />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

@@ -19,7 +19,7 @@ interface OrdersTableProps {
 const OrdersTable = memo(({ orders, onRowClick }: OrdersTableProps) => {
   return (
     <div className="w-full overflow-auto">
-      <Table>
+      <Table className="border-collapse table-fixed w-full">
         <TableHeader />
         <TableBody>
           {orders.length > 0 ? (

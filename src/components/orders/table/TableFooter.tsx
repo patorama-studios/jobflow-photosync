@@ -1,21 +1,21 @@
 
-import React, { memo } from 'react';
-import { TableCell, TableFooter, TableRow } from "@/components/ui/table";
+import React from 'react';
+import { TableFooter, TableRow, TableCell } from "@/components/ui/table";
 
-interface TableFooterProps {
+interface OrderTableFooterProps {
   count: number;
 }
 
-const OrderTableFooter = memo(({ count }: TableFooterProps) => (
-  <TableFooter>
-    <TableRow>
-      <TableCell colSpan={6} className="text-right">
-        Total {count} orders
-      </TableCell>
-    </TableRow>
-  </TableFooter>
-));
-
-OrderTableFooter.displayName = 'OrderTableFooter';
+const OrderTableFooter = ({ count }: OrderTableFooterProps) => {
+  return (
+    <TableFooter>
+      <TableRow>
+        <TableCell colSpan={6} className="text-right text-sm text-muted-foreground">
+          Total Orders: {count}
+        </TableCell>
+      </TableRow>
+    </TableFooter>
+  );
+};
 
 export default OrderTableFooter;

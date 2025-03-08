@@ -17,6 +17,7 @@ import { Customer, TeamMember } from "@/components/clients/mock-data";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientTeams } from "@/hooks/use-client-teams";
+import { toast } from "sonner";
 
 interface ClientTeamsProps {
   client: Customer;
@@ -27,8 +28,34 @@ export function ClientTeams({ client }: ClientTeamsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [potentialMemberSearch, setPotentialMemberSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   
-  const { allClients, isLoading } = useClientTeams();
+  const { allClients, isLoading: clientsLoading, addTeamMember, removeTeamMember, getClientTeam } = useClientTeams();
+  
+  // Load team members on component mount
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      setIsLoading(true);
+      try {
+        const teamMembers = await getClientTeam(client.id);
+        if (teamMembers.length > 0) {
+          setTeam(teamMembers);
+        } else {
+          // If no team members yet, ensure we at least have the client as leader
+          if (client.team && client.team.length > 0) {
+            setTeam(client.team);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading team members:", error);
+        toast.error("Failed to load team members");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadTeamMembers();
+  }, [client.id, client.team, getClientTeam]);
   
   // Filter potential members
   const filteredPotentialMembers = potentialMemberSearch.trim() === "" 
@@ -38,20 +65,46 @@ export function ClientTeams({ client }: ClientTeamsProps) {
         member.email.toLowerCase().includes(potentialMemberSearch.toLowerCase())
       );
   
-  // Mock function to add a team member
-  const addTeamMember = (member: TeamMember) => {
+  // Add a team member
+  const handleAddTeamMember = async (member: TeamMember) => {
     // Check if member already exists in team
     if (team.find(m => m.id === member.id)) {
+      toast.info("This member is already in the team");
       return;
     }
     
-    setTeam([...team, member]);
-    setShowAddDialog(false);
+    setIsLoading(true);
+    try {
+      await addTeamMember(client.id, member);
+      setTeam([...team, member]);
+      setShowAddDialog(false);
+    } catch (error) {
+      console.error("Error adding team member:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  // Mock function to remove a team member
-  const removeTeamMember = (memberId: string) => {
-    setTeam(team.filter(member => member.id !== memberId));
+  // Remove a team member
+  const handleRemoveTeamMember = async (memberId: string) => {
+    if (isLoading) return;
+    
+    // Don't allow removing the leader
+    const memberToRemove = team.find(m => m.id === memberId);
+    if (memberToRemove?.role === 'Leader') {
+      toast.error("You cannot remove the team leader");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await removeTeamMember(client.id, memberId);
+      setTeam(team.filter(member => member.id !== memberId));
+    } catch (error) {
+      console.error("Error removing team member:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,7 +152,7 @@ export function ClientTeams({ client }: ClientTeamsProps) {
                     />
                   </div>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {isLoading ? (
+                    {clientsLoading ? (
                       <div className="p-4 text-center text-muted-foreground">Loading clients...</div>
                     ) : filteredPotentialMembers.length === 0 ? (
                       <div className="p-4 text-center text-muted-foreground">No matching clients found</div>
@@ -108,7 +161,7 @@ export function ClientTeams({ client }: ClientTeamsProps) {
                         <div 
                           key={member.id} 
                           className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
-                          onClick={() => addTeamMember(member)}
+                          onClick={() => handleAddTeamMember(member)}
                         >
                           <div className="flex items-center gap-3">
                             <Avatar>
@@ -148,58 +201,75 @@ export function ClientTeams({ client }: ClientTeamsProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {team.filter(m => 
-                  m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                  m.email.toLowerCase().includes(searchQuery.toLowerCase())
-                ).map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <Checkbox 
-                        checked={member.role === 'Leader'} 
-                        disabled={member.role === 'Leader'}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={member.photoUrl} alt={member.name} />
-                          <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{member.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-muted-foreground">{member.email}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox 
-                        checked={member.role === 'Admin' || member.role === 'Leader'} 
-                        disabled={member.role === 'Leader'}
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox 
-                        checked={member.role === 'Finance' || member.role === 'Leader'} 
-                        disabled={member.role === 'Leader'}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        disabled={member.role === 'Leader'}
-                        onClick={() => removeTeamMember(member.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      Loading team members...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : team.filter(m => 
+                  m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  m.email.toLowerCase().includes(searchQuery.toLowerCase())
+                ).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      No team members found matching your search
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  team.filter(m => 
+                    m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    m.email.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={member.role === 'Leader'} 
+                          disabled={member.role === 'Leader'}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={member.photoUrl} alt={member.name} />
+                            <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{member.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-muted-foreground">{member.email}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Checkbox 
+                          checked={member.role === 'Admin' || member.role === 'Leader'} 
+                          disabled={member.role === 'Leader'}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Checkbox 
+                          checked={member.role === 'Finance' || member.role === 'Leader'} 
+                          disabled={member.role === 'Leader'}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          disabled={member.role === 'Leader' || isLoading}
+                          onClick={() => handleRemoveTeamMember(member.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
           
-          {team.length === 0 && (
+          {team.length === 0 && !isLoading && (
             <div className="text-center py-6">
               <p className="text-muted-foreground">No team members found.</p>
               <Button className="mt-4" onClick={() => setShowAddDialog(true)}>

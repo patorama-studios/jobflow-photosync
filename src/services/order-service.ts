@@ -75,9 +75,34 @@ export async function saveOrderChanges(order: Order): Promise<{
   }
 
   try {
-    // For now we're just logging the save action
-    // In a real app, we would update the order in the database
-    console.log('Saving order:', order);
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        client: order.client || order.customerName,
+        client_email: order.clientEmail || order.contactEmail,
+        client_phone: order.clientPhone || order.contactNumber,
+        address: order.address || order.propertyAddress,
+        city: order.city,
+        state: order.state,
+        zip: order.zip,
+        property_type: order.propertyType || order.property_type,
+        square_feet: order.squareFeet || order.square_feet,
+        scheduled_date: order.scheduledDate || order.scheduled_date,
+        scheduled_time: order.scheduledTime || order.scheduled_time,
+        photographer: order.photographer,
+        photographer_payout_rate: order.photographerPayoutRate || order.photographer_payout_rate,
+        price: order.price || order.amount,
+        status: order.status,
+        package: order.package,
+        notes: order.notes,
+        internal_notes: order.internalNotes || order.internal_notes,
+        customer_notes: order.customerNotes || order.customer_notes,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', order.id);
+
+    if (error) throw error;
+    
     return { success: true, error: null };
   } catch (err: any) {
     console.error('Error saving order:', err);
@@ -100,9 +125,14 @@ export async function deleteOrder(orderId: string | number): Promise<{
   }
 
   try {
-    // For now we're just logging the delete action
-    // In a real app, we would delete the order from the database
-    console.log('Deleting order:', orderId);
+    // Actually delete the order from the database
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId);
+
+    if (error) throw error;
+    
     return { success: true, error: null };
   } catch (err: any) {
     console.error('Error deleting order:', err);

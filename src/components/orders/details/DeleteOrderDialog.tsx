@@ -1,12 +1,13 @@
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 interface DeleteOrderDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirmDelete: () => void;
+  onConfirmDelete: () => Promise<void> | void;
 }
 
 // Use memo to prevent unnecessary re-renders
@@ -15,8 +16,24 @@ export const DeleteOrderDialog = memo(function DeleteOrderDialog({
   onOpenChange, 
   onConfirmDelete 
 }: DeleteOrderDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirmDelete();
+    } finally {
+      setIsDeleting(false);
+      onOpenChange(false); // Ensure dialog is closed when done
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!isDeleting) { // Only allow closing if not currently deleting
+        onOpenChange(open);
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Delete Order</DialogTitle>
@@ -25,13 +42,28 @@ export const DeleteOrderDialog = memo(function DeleteOrderDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button type="button" variant="destructive" onClick={onConfirmDelete}>
-            Delete
+          <Button 
+            type="button" 
+            variant="secondary" 
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="button" 
+            variant="destructive" 
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              'Delete'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
