@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -94,9 +93,12 @@ Patorama Studios Team
 
       if (error) throw error;
 
+      // Fix: Convert order.id to string if it's a number
+      const orderId = typeof order.id === 'number' ? order.id.toString() : order.id;
+      
       // Log the activity in order_activities
       await supabase.from('order_activities').insert({
-        order_id: order.id,
+        order_id: orderId,
         activity_type: 'email_delivery',
         description: `Delivery email sent to ${allRecipients.join(', ')}`,
         metadata: { emailData: emailPayload }

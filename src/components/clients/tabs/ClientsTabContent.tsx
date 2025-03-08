@@ -59,6 +59,7 @@ export function ClientsTabContent({ activeTab, onTabChange }: ClientsTabContentP
             </div>
           </CardHeader>
           <CardContent>
+            {/* Fix: Pass viewMode as a proper prop to CompanyList component */}
             <CompanyList viewMode={companyViewMode} />
           </CardContent>
         </Card>

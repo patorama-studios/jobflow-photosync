@@ -15,15 +15,18 @@ interface ProductionTabProps {
 }
 
 export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
+  // Fix: Convert order.id to string if it's a number
+  const orderId = typeof order.id === 'number' ? order.id.toString() : order.id;
+  
   // Fetch order products from the database
   const { data: orderProducts, isLoading } = useQuery({
-    queryKey: ['orderProducts', order.id],
+    queryKey: ['orderProducts', orderId],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
           .from('order_products')
           .select('*')
-          .eq('order_id', order.id);
+          .eq('order_id', orderId);
         
         if (error) throw error;
         return data || [];
@@ -32,7 +35,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
         return [];
       }
     },
-    enabled: !!order.id
+    enabled: !!orderId
   });
   
   // Use fetched products or fallback to mock data
@@ -76,13 +79,13 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
           <CardTitle>Production Status</CardTitle>
           <div className="flex gap-2">
             <Button asChild>
-              <Link to={`/production/upload/${order.id}`} className="flex items-center gap-1">
+              <Link to={`/production/upload/${orderId}`} className="flex items-center gap-1">
                 <UploadCloud className="h-4 w-4" />
                 Upload Content
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to={`/production/order/${order.id}`} className="flex items-center gap-1">
+              <Link to={`/production/order/${orderId}`} className="flex items-center gap-1">
                 <ExternalLink className="h-4 w-4" />
                 View in Production
               </Link>
