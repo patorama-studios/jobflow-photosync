@@ -38,7 +38,7 @@ export interface UserProfile {
 }
 
 // Type to help with type conversion from Supabase Json to our types
-export type JsonValue<T> = T extends object ? JsonObject<T> : Json;
+export type JsonValue<T = any> = T extends object ? JsonObject<T> : Json;
 
 type JsonObject<T> = {
   [K in keyof T]: JsonValue<T[K]>;

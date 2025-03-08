@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { UserProfile } from './types/user-settings-types';
+import { UserProfile, JsonValue } from './types/user-settings-types';
 
 const DEFAULT_USER_PROFILE: UserProfile = {
   id: '',
@@ -36,7 +36,8 @@ export function useUserProfile() {
         }
         
         if (data && data.value) {
-          const parsedProfile = data.value as UserProfile;
+          // Properly cast the JSON value to the expected type
+          const parsedProfile = data.value as unknown as UserProfile;
           setProfile(parsedProfile);
         } else {
           // No profile found, use defaults
@@ -64,7 +65,7 @@ export function useUserProfile() {
         .from('app_settings')
         .upsert({
           key: 'user_profile',
-          value: profile,
+          value: profile as unknown as JsonValue,
         });
       
       if (error) {

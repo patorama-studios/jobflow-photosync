@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { NotificationSetting } from './types/user-settings-types';
+import { NotificationSetting, JsonValue } from './types/user-settings-types';
 
 const DEFAULT_NOTIFICATION_TYPES = [
   'Order Created',
@@ -51,7 +51,8 @@ export function useNotificationSettings() {
       }
       
       if (data && data.value) {
-        const parsedSettings = data.value as NotificationSetting[];
+        // Properly cast the JSON value to the expected type
+        const parsedSettings = data.value as unknown as NotificationSetting[];
         setSettings(parsedSettings);
       } else {
         // No settings found, create default ones
@@ -97,7 +98,7 @@ export function useNotificationSettings() {
         .from('app_settings')
         .upsert({
           key: 'notification_preferences',
-          value: updatedSettings,
+          value: updatedSettings as unknown as JsonValue
         });
       
       if (error) {

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { OrganizationSettings } from './types/user-settings-types';
+import { OrganizationSettings, JsonValue } from './types/user-settings-types';
 
 const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
   companyName: '',
@@ -41,7 +41,8 @@ export function useOrganizationSettings() {
         }
         
         if (data && data.value) {
-          const parsedSettings = data.value as OrganizationSettings;
+          // Properly cast the JSON value to the expected type
+          const parsedSettings = data.value as unknown as OrganizationSettings;
           setSettings(parsedSettings);
         } else {
           // No settings found, use defaults
@@ -69,7 +70,7 @@ export function useOrganizationSettings() {
         .from('app_settings')
         .upsert({
           key: 'organization_settings',
-          value: settings,
+          value: settings as unknown as JsonValue,
         });
       
       if (error) {

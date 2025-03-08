@@ -10,10 +10,11 @@ import {
 } from "@/components/ui/table"
 import { Client } from '@/hooks/use-clients';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash, MoreHorizontal } from 'lucide-react';
+import { Edit, Trash, MoreHorizontal, User } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ClientTableProps {
   clients: Client[];
@@ -63,6 +64,15 @@ export function ClientTable({
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   // Render error message
   if (error) {
     return <div className="text-red-500">{error.message}</div>;
@@ -73,7 +83,6 @@ export function ClientTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">ID</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
@@ -88,8 +97,20 @@ export function ClientTable({
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => handleRowClick(client)}
             >
-              <TableCell className="font-medium">{client.id.substring(0, 8)}</TableCell>
-              <TableCell>{client.name}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    {client.photo_url ? (
+                      <AvatarImage src={client.photo_url} alt={client.name} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getInitials(client.name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span className="font-medium">{client.name}</span>
+                </div>
+              </TableCell>
               <TableCell>{client.email}</TableCell>
               <TableCell>{client.phone}</TableCell>
               <TableCell>
@@ -125,7 +146,7 @@ export function ClientTable({
           ))}
           {clients.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={5} className="text-center py-8">
                 No clients found.
               </TableCell>
             </TableRow>

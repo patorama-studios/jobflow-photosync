@@ -6,9 +6,10 @@ import { Plus } from "lucide-react";
 import { ClientTable } from './ClientTable';
 import { AddClientDialog } from './AddClientDialog';
 import { useClients } from '@/hooks/use-clients';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export function ClientsView() {
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
@@ -26,11 +27,26 @@ export function ClientsView() {
   };
 
   const handleDeleteClient = async (clientId: string) => {
-    // Handle client deletion (future implementation)
-    toast({
-      title: "Client deleted",
-      description: "The client has been removed"
-    });
+    try {
+      // Permanently delete the client from the database
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId);
+        
+      if (error) {
+        console.error('Error deleting client:', error);
+        toast.error('Failed to delete client');
+        return;
+      }
+      
+      // Update local state by removing the deleted client
+      await refetch();
+      toast.success('Client has been deleted');
+    } catch (error) {
+      console.error('Unexpected error deleting client:', error);
+      toast.error('An unexpected error occurred while deleting the client');
+    }
   };
 
   const handleEditClient = (client: any) => {
@@ -46,10 +62,7 @@ export function ClientsView() {
     try {
       const result = await addClient(client);
       if (result) {
-        toast({
-          title: "Client added",
-          description: "The client has been added successfully"
-        });
+        toast.success('Client has been added successfully');
         return true;
       }
       return false;
