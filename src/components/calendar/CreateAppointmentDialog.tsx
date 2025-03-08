@@ -15,6 +15,7 @@ import { DateTimeSelector } from './appointment/components/DateTimeSelector';
 import { DurationSelector } from './appointment/components/DurationSelector';
 import { NotificationSelector } from './appointment/components/NotificationSelector';
 import { supabase } from '@/integrations/supabase/client';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // Define the schema for our form
 const formSchema = z.object({
@@ -46,6 +47,36 @@ type CreateAppointmentDialogProps = {
   existingOrderData?: any;
 };
 
+// ToggleSection component for collapsible sections
+const ToggleSection = ({ 
+  title, 
+  children, 
+  isOpen, 
+  onToggle 
+}: { 
+  title: string; 
+  children: React.ReactNode; 
+  isOpen: boolean; 
+  onToggle: () => void 
+}) => {
+  return (
+    <div className="border rounded-md mb-4">
+      <div 
+        className="flex justify-between items-center p-4 cursor-pointer bg-muted/30"
+        onClick={onToggle}
+      >
+        <h3 className="text-lg font-medium">{title}</h3>
+        {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+      </div>
+      {isOpen && (
+        <div className="p-4 border-t">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export function CreateAppointmentDialog({ 
   isOpen, 
   onClose, 
@@ -61,6 +92,15 @@ export function CreateAppointmentDialog({
   const [selectedNotification, setSelectedNotification] = useState<string>("Email");
   const isMobile = useIsMobile();
   const [googleLoaded, setGoogleLoaded] = useState(false);
+  
+  // Toggle state for each section
+  const [schedulingOpen, setSchedulingOpen] = useState(true);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [photographerOpen, setPhotographerOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const [customItemsOpen, setCustomItemsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   // Set up the form
   const form = useForm<FormData>({
@@ -237,10 +277,13 @@ export function CreateAppointmentDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-8">
+            <div className="space-y-4">
               {/* Scheduling Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Scheduling</h3>
+              <ToggleSection 
+                title="Scheduling" 
+                isOpen={schedulingOpen} 
+                onToggle={() => setSchedulingOpen(!schedulingOpen)}
+              >
                 <DateTimeSelector
                   selectedDate={selectedDateTime}
                   selectedTime={selectedTime}
@@ -258,11 +301,14 @@ export function CreateAppointmentDialog({
                   onNotificationMethodChange={handleNotificationMethodChange}
                   defaultMethod={selectedNotification}
                 />
-              </div>
+              </ToggleSection>
               
-              {/* Property Information Section with Google Maps Autocomplete */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Property Information</h3>
+              {/* Address Section with Google Maps Autocomplete */}
+              <ToggleSection 
+                title="Property Information" 
+                isOpen={addressOpen} 
+                onToggle={() => setAddressOpen(!addressOpen)}
+              >
                 <FormField
                   control={form.control}
                   name="address"
@@ -277,7 +323,7 @@ export function CreateAppointmentDialog({
                   )}
                 />
                 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                   <FormField
                     control={form.control}
                     name="city"
@@ -321,7 +367,7 @@ export function CreateAppointmentDialog({
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <FormField
                     control={form.control}
                     name="property_type"
@@ -364,11 +410,14 @@ export function CreateAppointmentDialog({
                     )}
                   />
                 </div>
-              </div>
+              </ToggleSection>
               
-              {/* Client Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Client Information</h3>
+              {/* Customer Section */}
+              <ToggleSection 
+                title="Client Information" 
+                isOpen={customerOpen} 
+                onToggle={() => setCustomerOpen(!customerOpen)}
+              >
                 <FormField
                   control={form.control}
                   name="client"
@@ -383,7 +432,7 @@ export function CreateAppointmentDialog({
                   )}
                 />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <FormField
                     control={form.control}
                     name="client_email"
@@ -412,11 +461,14 @@ export function CreateAppointmentDialog({
                     )}
                   />
                 </div>
-              </div>
+              </ToggleSection>
               
               {/* Package Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Package Information</h3>
+              <ToggleSection 
+                title="Package Information" 
+                isOpen={productOpen} 
+                onToggle={() => setProductOpen(!productOpen)}
+              >
                 <FormField
                   control={form.control}
                   name="package"
@@ -430,11 +482,25 @@ export function CreateAppointmentDialog({
                     </FormItem>
                   )}
                 />
-              </div>
+              </ToggleSection>
+              
+              {/* Custom Items Section */}
+              <ToggleSection 
+                title="Custom Items" 
+                isOpen={customItemsOpen} 
+                onToggle={() => setCustomItemsOpen(!customItemsOpen)}
+              >
+                <div className="text-sm text-muted-foreground">
+                  Custom items functionality will be implemented soon.
+                </div>
+              </ToggleSection>
               
               {/* Photographer Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Assignment</h3>
+              <ToggleSection 
+                title="Photographer Assignment" 
+                isOpen={photographerOpen} 
+                onToggle={() => setPhotographerOpen(!photographerOpen)}
+              >
                 <FormField
                   control={form.control}
                   name="photographer"
@@ -448,11 +514,14 @@ export function CreateAppointmentDialog({
                     </FormItem>
                   )}
                 />
-              </div>
+              </ToggleSection>
               
               {/* Notes Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Notes</h3>
+              <ToggleSection 
+                title="Notes" 
+                isOpen={notesOpen} 
+                onToggle={() => setNotesOpen(!notesOpen)}
+              >
                 <FormField
                   control={form.control}
                   name="notes"
@@ -471,7 +540,7 @@ export function CreateAppointmentDialog({
                   control={form.control}
                   name="internal_notes"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mt-4">
                       <FormLabel>Internal Notes</FormLabel>
                       <FormControl>
                         <Textarea placeholder="Notes for internal reference only..." {...field} />
@@ -485,7 +554,7 @@ export function CreateAppointmentDialog({
                   control={form.control}
                   name="customer_notes"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mt-4">
                       <FormLabel>Customer Notes</FormLabel>
                       <FormControl>
                         <Textarea placeholder="Notes from or for the customer..." {...field} />
@@ -494,7 +563,7 @@ export function CreateAppointmentDialog({
                     </FormItem>
                   )}
                 />
-              </div>
+              </ToggleSection>
             </div>
             
             <DialogFooter>
