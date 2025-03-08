@@ -14,6 +14,9 @@ const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
   state: '',
   postalCode: '',
   country: '',
+  companyTimezone: '',
+  companyAddress: '',
+  addressFormat: '',
 };
 
 export function useOrganizationSettings() {
@@ -26,7 +29,7 @@ export function useOrganizationSettings() {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('user_settings')
+          .from('app_settings')
           .select('*')
           .eq('key', 'organization_settings')
           .maybeSingle();
@@ -38,7 +41,7 @@ export function useOrganizationSettings() {
         }
         
         if (data && data.value) {
-          const parsedSettings = data.value as unknown as OrganizationSettings;
+          const parsedSettings = data.value as OrganizationSettings;
           setSettings(parsedSettings);
         } else {
           // No settings found, use defaults
@@ -63,10 +66,10 @@ export function useOrganizationSettings() {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('user_settings')
+        .from('app_settings')
         .upsert({
           key: 'organization_settings',
-          value: settings as any,
+          value: settings,
         });
       
       if (error) {

@@ -8,7 +8,7 @@ import { User, Camera } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 export function UserSettings() {
-  const { profile, loading, updateProfile } = useUserProfile();
+  const { profile, loading, updateProfile, saveProfile } = useUserProfile();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -102,8 +102,8 @@ export function UserSettings() {
           <Input 
             id="phone" 
             type="tel" 
-            value={profile.phone}
-            onChange={(e) => updateProfile({ phone: e.target.value })}
+            value={profile.phoneNumber}
+            onChange={(e) => updateProfile({ phoneNumber: e.target.value })}
           />
         </div>
         
@@ -168,6 +168,12 @@ export function UserSettings() {
           disabled={changingPassword || !currentPassword || !newPassword || newPassword !== confirmPassword}
         >
           {changingPassword ? "Saving..." : "Change Password"}
+        </Button>
+      </div>
+      
+      <div className="flex justify-end mt-8 pt-4 border-t">
+        <Button onClick={() => saveProfile()}>
+          Save Profile
         </Button>
       </div>
     </div>

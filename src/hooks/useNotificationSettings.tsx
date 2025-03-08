@@ -37,7 +37,7 @@ export function useNotificationSettings() {
       setLoading(true);
       
       const { data, error } = await supabase
-        .from('user_settings')
+        .from('app_settings')
         .select('*')
         .eq('key', 'notification_preferences')
         .maybeSingle();
@@ -51,7 +51,7 @@ export function useNotificationSettings() {
       }
       
       if (data && data.value) {
-        const parsedSettings = data.value as unknown as NotificationSetting[];
+        const parsedSettings = data.value as NotificationSetting[];
         setSettings(parsedSettings);
       } else {
         // No settings found, create default ones
@@ -94,10 +94,10 @@ export function useNotificationSettings() {
   const saveNotificationSettings = async (updatedSettings: NotificationSetting[]) => {
     try {
       const { error } = await supabase
-        .from('user_settings')
+        .from('app_settings')
         .upsert({
           key: 'notification_preferences',
-          value: updatedSettings as any,
+          value: updatedSettings,
         });
       
       if (error) {

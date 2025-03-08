@@ -20,6 +20,9 @@ export interface OrganizationSettings {
   state: string;
   postalCode: string;
   country: string;
+  companyTimezone?: string;
+  companyAddress?: string;
+  addressFormat?: string;
 }
 
 export interface UserProfile {
@@ -30,6 +33,8 @@ export interface UserProfile {
   phoneNumber: string;
   title: string;
   avatar?: string;
+  phone?: string;
+  timezone?: string;
 }
 
 // Type to help with type conversion from Supabase Json to our types

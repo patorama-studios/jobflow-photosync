@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 export function OrganizationSettings() {
-  const { settings, loading, saveSettings } = useOrganizationSettings();
+  const { settings, loading, saving, updateSettings, saveSettings } = useOrganizationSettings();
   
   const handleSave = () => {
-    saveSettings(settings);
+    saveSettings();
   };
   
   if (loading) {
@@ -50,7 +50,7 @@ export function OrganizationSettings() {
           <Input 
             id="companyName" 
             value={settings.companyName}
-            onChange={(e) => saveSettings({ ...settings, companyName: e.target.value })}
+            onChange={(e) => updateSettings({ companyName: e.target.value })}
           />
         </div>
         
@@ -60,7 +60,7 @@ export function OrganizationSettings() {
             id="website" 
             type="url" 
             value={settings.website}
-            onChange={(e) => saveSettings({ ...settings, website: e.target.value })}
+            onChange={(e) => updateSettings({ website: e.target.value })}
           />
         </div>
         
@@ -70,7 +70,7 @@ export function OrganizationSettings() {
             id="supportEmail" 
             type="email" 
             value={settings.supportEmail}
-            onChange={(e) => saveSettings({ ...settings, supportEmail: e.target.value })}
+            onChange={(e) => updateSettings({ supportEmail: e.target.value })}
           />
         </div>
         
@@ -80,7 +80,7 @@ export function OrganizationSettings() {
             id="companyPhone" 
             type="tel" 
             value={settings.companyPhone}
-            onChange={(e) => saveSettings({ ...settings, companyPhone: e.target.value })}
+            onChange={(e) => updateSettings({ companyPhone: e.target.value })}
           />
         </div>
         
@@ -88,7 +88,7 @@ export function OrganizationSettings() {
           <Label htmlFor="companyTimezone">Company Timezone</Label>
           <Select 
             value={settings.companyTimezone}
-            onValueChange={(value) => saveSettings({ ...settings, companyTimezone: value })}
+            onValueChange={(value) => updateSettings({ companyTimezone: value })}
           >
             <SelectTrigger id="companyTimezone">
               <SelectValue placeholder="Select timezone" />
@@ -112,7 +112,7 @@ export function OrganizationSettings() {
               <Textarea 
                 id="companyAddress" 
                 value={settings.companyAddress}
-                onChange={(e) => saveSettings({ ...settings, companyAddress: e.target.value })}
+                onChange={(e) => updateSettings({ companyAddress: e.target.value })}
               />
             </div>
             
@@ -120,7 +120,7 @@ export function OrganizationSettings() {
               <Label htmlFor="addressFormat">Address Format</Label>
               <Select 
                 value={settings.addressFormat}
-                onValueChange={(value) => saveSettings({ ...settings, addressFormat: value })}
+                onValueChange={(value) => updateSettings({ addressFormat: value })}
               >
                 <SelectTrigger id="addressFormat">
                   <SelectValue placeholder="Select address format" />
@@ -139,6 +139,12 @@ export function OrganizationSettings() {
             </div>
           </div>
         </div>
+      </div>
+      
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ export function useUserProfile() {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('user_settings')
+          .from('app_settings')
           .select('*')
           .eq('key', 'user_profile')
           .maybeSingle();
@@ -36,7 +36,7 @@ export function useUserProfile() {
         }
         
         if (data && data.value) {
-          const parsedProfile = data.value as unknown as UserProfile;
+          const parsedProfile = data.value as UserProfile;
           setProfile(parsedProfile);
         } else {
           // No profile found, use defaults
@@ -61,10 +61,10 @@ export function useUserProfile() {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('user_settings')
+        .from('app_settings')
         .upsert({
           key: 'user_profile',
-          value: profile as any,
+          value: profile,
         });
       
       if (error) {
