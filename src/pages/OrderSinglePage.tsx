@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,12 +9,12 @@ import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
 import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
 import { ProductionTab } from '@/components/orders/single/ProductionTab';
 import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
-import { Loader2, ArrowLeft, Upload } from 'lucide-react';
+import { Loader2, ArrowLeft, Upload, Download, Share, Globe, Send } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Avatar } from '@/components/ui/avatar';
+import { DeliverEmailDialog } from '@/components/orders/single/DeliverEmailDialog';
 
 const OrderSinglePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,38 +30,59 @@ const OrderSinglePage = () => {
     confirmDelete 
   } = useOrderDetails(id);
   const [activeTab, setActiveTab] = useState('details');
-  const [isDelivering, setIsDelivering] = useState(false);
+  const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
 
-  // Handle deliver action
-  const handleDeliver = async () => {
-    setIsDelivering(true);
-    try {
-      // Mock delivery action for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast({
-        title: "Success",
-        description: "Content delivered successfully!",
+  // Handle back navigation
+  const handleBackClick = () => {
+    navigate('/orders');
+  };
+
+  // Handle navigation to production upload
+  const handleStartUpload = () => {
+    navigate(`/production/upload/${id}`);
+  };
+  
+  // Handle navigation to property website
+  const handlePropertyWebsite = () => {
+    navigate(`/property/${id}`);
+  };
+  
+  // Handle downloads page navigation
+  const handleDownloads = () => {
+    navigate(`/downloads?orderId=${id}`);
+  };
+  
+  // Handle sharing functionality
+  const handleShare = () => {
+    // Create a share link to downloads page
+    const shareLink = `${window.location.origin}/downloads?orderId=${id}`;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(shareLink)
+      .then(() => {
+        toast({
+          title: "Link copied to clipboard",
+          description: "The share link has been copied to your clipboard.",
+        });
+      })
+      .catch(err => {
+        console.error('Failed to copy link:', err);
+        toast({
+          title: "Failed to copy link",
+          description: "Please try again.",
+          variant: "destructive",
+        });
       });
-    } catch (error) {
-      console.error('Error delivering content:', error);
-      toast({
-        title: "Error",
-        description: "Failed to deliver content. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDelivering(false);
-    }
+  };
+  
+  // Handle delivery email dialog
+  const handleDeliverClick = () => {
+    setIsDeliveryDialogOpen(true);
   };
 
   // Handle delete confirmation
   const handleConfirmDelete = () => {
     confirmDelete();
-  };
-
-  // Handle back navigation
-  const handleBackClick = () => {
-    navigate('/orders');
   };
 
   if (isLoading) {
@@ -105,17 +127,43 @@ const OrderSinglePage = () => {
                   <span>Order #{order.orderNumber}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <Button variant="default" className="bg-blue-500 hover:bg-blue-600">
-                  Update Order
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="default" 
+                  className="bg-blue-500 hover:bg-blue-600"
+                  onClick={handleStartUpload}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Start Upload
                 </Button>
-                <div className="text-right">
-                  <div className="text-sm text-gray-500 mb-1">Team Members</div>
-                  <div className="flex -space-x-2">
-                    <Avatar className="border-2 border-white h-8 w-8 bg-green-500" />
-                    <Avatar className="border-2 border-white h-8 w-8 bg-blue-700" />
-                  </div>
-                </div>
+                <Button 
+                  variant="outline"
+                  onClick={handleDownloads}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Downloads
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handlePropertyWebsite}
+                >
+                  <Globe className="h-4 w-4 mr-2" />
+                  Property Website
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleShare}
+                >
+                  <Share className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleDeliverClick}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Deliver
+                </Button>
               </div>
             </div>
             
@@ -156,24 +204,12 @@ const OrderSinglePage = () => {
                   Communication
                 </TabsTrigger>
               </TabsList>
-              
-              <Button className="bg-blue-500 hover:bg-blue-600">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Job
-              </Button>
             </div>
             
             <Separator className="mb-6 mt-0" />
             
             <TabsContent value="details" className="mt-6">
               <OrderDetailsTab order={order} />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="mt-6">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-medium mb-4">Activity History</h3>
-                <p className="text-gray-500">No recent activity for this order.</p>
-              </div>
             </TabsContent>
             
             <TabsContent value="invoicing" className="mt-6">
@@ -193,6 +229,12 @@ const OrderSinglePage = () => {
             isOpen={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
             onConfirmDelete={handleConfirmDelete}
+          />
+          
+          <DeliverEmailDialog
+            isOpen={isDeliveryDialogOpen}
+            onOpenChange={setIsDeliveryDialogOpen}
+            order={order}
           />
         </div>
       </PageTransition>
