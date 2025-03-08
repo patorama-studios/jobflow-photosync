@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ClientTable } from "@/components/clients/ClientTable";
 import { CompanyList } from "@/components/clients/CompanyList";
+import { useClients } from "@/hooks/use-clients";
 
 interface ClientsTabContentProps {
   activeTab: string;
@@ -18,6 +19,17 @@ interface ClientsTabContentProps {
 
 export function ClientsTabContent({ activeTab, onTabChange }: ClientsTabContentProps) {
   const [companyViewMode, setCompanyViewMode] = useState<'table' | 'card'>('table');
+  const { clients, isLoading, error, updateClient, refetch } = useClients();
+  
+  const handleDeleteClient = async (clientId: string) => {
+    // Handle client deletion (future implementation)
+    console.log("Delete client:", clientId);
+  };
+
+  const handleEditClient = (client: any) => {
+    // Handle client editing (future implementation)
+    console.log("Edit client:", client);
+  };
   
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-4">
@@ -32,7 +44,14 @@ export function ClientsTabContent({ activeTab, onTabChange }: ClientsTabContentP
       </TabsList>
       
       <TabsContent value="clients">
-        <ClientTable />
+        <ClientTable 
+          clients={clients} 
+          isLoading={isLoading} 
+          error={error} 
+          updateClient={updateClient}
+          onEdit={handleEditClient}
+          onDelete={handleDeleteClient}
+        />
       </TabsContent>
       
       <TabsContent value="companies">
@@ -59,7 +78,6 @@ export function ClientsTabContent({ activeTab, onTabChange }: ClientsTabContentP
             </div>
           </CardHeader>
           <CardContent>
-            {/* Fix: Pass viewMode as a proper prop to CompanyList component */}
             <CompanyList viewMode={companyViewMode} />
           </CardContent>
         </Card>
