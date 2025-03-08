@@ -1,39 +1,37 @@
 
+import React from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
 
 type SidebarLinkProps = {
-  path: string;
-  name: string;
-  icon: LucideIcon;
-  isActive: boolean;
-  collapsed?: boolean;
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  active?: boolean;
   onClick?: () => void;
 };
 
 export function SidebarLink({ 
-  path, 
-  name, 
-  icon: Icon, 
-  isActive, 
-  collapsed = false,
+  to, 
+  label, 
+  icon, 
+  active, 
   onClick 
 }: SidebarLinkProps) {
   return (
     <Link
-      to={path}
+      to={to}
       className={cn(
         "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        isActive 
+        active 
           ? "bg-sidebar-accent text-sidebar-accent-foreground" 
           : "text-sidebar-foreground"
       )}
       onClick={onClick}
     >
-      <Icon className={cn("h-5 w-5", collapsed ? "" : "mr-3")} />
-      {!collapsed && <span>{name}</span>}
+      <span className="mr-3">{icon}</span>
+      <span>{label}</span>
     </Link>
   );
 }

@@ -27,8 +27,8 @@ import FileDownloads from '@/pages/FileDownloads';
 import Products from '@/pages/Products'; // Import the new Products page
 
 // Components
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { Customers } from '@/pages/Customers';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import Customers from '@/pages/Customers';
 import CustomerDetails from '@/pages/CustomerDetails';
 import GenerateData from '@/pages/GenerateData';
 import Debug from '@/pages/Debug';
@@ -49,87 +49,87 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/dashboard',
-    element: <ProtectedRoute element={<Dashboard />} />,
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
   },
   {
     path: '/calendar',
-    element: <ProtectedRoute element={<Calendar />} />,
+    element: <ProtectedRoute><Calendar /></ProtectedRoute>,
   },
   {
     path: '/orders',
-    element: <ProtectedRoute element={<Orders />} />,
+    element: <ProtectedRoute><Orders /></ProtectedRoute>,
   },
   {
     path: '/orders/:id',
-    element: <ProtectedRoute element={<OrderSinglePage />} />,
+    element: <ProtectedRoute><OrderSinglePage /></ProtectedRoute>,
   },
   {
     path: '/orders/details/:id',
-    element: <ProtectedRoute element={<OrderDetails />} />,
+    element: <ProtectedRoute><OrderDetails /></ProtectedRoute>,
   },
   {
     path: '/clients',
-    element: <ProtectedRoute element={<ClientsView />} />,
+    element: <ProtectedRoute><ClientsView /></ProtectedRoute>,
   },
   {
     path: '/clients/:id',
-    element: <ProtectedRoute element={<ClientDetails />} />,
+    element: <ProtectedRoute><ClientDetails /></ProtectedRoute>,
   },
   {
     path: '/companies/:id',
-    element: <ProtectedRoute element={<CompanyDetails />} />,
+    element: <ProtectedRoute><CompanyDetails /></ProtectedRoute>,
   },
   {
     path: '/customers',
-    element: <ProtectedRoute element={<Customers />} />,
+    element: <ProtectedRoute><Customers /></ProtectedRoute>,
   },
   {
     path: '/customers/:id',
-    element: <ProtectedRoute element={<CustomerDetails />} />,
+    element: <ProtectedRoute><CustomerDetails /></ProtectedRoute>,
   },
   {
     path: '/settings',
-    element: <ProtectedRoute element={<Settings />} />,
+    element: <ProtectedRoute><Settings /></ProtectedRoute>,
   },
   {
     path: '/products',
-    element: <ProtectedRoute element={<Products />} />,
+    element: <ProtectedRoute><Products /></ProtectedRoute>,
   },
   {
     path: '/production',
-    element: <ProtectedRoute element={<Production />} />,
+    element: <ProtectedRoute><Production /></ProtectedRoute>,
   },
   {
     path: '/production/board',
-    element: <ProtectedRoute element={<ProductionBoard />} />,
+    element: <ProtectedRoute><ProductionBoard /></ProtectedRoute>,
   },
   {
     path: '/production/order/:orderId',
-    element: <ProtectedRoute element={<ProductionOrderDetails />} />,
+    element: <ProtectedRoute><ProductionOrderDetails /></ProtectedRoute>,
   },
   {
     path: '/production/upload/:orderId',
-    element: <ProtectedRoute element={<ProductionUpload />} />,
+    element: <ProtectedRoute><ProductionUpload /></ProtectedRoute>,
   },
   {
     path: '/notifications',
-    element: <ProtectedRoute element={<NotificationsCenter />} />,
+    element: <ProtectedRoute><NotificationsCenter /></ProtectedRoute>,
   },
   {
     path: '/delivery/:id',
-    element: <ProtectedRoute element={<ProductDelivery />} />,
+    element: <ProtectedRoute><ProductDelivery /></ProtectedRoute>,
   },
   {
     path: '/property-website/:id',
-    element: <ProtectedRoute element={<PropertyWebsite />} />,
+    element: <ProtectedRoute><PropertyWebsite /></ProtectedRoute>,
   },
   {
     path: '/downloads',
-    element: <ProtectedRoute element={<FileDownloads />} />,
+    element: <ProtectedRoute><FileDownloads /></ProtectedRoute>,
   },
   {
     path: '/generate-data',
-    element: <ProtectedRoute element={<GenerateData />} />,
+    element: <ProtectedRoute><GenerateData /></ProtectedRoute>,
   },
   {
     path: '/debug',
