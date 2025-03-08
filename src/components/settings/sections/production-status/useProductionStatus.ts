@@ -1,6 +1,8 @@
+
 import { useState, useCallback, ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { ProductionStatus, StatusFormData } from './types';
+import { supabase } from '@/integrations/supabase/client';
 
 // This would normally be an API call
 const mockStatuses: ProductionStatus[] = [
@@ -70,7 +72,7 @@ const defaultFormData: StatusFormData = {
   name: '',
   color: '#3498db',
   description: '',
-  isDefault: false,
+  is_default: false,
 };
 
 export const useProductionStatus = () => {
@@ -85,9 +87,8 @@ export const useProductionStatus = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, is_default: checked }));
   };
 
   const handleAddClick = () => {
@@ -102,7 +103,7 @@ export const useProductionStatus = () => {
       name: status.name,
       color: status.color,
       description: status.description || '',
-      isDefault: status.is_default,
+      is_default: status.is_default,
     });
     setDialogOpen(true);
   };
@@ -177,7 +178,7 @@ export const useProductionStatus = () => {
         name: formData.name,
         color: formData.color,
         description: formData.description || null,
-        is_default: formData.isDefault,
+        is_default: formData.is_default,
         sort_order: statuses.length + 1,
         created_at: new Date().toISOString(),
         updated_at: null,
@@ -185,7 +186,7 @@ export const useProductionStatus = () => {
 
       // If the new status is set as default, update other statuses
       let updatedStatuses = [...statuses];
-      if (formData.isDefault) {
+      if (formData.is_default) {
         updatedStatuses = updatedStatuses.map(status => ({
           ...status,
           is_default: false,
@@ -214,12 +215,12 @@ export const useProductionStatus = () => {
             name: formData.name,
             color: formData.color,
             description: formData.description || null,
-            is_default: formData.isDefault,
+            is_default: formData.is_default,
             updated_at: new Date().toISOString(),
           };
         }
         // If the updated status is set as default, remove default from other statuses
-        if (formData.isDefault && status.id !== id) {
+        if (formData.is_default && status.id !== id) {
           return {
             ...status,
             is_default: false,

@@ -93,12 +93,12 @@ export function StatusFormDialog({
             
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox
-                id="isDefault"
+                id="is_default"
                 name="is_default"
                 checked={formData.is_default}
                 onCheckedChange={onCheckboxChange}
               />
-              <Label htmlFor="isDefault">
+              <Label htmlFor="is_default">
                 Set as default status for new tasks
               </Label>
             </div>

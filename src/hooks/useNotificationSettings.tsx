@@ -1,178 +1,124 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { NotificationSetting } from './types/user-settings-types';
 
-export interface NotificationChannel {
-  email: boolean;
-  sms: boolean;
-  push: boolean;
-}
+const DEFAULT_NOTIFICATION_TYPES = [
+  'Order Created',
+  'Order Updated',
+  'Order Completed',
+  'Payment Received',
+  'New Message',
+  'Task Assignment',
+  'Deadline Approaching',
+  'System Maintenance'
+];
 
-export interface NotificationSetting {
-  type: string;
-  channels: NotificationChannel;
-}
+// Create default notification settings with all channels off
+const createDefaultSettings = (types: string[]): NotificationSetting[] => {
+  return types.map(type => ({
+    type,
+    channels: {
+      email: false,
+      sms: false,
+      push: false
+    }
+  }));
+};
 
 export function useNotificationSettings() {
   const [settings, setSettings] = useState<NotificationSetting[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [notificationTypes] = useState<string[]>(DEFAULT_NOTIFICATION_TYPES);
 
-  const notificationTypes = [
-    "Appointment Assigned",
-    "Appointment Canceled",
-    "Appointment Postponed",
-    "Appointment Reminder",
-    "Appointment Rescheduled",
-    "Appointment Scheduled",
-    "Appointment Summary",
-    "Appointment Unassigned",
-    "Customer Team Invitation",
-    "Order Payment Processed",
-    "Order Received",
-    "Team Member Invitation",
-  ];
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'notification_preferences')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!error && data) {
-          setSettings(data.value as NotificationSetting[]);
-        } else {
-          // Initialize with default settings
-          const defaultSettings = notificationTypes.map(type => ({
-            type,
-            channels: {
-              email: type.includes("Payment") || type.includes("Order") || type.includes("Invitation"),
-              sms: false,
-              push: false
-            }
-          }));
-
-          setSettings(defaultSettings);
-
-          // Save default settings to database
-          await supabase
-            .from('app_settings')
-            .insert({
-              key: 'notification_preferences',
-              value: defaultSettings,
-              user_id: user.id,
-              is_global: false
-            });
-        }
-      } catch (error) {
-        console.error('Error fetching notification settings:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, [user]);
-
-  const updateSettings = async (newSettings: NotificationSetting[]) => {
-    if (!user) return;
-
+  const fetchNotificationSettings = useCallback(async () => {
     try {
       setLoading(true);
-
-      // Check if setting exists first
-      const { data, error: checkError } = await supabase
-        .from('app_settings')
-        .select('id')
+      
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
         .eq('key', 'notification_preferences')
-        .eq('user_id', user.id)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found"
-        throw checkError;
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching notification settings:', error);
+        toast.error('Failed to load notification settings');
+        // Initialize with default settings if there's an error
+        setSettings(createDefaultSettings(notificationTypes));
+        return;
       }
-
-      if (data) {
-        // Update existing setting
-        const { error } = await supabase
-          .from('app_settings')
-          .update({ 
-            value: newSettings,
-            updated_at: new Date().toISOString()
-          })
-          .eq('key', 'notification_preferences')
-          .eq('user_id', user.id);
-
-        if (error) throw error;
+      
+      if (data && data.value) {
+        const parsedSettings = data.value as unknown as NotificationSetting[];
+        setSettings(parsedSettings);
       } else {
-        // Insert new setting
-        const { error } = await supabase
-          .from('app_settings')
-          .insert({
-            key: 'notification_preferences',
-            value: newSettings,
-            user_id: user.id,
-            is_global: false
-          });
-
-        if (error) throw error;
+        // No settings found, create default ones
+        const defaultSettings = createDefaultSettings(notificationTypes);
+        setSettings(defaultSettings);
+        
+        // Save default settings to database
+        await saveNotificationSettings(defaultSettings);
       }
-
-      setSettings(newSettings);
-      
-      toast({
-        title: "Settings saved",
-        description: "Your notification preferences have been updated",
-      });
     } catch (error) {
-      console.error('Error saving notification settings:', error);
-      
-      toast({
-        title: "Error saving settings",
-        description: "There was a problem saving your notification preferences",
-        variant: "destructive",
-      });
+      console.error('Unexpected error loading notification settings:', error);
+      toast.error('An unexpected error occurred while loading notification settings');
+      setSettings(createDefaultSettings(notificationTypes));
     } finally {
       setLoading(false);
     }
-  };
-
-  const updateChannelForType = (type: string, channel: keyof NotificationChannel, value: boolean) => {
-    const newSettings = settings.map(setting => {
-      if (setting.type === type) {
-        return {
-          ...setting,
-          channels: {
-            ...setting.channels,
-            [channel]: value
-          }
-        };
-      }
-      return setting;
-    });
+  }, [notificationTypes]);
+  
+  useEffect(() => {
+    fetchNotificationSettings();
+  }, [fetchNotificationSettings]);
+  
+  const updateChannelForType = useCallback((type: string, channel: 'email' | 'sms' | 'push', value: boolean) => {
+    setSettings(prev => 
+      prev.map(setting => 
+        setting.type === type 
+          ? { ...setting, channels: { ...setting.channels, [channel]: value } } 
+          : setting
+      )
+    );
     
-    updateSettings(newSettings);
+    // Save changes
+    saveNotificationSettings(settings.map(setting => 
+      setting.type === type 
+        ? { ...setting, channels: { ...setting.channels, [channel]: value } } 
+        : setting
+    ));
+  }, [settings]);
+  
+  const saveNotificationSettings = async (updatedSettings: NotificationSetting[]) => {
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          key: 'notification_preferences',
+          value: updatedSettings as any,
+        });
+      
+      if (error) {
+        console.error('Error saving notification settings:', error);
+        toast.error('Failed to save notification settings');
+        return false;
+      }
+      
+      toast.success('Notification settings saved successfully');
+      return true;
+    } catch (error) {
+      console.error('Unexpected error saving notification settings:', error);
+      toast.error('An unexpected error occurred while saving notification settings');
+      return false;
+    }
   };
-
+  
   return {
     settings,
     loading,
-    updateSettings,
     updateChannelForType,
-    notificationTypes
+    notificationTypes,
   };
 }

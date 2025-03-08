@@ -1,119 +1,96 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { OrganizationSettings } from './types/user-settings-types';
 
-export interface OrganizationSettings {
-  companyName: string;
-  website: string;
-  supportEmail: string; 
-  companyPhone: string;
-  companyTimezone: string;
-  companyAddress: string;
-  addressFormat: string;
-}
+const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
+  companyName: '',
+  website: '',
+  supportEmail: '',
+  companyPhone: '',
+  address: '',
+  city: '',
+  state: '',
+  postalCode: '',
+  country: '',
+};
 
 export function useOrganizationSettings() {
-  const [settings, setSettings] = useState<OrganizationSettings>({
-    companyName: 'Acme Photography',
-    website: 'https://acmephotography.com',
-    supportEmail: 'support@acmephotography.com',
-    companyPhone: '+1 (555) 987-6543',
-    companyTimezone: 'America/New_York',
-    companyAddress: '123 Main Street, Suite 200\nSan Francisco, CA 94105',
-    addressFormat: 'Two-line format: {street}\n{city}, {state} {postal_code}'
-  });
-  
+  const [settings, setSettings] = useState<OrganizationSettings>(DEFAULT_ORGANIZATION_SETTINGS);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  // Load settings from Supabase on component mount
+  const [saving, setSaving] = useState(false);
+  
   useEffect(() => {
     const fetchSettings = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const { data, error } = await supabase
-          .from('app_settings')
-          .select('value')
-          .eq('key', 'organization')
-          .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-          throw error;
+          .from('user_settings')
+          .select('*')
+          .eq('key', 'organization_settings')
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching organization settings:', error);
+          toast.error('Failed to load organization settings');
+          return;
         }
-
-        if (data) {
-          setSettings(data.value as OrganizationSettings);
+        
+        if (data && data.value) {
+          const parsedSettings = data.value as unknown as OrganizationSettings;
+          setSettings(parsedSettings);
+        } else {
+          // No settings found, use defaults
+          setSettings(DEFAULT_ORGANIZATION_SETTINGS);
         }
       } catch (error) {
-        console.error('Error fetching organization settings:', error);
+        console.error('Unexpected error loading organization settings:', error);
+        toast.error('An unexpected error occurred while loading organization settings');
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchSettings();
   }, []);
-
-  // Save settings to Supabase
-  const saveSettings = async (newSettings: OrganizationSettings) => {
+  
+  const updateSettings = (updatedSettings: Partial<OrganizationSettings>) => {
+    setSettings(prev => ({ ...prev, ...updatedSettings }));
+  };
+  
+  const saveSettings = async () => {
+    setSaving(true);
     try {
-      setLoading(true);
-
-      // Check if setting exists
-      const { data: existingData } = await supabase
-        .from('app_settings')
-        .select('id')
-        .eq('key', 'organization')
-        .single();
-
-      if (existingData) {
-        // Update existing setting
-        const { error } = await supabase
-          .from('app_settings')
-          .update({ 
-            value: newSettings,
-            updated_at: new Date().toISOString()
-          })
-          .eq('key', 'organization');
-
-        if (error) throw error;
-      } else {
-        // Insert new setting
-        const { error } = await supabase
-          .from('app_settings')
-          .insert({ 
-            key: 'organization',
-            value: newSettings,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            is_global: true
-          });
-
-        if (error) throw error;
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          key: 'organization_settings',
+          value: settings as any,
+        });
+      
+      if (error) {
+        console.error('Error saving organization settings:', error);
+        toast.error('Failed to save organization settings');
+        return false;
       }
-
-      setSettings(newSettings);
       
-      toast({
-        title: "Settings saved",
-        description: "Organization settings have been updated",
-      });
+      toast.success('Organization settings saved successfully');
+      return true;
     } catch (error) {
-      console.error('Error saving organization settings:', error);
-      
-      toast({
-        title: "Error saving settings",
-        description: "There was a problem saving your organization settings",
-        variant: "destructive",
-      });
+      console.error('Unexpected error saving organization settings:', error);
+      toast.error('An unexpected error occurred while saving organization settings');
+      return false;
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
-
+  
   return {
     settings,
     loading,
-    saveSettings
+    saving,
+    updateSettings,
+    saveSettings,
   };
 }

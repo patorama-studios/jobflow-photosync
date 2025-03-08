@@ -1,129 +1,94 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { UserProfile } from './types/user-settings-types';
 
-export interface UserProfile {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  timezone: string;
-}
+const DEFAULT_USER_PROFILE: UserProfile = {
+  id: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  title: '',
+  avatar: '',
+};
 
 export function useUserProfile() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { toast } = useToast();
-
+  const [saving, setSaving] = useState(false);
+  
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
+    const fetchProfile = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        
-        // First try to get the profile from our app_settings
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('app_settings')
-          .select('value')
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('*')
           .eq('key', 'user_profile')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!settingsError && settingsData) {
-          setProfile(settingsData.value as UserProfile);
-          setLoading(false);
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          toast.error('Failed to load user profile');
           return;
         }
-
-        // If not found in app_settings, try to get from auth user metadata
-        const userMetadata = user?.user_metadata || {};
-        const authUserEmail = user?.email || '';
         
-        // Create a default profile from auth data
-        const defaultProfile: UserProfile = {
-          id: user.id,
-          firstName: userMetadata.first_name || '',
-          lastName: userMetadata.last_name || '',
-          email: authUserEmail,
-          phone: userMetadata.phone || '',
-          timezone: 'America/New_York'
-        };
-
-        setProfile(defaultProfile);
-
-        // Save this default profile to app_settings for future use
-        await supabase
-          .from('app_settings')
-          .insert({
-            key: 'user_profile',
-            value: defaultProfile,
-            user_id: user.id,
-            is_global: false
-          });
-
+        if (data && data.value) {
+          const parsedProfile = data.value as unknown as UserProfile;
+          setProfile(parsedProfile);
+        } else {
+          // No profile found, use defaults
+          setProfile(DEFAULT_USER_PROFILE);
+        }
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Unexpected error loading user profile:', error);
+        toast.error('An unexpected error occurred while loading user profile');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchUserProfile();
-  }, [user]);
-
-  const updateProfile = async (updatedProfile: Partial<UserProfile>) => {
-    if (!user || !profile) return;
-
+    
+    fetchProfile();
+  }, []);
+  
+  const updateProfile = (updatedProfile: Partial<UserProfile>) => {
+    setProfile(prev => ({ ...prev, ...updatedProfile }));
+  };
+  
+  const saveProfile = async () => {
+    setSaving(true);
     try {
-      setLoading(true);
-
-      // Merge existing profile with updates
-      const newProfile = { ...profile, ...updatedProfile };
-
-      // Save to app_settings
       const { error } = await supabase
-        .from('app_settings')
-        .update({ 
-          value: newProfile,
-          updated_at: new Date().toISOString()
-        })
-        .eq('key', 'user_profile')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setProfile(newProfile);
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      });
-
-    } catch (error) {
-      console.error('Error updating user profile:', error);
+        .from('user_settings')
+        .upsert({
+          key: 'user_profile',
+          value: profile as any,
+        });
       
-      toast({
-        title: "Update failed",
-        description: "There was a problem updating your profile.",
-        variant: "destructive",
-      });
+      if (error) {
+        console.error('Error saving user profile:', error);
+        toast.error('Failed to save user profile');
+        return false;
+      }
+      
+      toast.success('User profile saved successfully');
+      return true;
+    } catch (error) {
+      console.error('Unexpected error saving user profile:', error);
+      toast.error('An unexpected error occurred while saving user profile');
+      return false;
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
-
+  
   return {
     profile,
     loading,
-    updateProfile
+    saving,
+    updateProfile,
+    saveProfile,
   };
 }
