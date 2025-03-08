@@ -42,8 +42,7 @@ export function useOrganizationSettings() {
         
         if (data && data.value) {
           // Properly cast the JSON value to the expected type
-          const parsedSettings = data.value as unknown as OrganizationSettings;
-          setSettings(parsedSettings);
+          setSettings(data.value as OrganizationSettings);
         } else {
           // No settings found, use defaults
           setSettings(DEFAULT_ORGANIZATION_SETTINGS);
@@ -66,11 +65,12 @@ export function useOrganizationSettings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
+      // Save the settings object directly as a JSON value
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'organization_settings',
-          value: settings as unknown as JsonValue,
+          value: settings,
         });
       
       if (error) {

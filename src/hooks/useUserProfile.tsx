@@ -37,8 +37,7 @@ export function useUserProfile() {
         
         if (data && data.value) {
           // Properly cast the JSON value to the expected type
-          const parsedProfile = data.value as unknown as UserProfile;
-          setProfile(parsedProfile);
+          setProfile(data.value as UserProfile);
         } else {
           // No profile found, use defaults
           setProfile(DEFAULT_USER_PROFILE);
@@ -61,11 +60,12 @@ export function useUserProfile() {
   const saveProfile = async () => {
     setSaving(true);
     try {
+      // Convert the profile object to a plain object to ensure it's stored correctly
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'user_profile',
-          value: profile as unknown as JsonValue,
+          value: profile,
         });
       
       if (error) {

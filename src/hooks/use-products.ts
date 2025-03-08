@@ -26,7 +26,6 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -37,6 +36,39 @@ export function useProducts() {
       setError(err.message || 'Failed to fetch products');
       console.error("Error fetching products:", err);
       return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveProduct = async (product: Partial<Product>) => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('products')
+        .upsert({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          is_active: product.is_active !== undefined ? product.is_active : true,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Refresh the products list
+      await fetchProducts();
+      
+      toast.success(`Product ${product.id ? 'updated' : 'created'} successfully`);
+      return data;
+    } catch (err: any) {
+      console.error("Error saving product:", err);
+      toast.error(`Failed to save product: ${err.message || 'Unknown error'}`);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -93,6 +125,7 @@ export function useProducts() {
     isLoading,
     error,
     refetch: fetchProducts,
+    saveProduct,
     createProductOverride
   };
 }
