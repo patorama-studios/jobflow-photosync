@@ -2,14 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
 import BlockAppointmentForm from './appointment/BlockAppointmentForm';
 import { OrderDetailsForm } from './appointment/OrderDetailsForm';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useForm } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -126,7 +123,7 @@ export function CreateAppointmentDialog({
           // Simplified version when adding to existing order
           <div className="py-4">
             <AppointmentDetailsForm 
-              defaultDate={selectedDate}
+              selectedDate={selectedDate}
               defaultOrder={existingOrderData}
               isSubmitting={isSubmitting}
               onSubmit={(data) => handleSubmit(data, 'appointment')}
@@ -142,7 +139,7 @@ export function CreateAppointmentDialog({
             </TabsList>
             <TabsContent value="appointment">
               <AppointmentDetailsForm 
-                defaultDate={selectedDate}
+                selectedDate={selectedDate}
                 initialTime={initialTime}
                 isSubmitting={isSubmitting}
                 onSubmit={(data) => handleSubmit(data, 'appointment')}
@@ -150,7 +147,7 @@ export function CreateAppointmentDialog({
             </TabsContent>
             <TabsContent value="order">
               <OrderDetailsForm 
-                defaultDate={selectedDate}
+                selectedDate={selectedDate}
                 isSubmitting={isSubmitting}
                 onSubmit={(data) => handleSubmit(data, 'order')}
               />
