@@ -3,16 +3,16 @@ export interface ProductionStatus {
   id: string;
   name: string;
   color: string;
-  description: string | null;
-  is_default: boolean;
-  sort_order: number | null;
-  created_at: string;
-  updated_at: string | null;
+  description?: string;
+  is_default?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  sort_order?: number;
 }
 
 export interface StatusFormData {
   name: string;
   color: string;
   description: string;
-  isDefault: boolean;
+  is_default: boolean;
 }

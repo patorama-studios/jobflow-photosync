@@ -14,9 +14,7 @@ import { ThemeSettings } from "./sections/ThemeSettings";
 import { LegalSettings } from "./sections/LegalSettings";
 import { AppsSettings } from "./sections/AppsSettings";
 import { TeamSettings } from "./sections/TeamSettings";
-import { PhotographerAvailability } from "./sections/PhotographerAvailability";
-import { TeamNotificationPreferences } from "./sections/TeamNotificationPreferences";
-import { ProductionStatusSettings } from "./sections/ProductionStatusSettings";
+import { ProductionStatusSettings } from "./sections/production-status/ProductionStatusSettings";
 import { EsoftIntegrationSettings } from "./sections/EsoftIntegrationSettings";
 import { Card } from "@/components/ui/card";
 
@@ -29,7 +27,7 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
     <Card className="p-6">
       {activeCategory === "user" && <UserSettings />}
       {activeCategory === "team" && <TeamSettings />}
-      {activeCategory === "notifications" && <TeamNotificationPreferences />}
+      {activeCategory === "notifications" && <NotificationPreferences />}
       {activeCategory === "organization" && <OrganizationSettings />}
       {activeCategory === "editor" && <NotificationEditor />}
       {activeCategory === "downloads" && <DownloadSettings />}
@@ -40,7 +38,6 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
       {activeCategory === "theme" && <ThemeSettings />}
       {activeCategory === "legal" && <LegalSettings />}
       {activeCategory === "production-status" && <ProductionStatusSettings />}
-      {/* Moved Esoft integration into the apps section */}
       {activeCategory === "apps" && (
         <>
           <AppsSettings />

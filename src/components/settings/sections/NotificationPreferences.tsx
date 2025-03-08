@@ -3,33 +3,27 @@ import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 
 export function NotificationPreferences() {
-  const { toast } = useToast();
+  const { 
+    settings, 
+    loading, 
+    updateChannelForType,
+    notificationTypes
+  } = useNotificationSettings();
   
-  const handleSave = () => {
-    toast({
-      title: "Notification preferences updated",
-      description: "Your notification preferences have been saved.",
-    });
+  if (loading) {
+    return <div className="flex justify-center items-center h-40">Loading notification settings...</div>;
+  }
+  
+  const getSettingForType = (type: string) => {
+    return settings.find(s => s.type === type) || {
+      type,
+      channels: { email: false, sms: false, push: false }
+    };
   };
-  
-  const notificationTypes = [
-    "Appointment Assigned",
-    "Appointment Canceled",
-    "Appointment Postponed",
-    "Appointment Reminder",
-    "Appointment Rescheduled",
-    "Appointment Scheduled",
-    "Appointment Summary",
-    "Appointment Unassigned",
-    "Customer Team Invitation",
-    "Order Payment Processed",
-    "Order Received",
-    "Team Member Invitation",
-  ];
   
   return (
     <div className="space-y-6">
@@ -49,62 +43,85 @@ export function NotificationPreferences() {
         
         <TabsContent value="email" className="pt-4">
           <div className="space-y-4">
-            {notificationTypes.map((type) => (
-              <div key={type} className="flex items-start space-x-2">
-                <Checkbox id={`email-${type}`} defaultChecked />
-                <div className="grid gap-1">
-                  <Label htmlFor={`email-${type}`} className="font-normal">
-                    {type}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive an email when this event occurs
-                  </p>
+            {notificationTypes.map((type) => {
+              const setting = getSettingForType(type);
+              return (
+                <div key={type} className="flex items-start space-x-2">
+                  <Checkbox 
+                    id={`email-${type}`} 
+                    checked={setting.channels.email}
+                    onCheckedChange={(checked) => 
+                      updateChannelForType(type, 'email', checked === true)
+                    }
+                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor={`email-${type}`} className="font-normal">
+                      {type}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive an email when this event occurs
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </TabsContent>
         
         <TabsContent value="sms" className="pt-4">
           <div className="space-y-4">
-            {notificationTypes.map((type) => (
-              <div key={type} className="flex items-start space-x-2">
-                <Checkbox id={`sms-${type}`} />
-                <div className="grid gap-1">
-                  <Label htmlFor={`sms-${type}`} className="font-normal">
-                    {type}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive an SMS when this event occurs
-                  </p>
+            {notificationTypes.map((type) => {
+              const setting = getSettingForType(type);
+              return (
+                <div key={type} className="flex items-start space-x-2">
+                  <Checkbox 
+                    id={`sms-${type}`} 
+                    checked={setting.channels.sms}
+                    onCheckedChange={(checked) => 
+                      updateChannelForType(type, 'sms', checked === true)
+                    }
+                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor={`sms-${type}`} className="font-normal">
+                      {type}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive an SMS when this event occurs
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </TabsContent>
         
         <TabsContent value="push" className="pt-4">
           <div className="space-y-4">
-            {notificationTypes.map((type) => (
-              <div key={type} className="flex items-start space-x-2">
-                <Checkbox id={`push-${type}`} />
-                <div className="grid gap-1">
-                  <Label htmlFor={`push-${type}`} className="font-normal">
-                    {type}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive a push notification when this event occurs
-                  </p>
+            {notificationTypes.map((type) => {
+              const setting = getSettingForType(type);
+              return (
+                <div key={type} className="flex items-start space-x-2">
+                  <Checkbox 
+                    id={`push-${type}`} 
+                    checked={setting.channels.push}
+                    onCheckedChange={(checked) => 
+                      updateChannelForType(type, 'push', checked === true)
+                    }
+                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor={`push-${type}`} className="font-normal">
+                      {type}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive a push notification when this event occurs
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>
-      
-      <div className="flex justify-end">
-        <Button onClick={handleSave}>Save Preferences</Button>
-      </div>
     </div>
   );
 }

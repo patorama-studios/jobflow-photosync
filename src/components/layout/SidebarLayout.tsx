@@ -8,6 +8,7 @@ import {
   Kanban,
   GraduationCap,
   Puzzle,
+  Package,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
@@ -25,10 +26,11 @@ const sidebarLinks = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { name: "Calendar", icon: Calendar, path: "/calendar" },
   { name: "Orders", icon: ShoppingCart, path: "/orders" },
+  { name: "Products", icon: Package, path: "/products" },
   { name: "Customers", icon: Users, path: "/customers" },
   { name: "Production Board", icon: Kanban, path: "/production" },
   { name: "Apps", icon: Puzzle, path: "/apps" },
-  { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
+  { name: "Learning Hub", icon: GraduationCap, path: "/learning-hub" },
   { name: "Settings", icon: Settings, path: "/settings" }
 ];
 

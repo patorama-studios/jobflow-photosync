@@ -5,17 +5,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 export function OrganizationSettings() {
-  const { toast } = useToast();
+  const { settings, loading, saveSettings } = useOrganizationSettings();
   
   const handleSave = () => {
-    toast({
-      title: "Organization settings updated",
-      description: "Your organization settings have been saved.",
-    });
+    saveSettings(settings);
   };
+  
+  if (loading) {
+    return <div className="py-4">Loading organization settings...</div>;
+  }
   
   const timezones = [
     "America/New_York",
@@ -46,27 +47,49 @@ export function OrganizationSettings() {
       <div className="grid gap-4">
         <div className="space-y-2">
           <Label htmlFor="companyName">Company Name</Label>
-          <Input id="companyName" defaultValue="Acme Photography" />
+          <Input 
+            id="companyName" 
+            value={settings.companyName}
+            onChange={(e) => saveSettings({ ...settings, companyName: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="website">Website</Label>
-          <Input id="website" type="url" defaultValue="https://acmephotography.com" />
+          <Input 
+            id="website" 
+            type="url" 
+            value={settings.website}
+            onChange={(e) => saveSettings({ ...settings, website: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="supportEmail">Main Support Email</Label>
-          <Input id="supportEmail" type="email" defaultValue="support@acmephotography.com" />
+          <Input 
+            id="supportEmail" 
+            type="email" 
+            value={settings.supportEmail}
+            onChange={(e) => saveSettings({ ...settings, supportEmail: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="companyPhone">Company Phone</Label>
-          <Input id="companyPhone" type="tel" defaultValue="+1 (555) 987-6543" />
+          <Input 
+            id="companyPhone" 
+            type="tel" 
+            value={settings.companyPhone}
+            onChange={(e) => saveSettings({ ...settings, companyPhone: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="companyTimezone">Company Timezone</Label>
-          <Select defaultValue="America/New_York">
+          <Select 
+            value={settings.companyTimezone}
+            onValueChange={(value) => saveSettings({ ...settings, companyTimezone: value })}
+          >
             <SelectTrigger id="companyTimezone">
               <SelectValue placeholder="Select timezone" />
             </SelectTrigger>
@@ -86,12 +109,19 @@ export function OrganizationSettings() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="companyAddress">Company Address</Label>
-              <Textarea id="companyAddress" defaultValue="123 Main Street, Suite 200&#10;San Francisco, CA 94105" />
+              <Textarea 
+                id="companyAddress" 
+                value={settings.companyAddress}
+                onChange={(e) => saveSettings({ ...settings, companyAddress: e.target.value })}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="addressFormat">Address Format</Label>
-              <Select defaultValue={addressFormats[1]}>
+              <Select 
+                value={settings.addressFormat}
+                onValueChange={(value) => saveSettings({ ...settings, addressFormat: value })}
+              >
                 <SelectTrigger id="addressFormat">
                   <SelectValue placeholder="Select address format" />
                 </SelectTrigger>
@@ -109,10 +139,6 @@ export function OrganizationSettings() {
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="flex justify-end">
-        <Button onClick={handleSave}>Save Organization Settings</Button>
       </div>
     </div>
   );

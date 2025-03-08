@@ -1,17 +1,17 @@
 
 import React from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ProductionStatus, StatusFormData } from './types';
 
 interface StatusFormDialogProps {
@@ -19,9 +19,9 @@ interface StatusFormDialogProps {
   onOpenChange: (open: boolean) => void;
   formData: StatusFormData;
   editingStatus: ProductionStatus | null;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onCheckboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSubmit: () => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onCheckboxChange: (checked: boolean) => void;
+  onSubmit: (e: React.FormEvent) => void;
 }
 
 export function StatusFormDialog({
@@ -35,80 +35,88 @@ export function StatusFormDialog({
 }: StatusFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {editingStatus ? 'Edit Production Status' : 'Add Production Status'}
-          </DialogTitle>
-          <DialogDescription>
-            {editingStatus 
-              ? 'Update the details for this production status' 
-              : 'Create a new status for production tasks'}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Status Name</Label>
-            <Input 
-              id="name" 
-              name="name" 
-              value={formData.name} 
-              onChange={onInputChange} 
-              placeholder="e.g., In Progress" 
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="color">Color</Label>
-            <div className="flex items-center space-x-2">
-              <Input 
-                id="color" 
-                name="color" 
-                type="color" 
-                value={formData.color} 
-                onChange={onInputChange} 
-                className="w-16 h-10 p-1"
-              />
-              <Input 
-                name="color" 
-                value={formData.color} 
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={onSubmit}>
+          <DialogHeader>
+            <DialogTitle>
+              {editingStatus ? 'Edit Status' : 'Add New Status'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingStatus
+                ? 'Update the production status details below.'
+                : 'Fill in the details for the new production status.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Status Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
                 onChange={onInputChange}
-                className="flex-1"
+                required
               />
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="color">Color</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  id="color"
+                  name="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={onInputChange}
+                  className="w-12 h-10 p-1"
+                />
+                <Input
+                  id="colorHex"
+                  name="color"
+                  value={formData.color}
+                  onChange={onInputChange}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Input
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={onInputChange}
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox
+                id="isDefault"
+                name="is_default"
+                checked={formData.is_default}
+                onCheckedChange={onCheckboxChange}
+              />
+              <Label htmlFor="isDefault">
+                Set as default status for new tasks
+              </Label>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (optional)</Label>
-            <Textarea 
-              id="description" 
-              name="description" 
-              value={formData.description} 
-              onChange={onInputChange}
-              placeholder="Describe what this status means"
-              rows={3}
-            />
-          </div>
-          <div className="flex items-center space-x-2 pt-2">
-            <input 
-              type="checkbox" 
-              id="isDefault" 
-              name="isDefault" 
-              checked={formData.isDefault} 
-              onChange={onCheckboxChange} 
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <Label htmlFor="isDefault" className="text-sm font-normal">
-              Set as default status
-            </Label>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={onSubmit}>
-            {editingStatus ? 'Update' : 'Create'}
-          </Button>
-        </DialogFooter>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">
+              {editingStatus ? 'Save Changes' : 'Add Status'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

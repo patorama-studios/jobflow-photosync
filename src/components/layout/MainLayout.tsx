@@ -9,6 +9,7 @@ import {
   Kanban,
   GraduationCap,
   Bell,
+  Package
 } from "lucide-react";
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
@@ -26,9 +27,10 @@ const sidebarLinks = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { name: "Calendar", icon: Calendar, path: "/calendar" },
   { name: "Orders", icon: ShoppingCart, path: "/orders" },
+  { name: "Products", icon: Package, path: "/products" },
   { name: "Customers", icon: Users, path: "/customers" },
   { name: "Production Board", icon: Kanban, path: "/production" },
-  { name: "Learning Hub", icon: GraduationCap, path: "/learning" },
+  { name: "Learning Hub", icon: GraduationCap, path: "/learning-hub" },
   { name: "Notifications", icon: Bell, path: "/notifications" },
   { name: "Settings", icon: Settings, path: "/settings" }
 ];

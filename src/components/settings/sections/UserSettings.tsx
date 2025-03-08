@@ -4,22 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
 import { User, Camera } from "lucide-react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export function UserSettings() {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { profile, loading, updateProfile } = useUserProfile();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
   
-  const handleSave = () => {
-    setLoading(true);
+  if (loading || !profile) {
+    return <div className="flex justify-center items-center h-40">Loading user profile...</div>;
+  }
+  
+  const handleSavePassword = async () => {
+    // This would be implemented with supabase auth.updateUser
+    // But we'll just show a simple flow for now
+    setChangingPassword(true);
+    
     // Simulate API call
     setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      });
+      setChangingPassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     }, 1000);
   };
   
@@ -62,27 +71,48 @@ export function UserSettings() {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="firstName">First Name</Label>
-          <Input id="firstName" defaultValue="John" />
+          <Input 
+            id="firstName" 
+            value={profile.firstName}
+            onChange={(e) => updateProfile({ firstName: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="lastName">Last Name</Label>
-          <Input id="lastName" defaultValue="Doe" />
+          <Input 
+            id="lastName" 
+            value={profile.lastName}
+            onChange={(e) => updateProfile({ lastName: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" defaultValue="john.doe@example.com" />
+          <Input 
+            id="email" 
+            type="email" 
+            value={profile.email}
+            onChange={(e) => updateProfile({ email: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+          <Input 
+            id="phone" 
+            type="tel" 
+            value={profile.phone}
+            onChange={(e) => updateProfile({ phone: e.target.value })}
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="timezone">Timezone</Label>
-          <Select defaultValue="America/New_York">
+          <Select 
+            value={profile.timezone}
+            onValueChange={(value) => updateProfile({ timezone: value })}
+          >
             <SelectTrigger id="timezone">
               <SelectValue placeholder="Select timezone" />
             </SelectTrigger>
@@ -102,24 +132,42 @@ export function UserSettings() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
-            <Input id="currentPassword" type="password" />
+            <Input 
+              id="currentPassword" 
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
-            <Input id="newPassword" type="password" />
+            <Input 
+              id="newPassword" 
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input id="confirmPassword" type="password" />
+            <Input 
+              id="confirmPassword" 
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
           </div>
         </div>
       </div>
       
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? "Saving..." : "Save Changes"}
+        <Button 
+          onClick={handleSavePassword} 
+          disabled={changingPassword || !currentPassword || !newPassword || newPassword !== confirmPassword}
+        >
+          {changingPassword ? "Saving..." : "Change Password"}
         </Button>
       </div>
     </div>
