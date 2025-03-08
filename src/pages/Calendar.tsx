@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout"; // Changed from import { MainLayout }
 import { 
   Plus, 
   Calendar as CalendarIcon, 

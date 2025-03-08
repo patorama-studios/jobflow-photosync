@@ -41,14 +41,14 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (): Promise<void> => {
     try {
       setIsDeleting(true);
       const { success, error } = await deleteOrder(orderId);
       
       if (error) {
         toast.error(`Failed to delete order: ${error}`);
-        return false;
+        return;
       } 
       
       if (success) {
@@ -56,14 +56,10 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
         if (onOrderDeleted) {
           onOrderDeleted();
         }
-        return true;
       }
-      
-      return false;
     } catch (err) {
       console.error("Error during delete operation:", err);
       toast.error("An unexpected error occurred while deleting the order");
-      return false;
     } finally {
       setIsDeleting(false);
     }

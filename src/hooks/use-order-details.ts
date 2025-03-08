@@ -20,7 +20,7 @@ interface UseOrderDetailsResult {
   handleStatusChange: (status: string) => void;
   handleSaveClick: () => void;
   handleDeleteClick: () => void;
-  confirmDelete: () => void;
+  confirmDelete: () => Promise<void>;
 }
 
 export function useOrderDetails(orderId?: string | number): UseOrderDetailsResult {
@@ -107,7 +107,7 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (): Promise<void> => {
     try {
       const { success, error: deleteError } = await deleteOrder(orderId);
       
