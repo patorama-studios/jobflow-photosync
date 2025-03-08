@@ -91,19 +91,20 @@ const Calendar = () => {
   return (
     <div className="container mx-auto py-8">
       <CalendarHeader
-        date={currentDate}
-        view={view}
-        appointmentCount={events?.length || 0}
-        onPrevious={() => console.log('Previous')}
-        onNext={() => console.log('Next')}
-        onToday={() => setCurrentDate(new Date())}
-        onViewChange={handleViewChange}
-        onAddEvent={() => handleTimeSlotClick(new Date())}
+        currentDate={currentDate}
+        viewMode={view}
+        setViewMode={handleViewChange}
+        handlePrevious={() => console.log('Previous')}
+        handleNext={() => console.log('Next')}
+        handleToday={() => setCurrentDate(new Date())}
+        getDateRangeTitle={() => format(currentDate, 'MMMM yyyy')}
+        showCalendarSubmenu={false}
+        setShowCalendarSubmenu={() => {}}
       />
       
       <CalendarViews
-        date={currentDate}
-        view={view}
+        currentDate={currentDate}
+        currentView={view}
         onEventClick={handleEventClick}
         onTimeSlotClick={handleTimeSlotClick}
         onViewChange={handleViewChange}
@@ -112,9 +113,9 @@ const Calendar = () => {
       />
       
       <EventDetailsDialog
-        isOpen={isEventDetailsOpen}
-        onClose={handleCloseEventDetails}
-        event={selectedEvent}
+        selectedEvent={selectedEvent}
+        showEventDetails={isEventDetailsOpen}
+        setShowEventDetails={setIsEventDetailsOpen}
       />
       
       <CreateAppointmentDialog
