@@ -1,33 +1,10 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { X, ArrowLeft, Menu, LucideIcon } from "lucide-react";
+import { X, Menu } from "lucide-react";
 import { SidebarLogo } from "./SidebarLogo";
-import { SidebarLinks } from "./SidebarLinks";
-import { PhotographerFilter } from "./PhotographerFilter";
-
-type MobileSidebarProps = {
-  mobileOpen: boolean;
-  toggleMobileSidebar: () => void;
-  showCalendarSubmenu: boolean;
-  showBackButton: boolean;
-  showMainMenu: boolean;
-  toggleMainMenu: () => void;
-  sidebarLinks: Array<{
-    name: string;
-    icon: LucideIcon;
-    path: string;
-  }>;
-  isActiveLink: (path: string) => boolean;
-  photographers: Array<{
-    id: number;
-    name: string;
-    color: string;
-  }>;
-  selectedPhotographers: number[];
-  togglePhotographer: (id: number) => void;
-  hideLogo?: boolean;
-};
+import { SidebarContent } from "./SidebarContent";
+import { MobileSidebarProps } from "./types";
 
 export function MobileSidebar({
   mobileOpen,
@@ -74,43 +51,18 @@ export function MobileSidebar({
             <SidebarLogo hide={hideLogo} />
           </div>
 
-          <div className="flex-1 overflow-y-auto py-6 px-3">
-            {showCalendarSubmenu ? (
-              <div className="space-y-4">
-                {showBackButton && (
-                  <Button 
-                    variant="ghost" 
-                    className="flex items-center w-full mb-4 justify-start"
-                    onClick={toggleMainMenu}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    <span>Main Menu</span>
-                  </Button>
-                )}
-                
-                {showMainMenu ? (
-                  <SidebarLinks 
-                    links={sidebarLinks}
-                    isActiveLink={isActiveLink} 
-                    onLinkClick={toggleMobileSidebar}
-                  />
-                ) : (
-                  <PhotographerFilter
-                    photographers={photographers}
-                    selectedPhotographers={selectedPhotographers}
-                    onToggle={togglePhotographer}
-                    isMobile={true}
-                  />
-                )}
-              </div>
-            ) : (
-              <SidebarLinks 
-                links={sidebarLinks}
-                isActiveLink={isActiveLink}
-                onLinkClick={toggleMobileSidebar}
-              />
-            )}
-          </div>
+          <SidebarContent
+            showCalendarSubmenu={showCalendarSubmenu}
+            showBackButton={showBackButton}
+            showMainMenu={showMainMenu}
+            toggleMainMenu={toggleMainMenu}
+            sidebarLinks={sidebarLinks}
+            isActiveLink={isActiveLink}
+            photographers={photographers}
+            selectedPhotographers={selectedPhotographers}
+            togglePhotographer={togglePhotographer}
+            onLinkClick={toggleMobileSidebar}
+          />
         </div>
         
         <div 

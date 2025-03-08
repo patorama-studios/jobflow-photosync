@@ -1,33 +1,10 @@
 
 import { cn } from "@/lib/utils";
 import { SidebarLogo } from "./SidebarLogo";
-import { SidebarLinks } from "./SidebarLinks";
-import { PhotographerFilter } from "./PhotographerFilter";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ArrowLeft, LucideIcon } from "lucide-react";
-
-type DesktopSidebarProps = {
-  collapsed: boolean;
-  toggleSidebar: () => void;
-  showCalendarSubmenu: boolean;
-  showBackButton: boolean;
-  showMainMenu: boolean;
-  toggleMainMenu: () => void;
-  sidebarLinks: Array<{
-    name: string;
-    icon: LucideIcon;
-    path: string;
-  }>;
-  isActiveLink: (path: string) => boolean;
-  photographers: Array<{
-    id: number;
-    name: string;
-    color: string;
-  }>;
-  selectedPhotographers: number[];
-  togglePhotographer: (id: number) => void;
-  hideLogo?: boolean;
-};
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SidebarContent } from "./SidebarContent";
+import { DesktopSidebarProps } from "./types";
 
 export function DesktopSidebar({
   collapsed,
@@ -52,42 +29,18 @@ export function DesktopSidebar({
     >
       <SidebarLogo collapsed={collapsed} hide={hideLogo} />
 
-      <div className="flex-1 overflow-y-auto py-6 px-3">
-        {showCalendarSubmenu ? (
-          <div className="space-y-4">
-            {showBackButton && (
-              <Button 
-                variant="ghost" 
-                className="flex items-center w-full mb-4 justify-start"
-                onClick={toggleMainMenu}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span>Main Menu</span>
-              </Button>
-            )}
-            
-            {showMainMenu ? (
-              <SidebarLinks 
-                links={sidebarLinks}
-                isActiveLink={isActiveLink} 
-                collapsed={collapsed} 
-              />
-            ) : (
-              <PhotographerFilter
-                photographers={photographers}
-                selectedPhotographers={selectedPhotographers}
-                onToggle={togglePhotographer}
-              />
-            )}
-          </div>
-        ) : (
-          <SidebarLinks 
-            links={sidebarLinks}
-            isActiveLink={isActiveLink} 
-            collapsed={collapsed}
-          />
-        )}
-      </div>
+      <SidebarContent
+        showCalendarSubmenu={showCalendarSubmenu}
+        showBackButton={showBackButton}
+        showMainMenu={showMainMenu}
+        toggleMainMenu={toggleMainMenu}
+        sidebarLinks={sidebarLinks}
+        isActiveLink={isActiveLink}
+        photographers={photographers}
+        selectedPhotographers={selectedPhotographers}
+        togglePhotographer={togglePhotographer}
+        collapsed={collapsed}
+      />
 
       {!showCalendarSubmenu && (
         <div className="p-3 border-t border-sidebar-border">

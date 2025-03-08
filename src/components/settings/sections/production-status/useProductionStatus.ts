@@ -1,200 +1,197 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { ProductionStatus, StatusFormData } from './types';
 
-export function useProductionStatus() {
-  const { toast } = useToast();
-  const [statuses, setStatuses] = useState<ProductionStatus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingStatus, setEditingStatus] = useState<ProductionStatus | null>(null);
-  const [formData, setFormData] = useState<StatusFormData>({
-    name: '',
-    color: '#94a3b8',
-    description: '',
-    isDefault: false
-  });
+// This would normally be an API call
+const mockStatuses: ProductionStatus[] = [
+  {
+    id: '1',
+    name: 'Scheduled',
+    color: '#3498db',
+    description: 'The shoot has been scheduled',
+    is_default: true,
+    sort_order: 1,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: null,
+  },
+  {
+    id: '2',
+    name: 'In Progress',
+    color: '#f1c40f',
+    description: 'The shoot is currently in progress',
+    is_default: false,
+    sort_order: 2,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: null,
+  },
+  {
+    id: '3',
+    name: 'Editing',
+    color: '#9b59b6',
+    description: 'Photos are being edited',
+    is_default: false,
+    sort_order: 3,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: null,
+  },
+  {
+    id: '4',
+    name: 'Ready for Delivery',
+    color: '#2ecc71',
+    description: 'Photos are ready to be delivered to the client',
+    is_default: false,
+    sort_order: 4,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: null,
+  },
+  {
+    id: '5',
+    name: 'Delivered',
+    color: '#27ae60',
+    description: 'Photos have been delivered to the client',
+    is_default: false,
+    sort_order: 5,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: null,
+  },
+  {
+    id: '6',
+    name: 'Cancelled',
+    color: '#e74c3c',
+    description: 'The shoot has been cancelled',
+    is_default: false,
+    sort_order: 6,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: null,
+  },
+];
 
-  const fetchStatuses = async () => {
+export const useProductionStatus = () => {
+  const [statuses, setStatuses] = useState<ProductionStatus[]>(mockStatuses);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<ProductionStatus | null>(null);
+
+  const fetchStatuses = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('production_statuses')
-        .select('*')
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      setStatuses(data || []);
+      // In a real app, this would be an API call
+      setTimeout(() => {
+        setStatuses(mockStatuses);
+        setIsLoading(false);
+      }, 500);
     } catch (error) {
-      console.error('Error fetching production statuses:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load production statuses',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error fetching statuses:', error);
+      setIsLoading(false);
+      toast.error('Failed to load production statuses');
     }
-  };
-
-  useEffect(() => {
-    fetchStatuses();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, isDefault: e.target.checked }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      color: '#94a3b8',
-      description: '',
-      isDefault: false
-    });
-    setEditingStatus(null);
-  };
-
-  const handleAddClick = () => {
-    resetForm();
-    setDialogOpen(true);
-  };
-
-  const handleEditClick = (status: ProductionStatus) => {
-    setEditingStatus(status);
-    setFormData({
-      name: status.name,
-      color: status.color,
-      description: status.description || '',
-      isDefault: status.is_default
-    });
-    setDialogOpen(true);
-  };
-
-  const handleDeleteClick = async (id: string) => {
+  const addStatus = useCallback(async (formData: StatusFormData) => {
+    setIsLoading(true);
     try {
-      // Check if this is the default status
-      const isDefault = statuses.find(s => s.id === id)?.is_default;
-      if (isDefault) {
-        toast({
-          title: 'Cannot Delete',
-          description: 'You cannot delete the default status',
-          variant: 'destructive'
-        });
-        return;
+      // In a real app, this would be an API call
+      const newStatus: ProductionStatus = {
+        id: Date.now().toString(),
+        name: formData.name,
+        color: formData.color,
+        description: formData.description || null,
+        is_default: formData.isDefault,
+        sort_order: statuses.length + 1,
+        created_at: new Date().toISOString(),
+        updated_at: null,
+      };
+
+      // If the new status is set as default, update other statuses
+      let updatedStatuses = [...statuses];
+      if (formData.isDefault) {
+        updatedStatuses = updatedStatuses.map(status => ({
+          ...status,
+          is_default: false,
+        }));
       }
 
-      const { error } = await supabase
-        .from('production_statuses')
-        .delete()
-        .eq('id', id);
+      setStatuses([...updatedStatuses, newStatus]);
+      toast.success('Production status added successfully');
+    } catch (error) {
+      console.error('Error adding status:', error);
+      toast.error('Failed to add production status');
+    } finally {
+      setIsLoading(false);
+      setIsDialogOpen(false);
+    }
+  }, [statuses]);
 
-      if (error) throw error;
-
-      toast({
-        title: 'Status Deleted',
-        description: 'Production status has been deleted'
+  const updateStatus = useCallback(async (id: string, formData: StatusFormData) => {
+    setIsLoading(true);
+    try {
+      // In a real app, this would be an API call
+      const updatedStatuses = statuses.map(status => {
+        if (status.id === id) {
+          return {
+            ...status,
+            name: formData.name,
+            color: formData.color,
+            description: formData.description || null,
+            is_default: formData.isDefault,
+            updated_at: new Date().toISOString(),
+          };
+        }
+        // If the updated status is set as default, remove default from other statuses
+        if (formData.isDefault && status.id !== id) {
+          return {
+            ...status,
+            is_default: false,
+          };
+        }
+        return status;
       });
-      fetchStatuses();
+
+      setStatuses(updatedStatuses);
+      toast.success('Production status updated successfully');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update production status');
+    } finally {
+      setIsLoading(false);
+      setIsDialogOpen(false);
+    }
+  }, [statuses]);
+
+  const deleteStatus = useCallback(async (id: string) => {
+    setIsLoading(true);
+    try {
+      // Add a confirmation before deleting
+      const confirmed = window.confirm('Are you sure you want to delete this status?');
+      
+      if (!confirmed) {
+        setIsLoading(false);
+        return;
+      }
+      
+      // In a real app, this would be an API call
+      const filteredStatuses = statuses.filter(status => status.id !== id);
+      setStatuses(filteredStatuses);
+      toast.success('Production status deleted successfully');
     } catch (error) {
       console.error('Error deleting status:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete status',
-        variant: 'destructive'
-      });
+      toast.error('Failed to delete production status');
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (!formData.name || !formData.color) {
-        toast({
-          title: 'Validation Error',
-          description: 'Name and color are required',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      // If setting as default, need to update all other statuses
-      if (formData.isDefault) {
-        await supabase
-          .from('production_statuses')
-          .update({ is_default: false })
-          .not('id', editingStatus?.id || 'none');
-      }
-
-      if (editingStatus) {
-        // Update existing
-        const { error } = await supabase
-          .from('production_statuses')
-          .update({
-            name: formData.name,
-            color: formData.color,
-            description: formData.description || null,
-            is_default: formData.isDefault,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingStatus.id);
-
-        if (error) throw error;
-        toast({
-          title: 'Status Updated',
-          description: 'Production status has been updated'
-        });
-      } else {
-        // Create new
-        const maxOrder = Math.max(...statuses.map(s => s.sort_order || 0), 0);
-        const { error } = await supabase
-          .from('production_statuses')
-          .insert({
-            name: formData.name,
-            color: formData.color,
-            description: formData.description || null,
-            is_default: formData.isDefault,
-            sort_order: maxOrder + 1
-          });
-
-        if (error) throw error;
-        toast({
-          title: 'Status Created',
-          description: 'New production status has been created'
-        });
-      }
-
-      setDialogOpen(false);
-      resetForm();
-      fetchStatuses();
-    } catch (error) {
-      console.error('Error saving status:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save status',
-        variant: 'destructive'
-      });
-    }
-  };
+  }, [statuses]);
 
   return {
     statuses,
-    loading,
-    dialogOpen,
-    setDialogOpen,
-    editingStatus,
-    formData,
-    handleInputChange,
-    handleCheckboxChange,
-    handleAddClick,
-    handleEditClick,
-    handleDeleteClick,
-    handleSubmit
+    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
+    currentStatus,
+    setCurrentStatus,
+    fetchStatuses,
+    addStatus,
+    updateStatus,
+    deleteStatus
   };
-}
+};
