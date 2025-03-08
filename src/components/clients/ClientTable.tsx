@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Table,
@@ -15,30 +16,46 @@ import { useToast } from '@/components/ui/use-toast';
 
 interface ClientTableProps {
   clients: Client[];
-  onEdit: (client: Client) => void;
-  onDelete: (clientId: string) => void;
+  isLoading?: boolean;
+  error?: Error | null;
+  onEdit?: (client: Client) => void;
+  onDelete?: (clientId: string) => void;
+  updateClient?: (id: string, updates: Partial<Client>) => Promise<void>;
 }
 
-export function ClientTable({ clients, onEdit, onDelete }: ClientTableProps) {
+export function ClientTable({ 
+  clients, 
+  isLoading = false, 
+  error = null, 
+  onEdit, 
+  onDelete,
+  updateClient 
+}: ClientTableProps) {
   const { toast } = useToast();
 
   const handleEdit = (client: Client) => {
-    onEdit(client);
+    if (onEdit) {
+      onEdit(client);
+    } else if (updateClient) {
+      // Fallback to updateClient if onEdit is not provided
+      updateClient(client.id, client);
+    }
   };
 
   const handleDelete = (clientId: string) => {
-    onDelete(clientId);
-    toast({
-      title: "Client deleted",
-      description: "The client has been removed"
-    });
+    if (onDelete) {
+      onDelete(clientId);
+      toast({
+        title: "Client deleted",
+        description: "The client has been removed"
+      });
+    }
   };
 
-  // Fix the error by ensuring error is always a ReactNode
-  const renderError = (error: Error | null) => {
-    if (!error) return null;
+  // Render error message
+  if (error) {
     return <div className="text-red-500">{error.message}</div>;
-  };
+  }
 
   return (
     <div className="relative w-full overflow-auto">
@@ -93,7 +110,6 @@ export function ClientTable({ clients, onEdit, onDelete }: ClientTableProps) {
           )}
         </TableBody>
       </Table>
-      {renderError}
     </div>
   );
 }

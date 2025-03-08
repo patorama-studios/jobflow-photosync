@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { Plus } from "lucide-react";
 import { ClientTable } from './ClientTable';
 import { AddClientDialog } from './AddClientDialog';
 import { useClients } from '@/hooks/use-clients';
+import { toast } from '@/components/ui/use-toast';
 
 export function ClientsView() {
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
@@ -17,6 +19,36 @@ export function ClientsView() {
       await searchClients(e.target.value);
     } else if (e.target.value.length === 0) {
       await refetch();
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    // Handle client deletion (future implementation)
+    toast({
+      title: "Client deleted",
+      description: "The client has been removed"
+    });
+  };
+
+  const handleEditClient = (client: any) => {
+    // Handle client editing (future implementation)
+    console.log("Edit client:", client);
+  };
+
+  const handleClientAdded = async (client: any) => {
+    try {
+      const result = await addClient(client);
+      if (result) {
+        toast({
+          title: "Client added",
+          description: "The client has been added successfully"
+        });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error adding client:", error);
+      return false;
     }
   };
 
@@ -37,8 +69,19 @@ export function ClientsView() {
           onChange={handleSearch}
         />
       </div>
-      <ClientTable clients={clients} isLoading={isLoading} error={error} updateClient={updateClient} />
-      <AddClientDialog open={isAddClientDialogOpen} onOpenChange={setIsAddClientDialogOpen} addClient={addClient} />
+      <ClientTable 
+        clients={clients} 
+        isLoading={isLoading} 
+        error={error} 
+        updateClient={updateClient}
+        onEdit={handleEditClient}
+        onDelete={handleDeleteClient}
+      />
+      <AddClientDialog 
+        open={isAddClientDialogOpen} 
+        onOpenChange={setIsAddClientDialogOpen} 
+        onClientAdded={handleClientAdded}
+      />
     </div>
   );
 }

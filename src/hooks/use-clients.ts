@@ -24,31 +24,33 @@ export const useClients = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const fetchClients = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      // Transform the data to match our Client interface
+      const formattedClients = data.map((client: any) => ({
+        ...client,
+        status: client.status as ClientStatus || 'active'
+      }));
+
+      setClients(formattedClients);
+      setError(null);
+    } catch (err: any) {
+      console.error('Error fetching clients:', err);
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .order('name');
-
-        if (error) throw error;
-
-        // Transform the data to match our Client interface
-        const formattedClients = data.map((client: any) => ({
-          ...client,
-          status: client.status as ClientStatus || 'active'
-        }));
-
-        setClients(formattedClients);
-      } catch (err: any) {
-        console.error('Error fetching clients:', err);
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchClients();
   }, []);
 
@@ -114,15 +116,25 @@ export const useClients = () => {
       if (error) throw error;
 
       // Transform the data to match our Client interface
-      return data.map((client: any) => ({
+      const results = data.map((client: any) => ({
         ...client,
         status: client.status as ClientStatus || 'active'
       }));
+      
+      // Update the local state with the search results
+      setClients(results);
+      
+      return results;
     } catch (err) {
       console.error('Error searching clients:', err);
       return [];
     }
   };
 
-  return { clients, isLoading, error, addClient, updateClient, searchClients };
+  // Add refetch function to reload client data
+  const refetch = () => {
+    return fetchClients();
+  };
+
+  return { clients, isLoading, error, addClient, updateClient, searchClients, refetch };
 };

@@ -11,8 +11,8 @@ interface CustomItem {
 interface CustomItemsSectionProps {
   isOpen: boolean;
   onToggle: () => void;
-  items: CustomItem[];
-  onAddItem: (item: Omit<CustomItem, 'id'>) => void;
+  items?: CustomItem[];
+  onAddItem?: (item: Omit<CustomItem, 'id'>) => void;
   onRemoveItem?: (id: string) => void;
 }
 
