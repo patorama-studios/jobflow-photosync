@@ -11,7 +11,6 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { SuggestedDates } from './appointment/components/SuggestedDates';
 import { DateTimeSelector } from './appointment/components/DateTimeSelector';
 import { DurationSelector } from './appointment/components/DurationSelector';
 import { NotificationSelector } from './appointment/components/NotificationSelector';
@@ -59,6 +58,7 @@ export function CreateAppointmentDialog({
   const [selectedDateTime, setSelectedDateTime] = useState<Date | undefined>(selectedDate);
   const [selectedTime, setSelectedTime] = useState<string>(initialTime || "11:00 AM");
   const [selectedDuration, setSelectedDuration] = useState<string>("45 minutes");
+  const [selectedNotification, setSelectedNotification] = useState<string>("Email");
   const isMobile = useIsMobile();
   const [googleLoaded, setGoogleLoaded] = useState(false);
 
@@ -160,6 +160,10 @@ export function CreateAppointmentDialog({
     setSelectedDuration(duration);
   };
 
+  const handleNotificationMethodChange = (method: string) => {
+    setSelectedNotification(method);
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
@@ -187,7 +191,8 @@ export function CreateAppointmentDialog({
         notes: data.notes,
         internal_notes: data.internal_notes,
         customer_notes: data.customer_notes,
-        status: 'scheduled'
+        status: 'scheduled',
+        notification_method: selectedNotification
       };
       
       // Insert the order into Supabase
@@ -234,10 +239,8 @@ export function CreateAppointmentDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-8">
               {/* Scheduling Section */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <h3 className="text-lg font-medium">Scheduling</h3>
-                <SuggestedDates onDateSelect={handleDateChange} />
-                
                 <DateTimeSelector
                   selectedDate={selectedDateTime}
                   selectedTime={selectedTime}
@@ -251,55 +254,10 @@ export function CreateAppointmentDialog({
                   onDurationChange={handleDurationChange}
                 />
                 
-                <NotificationSelector />
-              </div>
-              
-              {/* Client Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Client Information</h3>
-                <FormField
-                  control={form.control}
-                  name="client"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Client name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <NotificationSelector 
+                  onNotificationMethodChange={handleNotificationMethodChange}
+                  defaultMethod={selectedNotification}
                 />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="client_email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="client@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="client_phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="(123) 456-7890" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
               
               {/* Property Information Section with Google Maps Autocomplete */}
@@ -362,12 +320,8 @@ export function CreateAppointmentDialog({
                     )}
                   />
                 </div>
-              </div>
-              
-              {/* Package Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Package Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="property_type"
@@ -398,20 +352,6 @@ export function CreateAppointmentDialog({
                   
                   <FormField
                     control={form.control}
-                    name="package"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Package</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Standard" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
                     name="price"
                     render={({ field }) => (
                       <FormItem>
@@ -424,6 +364,72 @@ export function CreateAppointmentDialog({
                     )}
                   />
                 </div>
+              </div>
+              
+              {/* Client Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Client Information</h3>
+                <FormField
+                  control={form.control}
+                  name="client"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Client name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="client_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="client@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="client_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(123) 456-7890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Package Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Package Information</h3>
+                <FormField
+                  control={form.control}
+                  name="package"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Package</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Standard" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               
               {/* Photographer Section */}
