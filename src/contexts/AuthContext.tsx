@@ -44,7 +44,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         console.log('Getting initial session...');
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
+        const currentSession = data.session;
         console.log('Session retrieved:', currentSession ? 'Yes' : 'No');
         
         if (currentSession) {
@@ -92,6 +93,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const activateUser = async (email: string) => {
     try {
+      // In development mode, return a success response without actual activation
+      if (import.meta.env.DEV) {
+        console.log('DEV MODE: Simulating user activation for:', email);
+        return { success: true, error: null };
+      }
+
       const { data, error } = await supabase.auth.admin.updateUserById(
         'user_id_placeholder',
         { email_confirm: true }

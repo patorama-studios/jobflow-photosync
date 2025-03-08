@@ -55,8 +55,9 @@ export default function Home() {
 
   // If not authenticated, go to login
   if (!session) {
+    // Add a fallback case to avoid blank screen
     console.log('Home component redirecting to login (no session)');
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   
   // If authenticated, redirect to dashboard

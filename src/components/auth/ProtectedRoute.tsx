@@ -58,6 +58,13 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
     return <PageLoading forceRefreshAfter={10} />;
   }
 
+  // Show children even if no session for development environment
+  // to allow easier testing before auth is fully implemented
+  if (import.meta.env.DEV && !session && !isLoading) {
+    console.log('DEV MODE: Showing protected content without authentication');
+    return <>{children}</>;
+  }
+
   // Redirect to login if definitely not authenticated
   if (!isLoading && !session) {
     console.log('ProtectedRoute - No session, redirecting to login from:', location.pathname);

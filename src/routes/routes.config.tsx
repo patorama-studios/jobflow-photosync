@@ -1,147 +1,198 @@
-
 import React from 'react';
-import { RouteObject } from 'react-router-dom';
-
-// Pages
-import Home from '@/pages/Home';
-import NotFound from '@/pages/NotFound';
-import Dashboard from '@/pages/Dashboard';
-import Calendar from '@/pages/Calendar';
-import Orders from '@/pages/Orders';
-import OrderDetails from '@/pages/OrderDetails';
-import OrderSinglePage from '@/pages/OrderSinglePage';
-import Login from '@/pages/Login';
-import Settings from '@/pages/Settings';
-import ClientDetails from '@/pages/ClientDetails';
-import { ClientsView } from '@/components/clients/ClientsView';
-import CompanyDetails from '@/pages/CompanyDetails';
-import Verify from '@/pages/Verify';
-import Production from '@/pages/Production';
-import ProductionBoard from '@/pages/ProductionBoard';
-import ProductionOrderDetails from '@/pages/ProductionOrderDetails';
-import ProductionUpload from '@/pages/ProductionUpload';
-import NotificationsCenter from '@/pages/NotificationsCenter';
-import PropertyWebsite from '@/pages/PropertyWebsite';
-import ProductDelivery from '@/pages/ProductDelivery';
-import FileDownloads from '@/pages/FileDownloads';
-import Products from '@/pages/Products';
-
-// Components
+import { Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import Customers from '@/pages/Customers';
-import CustomerDetails from '@/pages/CustomerDetails';
-import GenerateData from '@/pages/GenerateData';
-import Debug from '@/pages/Debug';
-import LearningHub from '@/pages/LearningHub'; // Import the Learning Hub page
+import MainLayout from '@/components/layout/MainLayout';
 
-// Define the routes configuration
-export const routes: RouteObject[] = [
+// Lazy-loaded components for better performance
+const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
+const Orders = React.lazy(() => import('@/pages/Orders'));
+const Calendar = React.lazy(() => import('@/pages/Calendar'));
+const Settings = React.lazy(() => import('@/pages/Settings'));
+const Login = React.lazy(() => import('@/pages/Login'));
+const OrderDetails = React.lazy(() => import('@/pages/OrderDetails'));
+const Production = React.lazy(() => import('@/pages/Production'));
+const Customers = React.lazy(() => import('@/pages/Customers'));
+const CustomerDetails = React.lazy(() => import('@/pages/CustomerDetails'));
+const NotFound = React.lazy(() => import('@/pages/NotFound'));
+const Home = React.lazy(() => import('@/pages/Home'));
+const ProductDelivery = React.lazy(() => import('@/pages/ProductDelivery'));
+const NotificationsCenter = React.lazy(() => import('@/pages/NotificationsCenter'));
+const LearningHub = React.lazy(() => import('@/pages/LearningHub'));
+const Products = React.lazy(() => import('@/pages/Products'));
+
+export const routes = [
+  // Root path handled by Home component which redirects to the appropriate page
   {
-    path: '/',
-    element: <Home />,
+    path: "/",
+    element: (
+      <React.Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+        <Home />
+      </React.Suspense>
+    ),
+  },
+  // Login page is not protected
+  {
+    path: "/login",
+    element: (
+      <React.Suspense fallback={<div className="p-8 text-center">Loading login...</div>}>
+        <Login />
+      </React.Suspense>
+    ),
+  },
+  // All other routes are protected and use the MainLayout
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading dashboard...</div>}>
+            <Dashboard />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/login',
-    element: <Login />,
+    path: "/orders",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading orders...</div>}>
+            <Orders />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/verify',
-    element: <Verify />,
+    path: "/orders/:orderId",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading order details...</div>}>
+            <OrderDetails />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/dashboard',
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+    path: "/calendar",
+    element: (
+      <ProtectedRoute>
+        <MainLayout showCalendarSubmenu={true}>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading calendar...</div>}>
+            <Calendar />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/calendar',
-    element: <ProtectedRoute><Calendar /></ProtectedRoute>,
+    path: "/settings",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading settings...</div>}>
+            <Settings />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/orders',
-    element: <ProtectedRoute><Orders /></ProtectedRoute>,
+    path: "/production",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading production board...</div>}>
+            <Production />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/orders/:id',
-    element: <ProtectedRoute><OrderSinglePage /></ProtectedRoute>,
+    path: "/customers",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading customers...</div>}>
+            <Customers />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/orders/details/:id',
-    element: <ProtectedRoute><OrderDetails /></ProtectedRoute>,
+    path: "/customers/:customerId",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading customer details...</div>}>
+            <CustomerDetails />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/clients',
-    element: <ProtectedRoute><ClientsView /></ProtectedRoute>,
+    path: "/product-delivery",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading product delivery...</div>}>
+            <ProductDelivery />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/clients/:id',
-    element: <ProtectedRoute><ClientDetails /></ProtectedRoute>,
+    path: "/notifications",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading notifications...</div>}>
+            <NotificationsCenter />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/companies/:id',
-    element: <ProtectedRoute><CompanyDetails /></ProtectedRoute>,
+    path: "/learning-hub",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading learning hub...</div>}>
+            <LearningHub />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
-  {
-    path: '/customers',
-    element: <ProtectedRoute><Customers /></ProtectedRoute>,
+    {
+    path: "/products",
+    element: (
+      <ProtectedRoute>
+        <MainLayout>
+          <React.Suspense fallback={<div className="p-8 text-center">Loading products...</div>}>
+            <Products />
+          </React.Suspense>
+        </MainLayout>
+      </ProtectedRoute>
+    ),
   },
+  // Catch-all route for 404 Not Found
   {
-    path: '/customers/:id',
-    element: <ProtectedRoute><CustomerDetails /></ProtectedRoute>,
+    path: "*",
+    element: (
+      <MainLayout>
+        <React.Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+          <NotFound />
+        </React.Suspense>
+      </MainLayout>
+    ),
   },
-  {
-    path: '/settings',
-    element: <ProtectedRoute><Settings /></ProtectedRoute>,
-  },
-  {
-    path: '/products',
-    element: <ProtectedRoute><Products /></ProtectedRoute>,
-  },
-  {
-    path: '/production',
-    element: <ProtectedRoute><Production /></ProtectedRoute>,
-  },
-  {
-    path: '/production/board',
-    element: <ProtectedRoute><ProductionBoard /></ProtectedRoute>,
-  },
-  {
-    path: '/production/order/:orderId',
-    element: <ProtectedRoute><ProductionOrderDetails /></ProtectedRoute>,
-  },
-  {
-    path: '/production/upload/:orderId',
-    element: <ProtectedRoute><ProductionUpload /></ProtectedRoute>,
-  },
-  {
-    path: '/notifications',
-    element: <ProtectedRoute><NotificationsCenter /></ProtectedRoute>,
-  },
-  {
-    path: '/delivery/:id',
-    element: <ProtectedRoute><ProductDelivery /></ProtectedRoute>,
-  },
-  {
-    path: '/property-website/:id',
-    element: <ProtectedRoute><PropertyWebsite /></ProtectedRoute>,
-  },
-  {
-    path: '/downloads',
-    element: <ProtectedRoute><FileDownloads /></ProtectedRoute>,
-  },
-  {
-    path: '/generate-data',
-    element: <ProtectedRoute><GenerateData /></ProtectedRoute>,
-  },
-  {
-    path: '/learning-hub', // Add Learning Hub route
-    element: <ProtectedRoute><LearningHub /></ProtectedRoute>,
-  },
-  {
-    path: '/debug',
-    element: <Debug />,
-  },
-  {
-    path: '*',
-    element: <NotFound />,
-  }
 ];
