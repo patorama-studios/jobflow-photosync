@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAppSettings } from './useAppSettings';
 
 export interface HeaderSettings {
@@ -49,17 +49,15 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => {
     console.log('Back button action not set');
   });
+  
+  // Used to track if settings have been loaded and initialized
+  const initialized = useRef(false);
 
   // Load settings when persisted settings are available and only once
   useEffect(() => {
-    if (!isLoading && persistedSettings) {
-      setSettings(previousSettings => {
-        // Only update if different to prevent infinite loops
-        if (JSON.stringify(previousSettings) !== JSON.stringify(persistedSettings)) {
-          return persistedSettings as HeaderSettings;
-        }
-        return previousSettings;
-      });
+    if (!isLoading && persistedSettings && !initialized.current) {
+      setSettings(persistedSettings as HeaderSettings);
+      initialized.current = true;
     }
   }, [persistedSettings, isLoading]);
 
@@ -73,24 +71,19 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
       
       // Only save if there are actual changes to prevent loops
       if (JSON.stringify(updatedSettings) !== JSON.stringify(prevSettings)) {
-        saveSettings(updatedSettings);
-        return updatedSettings;
+        // Using a timeout to avoid state update during render cycle
+        setTimeout(() => {
+          saveSettings(updatedSettings);
+        }, 0);
       }
-      return prevSettings;
+      
+      return updatedSettings;
     });
   }, [saveSettings]);
 
   const onBackButtonClick = useCallback(() => {
     backButtonAction();
   }, [backButtonAction]);
-
-  // Log when provider is mounted for debugging
-  useEffect(() => {
-    console.log('HeaderSettingsProvider mounted');
-    return () => {
-      console.log('HeaderSettingsProvider unmounted');
-    };
-  }, []);
 
   return (
     <HeaderSettingsContext.Provider 

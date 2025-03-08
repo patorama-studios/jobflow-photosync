@@ -65,21 +65,28 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
 
   // Save settings to Supabase
   const saveSettings = useCallback(async (newValue: AppSettingsValue, showToast = true) => {
-    // Avoid unnecessary saves if the value hasn't changed
-    const newValueString = JSON.stringify(newValue);
-    if (newValueString === lastSavedValue) {
-      return;
-    }
-    
     try {
       setIsLoading(true);
+      
+      // Convert to string for comparison and storage
+      const newValueString = JSON.stringify(newValue);
+      
+      // Avoid unnecessary saves if the value hasn't changed
+      if (newValueString === lastSavedValue) {
+        setIsLoading(false);
+        return true;
+      }
 
       // Check if setting exists
-      const { data: existingData } = await supabase
+      const { data: existingData, error: checkError } = await supabase
         .from('app_settings')
         .select('id')
         .eq('key', key)
         .maybeSingle();
+      
+      if (checkError) {
+        throw checkError;
+      }
 
       let result;
 
@@ -106,6 +113,7 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
 
       if (result.error) throw result.error;
       
+      // Update state only after successful save
       setValue(newValue);
       setLastSavedValue(newValueString);
       
@@ -115,6 +123,8 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
           description: "Your preferences have been updated",
         });
       }
+      
+      return true;
     } catch (err) {
       console.error('Error saving app settings:', err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -126,6 +136,8 @@ export function useAppSettings(key: string, defaultValue: AppSettingsValue = {})
           variant: "destructive",
         });
       }
+      
+      return false;
     } finally {
       setIsLoading(false);
     }

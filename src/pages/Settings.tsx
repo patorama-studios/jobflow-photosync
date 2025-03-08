@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -27,23 +27,13 @@ export type SettingsCategory =
 export function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");
   const { updateSettings } = useHeaderSettings();
-  const hasSetHeader = useRef(false);
 
-  // Only update the header settings once when the component mounts
+  // Update the header settings once when the component mounts
   useEffect(() => {
-    console.log("Settings page mounted with header provider available");
-    if (!hasSetHeader.current) {
-      try {
-        updateSettings({
-          title: "Settings",
-          description: "Manage your account and application preferences"
-        });
-        hasSetHeader.current = true;
-        console.log("Header settings updated in Settings page");
-      } catch (error) {
-        console.error("Failed to update header settings:", error);
-      }
-    }
+    updateSettings({
+      title: "Settings",
+      description: "Manage your account and application preferences"
+    });
   }, [updateSettings]);
   
   return (
