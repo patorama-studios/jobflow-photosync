@@ -1,3 +1,4 @@
+
 import { Order } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleOrders } from '@/data/sampleOrders'; 
@@ -5,7 +6,7 @@ import { toast } from 'sonner';
 
 export const fetchOrders = async (): Promise<{ orders: Order[], error: string | null }> => {
   try {
-    const { data: orders, error } = await supabase
+    const { data: ordersData, error } = await supabase
       .from('orders')
       .select('*');
 
@@ -14,7 +15,15 @@ export const fetchOrders = async (): Promise<{ orders: Order[], error: string | 
       return { orders: [], error: error.message };
     }
 
-    return { orders: orders as Order[], error: null };
+    // Convert to Order type with required fields
+    const orders: Order[] = ordersData.map(item => ({
+      ...item,
+      id: item.id,
+      scheduledDate: item.scheduled_date || '',
+      scheduledTime: item.scheduled_time || '',
+    })) as Order[];
+
+    return { orders, error: null };
   } catch (error: any) {
     console.error("Error fetching orders:", error);
     return { orders: [], error: error.message || 'An unexpected error occurred' };
@@ -47,8 +56,15 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
       return { order: null, error: error.message };
     }
     
-    // Transform the data into the Order type if needed
-    return { order: data as Order, error: null };
+    // Transform the data to include required fields for Order type
+    const order: Order = {
+      ...data,
+      id: data.id,
+      scheduledDate: data.scheduled_date || '',
+      scheduledTime: data.scheduled_time || '',
+    } as Order;
+    
+    return { order, error: null };
   } catch (err: any) {
     console.error('Error in fetchOrderDetails:', err);
     return { order: null, error: err.message || 'An unexpected error occurred' };
@@ -57,9 +73,17 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
 
 export const saveOrderChanges = async (order: Order): Promise<{ success: boolean, error: string | null }> => {
   try {
+    // Prepare the order data for Supabase
+    const orderData = {
+      ...order,
+      id: String(order.id), // Convert id to string for Supabase
+      scheduled_date: order.scheduledDate,
+      scheduled_time: order.scheduledTime
+    };
+    
     const { data, error } = await supabase
       .from('orders')
-      .update(order)
+      .update(orderData)
       .eq('id', String(order.id))
       .select()
       .single();
@@ -105,9 +129,16 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
 
 export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: boolean; data: Order | null; error: string | null }> => {
   try {
+    // Prepare the order data for Supabase
+    const orderData = {
+      ...order,
+      scheduled_date: order.scheduledDate,
+      scheduled_time: order.scheduledTime
+    };
+    
     const { data, error } = await supabase
       .from('orders')
-      .insert([order])
+      .insert([orderData])
       .select()
       .single();
 
@@ -117,8 +148,16 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       return { success: false, data: null, error: error.message };
     }
 
+    // Convert response to Order type
+    const createdOrder: Order = {
+      ...data,
+      id: data.id,
+      scheduledDate: data.scheduled_date || '',
+      scheduledTime: data.scheduled_time || '',
+    } as Order;
+
     toast.success("Order created successfully");
-    return { success: true, data: data as Order, error: null };
+    return { success: true, data: createdOrder, error: null };
   } catch (err: any) {
     console.error("Error creating order:", err);
     toast.error("An unexpected error occurred while creating the order");
