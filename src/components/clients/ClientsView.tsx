@@ -7,11 +7,14 @@ import { ClientTable } from './ClientTable';
 import { AddClientDialog } from './AddClientDialog';
 import { useClients } from '@/hooks/use-clients';
 import { toast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useNavigate } from 'react-router-dom';
 
 export function ClientsView() {
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { clients, isLoading, error, addClient, updateClient, searchClients, refetch } = useClients();
+  const navigate = useNavigate();
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -31,8 +34,12 @@ export function ClientsView() {
   };
 
   const handleEditClient = (client: any) => {
-    // Handle client editing (future implementation)
-    console.log("Edit client:", client);
+    // Open client details page
+    navigate(`/clients/${client.id}`);
+  };
+
+  const handleRowClick = (client: any) => {
+    navigate(`/clients/${client.id}`);
   };
 
   const handleClientAdded = async (client: any) => {
@@ -53,35 +60,43 @@ export function ClientsView() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
-        <Button onClick={() => setIsAddClientDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Client
-        </Button>
-      </div>
-      <div className="relative">
-        <Input
-          type="search"
-          placeholder="Search clients..."
-          value={searchQuery}
-          onChange={handleSearch}
+    <Card className="shadow-sm">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-semibold">Clients</CardTitle>
+            <CardDescription>Manage your clients and their information</CardDescription>
+          </div>
+          <Button onClick={() => setIsAddClientDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Client
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="relative mb-4">
+          <Input
+            type="search"
+            placeholder="Search clients..."
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+        </div>
+        <ClientTable 
+          clients={clients} 
+          isLoading={isLoading} 
+          error={error} 
+          updateClient={updateClient}
+          onEdit={handleEditClient}
+          onDelete={handleDeleteClient}
+          onRowClick={handleRowClick}
         />
-      </div>
-      <ClientTable 
-        clients={clients} 
-        isLoading={isLoading} 
-        error={error} 
-        updateClient={updateClient}
-        onEdit={handleEditClient}
-        onDelete={handleDeleteClient}
-      />
+      </CardContent>
       <AddClientDialog 
         open={isAddClientDialogOpen} 
         onOpenChange={setIsAddClientDialogOpen} 
         onClientAdded={handleClientAdded}
       />
-    </div>
+    </Card>
   );
 }

@@ -297,6 +297,45 @@ export type Database = {
           },
         ]
       }
+      esoft_settings: {
+        Row: {
+          allow_reference_editing: boolean | null
+          api_password: string
+          api_username: string
+          auto_deliver_listings: boolean | null
+          client_id: string
+          created_at: string | null
+          default_order_reference_format: string | null
+          id: string
+          updated_at: string | null
+          white_label_domain: string | null
+        }
+        Insert: {
+          allow_reference_editing?: boolean | null
+          api_password: string
+          api_username: string
+          auto_deliver_listings?: boolean | null
+          client_id: string
+          created_at?: string | null
+          default_order_reference_format?: string | null
+          id?: string
+          updated_at?: string | null
+          white_label_domain?: string | null
+        }
+        Update: {
+          allow_reference_editing?: boolean | null
+          api_password?: string
+          api_username?: string
+          auto_deliver_listings?: boolean | null
+          client_id?: string
+          created_at?: string | null
+          default_order_reference_format?: string | null
+          id?: string
+          updated_at?: string | null
+          white_label_domain?: string | null
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -493,6 +532,7 @@ export type Database = {
           product_id: string | null
           quantity: number
           status: string
+          status_id: string | null
           updated_at: string
         }
         Insert: {
@@ -506,6 +546,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number
           status?: string
+          status_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -519,6 +560,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number
           status?: string
+          status_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -534,6 +576,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_products_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "production_statuses"
             referencedColumns: ["id"]
           },
         ]
@@ -709,10 +758,44 @@ export type Database = {
           },
         ]
       }
+      production_statuses: {
+        Row: {
+          color: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string
           description: string | null
+          esoft_products: string[] | null
           id: string
           is_active: boolean | null
           name: string
@@ -722,6 +805,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          esoft_products?: string[] | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -731,6 +815,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          esoft_products?: string[] | null
           id?: string
           is_active?: boolean | null
           name?: string

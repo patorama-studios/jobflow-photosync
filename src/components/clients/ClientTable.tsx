@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface ClientTableProps {
   clients: Client[];
@@ -20,6 +21,7 @@ interface ClientTableProps {
   error?: Error | null;
   onEdit?: (client: Client) => void;
   onDelete?: (clientId: string) => void;
+  onRowClick?: (client: Client) => void;
   updateClient?: (id: string, updates: Partial<Client>) => Promise<void>;
 }
 
@@ -29,11 +31,13 @@ export function ClientTable({
   error = null, 
   onEdit, 
   onDelete,
+  onRowClick,
   updateClient 
 }: ClientTableProps) {
   const { toast } = useToast();
 
-  const handleEdit = (client: Client) => {
+  const handleEdit = (client: Client, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onEdit) {
       onEdit(client);
     } else if (updateClient) {
@@ -42,13 +46,20 @@ export function ClientTable({
     }
   };
 
-  const handleDelete = (clientId: string) => {
+  const handleDelete = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onDelete) {
       onDelete(clientId);
       toast({
         title: "Client deleted",
         description: "The client has been removed"
       });
+    }
+  };
+
+  const handleRowClick = (client: Client) => {
+    if (onRowClick) {
+      onRowClick(client);
     }
   };
 
@@ -72,26 +83,37 @@ export function ClientTable({
         </TableHeader>
         <TableBody>
           {clients.map((client) => (
-            <TableRow key={client.id}>
-              <TableCell className="font-medium">{client.id}</TableCell>
+            <TableRow 
+              key={client.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleRowClick(client)}
+            >
+              <TableCell className="font-medium">{client.id.substring(0, 8)}</TableCell>
               <TableCell>{client.name}</TableCell>
               <TableCell>{client.email}</TableCell>
               <TableCell>{client.phone}</TableCell>
-              <TableCell>{client.status}</TableCell>
+              <TableCell>
+                <Badge 
+                  variant={client.status === 'active' ? 'outline' : 'secondary'}
+                  className={client.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                >
+                  {client.status}
+                </Badge>
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
                       <span className="sr-only">Open menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(client)}>
+                    <DropdownMenuItem onClick={(e: any) => handleEdit(client, e)}>
                       <Edit className="mr-2 h-4 w-4" /> Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDelete(client.id)}
+                      onClick={(e: any) => handleDelete(client.id, e)}
                       className="text-destructive"
                     >
                       <Trash className="mr-2 h-4 w-4" /> Delete

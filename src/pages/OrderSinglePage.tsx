@@ -29,6 +29,14 @@ const OrderSinglePage = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
 
+  // Format order number - remove "ORD-" prefix
+  const formatOrderNumber = (orderNumber: string) => {
+    if (orderNumber?.startsWith('ORD-')) {
+      return `#${orderNumber.substring(4)}`;
+    }
+    return `#${orderNumber}`;
+  };
+
   // Handle delivery email dialog
   const handleDeliverClick = () => {
     setIsDeliveryDialogOpen(true);
@@ -61,16 +69,23 @@ const OrderSinglePage = () => {
     );
   }
 
+  // Make a copy of the order with the formatted order number
+  const formattedOrder = {
+    ...order,
+    orderNumber: formatOrderNumber(order.orderNumber || order.order_number || ''),
+    order_number: formatOrderNumber(order.orderNumber || order.order_number || '')
+  };
+
   return (
     <MainLayout>
       <PageTransition>
         <div className="container mx-auto py-6">
           {/* Header Section */}
           <div className="flex flex-col space-y-4">
-            <OrderSinglePageHeader order={order} />
+            <OrderSinglePageHeader order={formattedOrder} />
             
             <OrderActionButtons 
-              order={order} 
+              order={formattedOrder} 
               onDeliverClick={handleDeliverClick} 
             />
             
@@ -79,7 +94,7 @@ const OrderSinglePage = () => {
           
           {/* Tabs section */}
           <OrderTabsContainer 
-            order={order}
+            order={formattedOrder}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
           />
@@ -93,7 +108,7 @@ const OrderSinglePage = () => {
           <DeliverEmailDialog
             isOpen={isDeliveryDialogOpen}
             onOpenChange={setIsDeliveryDialogOpen}
-            order={order}
+            order={formattedOrder}
           />
         </div>
       </PageTransition>

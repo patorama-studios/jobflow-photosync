@@ -20,7 +20,9 @@ export type SettingsCategory =
   | "theme"
   | "legal"
   | "apps"
-  | "team";
+  | "team"
+  | "production-status"
+  | "esoft-integration";
 
 export function SettingsPage() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");

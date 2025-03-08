@@ -16,6 +16,8 @@ import { AppsSettings } from "./sections/AppsSettings";
 import { TeamSettings } from "./sections/TeamSettings";
 import { PhotographerAvailability } from "./sections/PhotographerAvailability";
 import { TeamNotificationPreferences } from "./sections/TeamNotificationPreferences";
+import { ProductionStatusSettings } from "./sections/ProductionStatusSettings";
+import { EsoftIntegrationSettings } from "./sections/EsoftIntegrationSettings";
 import { Card } from "@/components/ui/card";
 
 interface SettingsPanelProps {
@@ -38,6 +40,8 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
       {activeCategory === "theme" && <ThemeSettings />}
       {activeCategory === "legal" && <LegalSettings />}
       {activeCategory === "apps" && <AppsSettings />}
+      {activeCategory === "production-status" && <ProductionStatusSettings />}
+      {activeCategory === "esoft-integration" && <EsoftIntegrationSettings />}
     </Card>
   );
 });
