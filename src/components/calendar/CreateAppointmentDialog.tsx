@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
-import { BlockAppointmentForm } from './appointment/BlockAppointmentForm';
+import BlockAppointmentForm from './appointment/BlockAppointmentForm';
 import { OrderDetailsForm } from './appointment/OrderDetailsForm';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useForm } from 'react-hook-form';
@@ -17,6 +17,7 @@ type CreateAppointmentDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
+  initialTime?: string;
   onAppointmentAdded?: (appointmentData: any) => Promise<boolean>;
   existingOrderData?: any; // For when adding an appointment to an existing order
 };
@@ -25,6 +26,7 @@ export function CreateAppointmentDialog({
   isOpen, 
   onClose, 
   selectedDate,
+  initialTime,
   onAppointmentAdded,
   existingOrderData
 }: CreateAppointmentDialogProps) {
@@ -124,10 +126,10 @@ export function CreateAppointmentDialog({
           // Simplified version when adding to existing order
           <div className="py-4">
             <AppointmentDetailsForm 
-              onSubmit={(data) => handleSubmit(data, 'appointment')}
               defaultDate={selectedDate}
               defaultOrder={existingOrderData}
               isSubmitting={isSubmitting}
+              onSubmit={(data) => handleSubmit(data, 'appointment')}
             />
           </div>
         ) : (
@@ -140,23 +142,25 @@ export function CreateAppointmentDialog({
             </TabsList>
             <TabsContent value="appointment">
               <AppointmentDetailsForm 
-                onSubmit={(data) => handleSubmit(data, 'appointment')}
                 defaultDate={selectedDate}
+                initialTime={initialTime}
                 isSubmitting={isSubmitting}
+                onSubmit={(data) => handleSubmit(data, 'appointment')}
               />
             </TabsContent>
             <TabsContent value="order">
               <OrderDetailsForm 
-                onSubmit={(data) => handleSubmit(data, 'order')}
                 defaultDate={selectedDate}
                 isSubmitting={isSubmitting}
+                onSubmit={(data) => handleSubmit(data, 'order')}
               />
             </TabsContent>
             <TabsContent value="block">
               <BlockAppointmentForm 
-                onSubmit={(data) => handleSubmit(data, 'block')}
                 defaultDate={selectedDate}
+                initialTime={initialTime}
                 isSubmitting={isSubmitting}
+                onSubmit={(data) => handleSubmit(data, 'block')}
               />
             </TabsContent>
           </Tabs>

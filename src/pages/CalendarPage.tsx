@@ -127,7 +127,7 @@ export function CalendarPage() {
                 isOpen={isDialogOpen} 
                 onClose={handleCloseDialog} 
                 selectedDate={selectedDate}
-                selectedTime={timeSlot || undefined}
+                initialTime={timeSlot || undefined}
               />
             </Dialog>
           </div>

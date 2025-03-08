@@ -9,18 +9,23 @@ import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 interface BlockAppointmentFormProps {
-  initialDate?: Date;
+  defaultDate?: Date;
   initialTime?: string;
+  isSubmitting?: boolean;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 const BlockAppointmentForm: React.FC<BlockAppointmentFormProps> = ({
-  initialDate = new Date(),
+  defaultDate = new Date(),
   initialTime,
+  isSubmitting = false,
+  onSubmit
 }) => {
   const [blockName, setBlockName] = useState('');
-  const [date, setDate] = useState<Date | undefined>(initialDate);
+  const [date, setDate] = useState<Date | undefined>(defaultDate);
   const [startTime, setStartTime] = useState(initialTime || '09:00');
   const [duration, setDuration] = useState('60');
   const [notes, setNotes] = useState('');
@@ -34,6 +39,19 @@ const BlockAppointmentForm: React.FC<BlockAppointmentFormProps> = ({
     { value: '240', label: '4 hours' },
     { value: '480', label: 'Full day (8 hours)' },
   ];
+  
+  const handleSubmit = async () => {
+    const formData = {
+      blockName,
+      date,
+      startTime,
+      duration,
+      notes,
+      type: 'block'
+    };
+    
+    await onSubmit(formData);
+  };
 
   return (
     <div className="space-y-6">
@@ -128,6 +146,17 @@ const BlockAppointmentForm: React.FC<BlockAppointmentFormProps> = ({
             placeholder="Add any additional details..."
             className="mt-1.5"
           />
+        </div>
+        
+        <div className="pt-4">
+          <Button 
+            type="button" 
+            onClick={handleSubmit}
+            disabled={isSubmitting || !blockName || !date}
+            className="w-full"
+          >
+            {isSubmitting ? 'Creating...' : 'Create Time Block'}
+          </Button>
         </div>
       </div>
     </div>

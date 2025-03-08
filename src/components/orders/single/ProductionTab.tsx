@@ -53,25 +53,13 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
     enabled: !!orderId
   });
   
-  // Fetch upload statuses
-  const { data: uploadStatuses, isLoading: uploadsLoading } = useQuery({
-    queryKey: ['orderUploads', orderId],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('order_uploads')
-          .select('*')
-          .eq('order_id', orderId);
-        
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        console.error('Error fetching upload statuses:', error);
-        return [];
-      }
-    },
-    enabled: !!orderId
-  });
+  // Mock data for upload statuses since we don't have the real table yet
+  const mockUploadStatuses = [
+    { id: 1, order_id: orderId, product_id: 1, status: 'in_progress', total_uploaded: 23, total_required: 30 },
+    { id: 2, order_id: orderId, product_id: 2, status: 'completed', total_uploaded: 1, total_required: 1 },
+    { id: 3, order_id: orderId, product_id: 3, status: 'not_started', total_uploaded: 0, total_required: 1 },
+    { id: 4, order_id: orderId, product_id: 4, status: 'error', total_uploaded: 2, total_required: 5 }
+  ];
   
   // Use fetched products or fallback to mock data
   const products = orderProducts?.length ? orderProducts : [
@@ -132,11 +120,11 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
   };
   
   // Function to handle product upload button click
-  const handleUploadClick = (productId, productName) => {
+  const handleUploadClick = (productId: any, productName: string) => {
     navigate(`/production/upload/${orderId}?product=${productId}`);
   };
   
-  const isLoading = productsLoading || uploadsLoading;
+  const isLoading = productsLoading;
   
   return (
     <div className="space-y-6">
@@ -179,7 +167,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
               <TableBody>
                 {products.map((product) => {
                   // Find upload status for this product if available
-                  const uploadStatus = uploadStatuses?.find(u => u.product_id === product.id) || null;
+                  const uploadStatus = mockUploadStatuses.find(u => u.product_id === product.id) || null;
                   const progress = uploadStatus 
                     ? `${uploadStatus.total_uploaded || 0}/${uploadStatus.total_required || '-'}`
                     : '-';
