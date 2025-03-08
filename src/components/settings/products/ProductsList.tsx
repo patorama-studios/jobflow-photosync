@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Table, 
@@ -19,8 +20,9 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Product, ProductDialog } from "./ProductDialog";
 import { useToast } from "@/components/ui/use-toast";
+import { ProductDialog } from "./dialogs/ProductDialog";
+import { Product } from "./types/product-types";
 
 // Sample data for demonstration
 const sampleProducts: Product[] = [

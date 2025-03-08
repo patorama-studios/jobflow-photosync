@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ProductDialog } from "./dialogs/ProductDialog";
 import { 
   Table, 
   TableHeader, 
@@ -13,66 +14,49 @@ import {
   Trash, 
   Copy, 
   GripVertical, 
-  Image as ImageIcon,
-  Check,
+  Image as ImageIcon, 
+  Check, 
   X,
   MoreHorizontal
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Product, ProductDialog } from "./ProductDialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Product } from "./types/product-types";
 
-// Sample data for add-ons
+// Sample data for demonstration
 const sampleAddOns: Product[] = [
   {
     id: "addon-1",
-    title: "Twilight Photos",
-    description: "Stunning twilight exterior photos of the property",
-    isServiceable: true,
+    title: "Rush Order Processing",
+    description: "Guaranteed processing and completion within 24 hours",
+    isServiceable: false,
     hasVariants: false,
-    price: 99,
-    duration: 45,
-    defaultPayout: 70,
+    price: 49,
+    defaultPayout: 80,
     defaultPayoutType: "percentage",
     type: "addon"
   },
   {
     id: "addon-2",
-    title: "Aerial Photography",
-    description: "Drone photography showing property from above",
-    isServiceable: true,
+    title: "Premium Editing",
+    description: "Enhanced editing and retouching services",
+    isServiceable: false,
     hasVariants: false,
-    price: 149,
-    duration: 30,
+    price: 79,
     defaultPayout: 75,
     defaultPayoutType: "percentage",
     type: "addon"
   },
   {
     id: "addon-3",
-    title: "Property Video",
-    description: "Professional video tour of the property",
-    isServiceable: true,
-    hasVariants: true,
-    type: "addon",
-    variants: [
-      {
-        id: "var-1",
-        name: "Standard",
-        price: 199,
-        duration: 60,
-        payoutAmount: 65,
-        payoutType: "percentage"
-      },
-      {
-        id: "var-2",
-        name: "Premium",
-        price: 299,
-        duration: 90,
-        payoutAmount: 70,
-        payoutType: "percentage"
-      }
-    ]
+    title: "Additional Photo",
+    description: "Add 5 extra photos to your package",
+    isServiceable: false,
+    hasVariants: false,
+    price: 25,
+    defaultPayout: 70,
+    defaultPayoutType: "percentage",
+    type: "addon"
   }
 ];
 

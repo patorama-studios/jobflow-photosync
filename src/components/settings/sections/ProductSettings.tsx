@@ -9,7 +9,7 @@ import { TaxSettings } from "../products/TaxSettings";
 import { CouponCodes } from "../products/CouponCodes";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { ProductDialog } from "../products/ProductDialog";
+import { ProductDialog } from "../products/dialogs/ProductDialog";
 
 export function ProductSettings() {
   const [activeTab, setActiveTab] = useState("main-products");
