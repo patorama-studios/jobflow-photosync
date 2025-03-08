@@ -23,6 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from "@/components/ui/use-toast";
 import { ProductDialog } from "./dialogs/ProductDialog";
 import { Product } from "./types/product-types";
+import { useProducts } from "@/hooks/use-products";
 
 // Sample data for demonstration
 const sampleProducts: Product[] = [
@@ -79,12 +80,13 @@ const sampleProducts: Product[] = [
 
 export function ProductsList() {
   const { toast } = useToast();
+  const { products: apiProducts, saveProduct, isLoading } = useProducts();
   const [products, setProducts] = useState<Product[]>(sampleProducts);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleEdit = (product: Product) => {
-    setEditingProduct(product);
+    setEditingProduct({...product});
     setIsEditDialogOpen(true);
   };
 
@@ -109,6 +111,39 @@ export function ProductsList() {
       title: "Product duplicated",
       description: `Created a copy of ${product.title}`
     });
+  };
+
+  const handleSaveProduct = (updatedProduct: Product) => {
+    if (editingProduct) {
+      // Update existing product
+      setProducts(
+        products.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
+      );
+      
+      // In a real app, you would call the API to save the updated product
+      // saveProduct({
+      //   id: updatedProduct.id,
+      //   name: updatedProduct.title,
+      //   description: updatedProduct.description,
+      //   price: updatedProduct.price || 0,
+      //   is_active: true
+      // });
+      
+      toast({
+        title: "Product updated",
+        description: `${updatedProduct.title} has been updated successfully`
+      });
+    } else {
+      // Add new product
+      setProducts([...products, updatedProduct]);
+      toast({
+        title: "Product created",
+        description: `${updatedProduct.title} has been added successfully`
+      });
+    }
+    
+    setIsEditDialogOpen(false);
+    setEditingProduct(undefined);
   };
 
   const getProductPriceDisplay = (product: Product) => {
@@ -227,6 +262,7 @@ export function ProductsList() {
         onOpenChange={setIsEditDialogOpen}
         productType="main"
         editProduct={editingProduct}
+        onSave={handleSaveProduct}
       />
     </div>
   );

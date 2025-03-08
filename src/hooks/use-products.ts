@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Product as UIProduct } from '@/components/settings/products/types/product-types';
 
 export interface Product {
   id: string;
@@ -74,6 +75,39 @@ export function useProducts() {
     }
   };
 
+  // Function to map UI product model to database model
+  const saveUIProduct = async (uiProduct: UIProduct) => {
+    try {
+      const dbProduct: Partial<Product> = {
+        id: uiProduct.id,
+        name: uiProduct.title,
+        description: uiProduct.description || null,
+        price: uiProduct.hasVariants ? 
+          uiProduct.variants?.reduce((max, v) => Math.max(max, v.price), 0) || 0 : 
+          uiProduct.price || 0,
+        is_active: true
+      };
+      
+      // Store the detailed product data in app_settings as a JSON object
+      const { error: settingsError } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: `product_details_${uiProduct.id}`,
+          value: uiProduct,
+          is_global: true
+        });
+      
+      if (settingsError) throw settingsError;
+      
+      // Save the simplified version in the products table
+      return await saveProduct(dbProduct);
+    } catch (err: any) {
+      console.error("Error saving UI product:", err);
+      toast.error(`Failed to save product: ${err.message || 'Unknown error'}`);
+      throw err;
+    }
+  };
+
   const createProductOverride = async (
     clientId: string, 
     productId: string, 
@@ -126,6 +160,7 @@ export function useProducts() {
     error,
     refetch: fetchProducts,
     saveProduct,
+    saveUIProduct,
     createProductOverride
   };
 }

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -13,9 +13,10 @@ interface ProductDialogProps {
   onOpenChange: (open: boolean) => void;
   productType: "main" | "addon";
   editProduct?: Product;
+  onSave?: (product: Product) => void;
 }
 
-export function ProductDialog({ open, onOpenChange, productType, editProduct }: ProductDialogProps) {
+export function ProductDialog({ open, onOpenChange, productType, editProduct, onSave }: ProductDialogProps) {
   const { toast } = useToast();
   const isEditing = !!editProduct;
   
@@ -37,6 +38,27 @@ export function ProductDialog({ open, onOpenChange, productType, editProduct }: 
   const [variants, setVariants] = useState<ProductVariant[]>(
     editProduct?.variants || []
   );
+
+  // Reset form when editProduct changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      setProduct(
+        editProduct || {
+          title: "",
+          description: "",
+          isServiceable: true,
+          hasVariants: false,
+          type: productType,
+          price: 0,
+          duration: 60,
+          defaultPayout: 70,
+          defaultPayoutType: "percentage",
+          variants: [],
+        }
+      );
+      setVariants(editProduct?.variants || []);
+    }
+  }, [editProduct, open, productType]);
 
   const handleAddVariant = () => {
     const newVariant: ProductVariant = {
@@ -94,14 +116,24 @@ export function ProductDialog({ open, onOpenChange, productType, editProduct }: 
       }
     }
 
-    // Save product logic would go here
-    // For now, we'll just show a success message
-    toast({
-      title: isEditing ? "Product updated" : "Product created",
-      description: `${product.title} has been ${isEditing ? "updated" : "added"} successfully`,
-    });
-    
-    onOpenChange(false);
+    // Combine product data with variants
+    const completeProduct: Product = {
+      ...product as Product,
+      variants: product.hasVariants ? variants : undefined,
+      id: product.id || Math.random().toString(36).substring(2, 9),
+    };
+
+    // Call the onSave callback if provided
+    if (onSave) {
+      onSave(completeProduct);
+    } else {
+      // Fallback for backward compatibility
+      toast({
+        title: isEditing ? "Product updated" : "Product created",
+        description: `${product.title} has been ${isEditing ? "updated" : "added"} successfully`,
+      });
+      onOpenChange(false);
+    }
   };
 
   return (
