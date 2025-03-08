@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { ProductionStatus, StatusFormData } from './types';
 
@@ -67,29 +67,76 @@ const mockStatuses: ProductionStatus[] = [
   },
 ];
 
+const defaultFormData: StatusFormData = {
+  name: '',
+  color: '#3498db',
+  description: '',
+  isDefault: false,
+};
+
 export const useProductionStatus = () => {
   const [statuses, setStatuses] = useState<ProductionStatus[]>(mockStatuses);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<ProductionStatus | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingStatus, setEditingStatus] = useState<ProductionStatus | null>(null);
+  const [formData, setFormData] = useState<StatusFormData>(defaultFormData);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const handleAddClick = () => {
+    setEditingStatus(null);
+    setFormData(defaultFormData);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (status: ProductionStatus) => {
+    setEditingStatus(status);
+    setFormData({
+      name: status.name,
+      color: status.color,
+      description: status.description || '',
+      isDefault: status.is_default,
+    });
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    deleteStatus(id);
+  };
+
+  const handleSubmit = () => {
+    if (editingStatus) {
+      updateStatus(editingStatus.id, formData);
+    } else {
+      addStatus(formData);
+    }
+  };
 
   const fetchStatuses = useCallback(async () => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       // In a real app, this would be an API call
       setTimeout(() => {
         setStatuses(mockStatuses);
-        setIsLoading(false);
+        setLoading(false);
       }, 500);
     } catch (error) {
       console.error('Error fetching statuses:', error);
-      setIsLoading(false);
+      setLoading(false);
       toast.error('Failed to load production statuses');
     }
   }, []);
 
   const addStatus = useCallback(async (formData: StatusFormData) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       // In a real app, this would be an API call
       const newStatus: ProductionStatus = {
@@ -118,13 +165,13 @@ export const useProductionStatus = () => {
       console.error('Error adding status:', error);
       toast.error('Failed to add production status');
     } finally {
-      setIsLoading(false);
-      setIsDialogOpen(false);
+      setLoading(false);
+      setDialogOpen(false);
     }
   }, [statuses]);
 
   const updateStatus = useCallback(async (id: string, formData: StatusFormData) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       // In a real app, this would be an API call
       const updatedStatuses = statuses.map(status => {
@@ -154,19 +201,19 @@ export const useProductionStatus = () => {
       console.error('Error updating status:', error);
       toast.error('Failed to update production status');
     } finally {
-      setIsLoading(false);
-      setIsDialogOpen(false);
+      setLoading(false);
+      setDialogOpen(false);
     }
   }, [statuses]);
 
   const deleteStatus = useCallback(async (id: string) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       // Add a confirmation before deleting
       const confirmed = window.confirm('Are you sure you want to delete this status?');
       
       if (!confirmed) {
-        setIsLoading(false);
+        setLoading(false);
         return;
       }
       
@@ -178,20 +225,22 @@ export const useProductionStatus = () => {
       console.error('Error deleting status:', error);
       toast.error('Failed to delete production status');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, [statuses]);
 
   return {
     statuses,
-    isLoading,
-    isDialogOpen,
-    setIsDialogOpen,
-    currentStatus,
-    setCurrentStatus,
-    fetchStatuses,
-    addStatus,
-    updateStatus,
-    deleteStatus
+    loading,
+    dialogOpen,
+    setDialogOpen,
+    editingStatus,
+    formData,
+    handleInputChange,
+    handleCheckboxChange,
+    handleAddClick,
+    handleEditClick,
+    handleDeleteClick,
+    handleSubmit
   };
 };
