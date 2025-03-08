@@ -3,7 +3,6 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Company } from "@/hooks/use-companies";
 import {
   Dialog,
   DialogContent,
@@ -22,137 +21,120 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
-const companyFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }).optional(),
+// Define schema for form validation
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Company name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }).optional().or(z.literal('')),
   phone: z.string().optional(),
-  industry: z.string().default("real estate"),
-  website: z.string().optional(),
+  industry: z.string().min(1, { message: "Please select an industry." }),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   zip: z.string().optional(),
-  status: z.enum(["active", "inactive"]).default("active"),
+  website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
-type CompanyFormValues = z.infer<typeof companyFormSchema>;
+type AddCompanyFormValues = z.infer<typeof formSchema>;
 
 interface AddCompanyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCompanyAdded: (company: Company) => void;
+  onCompanyAdded: (company: AddCompanyFormValues) => Promise<boolean>;
 }
 
 export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddCompanyDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companyFormSchema),
+  const form = useForm<AddCompanyFormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
       phone: "",
       industry: "real estate",
-      website: "",
       address: "",
       city: "",
       state: "",
       zip: "",
-      status: "active",
+      website: "",
     },
   });
 
-  const onSubmit = async (data: CompanyFormValues) => {
+  async function onSubmit(values: AddCompanyFormValues) {
     setIsSubmitting(true);
+    
     try {
-      // Handle form submission - this data will be passed to the parent component
-      // which will call the addCompany function from useCompanies
-      const newCompany = {
-        name: data.name,
-        email: data.email || undefined,
-        phone: data.phone,
-        industry: data.industry,
-        website: data.website,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        zip: data.zip,
-        status: data.status,
-        open_jobs: 0,
-        total_jobs: 0,
-        outstanding_amount: 0,
-        total_revenue: 0,
-      };
+      const success = await onCompanyAdded(values);
       
-      onCompanyAdded(newCompany as Company);
-      form.reset();
-      onOpenChange(false);
+      if (success) {
+        form.reset();
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast.error("Failed to add company. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Add New Company</DialogTitle>
           <DialogDescription>
-            Create a new company. Fill in the details below.
+            Enter the company details below. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Acme Real Estate" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Industry</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Name*</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select industry" />
-                      </SelectTrigger>
+                      <Input placeholder="Acme Inc." {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="real estate">Real Estate</SelectItem>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="property management">Property Management</SelectItem>
-                      <SelectItem value="hospitality">Hospitality</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="industry"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Industry*</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select industry" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="real estate">Real Estate</SelectItem>
+                        <SelectItem value="construction">Construction</SelectItem>
+                        <SelectItem value="hospitality">Hospitality</SelectItem>
+                        <SelectItem value="retail">Retail</SelectItem>
+                        <SelectItem value="technology">Technology</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -161,12 +143,13 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="contact@acmerealty.com" {...field} />
+                      <Input placeholder="contact@company.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="phone"
@@ -174,13 +157,14 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" {...field} />
+                      <Input placeholder="(123) 456-7890" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
             <FormField
               control={form.control}
               name="website"
@@ -188,12 +172,13 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                 <FormItem>
                   <FormLabel>Website</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://acmerealty.com" {...field} />
+                    <Input placeholder="https://www.company.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="address"
@@ -207,7 +192,8 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="city"
@@ -215,12 +201,13 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input placeholder="Austin" {...field} />
+                      <Input placeholder="City" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="state"
@@ -228,12 +215,13 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                   <FormItem>
                     <FormLabel>State</FormLabel>
                     <FormControl>
-                      <Input placeholder="TX" {...field} />
+                      <Input placeholder="State" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="zip"
@@ -241,38 +229,18 @@ export function AddCompanyDialog({ open, onOpenChange, onCompanyAdded }: AddComp
                   <FormItem>
                     <FormLabel>ZIP</FormLabel>
                     <FormControl>
-                      <Input placeholder="78701" {...field} />
+                      <Input placeholder="12345" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Adding..." : "Add Company"}
               </Button>

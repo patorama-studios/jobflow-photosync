@@ -1,283 +1,249 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { 
-  Search, 
-  Filter, 
-  Building,
-  Calendar,
-  DollarSign,
-  ChevronRight,
-  Plus,
-  Download
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCompanies } from "@/hooks/use-companies";
-import { AddCompanyDialog } from "@/components/clients/AddCompanyDialog";
-import { exportToCSV } from "@/utils/csv-export";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCompanies } from "@/hooks/use-companies";
+import { PlusCircle, Search, FileDown, FileUp, Building2 } from "lucide-react";
+import { AddCompanyDialog } from "./AddCompanyDialog";
+import { toast } from "sonner";
+import { exportToCSV } from "@/utils/csv-export";
 
-interface CompanyListProps {
-  viewMode: 'table' | 'card';
-}
-
-export function CompanyList({ viewMode }: CompanyListProps) {
+export function CompanyList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
+  const navigate = useNavigate();
   
   const { companies, isLoading, error, addCompany } = useCompanies();
   
   const filteredCompanies = companies.filter(
     company => 
       company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (company.industry || '').toLowerCase().includes(searchQuery.toLowerCase())
+      company.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (company.email || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleRowClick = (companyId: string) => {
+    navigate(`/company/${companyId}`);
+  };
+
+  const handleAddCompany = async (company) => {
+    try {
+      const newCompany = await addCompany(company);
+      toast.success("Company added successfully");
+      
+      if (newCompany && newCompany.id) {
+        setTimeout(() => {
+          navigate(`/company/${newCompany.id}`);
+        }, 200);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error adding company:", error);
+      return false;
+    }
+  };
+
   const handleExport = () => {
-    // Filter the data to export
+    if (filteredCompanies.length === 0) {
+      toast.info("No companies to export");
+      return;
+    }
+    
     const exportData = filteredCompanies.map(company => ({
       ID: company.id,
       Name: company.name,
       Email: company.email || '',
       Phone: company.phone || '',
-      Website: company.website || '',
-      Industry: company.industry || '',
-      Address: [company.address, company.city, company.state, company.zip].filter(Boolean).join(', '),
+      Industry: company.industry,
       'Created Date': new Date(company.created_at).toLocaleDateString(),
       Status: company.status,
-      'Open Jobs': company.open_jobs,
       'Total Jobs': company.total_jobs,
+      'Open Jobs': company.open_jobs,
       'Outstanding Amount': company.outstanding_amount,
       'Total Revenue': company.total_revenue
     }));
     
     exportToCSV(exportData, 'companies-export');
+    toast.success(`Exported ${exportData.length} companies`);
   };
 
-  const handleAddCompany = async (company: any) => {
-    await addCompany(company);
-    setAddCompanyOpen(false);
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+      
+      const file = target.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = async (event) => {
+        try {
+          const csvData = event.target?.result as string;
+          toast.success(`Import started: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+          toast.info("CSV import functionality would process the data here");
+          console.log("CSV data to process:", csvData.substring(0, 100) + "...");
+        } catch (error: any) {
+          toast.error(`Import failed: ${error.message || 'Unknown error'}`);
+        }
+      };
+      
+      reader.onerror = () => {
+        toast.error("Failed to read the file");
+      };
+      
+      reader.readAsText(file);
+    };
+    
+    input.click();
   };
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <div className="text-center py-4 text-red-500">
-          Error loading companies: {error}
-        </div>
-      </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Company Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-red-500">
+            Error loading companies: {error}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row justify-between gap-4">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            className="pl-10" 
-            placeholder="Search companies..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-          <Button size="sm" onClick={() => setAddCompanyOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Company
-          </Button>
-        </div>
-      </div>
-      
-      {isLoading ? (
-        // Loading skeleton based on view mode
-        viewMode === 'table' ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Logo</TableHead>
-                  <TableHead>Company Name</TableHead>
-                  <TableHead>Industry</TableHead>
-                  <TableHead className="text-center">Open Jobs</TableHead>
-                  <TableHead className="text-center">All Jobs</TableHead>
-                  <TableHead className="text-center">Outstanding</TableHead>
-                  <TableHead className="text-center">All-time Revenue</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={`skeleton-${i}`}>
-                    <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                    <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto" /></TableCell>
-                    <TableCell className="text-center"><Skeleton className="h-5 w-8 mx-auto" /></TableCell>
-                    <TableCell className="text-center"><Skeleton className="h-5 w-16 mx-auto" /></TableCell>
-                    <TableCell className="text-center"><Skeleton className="h-5 w-20 mx-auto" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-9 w-16 ml-auto" /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>Company Management</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Search and Action Buttons */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="relative w-full sm:w-96">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="Search companies..."
+              className="pl-8 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={`skeleton-${i}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-5 w-32" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <Skeleton key={j} className="h-20 rounded-md" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-9 w-full" />
-                </CardContent>
-              </Card>
+          
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button 
+              variant="default" 
+              onClick={() => setAddCompanyOpen(true)}
+              className="w-full sm:w-auto"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Add Company
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExport}
+              className="w-full sm:w-auto"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleImport}
+              className="w-full sm:w-auto"
+            >
+              <FileUp className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </div>
+        </div>
+        
+        {/* Companies Table */}
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
-        )
-      ) : filteredCompanies.length === 0 ? (
-        <div className="text-center py-6 text-muted-foreground bg-muted rounded-md">
-          No companies found. Try adjusting your search or add a new company.
-        </div>
-      ) : viewMode === 'table' ? (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">Logo</TableHead>
-                <TableHead>Company Name</TableHead>
-                <TableHead>Industry</TableHead>
-                <TableHead className="text-center">Open Jobs</TableHead>
-                <TableHead className="text-center">All Jobs</TableHead>
-                <TableHead className="text-center">Outstanding</TableHead>
-                <TableHead className="text-center">All-time Revenue</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCompanies.map((company) => (
-                <TableRow key={company.id}>
-                  <TableCell>
-                    <Avatar>
-                      <AvatarImage src={company.logo_url} alt={company.name} />
-                      <AvatarFallback>
-                        <Building className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell>
-                    <p className="font-medium">{company.name}</p>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-sm text-muted-foreground">{company.industry}</p>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium">{company.open_jobs}</span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium">{company.total_jobs}</span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium text-amber-600">${company.outstanding_amount}</span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium text-green-600">${company.total_revenue}</span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/companies/${company.id}`}>
-                        View <ChevronRight className="h-4 w-4 ml-1" />
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCompanies.map((company) => (
-            <Card key={company.id} className="overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={company.logo_url} alt={company.name} />
-                    <AvatarFallback>{company.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-bold">{company.name}</p>
-                    <p className="text-sm text-muted-foreground">{company.industry}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex flex-col items-center p-2 bg-muted rounded-md">
-                    <Calendar className="h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">Open Jobs</p>
-                    <p className="font-bold">{company.open_jobs}</p>
-                  </div>
-                  <div className="flex flex-col items-center p-2 bg-muted rounded-md">
-                    <Calendar className="h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">All Jobs</p>
-                    <p className="font-bold">{company.total_jobs}</p>
-                  </div>
-                  <div className="flex flex-col items-center p-2 bg-muted rounded-md">
-                    <DollarSign className="h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">Outstanding</p>
-                    <p className="font-bold text-amber-600">${company.outstanding_amount}</p>
-                  </div>
-                  <div className="flex flex-col items-center p-2 bg-muted rounded-md">
-                    <DollarSign className="h-5 w-5 text-muted-foreground mb-1" />
-                    <p className="text-xs text-muted-foreground">Total Revenue</p>
-                    <p className="font-bold text-green-600">${company.total_revenue}</p>
-                  </div>
-                </div>
-                
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to={`/companies/${company.id}`}>
-                    View Details <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <AddCompanyDialog 
-        open={addCompanyOpen} 
-        onOpenChange={setAddCompanyOpen} 
-        onCompanyAdded={handleAddCompany} 
-      />
-    </div>
+        ) : (
+          <>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Industry</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Open Jobs</TableHead>
+                    <TableHead className="text-right">Outstanding</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCompanies.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                        No companies found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredCompanies.map((company) => (
+                      <TableRow 
+                        key={company.id} 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleRowClick(company.id)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                              <Building2 className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <div className="font-medium">{company.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {company.email || 'No email'}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{company.industry}</TableCell>
+                        <TableCell>
+                          <Badge variant={company.status === 'active' ? 'default' : 'secondary'}>
+                            {company.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{company.open_jobs}</TableCell>
+                        <TableCell className="text-right">
+                          ${company.outstanding_amount.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              Showing {filteredCompanies.length} of {companies.length} companies
+            </div>
+          </>
+        )}
+        
+        {/* Add Company Dialog */}
+        <AddCompanyDialog 
+          open={addCompanyOpen} 
+          onOpenChange={setAddCompanyOpen} 
+          onCompanyAdded={handleAddCompany} 
+        />
+      </CardContent>
+    </Card>
   );
 }
