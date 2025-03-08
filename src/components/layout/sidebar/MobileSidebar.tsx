@@ -90,7 +90,7 @@ export function MobileSidebar({
                 
                 {showMainMenu ? (
                   <SidebarLinks 
-                    links={sidebarLinks} 
+                    links={sidebarLinks}
                     isActiveLink={isActiveLink} 
                     onLinkClick={toggleMobileSidebar}
                   />
@@ -105,7 +105,7 @@ export function MobileSidebar({
               </div>
             ) : (
               <SidebarLinks 
-                links={sidebarLinks} 
+                links={sidebarLinks}
                 isActiveLink={isActiveLink}
                 onLinkClick={toggleMobileSidebar}
               />

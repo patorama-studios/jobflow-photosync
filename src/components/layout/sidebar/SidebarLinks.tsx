@@ -2,54 +2,73 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  ShoppingBasket, 
-  Users, 
-  UserCircle,
-  ClipboardEdit,
-  Bell,
-  FileBox,
-  Settings,
-  Package,
-  Building,
-  Bolt,
-  Download,
-} from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface SidebarLinksProps {
   closeSidebar?: () => void;
+  links?: Array<{ name: string; icon: LucideIcon; path: string }>;
+  isActiveLink?: (path: string) => boolean;
+  collapsed?: boolean;
+  onLinkClick?: () => void;
 }
 
-export function SidebarLinks({ closeSidebar }: SidebarLinksProps) {
-  const links = [
-    { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: "/calendar", label: "Calendar", icon: <Calendar className="h-5 w-5" /> },
-    { to: "/orders", label: "Orders", icon: <ShoppingBasket className="h-5 w-5" /> },
-    { to: "/clients", label: "Clients", icon: <Users className="h-5 w-5" /> },
-    { to: "/customers", label: "Customers", icon: <UserCircle className="h-5 w-5" /> },
-    { to: "/production/board", label: "Production", icon: <ClipboardEdit className="h-5 w-5" /> },
-    { to: "/products", label: "Products", icon: <Package className="h-5 w-5" /> },
-    { to: "/notifications", label: "Notifications", icon: <Bell className="h-5 w-5" /> },
-    { to: "/property-website/1", label: "Property Website", icon: <Building className="h-5 w-5" /> },
-    { to: "/delivery/1", label: "Content Delivery", icon: <FileBox className="h-5 w-5" /> },
-    { to: "/downloads", label: "Downloads", icon: <Download className="h-5 w-5" /> },
-    { to: "/generate-data", label: "Generator", icon: <Bolt className="h-5 w-5" /> },
-    { to: "/settings", label: "Settings", icon: <Settings className="h-5 w-5" /> },
+export function SidebarLinks({ 
+  closeSidebar, 
+  links, 
+  isActiveLink, 
+  collapsed,
+  onLinkClick 
+}: SidebarLinksProps) {
+  // Use the passed links prop if provided, otherwise use the default links array
+  const defaultLinks = [
+    { to: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
+    { to: "/calendar", label: "Calendar", icon: "Calendar" },
+    { to: "/orders", label: "Orders", icon: "ShoppingBasket" },
+    { to: "/clients", label: "Clients", icon: "Users" },
+    { to: "/customers", label: "Customers", icon: "UserCircle" },
+    { to: "/production/board", label: "Production", icon: "ClipboardEdit" },
+    { to: "/products", label: "Products", icon: "Package" },
+    { to: "/notifications", label: "Notifications", icon: "Bell" },
+    { to: "/property-website/1", label: "Property Website", icon: "Building" },
+    { to: "/delivery/1", label: "Content Delivery", icon: "FileBox" },
+    { to: "/downloads", label: "Downloads", icon: "Download" },
+    { to: "/generate-data", label: "Generator", icon: "Bolt" },
+    { to: "/settings", label: "Settings", icon: "Settings" },
   ];
+  
+  const renderLinks = () => {
+    if (links) {
+      return links.map((link, index) => {
+        const Icon = link.icon;
+        const isActive = isActiveLink ? isActiveLink(link.path) : false;
+        
+        return (
+          <SidebarLink
+            key={index}
+            to={link.path}
+            label={link.name}
+            icon={<Icon className="h-5 w-5" />}
+            active={isActive}
+            onClick={onLinkClick || closeSidebar}
+          />
+        );
+      });
+    }
+    
+    return defaultLinks.map((link, index) => (
+      <SidebarLink
+        key={index}
+        to={link.to}
+        label={link.label}
+        icon={link.icon}
+        onClick={closeSidebar}
+      />
+    ));
+  };
 
   return (
-    <div className="space-y-1 py-2">
-      {links.map((link, index) => (
-        <SidebarLink
-          key={index}
-          to={link.to}
-          label={link.label}
-          icon={link.icon}
-          onClick={closeSidebar}
-        />
-      ))}
+    <div className={cn("space-y-1 py-2", collapsed && "flex flex-col items-center")}>
+      {renderLinks()}
     </div>
   );
 }
@@ -57,7 +76,7 @@ export function SidebarLinks({ closeSidebar }: SidebarLinksProps) {
 type SidebarLinkProps = {
   to: string;
   label: string;
-  icon: React.ReactNode;
+  icon: React.ReactNode | string;
   active?: boolean;
   onClick?: () => void;
 };
@@ -69,6 +88,15 @@ export function SidebarLink({
   active, 
   onClick 
 }: SidebarLinkProps) {
+  // Render icon based on type (ReactNode or string)
+  const renderIcon = () => {
+    if (React.isValidElement(icon)) {
+      return <span className="mr-3">{icon}</span>;
+    }
+    
+    return null;
+  };
+
   return (
     <Link
       to={to}
@@ -81,7 +109,7 @@ export function SidebarLink({
       )}
       onClick={onClick}
     >
-      <span className="mr-3">{icon}</span>
+      {renderIcon()}
       <span>{label}</span>
     </Link>
   );

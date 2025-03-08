@@ -68,7 +68,7 @@ export function DesktopSidebar({
             
             {showMainMenu ? (
               <SidebarLinks 
-                links={sidebarLinks} 
+                links={sidebarLinks}
                 isActiveLink={isActiveLink} 
                 collapsed={collapsed} 
               />
@@ -82,7 +82,7 @@ export function DesktopSidebar({
           </div>
         ) : (
           <SidebarLinks 
-            links={sidebarLinks} 
+            links={sidebarLinks}
             isActiveLink={isActiveLink} 
             collapsed={collapsed}
           />
