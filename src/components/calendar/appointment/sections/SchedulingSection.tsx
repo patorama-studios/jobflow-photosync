@@ -4,6 +4,7 @@ import { ToggleSection } from '../components/ToggleSection';
 import { DateTimeSelector } from '../components/DateTimeSelector';
 import { DurationSelector } from '../components/DurationSelector';
 import { NotificationSelector } from '../components/NotificationSelector';
+import { SuggestedTimes } from '../components/SuggestedTimes';
 
 interface SchedulingSectionProps {
   selectedDateTime: Date | undefined;
@@ -44,6 +45,11 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
         onDateChange={onDateChange}
         onTimeChange={onTimeChange}
         isMobile={isMobile}
+      />
+      
+      <SuggestedTimes 
+        selectedDate={selectedDateTime}
+        onTimeSelect={onTimeChange}
       />
       
       <DurationSelector

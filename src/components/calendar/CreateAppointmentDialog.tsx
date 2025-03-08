@@ -10,15 +10,28 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
+import { Product } from '@/hooks/use-products';
 
-// Import our new section components
+// Import our section components
 import { SchedulingSection } from './appointment/sections/SchedulingSection';
 import { PropertyInformationSection } from './appointment/sections/PropertyInformationSection';
 import { ClientInformationSection } from './appointment/sections/ClientInformationSection';
-import { PackageInformationSection } from './appointment/sections/PackageInformationSection';
+import { ProductSelectionSection } from './appointment/sections/ProductSelectionSection';
 import { CustomItemsSection } from './appointment/sections/CustomItemsSection';
 import { PhotographerAssignmentSection } from './appointment/sections/PhotographerAssignmentSection';
 import { NotesSection } from './appointment/sections/NotesSection';
+
+// Define custom item interface
+interface CustomItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
+// Define selected product interface
+interface SelectedProduct extends Product {
+  quantity: number;
+}
 
 // Define the schema for our form
 const formSchema = z.object({
@@ -32,11 +45,10 @@ const formSchema = z.object({
   property_type: z.string().min(1, { message: "Property type is required" }),
   square_feet: z.coerce.number().positive({ message: "Square feet must be a positive number" }),
   price: z.coerce.number().positive({ message: "Price must be a positive number" }),
-  package: z.string().min(1, { message: "Package is required" }),
+  package: z.string().optional(),
   photographer: z.string().optional(),
-  notes: z.string().optional(),
-  internal_notes: z.string().optional(),
-  customer_notes: z.string().optional()
+  photographer_payout_rate: z.coerce.number().optional(),
+  internal_notes: z.string().optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -63,6 +75,8 @@ export function CreateAppointmentDialog({
   const [selectedTime, setSelectedTime] = useState<string>(initialTime || "11:00 AM");
   const [selectedDuration, setSelectedDuration] = useState<string>("45 minutes");
   const [selectedNotification, setSelectedNotification] = useState<string>("Email");
+  const [customItems, setCustomItems] = useState<CustomItem[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const isMobile = useIsMobile();
   const [googleLoaded, setGoogleLoaded] = useState(false);
   
@@ -89,11 +103,10 @@ export function CreateAppointmentDialog({
       property_type: existingOrderData?.property_type || 'Residential',
       square_feet: existingOrderData?.square_feet || 2000,
       price: existingOrderData?.price || 199,
-      package: existingOrderData?.package || 'Standard',
+      package: existingOrderData?.package || '',
       photographer: existingOrderData?.photographer || '',
-      notes: existingOrderData?.notes || '',
-      internal_notes: existingOrderData?.internal_notes || '',
-      customer_notes: existingOrderData?.customer_notes || ''
+      photographer_payout_rate: existingOrderData?.photographer_payout_rate || 100,
+      internal_notes: existingOrderData?.internal_notes || ''
     }
   });
 
@@ -177,6 +190,40 @@ export function CreateAppointmentDialog({
     setSelectedNotification(method);
   };
 
+  const handleAddCustomItem = (item: Omit<CustomItem, 'id'>) => {
+    setCustomItems([...customItems, { ...item, id: `custom-${Date.now()}` }]);
+    
+    // Update total price
+    const currentPrice = form.getValues('price') || 0;
+    form.setValue('price', currentPrice + item.price);
+  };
+
+  const handleRemoveCustomItem = (id: string) => {
+    const itemToRemove = customItems.find(item => item.id === id);
+    if (!itemToRemove) return;
+    
+    setCustomItems(customItems.filter(item => item.id !== id));
+    
+    // Update total price
+    const currentPrice = form.getValues('price') || 0;
+    form.setValue('price', currentPrice - itemToRemove.price);
+  };
+
+  const handleProductsChange = (products: SelectedProduct[]) => {
+    setSelectedProducts(products);
+    
+    // Update total price based on products
+    const productsTotal = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+    const customItemsTotal = customItems.reduce((sum, item) => sum + item.price, 0);
+    
+    form.setValue('price', productsTotal + customItemsTotal);
+    
+    // Set package name from first product if available
+    if (products.length > 0) {
+      form.setValue('package', products[0].name);
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
@@ -198,12 +245,11 @@ export function CreateAppointmentDialog({
         scheduled_time: selectedTime,
         property_type: data.property_type,
         square_feet: data.square_feet,
-        package: data.package,
+        package: data.package || (selectedProducts.length > 0 ? selectedProducts[0].name : 'Standard'),
         price: data.price,
         photographer: data.photographer,
-        notes: data.notes,
+        photographer_payout_rate: data.photographer_payout_rate,
         internal_notes: data.internal_notes,
-        customer_notes: data.customer_notes,
         status: 'scheduled',
         notification_method: selectedNotification
       };
@@ -218,6 +264,51 @@ export function CreateAppointmentDialog({
         throw error;
       }
       
+      // If we have products, add them to order_products
+      if (selectedProducts.length > 0 && newOrder && newOrder.length > 0) {
+        const orderId = newOrder[0].id;
+        
+        const productRecords = selectedProducts.map(product => ({
+          order_id: orderId,
+          product_id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: product.quantity,
+          description: product.description,
+          status: 'to_do'
+        }));
+        
+        const { error: productsError } = await supabase
+          .from('order_products')
+          .insert(productRecords);
+          
+        if (productsError) {
+          console.error('Error adding products to order:', productsError);
+        }
+      }
+      
+      // If we have custom items, add them as order_products too
+      if (customItems.length > 0 && newOrder && newOrder.length > 0) {
+        const orderId = newOrder[0].id;
+        
+        const customItemRecords = customItems.map(item => ({
+          order_id: orderId,
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          description: 'Custom item',
+          status: 'to_do'
+        }));
+        
+        const { error: customItemsError } = await supabase
+          .from('order_products')
+          .insert(customItemRecords);
+          
+        if (customItemsError) {
+          console.error('Error adding custom items to order:', customItemsError);
+        }
+      }
+      
       toast.success(`Order ${orderNumber} created successfully!`);
       
       // Call the onAppointmentAdded callback if provided
@@ -226,7 +317,7 @@ export function CreateAppointmentDialog({
       }
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating order:', error);
       toast.error("Failed to create order");
     } finally {
@@ -239,9 +330,7 @@ export function CreateAppointmentDialog({
       <DialogContent className={isMobile ? "sm:max-w-full max-h-[95vh] overflow-y-auto" : "sm:max-w-[900px] max-h-[80vh] overflow-y-auto"}>
         <DialogHeader>
           <DialogTitle>
-            {existingOrderData 
-              ? `Add Appointment to Order #${existingOrderData.orderNumber || existingOrderData.order_number}` 
-              : "Create New Appointment"}
+            Create New Order
           </DialogTitle>
           <DialogDescription>
             Fill out all the required fields to create a new order
@@ -280,17 +369,21 @@ export function CreateAppointmentDialog({
                 onToggle={() => setCustomerOpen(!customerOpen)}
               />
               
-              {/* Package Information Section */}
-              <PackageInformationSection
-                form={form}
+              {/* Product Selection Section */}
+              <ProductSelectionSection
                 isOpen={productOpen}
                 onToggle={() => setProductOpen(!productOpen)}
+                selectedProducts={selectedProducts}
+                onProductsChange={handleProductsChange}
               />
               
               {/* Custom Items Section */}
               <CustomItemsSection
                 isOpen={customItemsOpen}
                 onToggle={() => setCustomItemsOpen(!customItemsOpen)}
+                items={customItems}
+                onAddItem={handleAddCustomItem}
+                onRemoveItem={handleRemoveCustomItem}
               />
               
               {/* Photographer Assignment Section */}
