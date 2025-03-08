@@ -6,14 +6,21 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Label } from '@/components/ui/label';
 
 interface NotificationSelectorProps {
-  // Add props if needed for controlling notification methods
+  onNotificationMethodChange?: (method: string) => void;
+  defaultMethod?: string;
 }
 
-export const NotificationSelector: React.FC<NotificationSelectorProps> = () => {
-  const [selectedMethod, setSelectedMethod] = useState("Email");
+export const NotificationSelector: React.FC<NotificationSelectorProps> = ({ 
+  onNotificationMethodChange,
+  defaultMethod = "Email" 
+}) => {
+  const [selectedMethod, setSelectedMethod] = useState(defaultMethod);
 
   const handleSelectMethod = (method: string) => {
     setSelectedMethod(method);
+    if (onNotificationMethodChange) {
+      onNotificationMethodChange(method);
+    }
   };
 
   return (

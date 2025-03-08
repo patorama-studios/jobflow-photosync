@@ -91,16 +91,19 @@ const Calendar = () => {
   return (
     <div className="container mx-auto py-8">
       <CalendarHeader
-        currentDate={currentDate}
-        currentView={view}
+        date={currentDate}
+        view={view}
+        appointmentCount={events?.length || 0}
+        onPrevious={() => console.log('Previous')}
+        onNext={() => console.log('Next')}
+        onToday={() => setCurrentDate(new Date())}
         onViewChange={handleViewChange}
-        onDateChange={handleDateChange}
         onAddEvent={() => handleTimeSlotClick(new Date())}
       />
       
       <CalendarViews
-        currentDate={currentDate}
-        currentView={view}
+        date={currentDate}
+        view={view}
         onEventClick={handleEventClick}
         onTimeSlotClick={handleTimeSlotClick}
         onViewChange={handleViewChange}
@@ -109,7 +112,7 @@ const Calendar = () => {
       />
       
       <EventDetailsDialog
-        open={isEventDetailsOpen}
+        isOpen={isEventDetailsOpen}
         onClose={handleCloseEventDetails}
         event={selectedEvent}
       />
