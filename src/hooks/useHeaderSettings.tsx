@@ -128,7 +128,12 @@ export const MockHeaderSettingsProvider = ({ children }: { children: React.React
   return (
     <HeaderSettingsContext.Provider
       value={{
-        settings: defaultSettings,
+        settings: {
+          color: '#ffffff',
+          height: 65,
+          logoUrl: '',
+          showCompanyName: false
+        },
         updateSettings: mockUpdateSettings,
         title: null,
         showBackButton: false,

@@ -71,7 +71,16 @@ export function CreateAppointmentDialog({
     initialTime,
     existingOrderData,
     onClose,
-    onAppointmentAdded
+    onAppointmentAdded,
+    defaultSections: {
+      scheduling: true, // Open by default
+      address: false,
+      customer: false,
+      photographer: false,
+      product: false,
+      customItems: false,
+      notes: false
+    }
   });
 
   return (

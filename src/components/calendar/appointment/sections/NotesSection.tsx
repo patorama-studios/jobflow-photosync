@@ -27,7 +27,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({
         name="internal_notes"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Internal Notes</FormLabel>
+            <FormLabel>Internal Order Notes</FormLabel>
             <FormControl>
               <Textarea placeholder="Notes for internal reference only..." {...field} />
             </FormControl>

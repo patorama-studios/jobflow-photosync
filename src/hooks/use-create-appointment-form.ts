@@ -23,6 +23,7 @@ export interface SelectedProduct extends Product {
 // Define the schema for our form
 export const formSchema = z.object({
   client: z.string().min(1, { message: "Client name is required" }),
+  client_id: z.string().optional(),
   client_email: z.string().email({ message: "Invalid email" }).optional().or(z.literal('')),
   client_phone: z.string().optional().or(z.literal('')),
   address: z.string().min(1, { message: "Address is required" }),
@@ -34,11 +35,21 @@ export const formSchema = z.object({
   price: z.coerce.number().positive({ message: "Price must be a positive number" }),
   package: z.string().optional(),
   photographer: z.string().optional(),
-  photographer_payout_rate: z.coerce.number().optional(),
+  photographer_id: z.string().optional(),
   internal_notes: z.string().optional()
 });
 
 export type FormData = z.infer<typeof formSchema>;
+
+interface SectionState {
+  scheduling: boolean;
+  address: boolean;
+  customer: boolean;
+  photographer: boolean;
+  product: boolean;
+  customItems: boolean;
+  notes: boolean;
+}
 
 interface UseCreateAppointmentFormProps {
   selectedDate: Date;
@@ -46,6 +57,7 @@ interface UseCreateAppointmentFormProps {
   existingOrderData?: any;
   onClose: () => void;
   onAppointmentAdded?: (appointmentData: any) => Promise<boolean>;
+  defaultSections?: Partial<SectionState>;
 }
 
 export function useCreateAppointmentForm({
@@ -53,7 +65,8 @@ export function useCreateAppointmentForm({
   initialTime,
   existingOrderData,
   onClose,
-  onAppointmentAdded
+  onAppointmentAdded,
+  defaultSections
 }: UseCreateAppointmentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDateTime, setSelectedDateTime] = useState<Date | undefined>(selectedDate);
@@ -64,20 +77,21 @@ export function useCreateAppointmentForm({
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [googleLoaded, setGoogleLoaded] = useState(false);
   
-  // Toggle state for each section
-  const [schedulingOpen, setSchedulingOpen] = useState(true);
-  const [addressOpen, setAddressOpen] = useState(false);
-  const [customerOpen, setCustomerOpen] = useState(false);
-  const [photographerOpen, setPhotographerOpen] = useState(false);
-  const [productOpen, setProductOpen] = useState(false);
-  const [customItemsOpen, setCustomItemsOpen] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
+  // Toggle state for each section with defaults
+  const [schedulingOpen, setSchedulingOpen] = useState(defaultSections?.scheduling ?? false);
+  const [addressOpen, setAddressOpen] = useState(defaultSections?.address ?? false);
+  const [customerOpen, setCustomerOpen] = useState(defaultSections?.customer ?? false);
+  const [photographerOpen, setPhotographerOpen] = useState(defaultSections?.photographer ?? false);
+  const [productOpen, setProductOpen] = useState(defaultSections?.product ?? false);
+  const [customItemsOpen, setCustomItemsOpen] = useState(defaultSections?.customItems ?? false);
+  const [notesOpen, setNotesOpen] = useState(defaultSections?.notes ?? false);
 
   // Set up the form
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       client: existingOrderData?.client || '',
+      client_id: existingOrderData?.client_id || '',
       client_email: existingOrderData?.client_email || '',
       client_phone: existingOrderData?.client_phone || '',
       address: existingOrderData?.address || '',
@@ -89,7 +103,7 @@ export function useCreateAppointmentForm({
       price: existingOrderData?.price || 199,
       package: existingOrderData?.package || '',
       photographer: existingOrderData?.photographer || '',
-      photographer_payout_rate: existingOrderData?.photographer_payout_rate || 100,
+      photographer_id: existingOrderData?.photographer_id || '',
       internal_notes: existingOrderData?.internal_notes || ''
     }
   });
@@ -219,6 +233,7 @@ export function useCreateAppointmentForm({
       const orderData = {
         order_number: orderNumber,
         client: data.client,
+        client_id: data.client_id,
         client_email: data.client_email,
         client_phone: data.client_phone,
         address: data.address,
@@ -232,7 +247,7 @@ export function useCreateAppointmentForm({
         package: data.package || (selectedProducts.length > 0 ? selectedProducts[0].name : 'Standard'),
         price: data.price,
         photographer: data.photographer,
-        photographer_payout_rate: data.photographer_payout_rate,
+        photographer_id: data.photographer_id,
         internal_notes: data.internal_notes,
         status: 'scheduled',
         notification_method: selectedNotification

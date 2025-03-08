@@ -1,121 +1,151 @@
+import { useState, useEffect, Suspense, lazy } from "react";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
+import { Plus, Calendar, List, LayoutDashboard, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { CalendarSkeleton } from "@/components/dashboard/calendar/CalendarSkeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog";
+import { addDays, addWeeks, format, subDays, subWeeks } from "date-fns";
 
-import React, { useState, useEffect } from 'react';
-import { CalendarHeader } from '@/components/dashboard/calendar/header/CalendarHeader';
-import { format, getMonth, getYear, addDays } from 'date-fns';
-import { SidebarLayout } from '@/components/layout/SidebarLayout';
-import { CalendarViews, CalendarView } from '@/components/calendar/CalendarViews';
-import { useOrders } from '@/hooks/use-orders';
-import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
-import { useLocalStorage } from '@/hooks/use-local-storage'; // Assuming this hook exists
-import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
-import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
-import { Order } from '@/types/order-types';
+// Lazy load the calendar component for better initial load performance
+const JobCalendarWithErrorBoundary = lazy(() => 
+  import("@/components/dashboard/JobCalendar").then(module => ({
+    default: module.JobCalendarWithErrorBoundary
+  }))
+);
 
-const CalendarPage = () => {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Order | null>(null);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  const [calendarView, setCalendarView] = useState<CalendarView>('month');
+export function CalendarPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [timeSlot, setTimeSlot] = useState<string | null>(null);
   
-  // Fetch orders from Supabase
-  const { orders, isLoading, error, refetchOrders } = useOrders({
-    month: getMonth(selectedDate) + 1,
-    year: getYear(selectedDate),
-  });
-
-  // Close the create appointment dialog
-  const handleCloseCreateDialog = () => {
-    setIsCreateDialogOpen(false);
-    setSelectedTime(undefined);
-  };
-
-  // Handle clicking on a calendar event
-  const handleEventClick = (event: any) => {
-    setSelectedEvent(event);
-    setIsDetailsDialogOpen(true);
-  };
-
-  // Handle clicking on a time slot
-  const handleTimeSlotClick = (date: Date, time?: string) => {
-    setSelectedDate(date);
-    setSelectedTime(time);
-    setSelectedTimeSlot(date);
-    setIsCreateDialogOpen(true);
-  };
-
-  // Handle changing the calendar view
-  const handleViewChange = (newView: CalendarView) => {
-    setCalendarView(newView);
-  };
-
-  // Handle appointment added callback
-  const handleAppointmentAdded = async (appointmentData: any) => {
-    await refetchOrders();
-    return true;
-  };
-
-  // Format orders for the calendar
-  const formattedEvents = orders ? mapSupabaseOrdersToOrderType(orders).map((order: Order) => {
-    const date = order.scheduled_date || order.scheduledDate;
-    const time = order.scheduled_time || order.scheduledTime;
-    const dateTime = date && time ? new Date(`${date}T${time}`) : new Date();
+  useEffect(() => {
+    console.log("CalendarPage component mounted");
     
-    return {
-      ...order,
-      id: order.id,
-      title: order.client || 'Untitled',
-      start: dateTime,
-      end: addDays(dateTime, 1),
+    // Use requestAnimationFrame for smoother loading transition
+    const timer = requestAnimationFrame(() => {
+      setIsLoading(false);
+      console.log("CalendarPage finished loading");
+    });
+    
+    return () => {
+      console.log("CalendarPage component unmounted");
+      cancelAnimationFrame(timer);
     };
-  }) : [];
+  }, []);
+
+  const handleViewChange = (value: string) => {
+    setView(value as "month" | "week" | "day");
+    console.log(`Calendar view changed to: ${value}`);
+  };
+
+  const handleOpenDialog = (time?: string) => {
+    setTimeSlot(time || null);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setTimeSlot(null);
+  };
+
+  const navigatePrevious = () => {
+    if (view === "day") {
+      setSelectedDate(prev => subDays(prev, 1));
+    } else if (view === "week") {
+      setSelectedDate(prev => subWeeks(prev, 1));
+    }
+  };
+
+  const navigateNext = () => {
+    if (view === "day") {
+      setSelectedDate(prev => addDays(prev, 1));
+    } else if (view === "week") {
+      setSelectedDate(prev => addWeeks(prev, 1));
+    }
+  };
 
   return (
-    <SidebarLayout>
-      <div className="container mx-auto px-4 py-8">
-        <CalendarHeader 
-          selectedDate={selectedDate} 
-          onDateChange={setSelectedDate}
-          onAddClick={() => setIsCreateDialogOpen(true)}
-          onViewChange={handleViewChange} 
-          currentView={calendarView}
-        />
-        
-        <div className="mt-6">
-          <CalendarViews
-            selectedDate={selectedDate}
-            currentView={calendarView} 
-            onEventClick={handleEventClick}
-            onTimeSlotClick={handleTimeSlotClick}
-            onViewChange={handleViewChange}
-            events={formattedEvents}
-            isLoading={isLoading}
-          />
+    <SidebarLayout showCalendarSubmenu={true} showBackButton={true}>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold flex items-center gap-2">
+            <Calendar className="h-7 w-7 text-primary" />
+            Calendar
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your shooting schedule and appointments
+          </p>
         </div>
-        
-        {/* Create Appointment Dialog */}
-        <CreateAppointmentDialog 
-          isOpen={isCreateDialogOpen}
-          onClose={handleCloseCreateDialog}
-          selectedDate={selectedTimeSlot || selectedDate}
-          initialTime={selectedTime}
-          onAppointmentAdded={handleAppointmentAdded}
-        />
-        
-        {/* Event Details Dialog */}
-        {selectedEvent && (
-          <EventDetailsDialog 
-            isOpen={isDetailsDialogOpen}
-            onClose={() => setIsDetailsDialogOpen(false)}
-            event={selectedEvent}
-            onEventUpdated={refetchOrders}
-          />
-        )}
+        <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-4">
+          <Tabs value={view} onValueChange={handleViewChange} className="w-full sm:w-auto">
+            <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+              <TabsTrigger value="month">
+                <Calendar className="h-4 w-4 mr-2" />
+                Month
+              </TabsTrigger>
+              <TabsTrigger value="week">
+                <LayoutDashboard className="h-4 w-4 mr-2" />
+                Week
+              </TabsTrigger>
+              <TabsTrigger value="day">
+                <List className="h-4 w-4 mr-2" />
+                Day
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          <div className="flex space-x-3">
+            {(view === 'day' || view === 'week') && (
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="icon" onClick={navigatePrevious}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">
+                  {view === 'day' 
+                    ? format(selectedDate, 'MMM d, yyyy')
+                    : `Week of ${format(selectedDate, 'MMM d')}`}
+                </span>
+                <Button variant="outline" size="icon" onClick={navigateNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" onClick={() => handleOpenDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Appointment
+                </Button>
+              </DialogTrigger>
+              <CreateAppointmentDialog 
+                isOpen={isDialogOpen} 
+                onClose={handleCloseDialog} 
+                selectedDate={selectedDate}
+                initialTime={timeSlot || undefined}
+              />
+            </Dialog>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <Suspense fallback={<CalendarSkeleton />}>
+          <ErrorBoundary>
+            <JobCalendarWithErrorBoundary 
+              calendarView={view} 
+              onTimeSlotClick={handleOpenDialog}
+            />
+          </ErrorBoundary>
+        </Suspense>
       </div>
     </SidebarLayout>
   );
-};
+}
 
+// Adding default export for lazy loading
 export default CalendarPage;

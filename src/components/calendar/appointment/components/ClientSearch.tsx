@@ -4,15 +4,18 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
 import { Client, useClients } from '@/hooks/use-clients';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface ClientSearchProps {
   onClientSelect: (client: Client) => void;
   onAddNewClick: () => void;
+  selectedClient?: string;
 }
 
 export const ClientSearch: React.FC<ClientSearchProps> = ({
   onClientSelect,
-  onAddNewClick
+  onAddNewClick,
+  selectedClient
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Client[]>([]);
@@ -66,7 +69,6 @@ export const ClientSearch: React.FC<ClientSearchProps> = ({
             onChange={handleSearch}
             className="pl-10"
             onFocus={() => setShowResults(true)}
-            onBlur={() => setTimeout(() => setShowResults(false), 200)}
           />
           {showResults && searchQuery.length > 2 && (
             <div className="absolute z-10 w-full mt-1 border rounded-md bg-background shadow-lg">
