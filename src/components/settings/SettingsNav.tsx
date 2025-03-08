@@ -18,7 +18,6 @@ import {
   Plug2,
   Users,
   ListChecks,
-  Factory,
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -56,7 +55,6 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
       { id: "theme", label: "Theme", icon: <Moon className="mr-2 h-4 w-4" /> },
     ],
     integrations: [
-      { id: "esoft-integration", label: "Esoft Integration", icon: <Factory className="mr-2 h-4 w-4" /> },
       { id: "production-status", label: "Production Status", icon: <ListChecks className="mr-2 h-4 w-4" /> },
       { id: "apps", label: "Apps & Integrations", icon: <Plug2 className="mr-2 h-4 w-4" /> },
       { id: "legal", label: "Legal", icon: <BookOpenCheck className="mr-2 h-4 w-4" /> },

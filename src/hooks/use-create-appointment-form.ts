@@ -120,7 +120,11 @@ export function useCreateAppointmentForm({
       if (window.google && window.google.maps && !googleLoaded) {
         const addressInput = document.getElementById('address');
         if (addressInput) {
-          const autocomplete = new window.google.maps.places.Autocomplete(addressInput as HTMLInputElement);
+          const autocomplete = new window.google.maps.places.Autocomplete(addressInput as HTMLInputElement, {
+            componentRestrictions: { country: "au" }, // Restrict to Australia
+            fields: ["address_components", "formatted_address", "geometry", "name"],
+          });
+          
           autocomplete.addListener('place_changed', () => {
             const place = autocomplete.getPlace();
             
@@ -147,7 +151,8 @@ export function useCreateAppointmentForm({
                 }
               });
               
-              form.setValue('address', street || place.formatted_address || '');
+              // Use the full formatted address for the street field
+              form.setValue('address', place.formatted_address || street);
               form.setValue('city', city);
               form.setValue('state', state);
               form.setValue('zip', zip);

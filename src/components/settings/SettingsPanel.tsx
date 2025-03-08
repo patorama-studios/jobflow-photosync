@@ -39,9 +39,17 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
       {activeCategory === "header" && <HeaderSettings />}
       {activeCategory === "theme" && <ThemeSettings />}
       {activeCategory === "legal" && <LegalSettings />}
-      {activeCategory === "apps" && <AppsSettings />}
       {activeCategory === "production-status" && <ProductionStatusSettings />}
-      {activeCategory === "esoft-integration" && <EsoftIntegrationSettings />}
+      {/* Moved Esoft integration into the apps section */}
+      {activeCategory === "apps" && (
+        <>
+          <AppsSettings />
+          <div className="mt-8 pt-8 border-t">
+            <h2 className="text-2xl font-bold mb-6">Esoft Integration</h2>
+            <EsoftIntegrationSettings />
+          </div>
+        </>
+      )}
     </Card>
   );
 });

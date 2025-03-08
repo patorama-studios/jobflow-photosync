@@ -22,9 +22,8 @@ export function OrderActions({ orderId, orderNumber }: OrderActionsProps) {
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Use orderNumber if available (for compatibility), otherwise use orderId
-    const identifier = orderNumber || orderId;
-    navigate(`/order/${identifier}`);
+    // Fix: Navigate to the correct order page URL
+    navigate(`/orders/${orderId}`);
   };
 
   return (

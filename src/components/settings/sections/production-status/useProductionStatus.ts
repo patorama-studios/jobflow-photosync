@@ -1,4 +1,3 @@
-
 import { useState, useCallback, ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { ProductionStatus, StatusFormData } from './types';
@@ -119,6 +118,40 @@ export const useProductionStatus = () => {
       addStatus(formData);
     }
   };
+
+  // Handle reordering of statuses
+  const handleReorder = useCallback((dragIndex: number, hoverIndex: number) => {
+    setStatuses(prevStatuses => {
+      const newStatuses = [...prevStatuses];
+      const draggedStatus = newStatuses[dragIndex];
+      
+      // Remove the dragged status
+      newStatuses.splice(dragIndex, 1);
+      
+      // Insert it at the new position
+      newStatuses.splice(hoverIndex, 0, draggedStatus);
+      
+      // Update sort_order for each status
+      return newStatuses.map((status, index) => ({
+        ...status,
+        sort_order: index + 1,
+      }));
+    });
+  }, []);
+
+  // Save the new order to the database
+  const saveOrder = useCallback(async () => {
+    setLoading(true);
+    try {
+      // In a real app, this would be an API call to save the new order
+      toast.success('Production status order saved successfully');
+    } catch (error) {
+      console.error('Error saving status order:', error);
+      toast.error('Failed to save production status order');
+    } finally {
+      setLoading(false);
+    }
+  }, [statuses]);
 
   const fetchStatuses = useCallback(async () => {
     setLoading(true);
@@ -241,6 +274,8 @@ export const useProductionStatus = () => {
     handleAddClick,
     handleEditClick,
     handleDeleteClick,
-    handleSubmit
+    handleSubmit,
+    handleReorder,
+    saveOrder
   };
 };

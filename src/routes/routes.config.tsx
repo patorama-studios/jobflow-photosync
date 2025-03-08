@@ -24,7 +24,7 @@ import NotificationsCenter from '@/pages/NotificationsCenter';
 import PropertyWebsite from '@/pages/PropertyWebsite';
 import ProductDelivery from '@/pages/ProductDelivery';
 import FileDownloads from '@/pages/FileDownloads';
-import Products from '@/pages/Products'; // Import the new Products page
+import Products from '@/pages/Products';
 
 // Components
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -32,6 +32,7 @@ import Customers from '@/pages/Customers';
 import CustomerDetails from '@/pages/CustomerDetails';
 import GenerateData from '@/pages/GenerateData';
 import Debug from '@/pages/Debug';
+import LearningHub from '@/pages/LearningHub'; // Import the Learning Hub page
 
 // Define the routes configuration
 export const routes: RouteObject[] = [
@@ -130,6 +131,10 @@ export const routes: RouteObject[] = [
   {
     path: '/generate-data',
     element: <ProtectedRoute><GenerateData /></ProtectedRoute>,
+  },
+  {
+    path: '/learning-hub', // Add Learning Hub route
+    element: <ProtectedRoute><LearningHub /></ProtectedRoute>,
   },
   {
     path: '/debug',

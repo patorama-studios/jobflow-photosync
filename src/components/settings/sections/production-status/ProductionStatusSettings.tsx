@@ -26,7 +26,9 @@ export function ProductionStatusSettings() {
     handleAddClick,
     handleEditClick,
     handleDeleteClick,
-    handleSubmit
+    handleSubmit,
+    handleReorder,
+    saveOrder
   } = useProductionStatus();
 
   return (
@@ -50,6 +52,8 @@ export function ProductionStatusSettings() {
             loading={loading}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
+            onReorder={handleReorder}
+            onSaveOrder={saveOrder}
           />
         </CardContent>
       </Card>

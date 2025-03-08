@@ -24,10 +24,10 @@ export function SidebarLinks({
     { to: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
     { to: "/calendar", label: "Calendar", icon: "Calendar" },
     { to: "/orders", label: "Orders", icon: "ShoppingBasket" },
+    { to: "/products", label: "Products", icon: "Package" }, // Moved Products link up in the sidebar
     { to: "/clients", label: "Clients", icon: "Users" },
     { to: "/customers", label: "Customers", icon: "UserCircle" },
     { to: "/production/board", label: "Production", icon: "ClipboardEdit" },
-    { to: "/products", label: "Products", icon: "Package" },
     { to: "/notifications", label: "Notifications", icon: "Bell" },
     { to: "/property-website/1", label: "Property Website", icon: "Building" },
     { to: "/delivery/1", label: "Content Delivery", icon: "FileBox" },

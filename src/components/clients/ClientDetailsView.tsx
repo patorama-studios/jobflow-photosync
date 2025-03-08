@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // Add useParams
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Users, CreditCard, Package, Settings, ShoppingCart } from "lucide-react";
 import { ClientHeader } from "@/components/clients/details/ClientHeader";
@@ -22,7 +22,10 @@ interface ClientDetailsViewProps {
   clientId?: string;
 }
 
-export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
+export function ClientDetailsView({ clientId: propClientId }: ClientDetailsViewProps) {
+  const params = useParams(); // Add useParams to get clientId from URL
+  const clientId = propClientId || params.id; // Use clientId from props or URL params
+  
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [client, setClient] = useState(mockCustomers[0]);
@@ -121,11 +124,19 @@ export function ClientDetailsView({ clientId }: ClientDetailsViewProps) {
 
   // Fetch client when clientId changes
   useEffect(() => {
+    console.log("Fetching client data for ID:", clientId);
     fetchClientData();
   }, [clientId]);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-40">Loading client data...</div>;
+    return (
+      <div className="flex items-center justify-center h-40 p-4">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading client data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
