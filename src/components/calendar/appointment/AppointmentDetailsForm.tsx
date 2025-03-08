@@ -11,48 +11,48 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Order } from '@/types/order-types';
 
 interface AppointmentDetailsFormProps {
-  appointmentDate: string;
-  setAppointmentDate: (date: string) => void;
+  selectedDate?: Date;
+  initialTime?: string;
+  defaultOrder?: Order;
+  isSubmitting?: boolean;
+  onSubmit: (data: any) => void;
 }
 
 export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
-  appointmentDate,
-  setAppointmentDate
+  selectedDate: initialSelectedDate,
+  initialTime = "11:00 AM",
+  defaultOrder,
+  isSubmitting = false,
+  onSubmit
 }) => {
-  console.log("AppointmentDetailsForm received date:", appointmentDate);
   const isMobile = useIsMobile();
   
-  // Parse date parts from the appointmentDate string
-  const dateParts = appointmentDate.split(' ');
-  const timeStr = dateParts.length > 2 ? dateParts.slice(-2).join(' ') : "11:00 AM";
-  const dateStr = dateParts.length > 2 ? dateParts.slice(0, -2).join(' ') : dateParts[0];
-  
-  // Initialize state with parsed values
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
-    try {
-      return new Date(dateStr);
-    } catch (e) {
-      console.error("Error parsing date:", dateStr);
-      return new Date();
-    }
-  });
-  
-  const [selectedTime, setSelectedTime] = useState<string>(timeStr || "11:00 AM");
+  // Initialize state
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialSelectedDate || new Date());
+  const [selectedTime, setSelectedTime] = useState<string>(initialTime || "11:00 AM");
   const [selectedDuration, setSelectedDuration] = useState<string>("45 minutes");
   const [timeInputOpen, setTimeInputOpen] = useState(false);
   const [durationInputOpen, setDurationInputOpen] = useState(false);
-  const [timeInputValue, setTimeInputValue] = useState(timeStr);
+  const [timeInputValue, setTimeInputValue] = useState(initialTime || "11:00 AM");
   const [durationInputValue, setDurationInputValue] = useState("45 minutes");
+  const [appointmentDate, setAppointmentDate] = useState<string>(() => {
+    if (initialSelectedDate) {
+      const formattedDate = format(initialSelectedDate, "MMM dd, yyyy");
+      return `${formattedDate} ${initialTime}`;
+    }
+    return format(new Date(), "MMM dd, yyyy") + " " + initialTime;
+  });
 
-  // Update parent state when local state changes
+  // Update appointment date when selectedDate or selectedTime change
   useEffect(() => {
     if (selectedDate) {
       const formattedDate = format(selectedDate, "MMM dd, yyyy");
       setAppointmentDate(`${formattedDate} ${selectedTime}`);
     }
-  }, [selectedDate, selectedTime, setAppointmentDate]);
+  }, [selectedDate, selectedTime]);
 
   const handleDateChange = (date: Date | undefined) => {
     if (!date) return;
@@ -76,6 +76,17 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
     setSelectedDuration(duration);
     setDurationInputValue(duration);
     setDurationInputOpen(false);
+  };
+
+  const handleSubmit = () => {
+    const data = {
+      date: format(selectedDate || new Date(), "yyyy-MM-dd"),
+      time: selectedTime,
+      duration: selectedDuration,
+      // Include order data if available
+      ...(defaultOrder && { orderId: defaultOrder.id })
+    };
+    onSubmit(data);
   };
 
   // Generate time options in 45-minute increments
@@ -257,6 +268,17 @@ export const AppointmentDetailsForm: React.FC<AppointmentDetailsFormProps> = ({
           </PopoverContent>
         </Popover>
       </div>
+      
+      {/* Add a submit button when needed */}
+      {!isSubmitting ? (
+        <Button onClick={handleSubmit} className="w-full">
+          Schedule Appointment
+        </Button>
+      ) : (
+        <Button disabled className="w-full">
+          Scheduling...
+        </Button>
+      )}
     </div>
   );
 };

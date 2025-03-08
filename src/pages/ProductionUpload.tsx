@@ -50,6 +50,12 @@ const ProductionUpload = () => {
     enabled: !!orderId
   });
   
+  // Helper function to get order number from different formats
+  const getOrderNumber = (order: any): string => {
+    if (!order) return String(orderId || "1234");
+    return order.order_number || order.orderNumber || String(orderId || "1234");
+  };
+  
   // Determine if we should show steps view or legacy view
   const shouldShowStepsView = true; // In production this could be a feature flag
   
@@ -83,7 +89,7 @@ const ProductionUpload = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Order Number:</span>
-                      <span className="font-medium">{orderData?.order_number || orderData?.orderNumber}</span>
+                      <span className="font-medium">{getOrderNumber(orderData)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Property:</span>
@@ -110,7 +116,7 @@ const ProductionUpload = () => {
               </Alert>
               
               <BoxFolderIntegration 
-                orderNumber={orderData?.order_number || orderData?.orderNumber || String(orderId)}
+                orderNumber={getOrderNumber(orderData)}
                 propertyAddress={orderData?.address || "Property Address"}
                 productType={selectedProductId || undefined}
               />
