@@ -8,7 +8,12 @@ import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointment
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { format, parse, addDays } from 'date-fns';
-import { EventTypes } from '@/types/calendar';
+
+// Define enum for event types to replace the missing import
+enum EventTypes {
+  APPOINTMENT = 'appointment',
+  BLOCK = 'block'
+}
 
 const CalendarPage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -35,12 +40,24 @@ const CalendarPage = () => {
     queryFn: async () => {
       // In a real app, we'd fetch from the database
       try {
+        // Updated to use 'orders' table instead of non-existent 'calendar_events'
         const { data, error } = await supabase
-          .from('calendar_events')
+          .from('orders')
           .select('*');
         
         if (error) throw error;
-        return data || [];
+        
+        // Transform orders data to calendar event format
+        return (data || []).map(order => ({
+          id: order.id,
+          title: order.package || 'Photography Order',
+          start: order.scheduled_date,
+          end: order.scheduled_date, // Add 1.5 hours to end time in a real implementation
+          type: EventTypes.APPOINTMENT,
+          orderId: order.id,
+          location: `${order.address}, ${order.city}, ${order.state}`,
+          notes: order.notes || ''
+        }));
       } catch (err) {
         console.error('Error fetching calendar events:', err);
         // Return mock data if supabase table doesn't exist yet
@@ -114,7 +131,7 @@ const CalendarPage = () => {
       <SidebarLayout>
         <div className="container mx-auto">
           <CalendarViews 
-            events={calendarEvents || []}
+            calendarEvents={calendarEvents || []} // Updated prop name to calendarEvents
             selectedDate={selectedDate}
             selectedView={selectedView}
             onViewChange={setSelectedView}
@@ -127,8 +144,8 @@ const CalendarPage = () => {
           {/* Event Details Dialog */}
           {selectedEvent && (
             <EventDetailsDialog 
-              isOpen={isEventDialogOpen}
-              onClose={handleCloseEventDialog}
+              open={isEventDialogOpen} // Updated prop name to open
+              onOpenChange={() => setIsEventDialogOpen(false)} // Updated to use onOpenChange
               event={selectedEvent}
             />
           )}
