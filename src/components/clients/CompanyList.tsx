@@ -13,7 +13,11 @@ import { AddCompanyDialog } from "./AddCompanyDialog";
 import { toast } from "sonner";
 import { exportToCSV } from "@/utils/csv-export";
 
-export function CompanyList() {
+interface CompanyListProps {
+  viewMode?: 'table' | 'card';
+}
+
+export function CompanyList({ viewMode = 'table' }: CompanyListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [addCompanyOpen, setAddCompanyOpen] = useState(false);
   const navigate = useNavigate();
@@ -121,6 +125,60 @@ export function CompanyList() {
     );
   }
 
+  // Use the viewMode prop to determine how to display the companies
+  if (viewMode === 'card') {
+    // Card view implementation could go here
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Company Management (Card View)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 w-full" />
+              ))
+            ) : filteredCompanies.length === 0 ? (
+              <div className="col-span-full text-center py-4 text-muted-foreground">
+                No companies found
+              </div>
+            ) : (
+              filteredCompanies.map(company => (
+                <Card 
+                  key={company.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleRowClick(company.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{company.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {company.email || 'No email'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>Industry: {company.industry}</div>
+                      <div>Status: <Badge variant={company.status === 'active' ? 'default' : 'secondary'}>{company.status}</Badge></div>
+                      <div>Open Jobs: {company.open_jobs}</div>
+                      <div>Outstanding: ${company.outstanding_amount.toFixed(2)}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Default table view
   return (
     <Card>
       <CardHeader className="pb-3">
