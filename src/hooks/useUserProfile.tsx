@@ -60,16 +60,47 @@ export function useUserProfile() {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      // Convert the profile object to a plain object to ensure it's stored correctly
-      const { error } = await supabase
+      // Check if a profile entry exists first
+      const { data: existingData, error: checkError } = await supabase
         .from('app_settings')
-        .upsert({
-          key: 'user_profile',
-          value: profile as unknown as any,
-        });
+        .select('id')
+        .eq('key', 'user_profile')
+        .maybeSingle();
       
-      if (error) {
-        console.error('Error saving user profile:', error);
+      if (checkError) {
+        console.error('Error checking for existing profile:', checkError);
+        toast.error('Failed to save user profile');
+        return false;
+      }
+
+      let result;
+      
+      // Convert the profile object to a plain object to ensure it's stored correctly
+      // and ensure it's JSON-safe
+      const jsonSafeProfile = JSON.parse(JSON.stringify(profile));
+      
+      if (existingData) {
+        // Update existing profile
+        result = await supabase
+          .from('app_settings')
+          .update({
+            value: jsonSafeProfile,
+            updated_at: new Date().toISOString()
+          })
+          .eq('key', 'user_profile');
+      } else {
+        // Create new profile
+        result = await supabase
+          .from('app_settings')
+          .insert({
+            key: 'user_profile',
+            value: jsonSafeProfile,
+            user_id: (await supabase.auth.getUser()).data.user?.id
+          });
+      }
+      
+      if (result.error) {
+        console.error('Error saving user profile:', result.error);
         toast.error('Failed to save user profile');
         return false;
       }
