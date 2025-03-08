@@ -1,10 +1,10 @@
 
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { JobCalendar } from "@/components/dashboard/JobCalendar";
 import { useEffect } from "react";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
+import MainLayout from "@/components/layout/MainLayout";
 
 const Dashboard = () => {
   const { updateSettings } = useHeaderSettings();
@@ -21,7 +21,7 @@ const Dashboard = () => {
   }, [updateSettings]);
 
   return (
-    <SidebarLayout>
+    <MainLayout>
       <PageTransition>
         <div className="space-y-6 p-6 pb-16">
           <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
@@ -34,7 +34,7 @@ const Dashboard = () => {
           </div>
         </div>
       </PageTransition>
-    </SidebarLayout>
+    </MainLayout>
   );
 };
 

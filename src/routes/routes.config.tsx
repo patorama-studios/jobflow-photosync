@@ -2,7 +2,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import MainLayout from '@/components/layout/MainLayout';
 
 // Lazy-loaded components for better performance
 const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
@@ -21,12 +20,22 @@ const NotificationsCenter = React.lazy(() => import('@/pages/NotificationsCenter
 const LearningHub = React.lazy(() => import('@/pages/LearningHub'));
 const Products = React.lazy(() => import('@/pages/Products'));
 
+// Common loading fallback component
+const PageLoadingFallback = () => (
+  <div className="flex items-center justify-center h-[40vh]">
+    <div className="animate-pulse flex flex-col items-center">
+      <div className="w-12 h-12 rounded-full bg-primary/20 mb-3"></div>
+      <div className="h-4 w-32 bg-primary/20 rounded"></div>
+    </div>
+  </div>
+);
+
 export const routes = [
   // Root path handled by Home component which redirects to the appropriate page
   {
     path: "/",
     element: (
-      <React.Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <React.Suspense fallback={<PageLoadingFallback />}>
         <Home />
       </React.Suspense>
     ),
@@ -35,21 +44,19 @@ export const routes = [
   {
     path: "/login",
     element: (
-      <React.Suspense fallback={<div className="p-8 text-center">Loading login...</div>}>
+      <React.Suspense fallback={<PageLoadingFallback />}>
         <Login />
       </React.Suspense>
     ),
   },
-  // All other routes are protected and use the MainLayout
+  // All other routes are protected - note that MainLayout is inside each component now
   {
     path: "/dashboard",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading dashboard...</div>}>
-            <Dashboard />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Dashboard />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -57,11 +64,9 @@ export const routes = [
     path: "/orders",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading orders...</div>}>
-            <Orders />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Orders />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -69,11 +74,9 @@ export const routes = [
     path: "/orders/:orderId",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading order details...</div>}>
-            <OrderDetails />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <OrderDetails />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -81,11 +84,9 @@ export const routes = [
     path: "/calendar",
     element: (
       <ProtectedRoute>
-        <MainLayout showCalendarSubmenu={true}>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading calendar...</div>}>
-            <Calendar />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Calendar />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -93,11 +94,9 @@ export const routes = [
     path: "/settings",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading settings...</div>}>
-            <Settings />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Settings />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -105,11 +104,9 @@ export const routes = [
     path: "/production",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading production board...</div>}>
-            <Production />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Production />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -117,23 +114,19 @@ export const routes = [
     path: "/customers",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading customers...</div>}>
-            <Customers />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Customers />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
   {
-    path: "/customers/:customerId",
+    path: "/customers/:clientId",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading customer details...</div>}>
-            <CustomerDetails />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <CustomerDetails />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -141,11 +134,9 @@ export const routes = [
     path: "/product-delivery",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading product delivery...</div>}>
-            <ProductDelivery />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <ProductDelivery />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -153,11 +144,9 @@ export const routes = [
     path: "/notifications",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading notifications...</div>}>
-            <NotificationsCenter />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <NotificationsCenter />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -165,11 +154,9 @@ export const routes = [
     path: "/learning-hub",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading learning hub...</div>}>
-            <LearningHub />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <LearningHub />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -177,11 +164,9 @@ export const routes = [
     path: "/products",
     element: (
       <ProtectedRoute>
-        <MainLayout>
-          <React.Suspense fallback={<div className="p-8 text-center">Loading products...</div>}>
-            <Products />
-          </React.Suspense>
-        </MainLayout>
+        <React.Suspense fallback={<PageLoadingFallback />}>
+          <Products />
+        </React.Suspense>
       </ProtectedRoute>
     ),
   },
@@ -189,11 +174,11 @@ export const routes = [
   {
     path: "*",
     element: (
-      <MainLayout>
-        <React.Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <ProtectedRoute>
+        <React.Suspense fallback={<PageLoadingFallback />}>
           <NotFound />
         </React.Suspense>
-      </MainLayout>
+      </ProtectedRoute>
     ),
   },
 ];
