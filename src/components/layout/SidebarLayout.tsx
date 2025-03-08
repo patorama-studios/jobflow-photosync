@@ -15,6 +15,9 @@ import { DesktopSidebar } from "./sidebar/DesktopSidebar";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useSidebarState } from "./sidebar/useSidebarState";
 
+// This component is deprecated and should be removed in future versions
+// Use MainLayout instead
+
 type SidebarProps = {
   children: React.ReactNode;
   showCalendarSubmenu?: boolean;
@@ -52,6 +55,9 @@ export function SidebarLayout({
     togglePhotographer,
     isActiveLink
   } = useSidebarState(showCalendarSubmenu);
+
+  // This component is deprecated, redirect to MainLayout
+  console.warn('SidebarLayout is deprecated, please use MainLayout instead');
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">

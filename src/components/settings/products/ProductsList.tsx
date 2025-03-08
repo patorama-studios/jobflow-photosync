@@ -19,27 +19,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
-import { Product as UIProduct } from "./types/product-types";
+import { Product } from "./types/product-types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export function ProductsList() {
   const { products, isLoading, error, refetch } = useProducts();
-  const [productList, setProductList] = useState<UIProduct[]>([]);
+  const [productList, setProductList] = useState<Product[]>([]);
   
   // Convert database products to UI products format
   useEffect(() => {
     if (products && products.length > 0) {
       // Simple conversion for now - in a real app, you would load detailed UI product data
-      const convertedProducts: UIProduct[] = products.map(dbProduct => ({
+      const convertedProducts: Product[] = products.map(dbProduct => ({
         id: dbProduct.id,
         title: dbProduct.name,
         description: dbProduct.description || '',
         price: dbProduct.price,
         isActive: dbProduct.is_active,
         hasVariants: false,
-        productType: 'main',
+        isServiceable: false, // Default value
+        type: "main", // Default value
         variants: []
       }));
       
@@ -118,7 +119,7 @@ export function ProductsList() {
               {productList.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.title}</TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>${product.price?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell>
                     <Badge 
                       variant={product.isActive ? "success" : "secondary"}

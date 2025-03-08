@@ -12,13 +12,15 @@ export interface Product {
   id: string;
   title: string;
   description: string;
+  price?: number;
+  isActive?: boolean;
   isServiceable: boolean;
   hasVariants: boolean;
-  price?: number;
   duration?: number;
   defaultPayout?: number;
   defaultPayoutType?: "percentage" | "fixed";
   variants?: ProductVariant[];
   type: "main" | "addon";
   imageUrl?: string;
+  productType?: string;
 }

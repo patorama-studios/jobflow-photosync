@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -172,7 +173,7 @@ export const routes = [
       </ProtectedRoute>
     ),
   },
-    {
+  {
     path: "/products",
     element: (
       <ProtectedRoute>

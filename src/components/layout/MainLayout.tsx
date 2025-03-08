@@ -100,6 +100,4 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubm
 
 MainLayout.displayName = 'MainLayout';
 
-export { MainLayout }; // Export named component
-
-export default MainLayout; // Also export as default for backward compatibility
+export default MainLayout; // Only export as default
