@@ -10,15 +10,27 @@ import { CouponCodes } from "../products/CouponCodes";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProductDialog } from "../products/dialogs/ProductDialog";
+import { useProducts } from "@/hooks/use-products";
 
 export function ProductSettings() {
   const [activeTab, setActiveTab] = useState("main-products");
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [productType, setProductType] = useState<"main" | "addon">("main");
+  const { saveUIProduct, refetch } = useProducts();
 
   const handleAddProduct = (type: "main" | "addon") => {
     setProductType(type);
     setIsProductDialogOpen(true);
+  };
+
+  const handleSaveProduct = async (product) => {
+    try {
+      await saveUIProduct(product);
+      refetch();
+      setIsProductDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving product:", error);
+    }
   };
 
   return (
@@ -81,6 +93,7 @@ export function ProductSettings() {
         open={isProductDialogOpen} 
         onOpenChange={setIsProductDialogOpen}
         productType={productType}
+        onSave={handleSaveProduct}
       />
     </div>
   );
