@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { SettingsNav } from "@/components/settings/SettingsNav";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { MainLayout } from "@/components/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
 
 // Define the different settings categories

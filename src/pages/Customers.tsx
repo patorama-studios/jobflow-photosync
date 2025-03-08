@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { ClientsView } from "@/components/clients/ClientsView";
 import { CompanyList } from "@/components/clients/CompanyList";

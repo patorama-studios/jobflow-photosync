@@ -5,7 +5,7 @@ import { CompanyDetailsView } from '@/components/clients/CompanyDetailsView';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 
 const CompanyDetails = () => {
   const { id } = useParams<{ id: string }>();

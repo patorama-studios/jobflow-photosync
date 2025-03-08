@@ -8,7 +8,7 @@ import { useNotificationsContext } from '@/contexts/NotificationsContext';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
 import { NotificationFilters } from '@/components/notifications/NotificationFilters';
 import { Notification } from '@/types/notifications';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 
 const NotificationsCenter: React.FC = () => {
   const navigate = useNavigate();

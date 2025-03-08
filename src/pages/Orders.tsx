@@ -3,7 +3,7 @@ import React, { lazy, Suspense, memo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { OrdersView } from '@/components/orders/OrdersView';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useOrders } from '@/hooks/use-orders';
 import { PlusCircle } from 'lucide-react';
