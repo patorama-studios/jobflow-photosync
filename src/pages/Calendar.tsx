@@ -1,138 +1,121 @@
 
-import React, { useState, useMemo } from 'react';
-import { format } from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from 'react';
+import { CalendarHeader } from '@/components/dashboard/calendar/header/CalendarHeader';
+import { format, getMonth, getYear, addDays } from 'date-fns';
+import { SidebarLayout } from '@/components/layout/SidebarLayout';
+import { CalendarViews, CalendarView } from '@/components/calendar/CalendarViews';
+import { useOrders } from '@/hooks/use-orders';
 import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
-import { CalendarHeader } from '@/components/calendar/CalendarHeader';
-import { CalendarViews } from '@/components/calendar/CalendarViews';
+import { useLocalStorage } from '@/hooks/use-local-storage'; // Assuming this hook exists
 import { EventDetailsDialog } from '@/components/calendar/EventDetailsDialog';
-import { supabase } from '@/integrations/supabase/client';
-import { MainLayout } from '@/components/layout/MainLayout';
-
-type CalendarView = 'day' | 'week' | 'month';
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
+import { Order } from '@/types/order-types';
 
 const CalendarPage = () => {
-  const [view, setView] = useState<CalendarView>('month');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
-  const [selectedAppointmentTime, setSelectedAppointmentTime] = useState<string | undefined>();
-  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-  // Fetch events from Supabase
-  const { data: events, isLoading } = useQuery({
-    queryKey: ['calendar-events'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('scheduled_date', { ascending: true });
-        
-        if (error) throw error;
-        
-        return data.map(order => ({
-          id: order.id,
-          title: order.client || 'Unnamed Order',
-          start: new Date(`${order.scheduled_date} ${order.scheduled_time}`),
-          end: new Date(new Date(`${order.scheduled_date} ${order.scheduled_time}`).getTime() + 60 * 60 * 1000),
-          resourceId: order.photographer || 'unassigned',
-          status: order.status,
-          address: order.address,
-          city: order.city,
-          state: order.state,
-          orderData: order
-        }));
-      } catch (error) {
-        console.error('Error fetching events:', error);
-        toast.error('Failed to load calendar events');
-        return [];
-      }
-    }
+  const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Order | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [calendarView, setCalendarView] = useState<CalendarView>('month');
+  
+  // Fetch orders from Supabase
+  const { orders, isLoading, error, refetchOrders } = useOrders({
+    month: getMonth(selectedDate) + 1,
+    year: getYear(selectedDate),
   });
 
-  // Memoize the organized events to prevent unnecessary recalculations
-  const organizedEvents = useMemo(() => events || [], [events]);
-
-  const handleViewChange = (newView: CalendarView) => {
-    setView(newView);
+  // Close the create appointment dialog
+  const handleCloseCreateDialog = () => {
+    setIsCreateDialogOpen(false);
+    setSelectedTime(undefined);
   };
 
+  // Handle clicking on a calendar event
   const handleEventClick = (event: any) => {
     setSelectedEvent(event);
-    setIsEventDetailsOpen(true);
+    setIsDetailsDialogOpen(true);
   };
 
-  const handleCloseEventDetails = () => {
-    setIsEventDetailsOpen(false);
-    setSelectedEvent(null);
-  };
-
+  // Handle clicking on a time slot
   const handleTimeSlotClick = (date: Date, time?: string) => {
     setSelectedDate(date);
-    setSelectedAppointmentTime(time);
-    setIsNewAppointmentOpen(true);
+    setSelectedTime(time);
+    setSelectedTimeSlot(date);
+    setIsCreateDialogOpen(true);
   };
 
-  const handleCloseAppointmentDialog = () => {
-    setIsNewAppointmentOpen(false);
+  // Handle changing the calendar view
+  const handleViewChange = (newView: CalendarView) => {
+    setCalendarView(newView);
   };
 
-  const handleAppointmentAdded = async () => {
-    // Refetch events when a new appointment is added
+  // Handle appointment added callback
+  const handleAppointmentAdded = async (appointmentData: any) => {
+    await refetchOrders();
     return true;
   };
 
+  // Format orders for the calendar
+  const formattedEvents = orders ? mapSupabaseOrdersToOrderType(orders).map((order: Order) => {
+    const date = order.scheduled_date || order.scheduledDate;
+    const time = order.scheduled_time || order.scheduledTime;
+    const dateTime = date && time ? new Date(`${date}T${time}`) : new Date();
+    
+    return {
+      ...order,
+      id: order.id,
+      title: order.client || 'Untitled',
+      start: dateTime,
+      end: addDays(dateTime, 1),
+    };
+  }) : [];
+
   return (
-    <div className="container mx-auto py-8">
-      <CalendarHeader
-        currentDate={currentDate}
-        viewMode={view}
-        setViewMode={handleViewChange}
-        handlePrevious={() => console.log('Previous')}
-        handleNext={() => console.log('Next')}
-        handleToday={() => setCurrentDate(new Date())}
-        getDateRangeTitle={() => format(currentDate, 'MMMM yyyy')}
-        showCalendarSubmenu={false}
-        setShowCalendarSubmenu={() => {}}
-      />
-      
-      <CalendarViews
-        date={currentDate}
-        view={view}
-        onEventClick={handleEventClick}
-        onTimeSlotClick={handleTimeSlotClick}
-        onViewChange={handleViewChange}
-        events={organizedEvents}
-        isLoading={isLoading}
-      />
-      
-      <EventDetailsDialog
-        selectedEvent={selectedEvent}
-        showEventDetails={isEventDetailsOpen}
-        setShowEventDetails={setIsEventDetailsOpen}
-      />
-      
-      <CreateAppointmentDialog
-        isOpen={isNewAppointmentOpen}
-        onClose={handleCloseAppointmentDialog}
-        selectedDate={selectedDate}
-        initialTime={selectedAppointmentTime}
-        onAppointmentAdded={handleAppointmentAdded}
-      />
-    </div>
+    <SidebarLayout>
+      <div className="container mx-auto px-4 py-8">
+        <CalendarHeader 
+          selectedDate={selectedDate} 
+          onDateChange={setSelectedDate}
+          onAddClick={() => setIsCreateDialogOpen(true)}
+          onViewChange={handleViewChange} 
+          currentView={calendarView}
+        />
+        
+        <div className="mt-6">
+          <CalendarViews
+            selectedDate={selectedDate}
+            currentView={calendarView} 
+            onEventClick={handleEventClick}
+            onTimeSlotClick={handleTimeSlotClick}
+            onViewChange={handleViewChange}
+            events={formattedEvents}
+            isLoading={isLoading}
+          />
+        </div>
+        
+        {/* Create Appointment Dialog */}
+        <CreateAppointmentDialog 
+          isOpen={isCreateDialogOpen}
+          onClose={handleCloseCreateDialog}
+          selectedDate={selectedTimeSlot || selectedDate}
+          initialTime={selectedTime}
+          onAppointmentAdded={handleAppointmentAdded}
+        />
+        
+        {/* Event Details Dialog */}
+        {selectedEvent && (
+          <EventDetailsDialog 
+            isOpen={isDetailsDialogOpen}
+            onClose={() => setIsDetailsDialogOpen(false)}
+            event={selectedEvent}
+            onEventUpdated={refetchOrders}
+          />
+        )}
+      </div>
+    </SidebarLayout>
   );
 };
 
-const Calendar = () => {
-  return (
-    <MainLayout>
-      <CalendarPage />
-    </MainLayout>
-  );
-};
-
-export default Calendar;
+export default CalendarPage;
