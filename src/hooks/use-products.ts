@@ -88,12 +88,15 @@ export function useProducts() {
         is_active: true
       };
       
+      // Convert the UI product to a JSON-safe format before storing
+      const jsonSafeProduct = JSON.parse(JSON.stringify(uiProduct));
+      
       // Store the detailed product data in app_settings as a JSON object
       const { error: settingsError } = await supabase
         .from('app_settings')
         .upsert({
           key: `product_details_${uiProduct.id}`,
-          value: uiProduct,
+          value: jsonSafeProduct,
           is_global: true
         });
       
