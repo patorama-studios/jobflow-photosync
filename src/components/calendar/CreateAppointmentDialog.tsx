@@ -60,6 +60,7 @@ export function CreateAppointmentDialog({
   const [selectedTime, setSelectedTime] = useState<string>(initialTime || "11:00 AM");
   const [selectedDuration, setSelectedDuration] = useState<string>("45 minutes");
   const isMobile = useIsMobile();
+  const [googleLoaded, setGoogleLoaded] = useState(false);
 
   // Set up the form
   const form = useForm<FormData>({
@@ -89,6 +90,63 @@ export function CreateAppointmentDialog({
     }
   }, [selectedDate]);
 
+  // Google Maps Autocomplete Setup
+  useEffect(() => {
+    const initializeGoogleMaps = () => {
+      if (window.google && window.google.maps && !googleLoaded) {
+        const addressInput = document.getElementById('address');
+        if (addressInput) {
+          const autocomplete = new window.google.maps.places.Autocomplete(addressInput as HTMLInputElement);
+          autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            
+            if (place.address_components) {
+              // Extract components
+              let street = '';
+              let city = '';
+              let state = '';
+              let zip = '';
+              
+              place.address_components.forEach(component => {
+                const types = component.types;
+                
+                if (types.includes('street_number')) {
+                  street = component.long_name;
+                } else if (types.includes('route')) {
+                  street += (street ? ' ' : '') + component.long_name;
+                } else if (types.includes('locality')) {
+                  city = component.long_name;
+                } else if (types.includes('administrative_area_level_1')) {
+                  state = component.short_name;
+                } else if (types.includes('postal_code')) {
+                  zip = component.long_name;
+                }
+              });
+              
+              form.setValue('address', street || place.formatted_address || '');
+              form.setValue('city', city);
+              form.setValue('state', state);
+              form.setValue('zip', zip);
+            }
+          });
+        }
+        setGoogleLoaded(true);
+      }
+    };
+
+    // Initialize Google Maps if the script is already loaded
+    if (window.google && window.google.maps) {
+      initializeGoogleMaps();
+    } else {
+      // Add a listener for when the script loads
+      window.addEventListener('google-maps-loaded', initializeGoogleMaps);
+    }
+
+    return () => {
+      window.removeEventListener('google-maps-loaded', initializeGoogleMaps);
+    };
+  }, [googleLoaded, form]);
+
   const handleDateChange = (date: Date | undefined) => {
     if (!date) return;
     setSelectedDateTime(date);
@@ -109,12 +167,26 @@ export function CreateAppointmentDialog({
       // Generate an order number
       const orderNumber = `ORD-${Math.floor(Math.random() * 10000)}`;
       
-      // Prepare the order data
+      // Prepare the order data - include all required fields
       const orderData = {
-        ...data,
         order_number: orderNumber,
+        client: data.client,
+        client_email: data.client_email,
+        client_phone: data.client_phone,
+        address: data.address,
+        city: data.city, 
+        state: data.state,
+        zip: data.zip,
         scheduled_date: format(selectedDateTime || new Date(), 'yyyy-MM-dd'),
         scheduled_time: selectedTime,
+        property_type: data.property_type,
+        square_feet: data.square_feet,
+        package: data.package,
+        price: data.price,
+        photographer: data.photographer,
+        notes: data.notes,
+        internal_notes: data.internal_notes,
+        customer_notes: data.customer_notes,
         status: 'scheduled'
       };
       
@@ -129,6 +201,12 @@ export function CreateAppointmentDialog({
       }
       
       toast.success(`Order ${orderNumber} created successfully!`);
+      
+      // Call the onAppointmentAdded callback if provided
+      if (onAppointmentAdded) {
+        await onAppointmentAdded(newOrder?.[0] || orderData);
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error creating order:', error);
@@ -154,8 +232,8 @@ export function CreateAppointmentDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Scheduling */}
+            <div className="space-y-8">
+              {/* Scheduling Section */}
               <div className="space-y-6">
                 <h3 className="text-lg font-medium">Scheduling</h3>
                 <SuggestedDates onDateSelect={handleDateChange} />
@@ -176,183 +254,181 @@ export function CreateAppointmentDialog({
                 <NotificationSelector />
               </div>
               
-              {/* Right Column: Order Details */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">Order Details</h3>
+              {/* Client Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Client Information</h3>
+                <FormField
+                  control={form.control}
+                  name="client"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Client name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                {/* Client Information */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Client Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="client"
+                    name="client_email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Name</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="Client name" {...field} />
+                          <Input placeholder="client@example.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="client_email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="client@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="client_phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input placeholder="(123) 456-7890" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                
-                {/* Property Information */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Property Information</h4>
                   <FormField
                     control={form.control}
-                    name="address"
+                    name="client_phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel>Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="123 Main St" {...field} />
+                          <Input placeholder="(123) 456-7890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              {/* Property Information Section with Google Maps Autocomplete */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Property Information</h3>
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input id="address" placeholder="123 Main St" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="City" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="City" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input placeholder="State" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="zip"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>ZIP</FormLabel>
-                          <FormControl>
-                            <Input placeholder="ZIP" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="State" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="zip"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ZIP</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ZIP" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                
-                {/* Package Information */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Package Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="property_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Property Type</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Residential" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="square_feet"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Square Feet</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="2000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="package"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Package</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Standard" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="199" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+              </div>
+              
+              {/* Package Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Package Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="property_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property Type</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Residential" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="square_feet"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Square Feet</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="2000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="package"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Package</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Standard" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="199" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                
-                {/* Photographer */}
+              </div>
+              
+              {/* Photographer Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Assignment</h3>
                 <FormField
                   control={form.control}
                   name="photographer"
@@ -366,52 +442,52 @@ export function CreateAppointmentDialog({
                     </FormItem>
                   )}
                 />
+              </div>
+              
+              {/* Notes Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Notes</h3>
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>General Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Any general notes about this appointment..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                {/* Notes */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Notes</h4>
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>General Notes</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Any general notes about this appointment..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="internal_notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Internal Notes</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Notes for internal reference only..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="customer_notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer Notes</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Notes from or for the customer..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="internal_notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Internal Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Notes for internal reference only..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="customer_notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Notes from or for the customer..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
             

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -10,13 +10,19 @@ interface NotificationSelectorProps {
 }
 
 export const NotificationSelector: React.FC<NotificationSelectorProps> = () => {
+  const [selectedMethod, setSelectedMethod] = useState("Email");
+
+  const handleSelectMethod = (method: string) => {
+    setSelectedMethod(method);
+  };
+
   return (
     <div className="space-y-2">
       <Label htmlFor="notifyClient">Client Notification</Label>
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" className="w-full justify-start text-left">
-            Email
+            {selectedMethod}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0">
@@ -25,10 +31,10 @@ export const NotificationSelector: React.FC<NotificationSelectorProps> = () => {
             <CommandList>
               <CommandEmpty>No method found.</CommandEmpty>
               <CommandGroup>
-                <CommandItem onSelect={() => {}}>No notification</CommandItem>
-                <CommandItem onSelect={() => {}}>Email</CommandItem>
-                <CommandItem onSelect={() => {}}>SMS</CommandItem>
-                <CommandItem onSelect={() => {}}>Email & SMS</CommandItem>
+                <CommandItem onSelect={() => handleSelectMethod("No notification")}>No notification</CommandItem>
+                <CommandItem onSelect={() => handleSelectMethod("Email")}>Email</CommandItem>
+                <CommandItem onSelect={() => handleSelectMethod("SMS")}>SMS</CommandItem>
+                <CommandItem onSelect={() => handleSelectMethod("Email & SMS")}>Email & SMS</CommandItem>
               </CommandGroup>
             </CommandList>
           </Command>
