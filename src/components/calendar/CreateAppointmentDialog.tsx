@@ -2,20 +2,23 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Form } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DateTimeSelector } from './appointment/components/DateTimeSelector';
-import { DurationSelector } from './appointment/components/DurationSelector';
-import { NotificationSelector } from './appointment/components/NotificationSelector';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+
+// Import our new section components
+import { SchedulingSection } from './appointment/sections/SchedulingSection';
+import { PropertyInformationSection } from './appointment/sections/PropertyInformationSection';
+import { ClientInformationSection } from './appointment/sections/ClientInformationSection';
+import { PackageInformationSection } from './appointment/sections/PackageInformationSection';
+import { CustomItemsSection } from './appointment/sections/CustomItemsSection';
+import { PhotographerAssignmentSection } from './appointment/sections/PhotographerAssignmentSection';
+import { NotesSection } from './appointment/sections/NotesSection';
 
 // Define the schema for our form
 const formSchema = z.object({
@@ -45,36 +48,6 @@ type CreateAppointmentDialogProps = {
   initialTime?: string;
   onAppointmentAdded?: (appointmentData: any) => Promise<boolean>;
   existingOrderData?: any;
-};
-
-// ToggleSection component for collapsible sections
-const ToggleSection = ({ 
-  title, 
-  children, 
-  isOpen, 
-  onToggle 
-}: { 
-  title: string; 
-  children: React.ReactNode; 
-  isOpen: boolean; 
-  onToggle: () => void 
-}) => {
-  return (
-    <div className="border rounded-md mb-4">
-      <div 
-        className="flex justify-between items-center p-4 cursor-pointer bg-muted/30"
-        onClick={onToggle}
-      >
-        <h3 className="text-lg font-medium">{title}</h3>
-        {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-      </div>
-      {isOpen && (
-        <div className="p-4 border-t">
-          {children}
-        </div>
-      )}
-    </div>
-  );
 };
 
 export function CreateAppointmentDialog({ 
@@ -279,291 +252,60 @@ export function CreateAppointmentDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
               {/* Scheduling Section */}
-              <ToggleSection 
-                title="Scheduling" 
-                isOpen={schedulingOpen} 
+              <SchedulingSection 
+                selectedDateTime={selectedDateTime}
+                selectedTime={selectedTime}
+                selectedDuration={selectedDuration}
+                selectedNotification={selectedNotification}
+                onDateChange={handleDateChange}
+                onTimeChange={handleTimeChange}
+                onDurationChange={handleDurationChange}
+                onNotificationMethodChange={handleNotificationMethodChange}
+                isOpen={schedulingOpen}
                 onToggle={() => setSchedulingOpen(!schedulingOpen)}
-              >
-                <DateTimeSelector
-                  selectedDate={selectedDateTime}
-                  selectedTime={selectedTime}
-                  onDateChange={handleDateChange}
-                  onTimeChange={handleTimeChange}
-                  isMobile={isMobile}
-                />
-                
-                <DurationSelector
-                  selectedDuration={selectedDuration}
-                  onDurationChange={handleDurationChange}
-                />
-                
-                <NotificationSelector 
-                  onNotificationMethodChange={handleNotificationMethodChange}
-                  defaultMethod={selectedNotification}
-                />
-              </ToggleSection>
+                isMobile={isMobile}
+              />
               
-              {/* Address Section with Google Maps Autocomplete */}
-              <ToggleSection 
-                title="Property Information" 
-                isOpen={addressOpen} 
+              {/* Address/Property Information Section */}
+              <PropertyInformationSection
+                form={form}
+                isOpen={addressOpen}
                 onToggle={() => setAddressOpen(!addressOpen)}
-              >
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input id="address" placeholder="123 Main St" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl>
-                          <Input placeholder="City" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input placeholder="State" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="zip"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ZIP</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ZIP" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <FormField
-                    control={form.control}
-                    name="property_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Property Type</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Residential" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="square_feet"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Square Feet</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="2000" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="199" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </ToggleSection>
+              />
               
-              {/* Customer Section */}
-              <ToggleSection 
-                title="Client Information" 
-                isOpen={customerOpen} 
+              {/* Customer/Client Information Section */}
+              <ClientInformationSection
+                form={form}
+                isOpen={customerOpen}
                 onToggle={() => setCustomerOpen(!customerOpen)}
-              >
-                <FormField
-                  control={form.control}
-                  name="client"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Client name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <FormField
-                    control={form.control}
-                    name="client_email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="client@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="client_phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input placeholder="(123) 456-7890" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </ToggleSection>
+              />
               
               {/* Package Information Section */}
-              <ToggleSection 
-                title="Package Information" 
-                isOpen={productOpen} 
+              <PackageInformationSection
+                form={form}
+                isOpen={productOpen}
                 onToggle={() => setProductOpen(!productOpen)}
-              >
-                <FormField
-                  control={form.control}
-                  name="package"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Package</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Standard" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </ToggleSection>
+              />
               
               {/* Custom Items Section */}
-              <ToggleSection 
-                title="Custom Items" 
-                isOpen={customItemsOpen} 
+              <CustomItemsSection
+                isOpen={customItemsOpen}
                 onToggle={() => setCustomItemsOpen(!customItemsOpen)}
-              >
-                <div className="text-sm text-muted-foreground">
-                  Custom items functionality will be implemented soon.
-                </div>
-              </ToggleSection>
+              />
               
-              {/* Photographer Section */}
-              <ToggleSection 
-                title="Photographer Assignment" 
-                isOpen={photographerOpen} 
+              {/* Photographer Assignment Section */}
+              <PhotographerAssignmentSection
+                form={form}
+                isOpen={photographerOpen}
                 onToggle={() => setPhotographerOpen(!photographerOpen)}
-              >
-                <FormField
-                  control={form.control}
-                  name="photographer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Photographer</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Unassigned" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </ToggleSection>
+              />
               
               {/* Notes Section */}
-              <ToggleSection 
-                title="Notes" 
-                isOpen={notesOpen} 
+              <NotesSection
+                form={form}
+                isOpen={notesOpen}
                 onToggle={() => setNotesOpen(!notesOpen)}
-              >
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>General Notes</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Any general notes about this appointment..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="internal_notes"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Internal Notes</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Notes for internal reference only..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="customer_notes"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Customer Notes</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Notes from or for the customer..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </ToggleSection>
+              />
             </div>
             
             <DialogFooter>
