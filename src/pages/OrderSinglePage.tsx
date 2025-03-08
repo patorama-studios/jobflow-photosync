@@ -111,63 +111,64 @@ const OrderSinglePage = () => {
     <MainLayout>
       <PageTransition>
         <div className="container mx-auto py-6">
-          {/* Header section */}
+          {/* Improved Header Section */}
           <div className="flex flex-col space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-4xl font-bold text-gray-700">Order #{order.orderNumber}</h1>
-                <div className="flex items-center mt-2 text-gray-500">
-                  <button 
-                    onClick={handleBackClick}
-                    className="flex items-center hover:text-primary transition-colors"
-                  >
-                    <span>All Orders</span>
-                  </button>
-                  <span className="mx-2">&gt;</span>
-                  <span>Order #{order.orderNumber}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="default" 
-                  className="bg-blue-500 hover:bg-blue-600"
-                  onClick={handleStartUpload}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-gray-800">Order #{order.orderNumber || order.order_number}</h1>
+              <p className="text-lg text-gray-600">{order.address}, {order.city}, {order.state} {order.zip}</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <button 
+                  onClick={handleBackClick}
+                  className="flex items-center hover:text-primary transition-colors"
                 >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Start Upload
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleDownloads}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Downloads
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handlePropertyWebsite}
-                >
-                  <Globe className="h-4 w-4 mr-2" />
-                  Property Website
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleShare}
-                >
-                  <Share className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={handleDeliverClick}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Deliver
-                </Button>
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  <span>All Orders</span>
+                </button>
+                <span className="mx-2">&gt;</span>
+                <span>Order #{order.orderNumber || order.order_number}</span>
               </div>
             </div>
             
-            <Separator className="my-4" />
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <Button 
+                variant="default" 
+                className="bg-blue-500 hover:bg-blue-600"
+                onClick={handleStartUpload}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Start Upload
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleDownloads}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Downloads
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handlePropertyWebsite}
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                Property Website
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleShare}
+              >
+                <Share className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleDeliverClick}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Deliver
+              </Button>
+            </div>
+            
+            <Separator className="my-2" />
           </div>
           
           {/* Tabs section - Updated tab labels */}
@@ -175,7 +176,7 @@ const OrderSinglePage = () => {
             defaultValue="details" 
             value={activeTab} 
             onValueChange={setActiveTab}
-            className="mt-2"
+            className="mt-6"
           >
             <div className="flex justify-between items-center">
               <TabsList className="h-12 p-0 bg-transparent space-x-8">

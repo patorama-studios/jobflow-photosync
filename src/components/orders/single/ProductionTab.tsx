@@ -1,25 +1,40 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Order } from '@/types/order-types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UploadCloud, Edit, CheckCircle, Clock, ChevronRight, ExternalLink } from 'lucide-react';
+import { 
+  UploadCloud, 
+  Edit, 
+  CheckCircle, 
+  Clock, 
+  ChevronRight, 
+  ExternalLink, 
+  AlertTriangle,
+  Images,
+  FileImage,
+  Video,
+  Clapperboard,
+  ArrowLeft 
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProductionTabProps {
   order: Order;
 }
 
 export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
+  const navigate = useNavigate();
   // Fix: Convert order.id to string if it's a number
   const orderId = typeof order.id === 'number' ? order.id.toString() : order.id;
   
   // Fetch order products from the database
-  const { data: orderProducts, isLoading } = useQuery({
+  const { data: orderProducts, isLoading: productsLoading } = useQuery({
     queryKey: ['orderProducts', orderId],
     queryFn: async () => {
       try {
@@ -38,10 +53,32 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
     enabled: !!orderId
   });
   
+  // Fetch upload statuses
+  const { data: uploadStatuses, isLoading: uploadsLoading } = useQuery({
+    queryKey: ['orderUploads', orderId],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('order_uploads')
+          .select('*')
+          .eq('order_id', orderId);
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching upload statuses:', error);
+        return [];
+      }
+    },
+    enabled: !!orderId
+  });
+  
   // Use fetched products or fallback to mock data
   const products = orderProducts?.length ? orderProducts : [
     { id: 1, name: 'Professional Photography', status: 'to_do', assigned_editor: null },
-    { id: 2, name: 'Virtual Tour', status: 'in_production', assigned_editor: 'David Chen' }
+    { id: 2, name: 'Virtual Tour', status: 'in_production', assigned_editor: 'David Chen' },
+    { id: 3, name: 'Floor Plan', status: 'completed', assigned_editor: 'Sarah Miller' },
+    { id: 4, name: 'Video Tour', status: 'in_production', assigned_editor: 'James Wilson' }
   ];
   
   // Function to get the status icon
@@ -53,6 +90,8 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
         return <Edit className="h-4 w-4 text-blue-500" />;
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
       default:
         return null;
     }
@@ -67,10 +106,37 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
         return 'In Production';
       case 'completed':
         return 'Completed';
+      case 'error':
+        return 'Error';
       default:
         return status;
     }
   };
+  
+  // Function to get product icon
+  const getProductIcon = (productName: string) => {
+    if (!productName) return <FileImage className="h-4 w-4" />;
+    
+    const name = productName.toLowerCase();
+    if (name.includes('photo') || name.includes('image')) {
+      return <Images className="h-4 w-4" />;
+    } else if (name.includes('floor') || name.includes('plan')) {
+      return <FileImage className="h-4 w-4" />;
+    } else if (name.includes('video') || name.includes('tour')) {
+      return name.includes('virtual') 
+        ? <Clapperboard className="h-4 w-4" /> 
+        : <Video className="h-4 w-4" />;
+    }
+    
+    return <FileImage className="h-4 w-4" />;
+  };
+  
+  // Function to handle product upload button click
+  const handleUploadClick = (productId, productName) => {
+    navigate(`/production/upload/${orderId}?product=${productId}`);
+  };
+  
+  const isLoading = productsLoading || uploadsLoading;
   
   return (
     <div className="space-y-6">
@@ -94,8 +160,10 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="py-8 text-center text-muted-foreground">
-              Loading production data...
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
           ) : (
             <Table>
@@ -104,13 +172,26 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
                   <TableHead>Product</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Editor</TableHead>
+                  <TableHead>Upload Progress</TableHead>
                   <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => (
+                {products.map((product) => {
+                  // Find upload status for this product if available
+                  const uploadStatus = uploadStatuses?.find(u => u.product_id === product.id) || null;
+                  const progress = uploadStatus 
+                    ? `${uploadStatus.total_uploaded || 0}/${uploadStatus.total_required || '-'}`
+                    : '-';
+                    
+                  return (
                   <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {getProductIcon(product.name)}
+                        <span>{product.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(product.status)}
@@ -125,19 +206,45 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ order }) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      {uploadStatus ? (
+                        <div className="text-sm">
+                          {uploadStatus.status === 'completed' ? (
+                            <Badge variant="success" className="bg-green-100 text-green-800">
+                              Complete
+                            </Badge>
+                          ) : uploadStatus.status === 'in_progress' ? (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                              {progress} Uploaded
+                            </Badge>
+                          ) : uploadStatus.status === 'error' ? (
+                            <Badge variant="destructive">Error</Badge>
+                          ) : (
+                            <Badge variant="outline">{progress} Uploaded</Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <Badge variant="outline">Not Started</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleUploadClick(product.id, product.name)}
+                      >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                )})}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
       
-      {/* Media Gallery Placeholder */}
+      {/* Media Gallery */}
       <Card>
         <CardHeader>
           <CardTitle>Media Gallery</CardTitle>

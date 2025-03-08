@@ -1,113 +1,173 @@
 
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { X } from 'lucide-react';
-import { 
-  Dialog,
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AppointmentDetailsForm } from './appointment/AppointmentDetailsForm';
+import { BlockAppointmentForm } from './appointment/BlockAppointmentForm';
 import { OrderDetailsForm } from './appointment/OrderDetailsForm';
-import BlockAppointmentForm from './appointment/BlockAppointmentForm';
-import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { GoogleMapsProvider } from '@/contexts/GoogleMapsContext';
+import { useForm } from 'react-hook-form';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface CreateAppointmentDialogProps {
+type CreateAppointmentDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
-  selectedTime?: string;
-}
+  onAppointmentAdded?: (appointmentData: any) => Promise<boolean>;
+  existingOrderData?: any; // For when adding an appointment to an existing order
+};
 
-export const CreateAppointmentDialog: React.FC<CreateAppointmentDialogProps> = ({
-  isOpen,
-  onClose,
+export function CreateAppointmentDialog({ 
+  isOpen, 
+  onClose, 
   selectedDate,
-  selectedTime
-}) => {
+  onAppointmentAdded,
+  existingOrderData
+}: CreateAppointmentDialogProps) {
+  const [activeTab, setActiveTab] = useState("appointment");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isMobile = useIsMobile();
-  const [mode, setMode] = useState<'appointment' | 'block'>('appointment');
-  
-  // Format the date safely - handle potential invalid date errors
-  const formattedDate = selectedDate ? format(selectedDate, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy");
-  const initialAppointmentTime = selectedTime || "11:00 AM";
-  
-  const [appointmentDate, setAppointmentDate] = useState<string>(
-    `${formattedDate} ${initialAppointmentTime}`
-  );
 
-  // Update appointment date when selectedDate or selectedTime changes
+  // Set the initial tab based on whether we're adding to an existing order
   useEffect(() => {
-    if (selectedDate) {
-      const formattedDate = format(selectedDate, "MMM dd, yyyy");
-      const time = selectedTime || initialAppointmentTime;
-      setAppointmentDate(`${formattedDate} ${time}`);
-      console.log("Updated appointment date:", `${formattedDate} ${time}`);
+    if (existingOrderData) {
+      setActiveTab("appointment");
     }
-  }, [selectedDate, selectedTime, initialAppointmentTime]);
+  }, [existingOrderData, isOpen]);
 
-  const handleCreateAppointment = () => {
-    if (mode === 'appointment') {
-      // In a real app, this would save the appointment
-      console.log("Creating appointment with date:", appointmentDate);
-      toast.success("Appointment created successfully!");
-    } else {
-      // In a real app, this would save the time block
-      console.log("Creating time block for date:", appointmentDate);
-      toast.success("Time block created successfully!");
+  // Function to handle form submission
+  const handleSubmit = async (formData: any, formType: string) => {
+    setIsSubmitting(true);
+    
+    try {
+      // If we have a custom handler for adding to an existing order
+      if (existingOrderData && onAppointmentAdded) {
+        const success = await onAppointmentAdded({
+          ...formData,
+          orderId: existingOrderData.id
+        });
+        
+        if (success) {
+          onClose();
+        }
+      } else {
+        // Regular appointment creation logic
+        console.log('Creating appointment:', formData, 'Type:', formType);
+        
+        if (formType === 'order') {
+          // Create a new order in the database
+          const { data, error } = await supabase
+            .from('orders')
+            .insert({
+              order_number: `ORD-${Math.floor(Math.random() * 10000)}`,
+              client: formData.client?.name || 'New Client',
+              client_email: formData.client?.email || '',
+              client_phone: formData.client?.phone || '',
+              address: formData.address?.formatted_address || '',
+              city: formData.address?.city || '',
+              state: formData.address?.state || '',
+              zip: formData.address?.postal_code || '',
+              scheduled_date: formData.date,
+              scheduled_time: formData.time,
+              photographer: formData.photographer || 'Unassigned',
+              property_type: formData.propertyType || 'Residential',
+              square_feet: formData.squareFeet || 0,
+              price: formData.price || 0,
+              status: 'scheduled',
+              internal_notes: formData.internalNotes || '',
+              customer_notes: formData.customerNotes || '',
+              package: formData.package || 'Standard'
+            })
+            .select();
+          
+          if (error) {
+            throw error;
+          }
+          
+          toast.success("Order created successfully!");
+        } else {
+          // Just creating a calendar appointment (not implementing the actual calendar here)
+          toast.success("Appointment created successfully!");
+        }
+        
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error creating appointment or order:', error);
+      toast.error("Failed to create appointment");
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
-
-  // Get Google Maps API key from environment or use a default one for development
-  // Note: In production, this should be loaded from an environment variable
-  const googleMapsApiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "AIzaSyDcwGyRxRbcNGWOFQVT87A1xkbTuoiRRwE";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`max-w-2xl p-0 gap-0 ${isMobile ? 'h-[85vh]' : 'h-[90vh]'} flex flex-col overflow-hidden`}>
-        <DialogHeader className="px-6 py-4 flex flex-row justify-between items-center border-b shrink-0">
-          <DialogTitle className="text-xl">
-            {mode === 'appointment' ? 'Create Appointment' : 'Create Time Block'}
+      <DialogContent className={isMobile ? "sm:max-w-full max-h-[95vh] overflow-y-auto" : "sm:max-w-[900px] max-h-[80vh] overflow-y-auto"}>
+        <DialogHeader>
+          <DialogTitle>
+            {existingOrderData 
+              ? `Add Appointment to Order #${existingOrderData.orderNumber || existingOrderData.order_number}` 
+              : "Create New Appointment"}
           </DialogTitle>
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              className="text-primary"
-              onClick={() => setMode(mode === 'appointment' ? 'block' : 'appointment')}
-            >
-              Switch to {mode === 'appointment' ? 'Block' : 'Appointment'}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={onClose} className="ml-2">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogDescription>
+            {existingOrderData
+              ? "Add a new appointment to this order"
+              : "Schedule a new appointment or create a new order"}
+          </DialogDescription>
         </DialogHeader>
-        
-        <div className="flex-1 overflow-y-auto p-4">
-          {mode === 'appointment' ? (
-            <GoogleMapsProvider apiKey={googleMapsApiKey} defaultRegion="au">
-              <OrderDetailsForm />
-            </GoogleMapsProvider>
-          ) : (
-            <BlockAppointmentForm 
-              initialDate={selectedDate}
-              initialTime={selectedTime}
+
+        {existingOrderData ? (
+          // Simplified version when adding to existing order
+          <div className="py-4">
+            <AppointmentDetailsForm 
+              onSubmit={(data) => handleSubmit(data, 'appointment')}
+              defaultDate={selectedDate}
+              defaultOrder={existingOrderData}
+              isSubmitting={isSubmitting}
             />
-          )}
-        </div>
-        
-        <DialogFooter className="px-6 py-4 border-t mt-auto shrink-0">
-          <Button variant="outline" onClick={onClose} className="mr-2">Close</Button>
-          <Button onClick={handleCreateAppointment}>
-            {mode === 'appointment' ? 'Create Appointment' : 'Create Block'}
+          </div>
+        ) : (
+          // Full version with tabs
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="appointment">Appointment</TabsTrigger>
+              <TabsTrigger value="order">New Order</TabsTrigger>
+              <TabsTrigger value="block">Block Time</TabsTrigger>
+            </TabsList>
+            <TabsContent value="appointment">
+              <AppointmentDetailsForm 
+                onSubmit={(data) => handleSubmit(data, 'appointment')}
+                defaultDate={selectedDate}
+                isSubmitting={isSubmitting}
+              />
+            </TabsContent>
+            <TabsContent value="order">
+              <OrderDetailsForm 
+                onSubmit={(data) => handleSubmit(data, 'order')}
+                defaultDate={selectedDate}
+                isSubmitting={isSubmitting}
+              />
+            </TabsContent>
+            <TabsContent value="block">
+              <BlockAppointmentForm 
+                onSubmit={(data) => handleSubmit(data, 'block')}
+                defaultDate={selectedDate}
+                isSubmitting={isSubmitting}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
+}
