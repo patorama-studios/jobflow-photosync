@@ -13,8 +13,6 @@ import ProductionOrderDetails from '@/pages/ProductionOrderDetails';
 import Debug from '@/pages/Debug';
 import ProductionBoard from '@/pages/ProductionBoard';
 import ProductionUpload from '@/pages/ProductionUpload';
-import Calendar from '@/pages/Calendar';
-import Client from '@/pages/Client';
 import Customers from '@/pages/Customers';
 import CustomerDetails from '@/pages/CustomerDetails';
 import Verify from '@/pages/Verify';
@@ -23,7 +21,6 @@ import NotificationsCenter from '@/pages/NotificationsCenter';
 import CalendarPage from '@/pages/CalendarPage';
 import ProductDelivery from '@/pages/ProductDelivery';
 import PropertyWebsite from '@/pages/PropertyWebsite';
-import ClientDetails from '@/pages/ClientDetails';
 import CompanyDetails from '@/pages/CompanyDetails';
 import FileDownloads from '@/pages/FileDownloads';
 import Learning from '@/pages/Learning';
@@ -82,24 +79,12 @@ export const routes = [
     element: <ProtectedRoute><ProductionOrderDetails /></ProtectedRoute>,
   },
   {
-    path: '/calendar',
-    element: <ProtectedRoute><Calendar /></ProtectedRoute>,
-  },
-  {
     path: '/calendar/:date',
     element: <ProtectedRoute><CalendarPage /></ProtectedRoute>,
   },
   {
-    path: '/clients',
-    element: <ProtectedRoute><Client /></ProtectedRoute>,
-  },
-  {
-    path: '/client/:id',
-    element: <ProtectedRoute><ClientDetails /></ProtectedRoute>,
-  },
-  {
-    path: '/company/:id',
-    element: <ProtectedRoute><CompanyDetails /></ProtectedRoute>,
+    path: '/calendar',
+    element: <ProtectedRoute><CalendarPage /></ProtectedRoute>,
   },
   {
     path: '/customers',
@@ -108,6 +93,10 @@ export const routes = [
   {
     path: '/customer/:id',
     element: <ProtectedRoute><CustomerDetails /></ProtectedRoute>,
+  },
+  {
+    path: '/company/:id',
+    element: <ProtectedRoute><CompanyDetails /></ProtectedRoute>,
   },
   {
     path: '/notifications',

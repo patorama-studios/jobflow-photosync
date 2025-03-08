@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, Edit } from "lucide-react";
 
 interface CompanyHeaderProps {
   company: any;
@@ -17,10 +18,12 @@ export function CompanyHeader({ company }: CompanyHeaderProps) {
         <p className="text-muted-foreground">{company.industry} company</p>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => navigate("/customers")}>
+        <Button variant="outline" onClick={() => navigate("/customers")} className="flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" />
           Back to Companies
         </Button>
-        <Button variant="default">
+        <Button variant="default" className="flex items-center gap-2">
+          <Edit className="h-4 w-4" />
           Edit Company
         </Button>
       </div>
