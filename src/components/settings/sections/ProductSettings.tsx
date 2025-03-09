@@ -21,11 +21,13 @@ export function ProductSettings() {
   const { saveUIProduct, refetch } = useProducts();
 
   const handleAddProduct = (type: "main" | "addon") => {
+    console.log("Adding new product of type:", type);
     setProductType(type);
     setIsProductDialogOpen(true);
   };
 
   const handleSaveProduct = async (product: Product) => {
+    console.log("Handling save product in ProductSettings:", product);
     try {
       await saveUIProduct(product);
       await refetch();

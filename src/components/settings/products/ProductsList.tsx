@@ -34,6 +34,7 @@ export function ProductsList() {
   
   // Convert database products to UI products format
   useEffect(() => {
+    console.log("Products in ProductsList:", products);
     if (products && products.length > 0) {
       // Simple conversion for now - in a real app, you would load detailed UI product data
       const convertedProducts: Product[] = products.map(dbProduct => ({
@@ -48,6 +49,7 @@ export function ProductsList() {
         variants: []
       }));
       
+      console.log("Converted products for UI:", convertedProducts);
       setProductList(convertedProducts);
     } else {
       setProductList([]);
@@ -55,6 +57,7 @@ export function ProductsList() {
   }, [products]);
 
   const handleDeleteProduct = async (productId: string) => {
+    console.log("Deleting product with ID:", productId);
     try {
       setIsDeleting(productId);
       // Call actual delete function from hook
@@ -77,8 +80,8 @@ export function ProductsList() {
   };
 
   const handleSaveEditedProduct = async (product: Product) => {
+    console.log("Saving edited product:", product);
     try {
-      console.log("Saving edited product:", product);
       await saveUIProduct(product);
       await refetch();
       setIsEditDialogOpen(false);

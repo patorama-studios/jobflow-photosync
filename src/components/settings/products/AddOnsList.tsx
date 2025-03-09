@@ -34,8 +34,11 @@ export function AddOnsList() {
 
   // Fetch add-ons from Supabase
   const loadAddOns = async () => {
+    console.log("Loading add-ons...");
     try {
       const addons = await fetchAddOns();
+      console.log("Received add-ons from API:", addons);
+      
       if (addons && addons.length > 0) {
         // Convert DB addons to UI format
         const convertedAddons = addons.map(addon => ({
@@ -49,6 +52,7 @@ export function AddOnsList() {
           type: "addon" as const,
           variants: []
         }));
+        console.log("Converted add-ons for UI:", convertedAddons);
         setAddonsList(convertedAddons);
       } else {
         setAddonsList([]);
@@ -64,6 +68,7 @@ export function AddOnsList() {
   }, []);
 
   const handleDeleteAddon = async (addonId: string) => {
+    console.log("Deleting add-on with ID:", addonId);
     try {
       setIsDeleting(addonId);
       await deleteProduct(addonId);
@@ -84,8 +89,8 @@ export function AddOnsList() {
   };
 
   const handleSaveEditedAddon = async (addon: Product) => {
+    console.log("Saving edited add-on:", addon);
     try {
-      console.log("Saving edited add-on:", addon);
       await saveUIProduct(addon);
       await loadAddOns(); // Refresh the list after saving
       setIsEditDialogOpen(false);

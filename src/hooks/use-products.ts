@@ -20,6 +20,7 @@ export function useProducts() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
+    console.log("Fetching products...");
     setIsLoading(true);
     setError(null);
     
@@ -27,11 +28,11 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (error) throw error;
       
+      console.log("Products fetched:", data);
       setProducts(data || []);
       return data || [];
     } catch (err: any) {
@@ -45,6 +46,7 @@ export function useProducts() {
 
   // Fetch add-ons specifically - products with type='addon'
   const fetchAddOns = useCallback(async () => {
+    console.log("Fetching add-ons...");
     setIsLoading(true);
     setError(null);
     
@@ -57,27 +59,43 @@ export function useProducts() {
       
       if (settingsError) throw settingsError;
       
+      console.log("Add-ons settings data:", settingsData);
+      
       // Filter settings to find add-ons
       const addonSettings = settingsData?.filter(setting => {
-        const productDetails = setting.value as UIProduct;
-        return productDetails && productDetails.type === 'addon';
+        try {
+          // Safely cast the value to UIProduct
+          const productDetails = setting.value as Record<string, any>;
+          return productDetails && productDetails.type === 'addon';
+        } catch (e) {
+          console.error("Error parsing product details:", e, setting);
+          return false;
+        }
       });
       
       if (addonSettings && addonSettings.length > 0) {
         // Extract add-ons from settings
         const addons = addonSettings.map(setting => {
-          const productId = setting.key.replace('product_details_', '');
-          return {
-            id: productId,
-            name: (setting.value as UIProduct).title,
-            description: (setting.value as UIProduct).description,
-            price: (setting.value as UIProduct).price,
-            is_active: (setting.value as UIProduct).isActive ?? true,
-            created_at: setting.created_at,
-            updated_at: setting.updated_at
-          };
-        });
+          try {
+            const productId = setting.key.replace('product_details_', '');
+            const productValue = setting.value as Record<string, any>;
+            
+            return {
+              id: productId,
+              name: productValue.title,
+              description: productValue.description,
+              price: productValue.price,
+              is_active: productValue.isActive ?? true,
+              created_at: setting.created_at,
+              updated_at: setting.updated_at
+            };
+          } catch (e) {
+            console.error("Error mapping addon:", e, setting);
+            return null;
+          }
+        }).filter(addon => addon !== null) as Product[];
         
+        console.log("Processed addons:", addons);
         return addons;
       }
       
@@ -92,6 +110,7 @@ export function useProducts() {
       
       // For now, we don't have a way to distinguish add-ons in the products table
       // so we'll return all products. In a real app, you'd have a product_type field.
+      console.log("Fallback to products table for addons:", data);
       return data || [];
     } catch (err: any) {
       setError(err.message || 'Failed to fetch add-ons');
@@ -103,6 +122,7 @@ export function useProducts() {
   }, []);
 
   const saveProduct = useCallback(async (product: Partial<Product>) => {
+    console.log("Saving product:", product);
     try {
       setIsLoading(true);
       
@@ -121,6 +141,8 @@ export function useProducts() {
       
       if (error) throw error;
       
+      console.log("Product saved successfully:", data);
+      
       // Refresh the products list
       fetchProducts();
       
@@ -137,6 +159,7 @@ export function useProducts() {
 
   // Delete product (soft delete by setting is_active to false)
   const deleteProduct = useCallback(async (productId: string) => {
+    console.log("Deleting product:", productId);
     try {
       setIsLoading(true);
       
@@ -148,6 +171,8 @@ export function useProducts() {
       
       if (settingsError) throw settingsError;
       
+      console.log("Settings data for deletion:", settingsData);
+      
       // If we have detailed settings, delete them
       if (settingsData && settingsData.length > 0) {
         const { error: deleteSettingsError } = await supabase
@@ -156,6 +181,7 @@ export function useProducts() {
           .eq('key', `product_details_${productId}`);
         
         if (deleteSettingsError) throw deleteSettingsError;
+        console.log("Product details deleted from app_settings");
       }
       
       // Then update the product in the products table
@@ -168,6 +194,8 @@ export function useProducts() {
         .eq('id', productId);
       
       if (error) throw error;
+      
+      console.log("Product soft-deleted (marked inactive)");
       
       // Remove from local state to update UI immediately
       setProducts(prev => prev.filter(p => p.id !== productId));
@@ -185,9 +213,8 @@ export function useProducts() {
 
   // Function to map UI product model to database model
   const saveUIProduct = useCallback(async (uiProduct: UIProduct) => {
+    console.log("Saving UI product:", uiProduct);
     try {
-      console.log("Saving UI product:", uiProduct);
-      
       const dbProduct: Partial<Product> = {
         id: uiProduct.id,
         name: uiProduct.title,
@@ -195,14 +222,18 @@ export function useProducts() {
         price: uiProduct.hasVariants ? 
           uiProduct.variants?.reduce((max, v) => Math.max(max, v.price), 0) || 0 : 
           uiProduct.price || 0,
-        is_active: uiProduct.isActive
+        is_active: uiProduct.isActive !== undefined ? uiProduct.isActive : true
       };
+      
+      console.log("Converted to DB product:", dbProduct);
       
       // Save the simplified version in the products table
       const savedProduct = await saveProduct(dbProduct);
       
       // Convert the UI product to a JSON-safe format before storing
       const jsonSafeProduct = JSON.parse(JSON.stringify(uiProduct));
+      
+      console.log("Storing detailed product data in app_settings:", jsonSafeProduct);
       
       // Store the detailed product data in app_settings as a JSON object
       const { error: settingsError } = await supabase
@@ -219,6 +250,7 @@ export function useProducts() {
         throw settingsError;
       }
       
+      console.log("Product successfully saved with details");
       return savedProduct;
     } catch (err: any) {
       console.error("Error saving UI product:", err);
@@ -232,6 +264,7 @@ export function useProducts() {
     productId: string, 
     overridePrice: number
   ) => {
+    console.log("Creating product override:", { clientId, productId, overridePrice });
     try {
       // First get the product details
       const product = products.find(p => p.id === productId);
@@ -258,6 +291,8 @@ export function useProducts() {
         .single();
 
       if (error) throw error;
+      
+      console.log("Product override created:", data);
       
       toast.success(`Price override created for ${product.name}`);
       return data;
