@@ -30,8 +30,7 @@ export function useClientTeams() {
           name: client.name || 'Unknown',
           email: client.email || 'no-email@example.com',
           role: 'Admin' as TeamMemberRole, // Set a valid role
-          photoUrl: client.photo_url || '',
-          status: client.is_active ? 'Active' : 'Inactive'
+          photoUrl: client.photo_url || ''
         }));
         
         setAllClients(teamMembers);
@@ -44,24 +43,21 @@ export function useClientTeams() {
             name: "Alex Johnson",
             email: "alex@example.com",
             role: 'Admin' as TeamMemberRole,
-            photoUrl: "",
-            status: "Active"
+            photoUrl: ""
           },
           {
             id: "tm2",
             name: "Maria Garcia",
             email: "maria@example.com",
             role: 'Admin' as TeamMemberRole,
-            photoUrl: "",
-            status: "Active"
+            photoUrl: ""
           },
           {
             id: "tm3",
             name: "Jason Lee",
             email: "jason@example.com",
             role: 'Admin' as TeamMemberRole,
-            photoUrl: "",
-            status: "Active"
+            photoUrl: ""
           }
         ];
         setAllClients(mockTeamMembers);
@@ -95,8 +91,7 @@ export function useClientTeams() {
             id: member.id,
             name: member.name,
             email: member.email,
-            photoUrl: member.photoUrl,
-            status: member.status
+            photoUrl: member.photoUrl
           }
         });
         
@@ -149,8 +144,7 @@ export function useClientTeams() {
         name: item.member?.name || 'Unknown',
         email: item.member?.email || 'no-email@example.com',
         role: item.role as TeamMemberRole,
-        photoUrl: item.member?.photoUrl || '',
-        status: item.member?.status || 'Active'
+        photoUrl: item.member?.photoUrl || ''
       }));
       
       return teamMembers;

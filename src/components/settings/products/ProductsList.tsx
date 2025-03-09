@@ -25,8 +25,9 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export function ProductsList() {
-  const { products, isLoading, error, refetch } = useProducts();
+  const { products, isLoading, error, refetch, deleteProduct } = useProducts();
   const [productList, setProductList] = useState<Product[]>([]);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   // Convert database products to UI products format
   useEffect(() => {
@@ -45,18 +46,24 @@ export function ProductsList() {
       }));
       
       setProductList(convertedProducts);
+    } else {
+      setProductList([]);
     }
   }, [products]);
 
   const handleDeleteProduct = async (productId: string) => {
     try {
-      // Call API to delete product
-      // await deleteProduct(productId);
+      setIsDeleting(productId);
+      // Call actual delete function from hook
+      await deleteProduct(productId);
+      // Update products list
+      setProductList(prevList => prevList.filter(product => product.id !== productId));
       toast.success("Product deleted successfully");
-      refetch();
     } catch (error) {
       console.error("Error deleting product:", error);
       toast.error("Failed to delete product");
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -149,9 +156,19 @@ export function ProductsList() {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction 
-                            onClick={() => product.id && handleDeleteProduct(product.id)}
+                            onClick={(e) => {
+                              // Prevent default to avoid closing the dialog too early
+                              e.preventDefault(); 
+                              if (product.id) {
+                                handleDeleteProduct(product.id).then(() => {
+                                  // Close the dialog after operation completes
+                                  document.querySelector('[data-state="open"] button[data-state="closed"]')?.click();
+                                });
+                              }
+                            }}
+                            disabled={isDeleting === product.id}
                           >
-                            Delete
+                            {isDeleting === product.id ? "Deleting..." : "Delete"}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
