@@ -30,6 +30,9 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Add alias for lodash to ensure consistent imports
+      "lodash": path.resolve(__dirname, "node_modules/lodash"),
+      "lodash/*": path.resolve(__dirname, "node_modules/lodash/*"),
     },
   },
   // Enable asset optimizations
@@ -79,6 +82,16 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-utils';
           }
           
+          // Charts and visualization - separate chunk to handle lodash dependencies
+          if (id.includes('node_modules/recharts')) {
+            return 'vendor-charts';
+          }
+          
+          // Lodash as a separate chunk to avoid conflicts
+          if (id.includes('node_modules/lodash')) {
+            return 'vendor-lodash';
+          }
+          
           // Everything else from node_modules
           if (id.includes('node_modules')) {
             return 'vendor-others';
@@ -104,6 +117,10 @@ export default defineConfig(({ mode }) => ({
       'tailwind-merge',
       'date-fns',
       'lucide-react',
+      'lodash',
+      'lodash/get',
+      'lodash/debounce',
+      'lodash/merge',
     ],
     // Exclude large dependencies from pre-bundling if they're not needed on initial load
     exclude: ['recharts'],

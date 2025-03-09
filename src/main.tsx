@@ -4,8 +4,21 @@ import App from './App.tsx'
 import './index.css'
 import { installGlobalErrorMonitoring } from './utils/pre-commit-check.ts'
 
-// Fix for lodash import issue with Recharts
-window.lodash = window._ = require('lodash');
+// Fix for lodash import issue with Recharts - using window assignment instead of require
+window.lodash = window._ = {};
+if (typeof window !== 'undefined') {
+  try {
+    // Dynamically import lodash for browser environments
+    import('lodash').then(lodashModule => {
+      window._ = window.lodash = lodashModule;
+      console.log('Lodash loaded dynamically');
+    }).catch(err => {
+      console.error('Failed to load lodash:', err);
+    });
+  } catch (error) {
+    console.error('Error setting up lodash:', error);
+  }
+}
 
 // Apply theme and font immediately to prevent layout shifts
 const applyThemeAndFont = () => {
@@ -47,10 +60,12 @@ window.addEventListener('error', (event) => {
   window.__CONSOLE_ERROR_COUNT__ = (window.__CONSOLE_ERROR_COUNT__ || 0) + 1;
   
   // Specific handling for the Recharts/lodash error
-  if (event.error && event.error.message && event.error.message.includes('lodash') && 
-      event.error.message.includes('does not provide an export named')) {
-    console.error('Detected lodash import error. Attempting recovery...');
-    displayFallbackUI('Application error with charting library. This is likely due to a library conflict with lodash imports.');
+  if (event.error && event.error.message && 
+      (event.error.message.includes('lodash') || 
+       event.error.message.includes('forwardRef') ||
+       event.error.message.includes('Cannot read properties of undefined'))) {
+    console.error('Detected critical library error. Attempting recovery...');
+    displayFallbackUI('Application error with UI library. This is likely due to a library conflict.');
     return;
   }
   
@@ -155,6 +170,7 @@ const mountApp = () => {
     
     // Try rendering the app
     try {
+      // Wrap the App in an error boundary
       root.render(<App />);
       clearTimeout(appLoadTimeout);
       console.log('App render completed');
