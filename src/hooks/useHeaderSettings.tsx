@@ -72,7 +72,20 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
 
         if (data?.value) {
           console.log('Loaded header settings from Supabase:', data.value);
-          setSettings(data.value as HeaderSettings);
+          // Safely cast the JSON value to HeaderSettings
+          const loadedSettings = data.value as any;
+          
+          // Ensure all required properties exist with correct types
+          const validatedSettings: HeaderSettings = {
+            color: typeof loadedSettings.color === 'string' ? loadedSettings.color : defaultSettings.color,
+            height: typeof loadedSettings.height === 'number' ? loadedSettings.height : defaultSettings.height,
+            logoUrl: typeof loadedSettings.logoUrl === 'string' ? loadedSettings.logoUrl : defaultSettings.logoUrl,
+            showCompanyName: typeof loadedSettings.showCompanyName === 'boolean' ? loadedSettings.showCompanyName : defaultSettings.showCompanyName,
+            title: loadedSettings.title || null,
+            description: loadedSettings.description || null
+          };
+          
+          setSettings(validatedSettings);
         } else {
           console.log('No header settings found, using defaults');
           // Save default settings if none exist
@@ -95,11 +108,21 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   // Function to save settings to Supabase
   const saveToSupabase = async (settingsToSave: HeaderSettings) => {
     try {
+      // Convert HeaderSettings to a JSON object that can be stored in Supabase
+      const jsonValue = {
+        color: settingsToSave.color,
+        height: settingsToSave.height,
+        logoUrl: settingsToSave.logoUrl,
+        showCompanyName: settingsToSave.showCompanyName,
+        title: settingsToSave.title,
+        description: settingsToSave.description
+      };
+      
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'headerSettings',
-          value: settingsToSave,
+          value: jsonValue,
           is_global: true
         });
 

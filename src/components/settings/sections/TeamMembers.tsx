@@ -25,6 +25,8 @@ interface TeamMember {
   phone?: string;
   role: string;
   avatar_url?: string;
+  username?: string;
+  updated_at?: string;
 }
 
 export function TeamMembers() {
@@ -64,7 +66,14 @@ export function TeamMembers() {
       
       if (error) throw error;
       
-      setMembers(data || []);
+      // Add default email if missing
+      const enrichedData = data?.map(profile => ({
+        ...profile,
+        // If email is missing, create a placeholder from username or id
+        email: profile.email || `${profile.username || profile.id}@example.com`
+      })) || [];
+      
+      setMembers(enrichedData as TeamMember[]);
     } catch (error) {
       console.error("Error fetching team members:", error);
       toast.error("Failed to load team members");
@@ -130,7 +139,8 @@ export function TeamMembers() {
           .update({
             full_name: newMember.full_name,
             phone: newMember.phone,
-            role: newMember.role
+            role: newMember.role,
+            email: newMember.email // Add email to update
           })
           .eq('id', editingMember.id);
         

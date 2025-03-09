@@ -30,6 +30,8 @@ interface Coupon {
   end_date?: string;
   usage_limit?: number;
   used_count: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export function CouponCodes() {
@@ -63,7 +65,17 @@ export function CouponCodes() {
         throw error;
       }
       
-      setCoupons(data || []);
+      // Explicitly cast the type of each coupon to ensure it matches our interface
+      const typedCoupons = data?.map(coupon => ({
+        ...coupon,
+        type: coupon.type as "percentage" | "fixed",
+        value: Number(coupon.value),
+        enabled: Boolean(coupon.enabled),
+        used_count: Number(coupon.used_count || 0),
+        usage_limit: coupon.usage_limit ? Number(coupon.usage_limit) : undefined
+      })) || [];
+      
+      setCoupons(typedCoupons);
     } catch (error) {
       console.error("Error fetching coupons:", error);
       toast.error("Failed to load coupon codes");
@@ -157,11 +169,11 @@ export function CouponCodes() {
     }
 
     try {
-      // Prepare data for Supabase
+      // Prepare data for Supabase, ensuring the type is correctly set
       const couponData = {
         code: newCoupon.code,
         description: newCoupon.description,
-        type: newCoupon.type,
+        type: newCoupon.type as "percentage" | "fixed",
         value: newCoupon.value,
         enabled: newCoupon.enabled,
         start_date: newCoupon.start_date,
@@ -194,7 +206,17 @@ export function CouponCodes() {
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setCoupons([...coupons, data[0]]);
+          // Ensure the returned data has the correct type
+          const newCoupons = data.map(coupon => ({
+            ...coupon,
+            type: coupon.type as "percentage" | "fixed",
+            value: Number(coupon.value),
+            enabled: Boolean(coupon.enabled),
+            used_count: Number(coupon.used_count || 0),
+            usage_limit: coupon.usage_limit ? Number(coupon.usage_limit) : undefined
+          }));
+          
+          setCoupons([...coupons, newCoupons[0]]);
         }
         
         toast.success(`${newCoupon.code} has been created successfully`);
