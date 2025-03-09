@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +23,9 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
     handleDeleteContractor,
     handleAddNewContractor,
     handleInputChange,
-    handleSelectChange
+    handleSelectChange,
+    setEditingContractorId,
+    setNewContractor
   } = useContractorPayouts(orderId);
 
   return (
@@ -36,7 +39,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
                 <ContractorForm 
                   contractor={contractor}
                   onSave={handleSaveContractor}
-                  onCancel={() => editingContractorId && setEditingContractorId(null)}
+                  onCancel={() => setEditingContractorId(null)}
                   totalOrderAmount={totalOrderAmount}
                 />
               ) : (
