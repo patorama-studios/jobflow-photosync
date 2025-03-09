@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductsList } from "../products/ProductsList";
@@ -11,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProductDialog } from "../products/dialogs/ProductDialog";
 import { useProducts } from "@/hooks/use-products";
+import { toast } from "sonner";
+import { Product } from "../products/types/product-types";
 
 export function ProductSettings() {
   const [activeTab, setActiveTab] = useState("main-products");
@@ -23,13 +24,18 @@ export function ProductSettings() {
     setIsProductDialogOpen(true);
   };
 
-  const handleSaveProduct = async (product) => {
+  const handleSaveProduct = async (product: Product) => {
     try {
       await saveUIProduct(product);
       refetch();
       setIsProductDialogOpen(false);
+      
+      // Show success message
+      const productTypeName = product.type === "main" ? "Product" : "Add-On";
+      toast.success(`${productTypeName} saved successfully`);
     } catch (error) {
       console.error("Error saving product:", error);
+      toast.error("Failed to save product");
     }
   };
 

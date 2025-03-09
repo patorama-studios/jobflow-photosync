@@ -23,11 +23,14 @@ import { Product } from "./types/product-types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ProductDialog } from "./dialogs/ProductDialog";
 
 export function ProductsList() {
-  const { products, isLoading, error, refetch, deleteProduct } = useProducts();
+  const { products, isLoading, error, refetch, deleteProduct, saveUIProduct } = useProducts();
   const [productList, setProductList] = useState<Product[]>([]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   // Convert database products to UI products format
   useEffect(() => {
@@ -64,6 +67,24 @@ export function ProductsList() {
       toast.error("Failed to delete product");
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditProduct(product);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEditedProduct = async (product: Product) => {
+    try {
+      await saveUIProduct(product);
+      setIsEditDialogOpen(false);
+      setEditProduct(null);
+      refetch();
+      toast.success("Product updated successfully");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error("Failed to update product");
     }
   };
 
@@ -135,7 +156,11 @@ export function ProductsList() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right space-x-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditProduct(product)}
+                    >
                       <Pencil className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
@@ -162,7 +187,10 @@ export function ProductsList() {
                               if (product.id) {
                                 handleDeleteProduct(product.id).then(() => {
                                   // Close the dialog after operation completes
-                                  document.querySelector('[data-state="open"] button[data-state="closed"]')?.click();
+                                  const closeButton = document.querySelector('[data-state="open"] button[data-state="closed"]');
+                                  if (closeButton && 'click' in closeButton) {
+                                    (closeButton as HTMLElement).click();
+                                  }
                                 });
                               }
                             }}
@@ -180,6 +208,17 @@ export function ProductsList() {
           </Table>
         )}
       </CardContent>
+
+      {/* Product Edit Dialog */}
+      {editProduct && (
+        <ProductDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          productType="main"
+          editProduct={editProduct}
+          onSave={handleSaveEditedProduct}
+        />
+      )}
     </Card>
   );
 }

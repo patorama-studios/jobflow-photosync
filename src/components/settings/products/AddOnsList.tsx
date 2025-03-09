@@ -1,216 +1,230 @@
-import React, { useState } from "react";
-import { ProductDialog } from "./dialogs/ProductDialog";
+
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
-  TableHeader, 
   TableBody, 
-  TableRow, 
+  TableCell, 
   TableHead, 
-  TableCell 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { 
-  Edit, 
-  Trash, 
-  Copy, 
-  GripVertical, 
-  Image as ImageIcon, 
-  Check, 
-  X,
-  MoreHorizontal
-} from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2 } from "lucide-react";
+import { useProducts } from "@/hooks/use-products";
 import { Product } from "./types/product-types";
-
-// Sample data for demonstration
-const sampleAddOns: Product[] = [
-  {
-    id: "addon-1",
-    title: "Rush Order Processing",
-    description: "Guaranteed processing and completion within 24 hours",
-    isServiceable: false,
-    hasVariants: false,
-    price: 49,
-    defaultPayout: 80,
-    defaultPayoutType: "percentage",
-    type: "addon"
-  },
-  {
-    id: "addon-2",
-    title: "Premium Editing",
-    description: "Enhanced editing and retouching services",
-    isServiceable: false,
-    hasVariants: false,
-    price: 79,
-    defaultPayout: 75,
-    defaultPayoutType: "percentage",
-    type: "addon"
-  },
-  {
-    id: "addon-3",
-    title: "Additional Photo",
-    description: "Add 5 extra photos to your package",
-    isServiceable: false,
-    hasVariants: false,
-    price: 25,
-    defaultPayout: 70,
-    defaultPayoutType: "percentage",
-    type: "addon"
-  }
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ProductDialog } from "./dialogs/ProductDialog";
 
 export function AddOnsList() {
-  const { toast } = useToast();
-  const [addOns, setAddOns] = useState<Product[]>(sampleAddOns);
-  const [editingAddOn, setEditingAddOn] = useState<Product | undefined>(undefined);
+  const { products, isLoading, error, refetch, deleteProduct, saveUIProduct } = useProducts();
+  const [addonsList, setAddonsList] = useState<Product[]>([]);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const handleEdit = (addOn: Product) => {
-    setEditingAddOn(addOn);
+  // Mock data for addons - in a real app this would come from your API
+  useEffect(() => {
+    // In a real app, you would get addons from the API
+    // For now, use mock data
+    const mockAddons: Product[] = [
+      {
+        id: "addon1",
+        title: "Rush Service",
+        description: "24 hour turnaround time",
+        price: 49.99,
+        isActive: true,
+        hasVariants: false,
+        isServiceable: false,
+        type: "addon",
+      },
+      {
+        id: "addon2",
+        title: "Additional Exposures",
+        description: "Extra photo exposures for difficult lighting conditions",
+        price: 29.99,
+        isActive: true,
+        hasVariants: false,
+        isServiceable: false,
+        type: "addon",
+      },
+      {
+        id: "addon3",
+        title: "Floor Plan",
+        description: "Professional floor plan drawing",
+        price: 75,
+        isActive: true,
+        hasVariants: false,
+        isServiceable: false,
+        type: "addon",
+      }
+    ];
+    
+    setAddonsList(mockAddons);
+  }, []);
+
+  const handleDeleteAddon = async (addonId: string) => {
+    try {
+      setIsDeleting(addonId);
+      // In a real app, you would call an API
+      // For now, update local state
+      setAddonsList(prevList => prevList.filter(addon => addon.id !== addonId));
+      
+      toast.success("Add-on deleted successfully");
+    } catch (error) {
+      console.error("Error deleting add-on:", error);
+      toast.error("Failed to delete add-on");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const handleEditAddon = (addon: Product) => {
+    setEditProduct(addon);
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    // In a real app, you would call an API here
-    setAddOns(addOns.filter(addOn => addOn.id !== id));
-    toast({
-      title: "Add-on deleted",
-      description: "The add-on has been removed"
-    });
-  };
-
-  const handleDuplicate = (addOn: Product) => {
-    const newAddOn = {
-      ...addOn,
-      id: Math.random().toString(36).substring(2, 9),
-      title: `${addOn.title} (Copy)`,
-      variants: addOn.variants ? [...addOn.variants.map(v => ({...v, id: Math.random().toString(36).substring(2, 9)}))] : undefined
-    };
-    setAddOns([...addOns, newAddOn]);
-    toast({
-      title: "Add-on duplicated",
-      description: `Created a copy of ${addOn.title}`
-    });
-  };
-
-  const getAddOnPriceDisplay = (addOn: Product) => {
-    if (addOn.hasVariants && addOn.variants) {
-      const prices = addOn.variants.map(v => v.price);
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      return minPrice === maxPrice ? `$${minPrice}` : `$${minPrice} - $${maxPrice}`;
+  const handleSaveEditedAddon = async (addon: Product) => {
+    try {
+      // In a real app, you would call an API
+      // For now, update local state
+      setAddonsList(prevList => 
+        prevList.map(item => item.id === addon.id ? addon : item)
+      );
+      
+      setIsEditDialogOpen(false);
+      setEditProduct(null);
+      toast.success("Add-on updated successfully");
+    } catch (error) {
+      console.error("Error updating add-on:", error);
+      toast.error("Failed to update add-on");
     }
-    return `$${addOn.price}`;
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Add-Ons</CardTitle>
+          <CardDescription>Manage your product add-ons</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-10"></TableHead>
-            <TableHead>Add-On</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Serviceable</TableHead>
-            <TableHead>Variants</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {addOns.map((addOn) => (
-            <TableRow key={addOn.id}>
-              <TableCell>
-                <Button variant="ghost" size="sm" className="cursor-move">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-muted rounded-md flex items-center justify-center">
-                    {addOn.imageUrl ? (
-                      <img 
-                        src={addOn.imageUrl} 
-                        alt={addOn.title} 
-                        className="h-full w-full object-cover rounded-md" 
-                      />
-                    ) : (
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-medium">{addOn.title}</div>
-                    <div className="text-sm text-muted-foreground truncate max-w-[250px]">
-                      {addOn.description}
-                    </div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>{getAddOnPriceDisplay(addOn)}</TableCell>
-              <TableCell>
-                {addOn.isServiceable ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <X className="h-4 w-4 text-muted-foreground" />
-                )}
-              </TableCell>
-              <TableCell>
-                {addOn.hasVariants ? (
-                  <div className="text-sm text-muted-foreground">
-                    {addOn.variants?.length} variant{addOn.variants?.length !== 1 ? 's' : ''}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">None</div>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(addOn)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDuplicate(addOn)}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleDelete(addOn.id)}
-                      className="text-destructive"
+    <Card>
+      <CardHeader>
+        <CardTitle>Add-Ons</CardTitle>
+        <CardDescription>Manage your product add-ons</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {addonsList.length === 0 ? (
+          <div className="text-center p-6 text-muted-foreground">
+            No add-ons found. Add your first add-on using the button above.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {addonsList.map((addon) => (
+                <TableRow key={addon.id}>
+                  <TableCell className="font-medium">{addon.title}</TableCell>
+                  <TableCell>${addon.price?.toFixed(2) || '0.00'}</TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant={addon.isActive ? "success" : "secondary"}
                     >
-                      <Trash className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-          
-          {addOns.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
-                <div className="text-muted-foreground">No add-ons found</div>
-                <Button variant="outline" size="sm" className="mt-4">
-                  Add Your First Add-On
-                </Button>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                      {addon.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditAddon(addon)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Add-On</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this add-on? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={(e) => {
+                              // Prevent default to avoid closing the dialog too early
+                              e.preventDefault(); 
+                              if (addon.id) {
+                                handleDeleteAddon(addon.id).then(() => {
+                                  // Close the dialog after operation completes
+                                  const closeButton = document.querySelector('[data-state="open"] button[data-state="closed"]');
+                                  if (closeButton && 'click' in closeButton) {
+                                    (closeButton as HTMLElement).click();
+                                  }
+                                });
+                              }
+                            }}
+                            disabled={isDeleting === addon.id}
+                          >
+                            {isDeleting === addon.id ? "Deleting..." : "Delete"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
 
-      <ProductDialog 
-        open={isEditDialogOpen} 
-        onOpenChange={setIsEditDialogOpen}
-        productType="addon"
-        editProduct={editingAddOn}
-      />
-    </div>
+      {/* Product Edit Dialog */}
+      {editProduct && (
+        <ProductDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          productType="addon"
+          editProduct={editProduct}
+          onSave={handleSaveEditedAddon}
+        />
+      )}
+    </Card>
   );
 }
