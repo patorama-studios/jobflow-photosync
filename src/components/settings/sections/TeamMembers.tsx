@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Table, 
@@ -21,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface TeamMember {
   id: string;
   full_name: string;
-  email: string;
+  email?: string;
   phone?: string;
   role: string;
   avatar_url?: string;
@@ -67,9 +66,9 @@ export function TeamMembers() {
       if (error) throw error;
       
       // Add default email if missing
-      const enrichedData = data?.map(profile => ({
+      const enrichedData = data?.map((profile: any) => ({
         ...profile,
-        // Fix: Check for email in the profile and provide a fallback if it doesn't exist
+        // Make sure we handle missing email values
         email: profile.email || `${profile.username || profile.id}@example.com`
       })) || [];
       

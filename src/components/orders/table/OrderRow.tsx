@@ -1,8 +1,8 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 import { OrderActions } from "@/components/orders/OrderActions";
 import { Order } from "@/types/order-types";
 
@@ -35,11 +35,18 @@ const OrderRow = ({ order, onRowClick }: OrderRowProps) => {
 
   return (
     <TableRow 
-      className="cursor-pointer hover:bg-muted/50"
-      onClick={() => onRowClick(order.id)}
+      className="hover:bg-muted/50"
+      onClick={(e) => {
+        // Only trigger onRowClick if the click wasn't on a button or action element
+        if (!(e.target as HTMLElement).closest('button')) {
+          onRowClick(order.id);
+        }
+      }}
     >
       <TableCell className="font-medium">
-        {order.orderNumber || order.order_number || `#${order.id.toString().slice(0, 8)}`}
+        <Link to={`/orders/${order.id}`} className="hover:underline">
+          {order.orderNumber || order.order_number || `#${order.id.toString().slice(0, 8)}`}
+        </Link>
       </TableCell>
       <TableCell>
         {order.customerName || order.client || "Unknown Client"}

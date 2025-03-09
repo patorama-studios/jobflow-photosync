@@ -30,16 +30,19 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     navigate(`/orders/${orderId}`);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     navigate(`/orders/${orderId}/edit`);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setIsDeleteDialogOpen(true);
   };
 
@@ -81,7 +84,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
             <span className="sr-only">Open menu</span>
             {isDeleting ? (
@@ -91,7 +94,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleView}>
