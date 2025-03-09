@@ -9,6 +9,7 @@ export default function Home() {
   const { session, isLoading } = useAuth();
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   // Add comprehensive logging for debugging
   useEffect(() => {
@@ -16,26 +17,37 @@ export default function Home() {
       isLoading, 
       hasSession: !!session,
       currentPath: window.location.pathname,
-      retryCount
+      retryCount,
+      buildMode: import.meta.env.MODE,
+      isDev: import.meta.env.DEV
     });
 
     // If we've been loading for more than 3 seconds, try to force a resolution
     const timeoutId = setTimeout(() => {
-      if (isLoading && retryCount < 3) {
+      if (isLoading) {
         console.log('Auth loading timeout reached, forcing update');
-        setRetryCount(prev => prev + 1);
-      } else if (isLoading && retryCount >= 3) {
-        console.log('Multiple retry attempts failed, showing error');
-        setHasError(true);
+        setLoadingTimeout(true);
+        if (retryCount < 3) {
+          setRetryCount(prev => prev + 1);
+        } else if (retryCount >= 3) {
+          console.log('Multiple retry attempts failed, showing error');
+          setHasError(true);
+        }
       }
     }, 3000);
 
     return () => clearTimeout(timeoutId);
   }, [isLoading, session, retryCount]);
 
-  // For development environment, bypass auth completely
+  // ALWAYS bypass auth in development mode
   if (import.meta.env.DEV) {
     console.log('DEV MODE: Bypassing auth check and redirecting to dashboard');
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // If loading takes too long but we haven't exceeded retries
+  if (loadingTimeout && retryCount < 3) {
+    console.log('Auth loading taking too long, attempting to continue...');
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -55,19 +67,12 @@ export default function Home() {
     );
   }
 
-  // If still loading auth state, show loading indicator
-  if (isLoading) {
+  // If still loading auth state within reasonable time, show loading indicator
+  if (isLoading && !loadingTimeout) {
     return <PageLoading forceRefreshAfter={5} />;
   }
 
-  // If not authenticated, go to login
-  if (!session) {
-    // Add a fallback case to avoid blank screen
-    console.log('Home component redirecting to dashboard (no session)');
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  // If authenticated, redirect to dashboard
-  console.log('Home component redirecting to dashboard (authenticated)');
+  // Fallback: redirect to dashboard in all cases to avoid blank screen
+  console.log('Home component using fallback redirect to dashboard');
   return <Navigate to="/dashboard" replace />;
 }

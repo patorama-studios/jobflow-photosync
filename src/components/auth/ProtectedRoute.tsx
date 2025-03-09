@@ -18,7 +18,9 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
       isAuthLoading: isLoading,
       hasSession: !!session,
       localLoading,
-      retryCount
+      retryCount,
+      isDev: import.meta.env.DEV, 
+      buildMode: import.meta.env.MODE
     });
     
     // Set a timeout to prevent infinite loading
@@ -46,6 +48,7 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
 
   // If we've hit an error after multiple retries
   if (hasError) {
+    console.error('ProtectedRoute: Authentication error encountered');
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <h2 className="text-xl font-semibold text-red-500 mb-2">Authentication Error</h2>
@@ -62,16 +65,17 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
 
   // If still in initial auth loading state within reasonable time, show loading
   if (isLoading && localLoading) {
+    console.log('ProtectedRoute: Showing loading state');
     return <PageLoading forceRefreshAfter={10} />;
   }
 
-  // Redirect to login if definitely not authenticated
-  if (!isLoading && !session) {
+  // For production: redirect to login if definitely not authenticated
+  if (!import.meta.env.DEV && !isLoading && !session) {
     console.log('ProtectedRoute - No session, redirecting to login from:', location.pathname);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Either authenticated or forcing decision after timeout
+  // Either authenticated or forcing decision after timeout or in development mode
   console.log('ProtectedRoute - Rendering protected content for:', location.pathname);
   return <ErrorBoundary>{children}</ErrorBoundary>;
 });
