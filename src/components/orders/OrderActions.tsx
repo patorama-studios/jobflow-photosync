@@ -47,6 +47,8 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
   };
 
   const confirmDelete = async (): Promise<void> => {
+    if (isDeleting) return; // Prevent multiple deletion requests
+    
     try {
       setIsDeleting(true);
       const { success, error } = await deleteOrder(orderId);
@@ -60,7 +62,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
         toast.success("Order deleted successfully");
         
         // Invalidate orders query cache
-        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        await queryClient.invalidateQueries({ queryKey: ['orders'] });
         
         // If we're on a specific order's page, navigate back to orders
         if (window.location.pathname.includes(orderId)) {
@@ -105,7 +107,10 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+          <DropdownMenuItem 
+            className="text-destructive" 
+            onClick={handleDelete}
+          >
             <Trash className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
@@ -116,6 +121,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirmDelete={confirmDelete}
+        isDeleting={isDeleting}
       />
     </>
   );

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,35 +10,55 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface DeleteOrderDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirmDelete: () => void;
+  onConfirmDelete: () => Promise<void>;
+  isDeleting?: boolean;
 }
 
-export const DeleteOrderDialog: React.FC<DeleteOrderDialogProps> = ({
+export function DeleteOrderDialog({
   isOpen,
   onOpenChange,
   onConfirmDelete,
-}) => {
+  isDeleting = false
+}: DeleteOrderDialogProps) {
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await onConfirmDelete();
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure you want to delete this order?</AlertDialogTitle>
+          <AlertDialogTitle>Delete Order</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the order
-            and remove the data from the server.
+            and remove it from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirmDelete} className="bg-red-600 hover:bg-red-700">
-            Delete
-          </AlertDialogAction>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <Button 
+            variant="destructive" 
+            onClick={handleConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+}

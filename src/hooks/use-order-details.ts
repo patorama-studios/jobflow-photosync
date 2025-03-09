@@ -113,12 +113,15 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
       
       if (deleteError) {
         setError(deleteError);
-      } else if (success) {
-        // Redirect to orders page after successful deletion
-        navigate('/orders');
-      }
+        setIsDeleteDialogOpen(false);
+        return;
+      } 
       
-      setIsDeleteDialogOpen(false);
+      if (success) {
+        // Redirect to orders page after successful deletion
+        navigate('/orders', { replace: true });
+        setIsDeleteDialogOpen(false);
+      }
     } catch (err: any) {
       console.error('Error deleting order:', err);
       setError(err.message || 'An unexpected error occurred while deleting');
