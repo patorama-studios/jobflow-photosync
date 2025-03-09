@@ -1,14 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
+import { RefundTypeSelector } from './refund/RefundTypeSelector';
+import { RefundAmountField } from './refund/RefundAmountField';
+import { RefundReasonField } from './refund/RefundReasonField';
+import { RefundMethodSelector } from './refund/RefundMethodSelector';
+import { useRefundDialogState } from './refund/useRefundDialogState';
 
 export interface RefundDialogProps {
   open: boolean;
@@ -33,30 +32,18 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
   orderId, 
   orderTotal 
 }) => {
-  const [refundType, setRefundType] = useState<'full' | 'partial'>('full');
-  const [refundAmount, setRefundAmount] = useState<number>(orderTotal);
-  const [refundReason, setRefundReason] = useState<string>('');
-  const [refundMethod, setRefundMethod] = useState<string>('original');
-  const [processing, setProcessing] = useState<boolean>(false);
-
-  // Reset form when dialog opens
-  React.useEffect(() => {
-    if (open) {
-      setRefundType('full');
-      setRefundAmount(orderTotal);
-      setRefundReason('');
-      setRefundMethod('original');
-    }
-  }, [open, orderTotal]);
-
-  // Update refund amount when type changes
-  React.useEffect(() => {
-    if (refundType === 'full') {
-      setRefundAmount(orderTotal);
-    } else {
-      setRefundAmount(0);
-    }
-  }, [refundType, orderTotal]);
+  const {
+    refundType,
+    setRefundType,
+    refundAmount,
+    setRefundAmount,
+    refundReason,
+    setRefundReason,
+    refundMethod,
+    setRefundMethod,
+    processing,
+    setProcessing
+  } = useRefundDialogState({ open, orderTotal });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,67 +106,29 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <RadioGroup
+          <RefundTypeSelector 
             value={refundType}
-            onValueChange={(value) => setRefundType(value as 'full' | 'partial')}
-            className="space-y-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="full" id="full-refund" />
-              <Label htmlFor="full-refund">Full Refund (${orderTotal.toFixed(2)})</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="partial" id="partial-refund" />
-              <Label htmlFor="partial-refund">Partial Refund</Label>
-            </div>
-          </RadioGroup>
+            onChange={setRefundType}
+            orderTotal={orderTotal}
+          />
           
           {refundType === 'partial' && (
-            <div className="space-y-2">
-              <Label htmlFor="refund-amount">Refund Amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                <Input
-                  id="refund-amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  max={orderTotal}
-                  value={refundAmount}
-                  onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
-                  className="pl-7"
-                />
-              </div>
-            </div>
+            <RefundAmountField
+              value={refundAmount}
+              onChange={setRefundAmount}
+              max={orderTotal}
+            />
           )}
           
-          <div className="space-y-2">
-            <Label htmlFor="refund-reason">Reason for Refund</Label>
-            <Textarea
-              id="refund-reason"
-              value={refundReason}
-              onChange={(e) => setRefundReason(e.target.value)}
-              placeholder="Please explain why you're processing this refund..."
-              required
-            />
-          </div>
+          <RefundReasonField
+            value={refundReason}
+            onChange={setRefundReason}
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="refund-method">Refund Method</Label>
-            <Select
-              value={refundMethod}
-              onValueChange={setRefundMethod}
-            >
-              <SelectTrigger id="refund-method">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="original">Refund to Original Payment Method</SelectItem>
-                <SelectItem value="store_credit">Store Credit</SelectItem>
-                <SelectItem value="manual">Manual Refund (processed offline)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <RefundMethodSelector
+            value={refundMethod}
+            onValueChange={setRefundMethod}
+          />
           
           <DialogFooter className="pt-4">
             <Button
