@@ -1,47 +1,98 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export const useOrderProducts = (orderId: string) => {
-  // Fetch order products from the database
-  const { data: orderProducts, isLoading: productsLoading } = useQuery({
-    queryKey: ['orderProducts', orderId],
-    queryFn: async () => {
+export const useOrderProducts = (orderId?: string | number) => {
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrderProducts = async () => {
+      if (!orderId) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
+        setIsLoading(true);
+        setError(null);
+
         const { data, error } = await supabase
           .from('order_products')
           .select('*')
           .eq('order_id', orderId);
-        
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        console.error('Error fetching order products:', error);
-        return [];
-      }
-    },
-    enabled: !!orderId
-  });
-  
-  // Mock data for upload statuses since we don't have the real table yet
-  const mockUploadStatuses = [
-    { id: 1, order_id: orderId, product_id: 1, status: 'in_progress', total_uploaded: 23, total_required: 30 },
-    { id: 2, order_id: orderId, product_id: 2, status: 'completed', total_uploaded: 1, total_required: 1 },
-    { id: 3, order_id: orderId, product_id: 3, status: 'not_started', total_uploaded: 0, total_required: 1 },
-    { id: 4, order_id: orderId, product_id: 4, status: 'error', total_uploaded: 2, total_required: 5 }
-  ];
-  
-  // Use fetched products or fallback to mock data
-  const products = orderProducts?.length ? orderProducts : [
-    { id: 1, name: 'Professional Photography', status: 'to_do', assigned_editor: null },
-    { id: 2, name: 'Virtual Tour', status: 'in_production', assigned_editor: 'David Chen' },
-    { id: 3, name: 'Floor Plan', status: 'completed', assigned_editor: 'Sarah Miller' },
-    { id: 4, name: 'Video Tour', status: 'in_production', assigned_editor: 'James Wilson' }
-  ];
 
-  return {
-    products,
-    uploadStatuses: mockUploadStatuses,
-    isLoading: productsLoading
+        if (error) {
+          throw error;
+        }
+
+        // For demo purposes, if no products are found in Supabase,
+        // create some sample products
+        if (!data || data.length === 0) {
+          setProducts([
+            {
+              id: '1',
+              order_id: orderId,
+              name: 'Professional Photography',
+              status: 'to_do',
+              assigned_editor: 'John Editor'
+            },
+            {
+              id: '2',
+              order_id: orderId,
+              name: 'Video Tour',
+              status: 'in_production',
+              assigned_editor: 'Sarah Editor'
+            },
+            {
+              id: '3',
+              order_id: orderId,
+              name: 'Floor Plan',
+              status: 'completed',
+              assigned_editor: 'Mark Editor'
+            }
+          ]);
+        } else {
+          setProducts(data);
+        }
+      } catch (err: any) {
+        console.error('Error fetching order products:', err);
+        setError(err.message);
+        toast.error(`Failed to load products: ${err.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrderProducts();
+  }, [orderId]);
+
+  const updateProductStatus = async (productId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('order_products')
+        .update({ status })
+        .eq('id', productId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state
+      setProducts(prevProducts => 
+        prevProducts.map(product => 
+          product.id === productId ? { ...product, status } : product
+        )
+      );
+
+      toast.success(`Product status updated to ${status}`);
+    } catch (err: any) {
+      console.error('Error updating product status:', err);
+      toast.error(`Failed to update status: ${err.message}`);
+    }
   };
+
+  return { products, isLoading, error, updateProductStatus };
 };

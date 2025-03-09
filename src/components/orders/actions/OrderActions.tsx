@@ -14,6 +14,7 @@ import { MoreHorizontal, Eye, Edit, Trash, Loader2 } from "lucide-react";
 import { DeleteOrderDialog } from "../details/DeleteOrderDialog";
 import { deleteOrder } from "@/services/order-service";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface OrderActionsProps {
   orderId: string;
@@ -23,25 +24,31 @@ interface OrderActionsProps {
 
 export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActionsProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     navigate(`/orders/${orderId}`);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     navigate(`/orders/${orderId}/edit`);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     setIsDeleteDialogOpen(true);
   };
 
   const confirmDelete = async (): Promise<void> => {
+    if (isDeleting) return; // Prevent multiple deletion requests
+    
     try {
       setIsDeleting(true);
       const { success, error } = await deleteOrder(orderId);
@@ -53,6 +60,16 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
       
       if (success) {
         toast.success("Order deleted successfully");
+        
+        // Invalidate orders query cache
+        await queryClient.invalidateQueries({ queryKey: ['orders'] });
+        
+        // If we're on a specific order's page, navigate back to orders
+        if (window.location.pathname.includes(orderId)) {
+          navigate('/orders', { replace: true });
+        }
+        
+        // Call the callback if provided
         if (onOrderDeleted) {
           onOrderDeleted();
         }
@@ -62,13 +79,14 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
       toast.error("An unexpected error occurred while deleting the order");
     } finally {
       setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
             <span className="sr-only">Open menu</span>
             {isDeleting ? (
@@ -78,7 +96,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleView}>
@@ -89,7 +107,10 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+          <DropdownMenuItem 
+            className="text-destructive" 
+            onClick={handleDelete}
+          >
             <Trash className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
@@ -100,6 +121,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirmDelete={confirmDelete}
+        isDeleting={isDeleting}
       />
     </>
   );

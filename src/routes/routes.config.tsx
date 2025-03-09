@@ -3,182 +3,227 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-// Lazy-loaded components for better performance
-const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
-const Orders = React.lazy(() => import('@/pages/Orders'));
-const OrderDetails = React.lazy(() => import('@/pages/OrderDetails'));
-const Calendar = React.lazy(() => import('@/pages/Calendar'));
-const Settings = React.lazy(() => import('@/pages/Settings'));
-const Login = React.lazy(() => import('@/pages/Login'));
-const Production = React.lazy(() => import('@/pages/Production'));
-const Customers = React.lazy(() => import('@/pages/Customers'));
-const CustomerDetails = React.lazy(() => import('@/pages/CustomerDetails'));
-const NotFound = React.lazy(() => import('@/pages/NotFound'));
-const Home = React.lazy(() => import('@/pages/Home'));
-const ProductDelivery = React.lazy(() => import('@/pages/ProductDelivery'));
-const NotificationsCenter = React.lazy(() => import('@/pages/NotificationsCenter'));
-const LearningHub = React.lazy(() => import('@/pages/LearningHub'));
-const Products = React.lazy(() => import('@/pages/Products'));
+// Layouts
+import MainLayout from '@/components/layout/MainLayout';
 
-// Common loading fallback component
-const PageLoadingFallback = () => (
-  <div className="flex items-center justify-center h-[40vh]">
-    <div className="animate-pulse flex flex-col items-center">
-      <div className="w-12 h-12 rounded-full bg-primary/20 mb-3"></div>
-      <div className="h-4 w-32 bg-primary/20 rounded"></div>
-    </div>
-  </div>
-);
+// Pages
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Dashboard from '@/pages/Dashboard';
+import CalendarPage from '@/pages/CalendarPage';
+import Orders from '@/pages/Orders';
+import OrderSinglePage from '@/pages/OrderSinglePage';
+import OrderDetails from '@/pages/OrderDetails';
+import Clients from '@/pages/Client';
+import ClientDetails from '@/pages/ClientDetails';
+import CompanyDetails from '@/pages/CompanyDetails';
+import Customers from '@/pages/Customers';
+import CustomerDetails from '@/pages/CustomerDetails';
+import Production from '@/pages/Production';
+import ProductionBoard from '@/pages/ProductionBoard';
+import ProductionOrderDetails from '@/pages/ProductionOrderDetails';
+import ProductionUpload from '@/pages/ProductionUpload';
+import Settings from '@/pages/Settings';
+import NotFound from '@/pages/NotFound';
+import LearningHub from '@/pages/LearningHub';
+import NotificationsCenter from '@/pages/NotificationsCenter';
+import Products from '@/pages/Products';
+import PropertyWebsite from '@/pages/PropertyWebsite';
+import ProductDelivery from '@/pages/ProductDelivery';
+import Verify from '@/pages/Verify';
+import FileDownloads from '@/pages/FileDownloads';
+import GenerateData from '@/pages/GenerateData';
+import Debug from '@/pages/Debug';
 
-export const routes = [
-  // Root path handled by Home component which redirects to the appropriate page
+const routes = [
   {
-    path: "/",
-    element: (
-      <React.Suspense fallback={<PageLoadingFallback />}>
-        <Home />
-      </React.Suspense>
-    ),
+    path: '/',
+    element: <Home />,
   },
-  // Login page is not protected
   {
-    path: "/login",
-    element: (
-      <React.Suspense fallback={<PageLoadingFallback />}>
-        <Login />
-      </React.Suspense>
-    ),
+    path: '/login',
+    element: <Login />,
   },
-  // All other routes are protected - note that MainLayout is inside each component now
   {
-    path: "/dashboard",
+    path: '/verify',
+    element: <Verify />,
+  },
+  {
+    path: '/dashboard',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Dashboard />
-        </React.Suspense>
+        <Dashboard />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/orders",
+    path: '/calendar',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Orders />
-        </React.Suspense>
+        <CalendarPage />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/orders/:orderId",
+    path: '/orders',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <OrderDetails />
-        </React.Suspense>
+        <Orders />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/calendar",
+    path: '/orders/:orderId',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Calendar />
-        </React.Suspense>
+        <OrderSinglePage />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/settings",
+    path: '/orders/:orderId/edit',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Settings />
-        </React.Suspense>
+        <OrderDetails />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/production",
+    path: '/clients',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Production />
-        </React.Suspense>
+        <Clients />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/customers",
+    path: '/clients/:clientId',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Customers />
-        </React.Suspense>
+        <ClientDetails />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/customers/:clientId",
+    path: '/companies/:companyId',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <CustomerDetails />
-        </React.Suspense>
+        <CompanyDetails />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/product-delivery",
+    path: '/customers',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <ProductDelivery />
-        </React.Suspense>
+        <Customers />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/notifications",
+    path: '/customers/:customerId',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <NotificationsCenter />
-        </React.Suspense>
+        <CustomerDetails />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/learning-hub",
+    path: '/production',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <LearningHub />
-        </React.Suspense>
+        <Production />
       </ProtectedRoute>
     ),
   },
   {
-    path: "/products",
+    path: '/production/board',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <Products />
-        </React.Suspense>
+        <ProductionBoard />
       </ProtectedRoute>
     ),
   },
-  // Catch-all route for 404 Not Found
   {
-    path: "*",
+    path: '/production/order/:orderId',
     element: (
       <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <NotFound />
-        </React.Suspense>
+        <ProductionOrderDetails />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/production/upload/:orderId?',
+    element: (
+      <ProtectedRoute>
+        <ProductionUpload />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/settings/*',
+    element: (
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/learning',
+    element: (
+      <ProtectedRoute>
+        <LearningHub />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/notifications',
+    element: (
+      <ProtectedRoute>
+        <NotificationsCenter />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/products',
+    element: (
+      <ProtectedRoute>
+        <Products />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/property-website/:orderId',
+    element: <PropertyWebsite />,
+  },
+  {
+    path: '/delivery/:orderId',
+    element: <ProductDelivery />,
+  },
+  {
+    path: '/download/:orderId',
+    element: <FileDownloads />,
+  },
+  {
+    path: '/generate-data',
+    element: (
+      <ProtectedRoute adminOnly>
+        <GenerateData />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/debug',
+    element: (
+      <ProtectedRoute>
+        <Debug />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '*',
+    element: <NotFound />,
   },
 ];
+
+export default routes;

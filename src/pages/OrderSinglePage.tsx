@@ -1,124 +1,151 @@
 
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import MainLayout from '@/components/layout/MainLayout';
-import { PageTransition } from '@/components/layout/PageTransition';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrderDetails } from '@/hooks/use-order-details';
-import { Loader2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
-import { DeliverEmailDialog } from '@/components/orders/single/DeliverEmailDialog';
+import { PageTransition } from '@/components/layout/PageTransition';
+import MainLayout from '@/components/layout/MainLayout';
+import { useHeaderSettings } from '@/hooks/useHeaderSettings';
+import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
+import { OrderDetailsError } from '@/components/orders/details/OrderDetailsError';
+import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
 import { OrderSinglePageHeader } from '@/components/orders/single/OrderSinglePageHeader';
-import { OrderActionButtons } from '@/components/orders/single/OrderActionButtons';
-import { OrderTabsContainer } from '@/components/orders/single/OrderTabsContainer';
+import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
+import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
+import { ProductionTab } from '@/components/orders/single/ProductionTab';
+import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
+import { toast } from 'sonner';
 
 const OrderSinglePage = () => {
-  const { id } = useParams<{ id: string }>();
-  console.log("Order ID from params:", id);
+  const { orderId } = useParams<{ orderId: string }>();
+  const navigate = useNavigate();
+  const { setTitle, setShowBackButton, setBackButtonAction } = useHeaderSettings();
   
   const { 
     order, 
+    editedOrder, 
     isLoading, 
     error, 
-    isDeleteDialogOpen, 
-    setIsDeleteDialogOpen, 
-    handleDeleteClick, 
-    confirmDelete 
-  } = useOrderDetails(id);
-  
-  const [activeTab, setActiveTab] = useState('details');
-  const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+    isEditing, 
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    handleEditClick,
+    handleCancelClick,
+    handleInputChange,
+    handleStatusChange,
+    handleSaveClick,
+    handleDeleteClick,
+    confirmDelete,
+    refundsForOrder,
+    setRefundsForOrder
+  } = useOrderDetails(orderId);
 
-  // Format order number - remove "ORD-" prefix
-  const formatOrderNumber = (orderNumber: string) => {
-    if (orderNumber?.startsWith('ORD-')) {
-      return `#${orderNumber.substring(4)}`;
+  useEffect(() => {
+    // Set header title and back button
+    if (!isLoading && order) {
+      setTitle(`Order ${order.orderNumber || order.order_number || orderId}`);
+    } else {
+      setTitle('Order Details');
     }
-    return `#${orderNumber}`;
-  };
+    
+    setShowBackButton(true);
+    setBackButtonAction(() => () => navigate('/orders'));
+    
+    // Clean up when component unmounts
+    return () => {
+      setTitle(null);
+      setShowBackButton(false);
+      setBackButtonAction(undefined);
+    };
+  }, [order, orderId, isLoading, setTitle, setShowBackButton, setBackButtonAction, navigate]);
 
-  // Handle delivery email dialog
-  const handleDeliverClick = () => {
-    setIsDeliveryDialogOpen(true);
-  };
-
-  // Handle delete confirmation - now returns a Promise to match expected type
-  const handleConfirmDelete = async (): Promise<void> => {
-    try {
-      setIsDeleting(true);
-      await confirmDelete();
-    } catch (error) {
-      console.error("Error during delete:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  // For debugging
+  useEffect(() => {
+    console.log("OrderSinglePage rendering with order:", order);
+    console.log("Loading state:", isLoading);
+    console.log("Error state:", error);
+  }, [order, isLoading, error]);
 
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading order details...</span>
-        </div>
+        <PageTransition>
+          <OrderDetailsLoading />
+        </PageTransition>
       </MainLayout>
     );
   }
 
-  if (error || !order) {
+  if (error) {
     return (
       <MainLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <h2 className="text-2xl font-bold text-destructive mb-2">Error Loading Order</h2>
-          <p className="text-gray-600">{error || 'Order not found'}</p>
-        </div>
+        <PageTransition>
+          <OrderDetailsError error={error} />
+        </PageTransition>
       </MainLayout>
     );
   }
 
-  // Make a copy of the order with the formatted order number
-  const formattedOrder = {
-    ...order,
-    orderNumber: formatOrderNumber(order.orderNumber || order.order_number || ''),
-    order_number: formatOrderNumber(order.orderNumber || order.order_number || '')
-  };
+  if (!order && !isLoading) {
+    return (
+      <MainLayout>
+        <PageTransition>
+          <OrderNotFound />
+        </PageTransition>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
       <PageTransition>
-        <div className="container mx-auto py-6">
-          {/* Header Section */}
-          <div className="flex flex-col space-y-4">
-            <OrderSinglePageHeader order={formattedOrder} />
-            
-            <OrderActionButtons 
-              order={formattedOrder} 
-              onDeliverClick={handleDeliverClick} 
+        <div className="container py-6 max-w-7xl">
+          {order && (
+            <OrderSinglePageHeader
+              order={order}
+              orderId={orderId}
+              isEditing={isEditing}
+              handleEditClick={handleEditClick}
+              handleDeleteClick={handleDeleteClick}
+              handleCancelClick={handleCancelClick}
+              handleSaveClick={handleSaveClick}
             />
+          )}
+          
+          <Tabs defaultValue="details" className="mt-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="details">Order Details</TabsTrigger>
+              <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
+              <TabsTrigger value="production">Production & Delivery</TabsTrigger>
+              <TabsTrigger value="communication">Communication</TabsTrigger>
+            </TabsList>
             
-            <Separator className="my-2" />
-          </div>
-          
-          {/* Tabs section */}
-          <OrderTabsContainer 
-            order={formattedOrder}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
-          
-          <DeleteOrderDialog
-            isOpen={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
-            onConfirmDelete={handleConfirmDelete}
-            isDeleting={isDeleting}
-          />
-          
-          <DeliverEmailDialog
-            isOpen={isDeliveryDialogOpen}
-            onOpenChange={setIsDeliveryDialogOpen}
-            order={formattedOrder}
-          />
+            <TabsContent value="details" className="mt-6">
+              <OrderDetailsTab 
+                order={order}
+                editedOrder={editedOrder}
+                isEditing={isEditing}
+                onInputChange={handleInputChange}
+                onStatusChange={handleStatusChange}
+              />
+            </TabsContent>
+            
+            <TabsContent value="invoicing" className="mt-6">
+              <InvoicingTab 
+                order={order}
+                refundsForOrder={refundsForOrder}
+                setRefundsForOrder={setRefundsForOrder}
+              />
+            </TabsContent>
+            
+            <TabsContent value="production" className="mt-6">
+              <ProductionTab order={order} />
+            </TabsContent>
+            
+            <TabsContent value="communication" className="mt-6">
+              <CommunicationTab order={order} />
+            </TabsContent>
+          </Tabs>
         </div>
       </PageTransition>
     </MainLayout>
