@@ -19,11 +19,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Create coupons table if it doesn't exist
-    const { error: tableError } = await supabaseClient.rpc('create_coupons_table_if_not_exists');
+    // Call the function we created in the SQL migration
+    const { error } = await supabaseClient.rpc('create_coupons_table_if_not_exists');
 
-    if (tableError) {
-      console.error('Error creating coupons table:', tableError);
+    if (error) {
+      console.error('Error creating coupons table:', error);
       return new Response(
         JSON.stringify({ error: 'Failed to create coupons table' }),
         { 

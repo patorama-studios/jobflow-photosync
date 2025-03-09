@@ -265,6 +265,51 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string
+          enabled: boolean | null
+          end_date: string | null
+          id: string
+          start_date: string | null
+          type: string
+          updated_at: string | null
+          usage_limit: number | null
+          used_count: number | null
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description: string
+          enabled?: boolean | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          type: string
+          updated_at?: string | null
+          usage_limit?: number | null
+          used_count?: number | null
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string
+          enabled?: boolean | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          type?: string
+          updated_at?: string | null
+          usage_limit?: number | null
+          used_count?: number | null
+          value?: number
+        }
+        Relationships: []
+      }
       custom_fields: {
         Row: {
           created_at: string
@@ -902,6 +947,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_coupons_table_if_not_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_user_profile: {
         Args: Record<PropertyKey, never>
         Returns: {

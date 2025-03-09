@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Table, 
@@ -10,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Trash, Plus, Calendar, Percent, DollarSign } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,6 @@ interface Coupon {
 }
 
 export function CouponCodes() {
-  const { toast } = useToast();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
@@ -61,57 +60,21 @@ export function CouponCodes() {
         .order('code', { ascending: true });
 
       if (error) {
-        if (error.code === '42P01') {
-          // Table doesn't exist yet, create it
-          await createCouponsTable();
-          setCoupons([]);
-        } else {
-          throw error;
-        }
-      } else {
-        setCoupons(data || []);
+        throw error;
       }
+      
+      setCoupons(data || []);
     } catch (error) {
       console.error("Error fetching coupons:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load coupon codes"
-      });
+      toast.error("Failed to load coupon codes");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createCouponsTable = async () => {
-    try {
-      // In a real app, this would be done with a database migration
-      // For this demo, we'll do it client-side
-      const { error } = await supabase.rpc('create_coupons_table');
-      
-      if (error) {
-        console.error("Error creating coupons table:", error);
-        throw error;
-      }
-    } catch (error) {
-      console.error("Error creating coupons table:", error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize coupons system"
-      });
-    }
-  };
-
   const handleEditCoupon = (coupon: Coupon) => {
     setEditingCoupon(coupon);
-    
-    // Convert date strings to Date objects if they exist
-    const formattedCoupon = {
-      ...coupon,
-      startDate: coupon.start_date ? new Date(coupon.start_date) : undefined,
-      endDate: coupon.end_date ? new Date(coupon.end_date) : undefined
-    };
-    
-    setNewCoupon({...formattedCoupon});
+    setNewCoupon({...coupon});
     setIsDialogOpen(true);
   };
 
@@ -138,17 +101,10 @@ export function CouponCodes() {
       if (error) throw error;
       
       setCoupons(coupons.filter(coupon => coupon.id !== id));
-      
-      toast({
-        title: "Coupon deleted",
-        description: "The coupon has been removed"
-      });
+      toast.success("Coupon deleted");
     } catch (error) {
       console.error("Error deleting coupon:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete coupon"
-      });
+      toast.error("Failed to delete coupon");
     }
   };
 
@@ -165,46 +121,28 @@ export function CouponCodes() {
         coupon.id === id ? { ...coupon, enabled } : coupon
       ));
       
-      toast({
-        title: enabled ? "Coupon enabled" : "Coupon disabled",
-        description: `The coupon has been ${enabled ? "enabled" : "disabled"}`
-      });
+      toast.success(enabled ? "Coupon enabled" : "Coupon disabled");
     } catch (error) {
       console.error("Error toggling coupon:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update coupon"
-      });
+      toast.error("Failed to update coupon");
     }
   };
 
   const handleSaveCoupon = async () => {
     if (!newCoupon.code || !newCoupon.description) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (!newCoupon.value || newCoupon.value <= 0) {
-      toast({
-        title: "Invalid value",
-        description: "Please enter a valid discount value greater than zero",
-        variant: "destructive"
-      });
+      toast.error("Please enter a valid discount value greater than zero");
       return;
     }
 
     // Validate coupon code format (alphanumeric only)
     const codeRegex = /^[A-Z0-9]+$/;
     if (!codeRegex.test(newCoupon.code)) {
-      toast({
-        title: "Invalid coupon code",
-        description: "Coupon code should only contain uppercase letters and numbers",
-        variant: "destructive"
-      });
+      toast.error("Coupon code should only contain uppercase letters and numbers");
       return;
     }
 
@@ -214,11 +152,7 @@ export function CouponCodes() {
     );
     
     if (codeExists) {
-      toast({
-        title: "Duplicate coupon code",
-        description: "This coupon code already exists",
-        variant: "destructive"
-      });
+      toast.error("This coupon code already exists");
       return;
     }
 
@@ -249,10 +183,7 @@ export function CouponCodes() {
           coupon.id === editingCoupon.id ? { ...coupon, ...couponData, id: editingCoupon.id } : coupon
         ));
         
-        toast({
-          title: "Coupon updated",
-          description: `${newCoupon.code} has been updated successfully`
-        });
+        toast.success(`${newCoupon.code} has been updated successfully`);
       } else {
         // Create new coupon
         const { data, error } = await supabase
@@ -266,19 +197,13 @@ export function CouponCodes() {
           setCoupons([...coupons, data[0]]);
         }
         
-        toast({
-          title: "Coupon created",
-          description: `${newCoupon.code} has been created successfully`
-        });
+        toast.success(`${newCoupon.code} has been created successfully`);
       }
       
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error saving coupon:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save coupon code"
-      });
+      toast.error("Failed to save coupon code");
     }
   };
 
@@ -308,7 +233,7 @@ export function CouponCodes() {
     if (coupon.usage_limit) {
       return `${coupon.used_count} / ${coupon.usage_limit}`;
     } else {
-      return 'Unlimited';
+      return `${coupon.used_count} / Unlimited`;
     }
   };
 
@@ -318,14 +243,6 @@ export function CouponCodes() {
     } else {
       return 0;
     }
-  };
-
-  const handleStartDateChange = (date: Date | undefined) => {
-    setNewCoupon({...newCoupon, start_date: date ? date.toISOString() : undefined});
-  };
-
-  const handleEndDateChange = (date: Date | undefined) => {
-    setNewCoupon({...newCoupon, end_date: date ? date.toISOString() : undefined});
   };
 
   return (
@@ -413,7 +330,7 @@ export function CouponCodes() {
                       </div>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Unlimited</span>
+                    <span className="text-muted-foreground">{getUsageString(coupon)}</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -535,12 +452,18 @@ export function CouponCodes() {
                 <Input
                   type="date"
                   value={newCoupon.start_date ? format(new Date(newCoupon.start_date), 'yyyy-MM-dd') : ''}
-                  onChange={(e) => handleStartDateChange(e.target.value ? new Date(e.target.value) : undefined)}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    setNewCoupon({...newCoupon, start_date: date ? date.toISOString() : undefined});
+                  }}
                 />
                 <Input
                   type="date"
                   value={newCoupon.end_date ? format(new Date(newCoupon.end_date), 'yyyy-MM-dd') : ''}
-                  onChange={(e) => handleEndDateChange(e.target.value ? new Date(e.target.value) : undefined)}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    setNewCoupon({...newCoupon, end_date: date ? date.toISOString() : undefined});
+                  }}
                 />
               </div>
             </div>
