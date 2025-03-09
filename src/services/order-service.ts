@@ -1,8 +1,8 @@
-
 import { Order } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleOrders } from '@/data/sampleOrders'; 
 import { toast } from 'sonner';
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 
 export const fetchOrders = async (): Promise<{ orders: Order[], error: string | null }> => {
   try {
@@ -15,14 +15,8 @@ export const fetchOrders = async (): Promise<{ orders: Order[], error: string | 
       return { orders: [], error: error.message };
     }
 
-    // Convert to Order type with required fields
-    const orders: Order[] = ordersData.map(item => ({
-      ...item,
-      id: item.id,
-      scheduledDate: item.scheduled_date || '',
-      scheduledTime: item.scheduled_time || '',
-    })) as Order[];
-
+    // Use the mapper function to convert to Order type
+    const orders = mapSupabaseOrdersToOrderType(ordersData || []);
     return { orders, error: null };
   } catch (error: any) {
     console.error("Error fetching orders:", error);
@@ -56,13 +50,9 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
       return { order: null, error: error.message };
     }
     
-    // Transform the data to include required fields for Order type
-    const order: Order = {
-      ...data,
-      id: data.id,
-      scheduledDate: data.scheduled_date || '',
-      scheduledTime: data.scheduled_time || '',
-    } as Order;
+    // Use the mapper function to handle a single order
+    const orders = mapSupabaseOrdersToOrderType([data]);
+    const order = orders[0];
     
     return { order, error: null };
   } catch (err: any) {
@@ -107,6 +97,7 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
       return { success: false, error: 'No order ID provided' };
     }
     
+    console.log('Deleting order with ID:', orderId);
     const orderIdString = String(orderId); // Convert to string to ensure compatibility
     
     const { error } = await supabase
@@ -166,13 +157,9 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       return { success: false, data: null, error: error.message };
     }
 
-    // Convert response to Order type
-    const createdOrder: Order = {
-      ...data,
-      id: data.id,
-      scheduledDate: data.scheduled_date || '',
-      scheduledTime: data.scheduled_time || '',
-    } as Order;
+    // Convert response to Order type using our mapper
+    const orders = mapSupabaseOrdersToOrderType([data]);
+    const createdOrder = orders[0];
 
     toast.success("Order created successfully");
     return { success: true, data: createdOrder, error: null };

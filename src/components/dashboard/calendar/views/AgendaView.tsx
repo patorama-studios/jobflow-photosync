@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { CalendarClock, MapPin, Camera } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 
 interface AgendaViewProps {
   orders: Order[];
@@ -32,22 +33,9 @@ export const AgendaView = memo(({ orders }: AgendaViewProps) => {
         }
 
         if (data) {
-          // Convert to Order type with required fields
-          const supabaseOrdersData: Order[] = data.map(item => ({
-            ...item,
-            id: item.id,
-            orderNumber: item.order_number || `Order-${item.id}`,
-            client: item.client || 'Unknown Client',
-            address: item.address || 'No address provided',
-            propertyType: item.property_type || 'Residential',
-            squareFeet: item.square_feet || 0,
-            scheduledDate: item.scheduled_date || new Date().toISOString(),
-            scheduledTime: item.scheduled_time || '12:00 PM',
-            status: item.status || 'pending',
-            photographer: item.photographer || 'Unassigned',
-          }));
-          
-          setSupabaseOrders(supabaseOrdersData);
+          // Use our mapper function for type conversion
+          const mappedOrders = mapSupabaseOrdersToOrderType(data || []);
+          setSupabaseOrders(mappedOrders);
         }
       } catch (err) {
         console.error('Error in fetchOrders:', err);

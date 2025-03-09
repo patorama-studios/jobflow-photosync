@@ -15,7 +15,7 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     photographer: order.photographer || '',
     photographerPayoutRate: order.photographer_payout_rate,
     photographer_payout_rate: order.photographer_payout_rate,
-    price: order.price || 0,
+    price: order.price || 0, // Ensure this is never undefined
     propertyType: order.property_type || 'Residential', // Ensure this is never undefined
     property_type: order.property_type,
     scheduledDate: order.scheduled_date || new Date().toISOString(), // Ensure this is never undefined
@@ -38,6 +38,6 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     stripePaymentId: order.stripe_payment_id || '',
     stripe_payment_id: order.stripe_payment_id || '',
     notes: order.notes || '',
-    drivingTimeMin: 15 + Math.floor(Math.random() * 30) // Random driving time
+    drivingTimeMin: order.driving_time_min || (15 + Math.floor(Math.random() * 30)) // Random driving time if not provided
   }));
 }

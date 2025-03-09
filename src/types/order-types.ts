@@ -15,22 +15,22 @@ export interface Order {
   contactEmail?: string;
   type?: string;
   
-  // Additional properties needed by various components
-  orderNumber: string; // Make this required to match orders.ts
+  // Required properties across all components
+  orderNumber: string;
   order_number?: string;
-  client: string; // Make this required to match orders.ts
+  client: string;
   clientEmail?: string;
   client_email?: string;
   clientPhone?: string;
   client_phone?: string;
-  address: string; // Make this required to match orders.ts
+  address: string;
   city?: string;
   state?: string;
   zip?: string;
-  price?: number;
-  propertyType: string; // Make this required to match orders.ts
+  price: number; // Changed from optional to required
+  propertyType: string;
   property_type?: string;
-  squareFeet: number; // Make this required to match orders.ts
+  squareFeet: number;
   square_feet?: number;
   package?: string;
   drivingTimeMin?: number;

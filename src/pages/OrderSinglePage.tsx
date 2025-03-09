@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { OrderErrorBoundary } from '@/components/orders/debug/OrderErrorBoundary';
 import { useOrderDetailsView } from '@/hooks/use-order-details-view';
 import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
@@ -11,7 +11,12 @@ import { ContractorsSection } from '@/components/orders/details/ContractorsSecti
 import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
 import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
 import MainLayout from '@/components/layout/MainLayout';
-import { Order as OrderType } from '@/types/orders'; // Import the correct Order type
+import { Order } from '@/types/order-types';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
+import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
+import { ProductionTab } from '@/components/orders/single/ProductionTab';
+import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
 
 export default function OrderSinglePage() {
   // Use our custom hook to handle all the order details logic
@@ -35,6 +40,8 @@ export default function OrderSinglePage() {
     confirmDelete,
     navigate
   } = useOrderDetailsView();
+
+  const [activeTab, setActiveTab] = useState("details");
 
   // Content to be rendered based on loading/error state
   let content;
@@ -65,15 +72,36 @@ export default function OrderSinglePage() {
           handleSaveClick={handleSaveClick}
         />
 
-        <div className="mt-6">
-          <OrderDetailsContent
-            order={order}
-            editedOrder={editedOrder}
-            isEditing={isEditing}
-            onInputChange={handleInputChange}
-            onStatusChange={handleStatusChange}
-          />
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+          <TabsList className="w-full grid grid-cols-4">
+            <TabsTrigger value="details">Order Details</TabsTrigger>
+            <TabsTrigger value="production">Production</TabsTrigger>
+            <TabsTrigger value="communication">Communication</TabsTrigger>
+            <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details">
+            <OrderDetailsTab 
+              order={order} 
+              editedOrder={editedOrder} 
+              isEditing={isEditing} 
+              onInputChange={handleInputChange} 
+              onStatusChange={handleStatusChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="production">
+            <ProductionTab order={order} />
+          </TabsContent>
+
+          <TabsContent value="communication">
+            <CommunicationTab order={order} />
+          </TabsContent>
+
+          <TabsContent value="invoicing">
+            <InvoicingTab order={order} />
+          </TabsContent>
+        </Tabs>
 
         <div className="mt-8">
           <RefundsSection 
@@ -94,6 +122,7 @@ export default function OrderSinglePage() {
           isOpen={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
           onConfirmDelete={confirmDelete}
+          isDeleting={false}
         />
       </div>
     );

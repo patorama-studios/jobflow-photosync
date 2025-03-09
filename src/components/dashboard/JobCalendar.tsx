@@ -1,16 +1,17 @@
-
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { useSampleOrders, Order } from '@/hooks/useSampleOrders';
+import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { CalendarView } from './calendar/CalendarView';
 import { JobList } from './calendar/JobList';
 import { CalendarSkeleton } from './calendar/CalendarSkeleton';
 import { isSameDay, format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { Order } from '@/types/order-types';
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 
 // Define the interface for the JobCountBadge component props
 interface JobCountBadgeProps {
@@ -96,16 +97,9 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
         }
 
         if (data) {
-          // Convert to Order type with required fields
-          const supabaseOrdersData: Order[] = data.map(item => ({
-            ...item,
-            id: item.id,
-            scheduledDate: item.scheduled_date || '',
-            scheduledTime: item.scheduled_time || '',
-            status: item.status || 'pending',
-          }));
-          
-          setSupabaseOrders(supabaseOrdersData);
+          // Use the mapper function to ensure correct types
+          const mappedOrders = mapSupabaseOrdersToOrderType(data || []);
+          setSupabaseOrders(mappedOrders);
         }
       } catch (err) {
         console.error('Error in fetchOrders:', err);

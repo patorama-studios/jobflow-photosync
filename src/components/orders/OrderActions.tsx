@@ -43,6 +43,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    console.log("Opening delete dialog for order:", orderId);
     setIsDeleteDialogOpen(true);
   };
 
@@ -50,15 +51,18 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
     if (isDeleting) return; // Prevent multiple deletion requests
     
     try {
+      console.log("Confirming deletion of order:", orderId);
       setIsDeleting(true);
       const { success, error } = await deleteOrder(orderId);
       
       if (error) {
+        console.error("Delete order error:", error);
         toast.error(`Failed to delete order: ${error}`);
         return;
       } 
       
       if (success) {
+        console.log("Order successfully deleted");
         toast.success("Order deleted successfully");
         
         // Invalidate orders query cache

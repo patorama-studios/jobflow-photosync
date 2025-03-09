@@ -1,4 +1,3 @@
-
 import React, { memo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Order } from '@/types/order-types';
@@ -8,6 +7,7 @@ import { WeekRescheduleDialog } from './components/WeekRescheduleDialog';
 import { useWeekView, useWeekAppointments } from './hooks/useWeekView';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 
 interface WeekViewProps {
   dates: Date[];
@@ -48,16 +48,8 @@ export const WeekView = memo(({ dates, orders, onTimeSlotClick }: WeekViewProps)
         }
 
         if (data) {
-          // Convert to Order type with required fields
-          const supabaseOrdersData: Order[] = data.map(item => ({
-            ...item,
-            id: item.id,
-            scheduledDate: item.scheduled_date || '',
-            scheduledTime: item.scheduled_time || '',
-            status: item.status || 'pending',
-          }));
-          
-          setSupabaseOrders(supabaseOrdersData);
+          const mappedOrders = mapSupabaseOrdersToOrderType(data || []);
+          setSupabaseOrders(mappedOrders);
         }
       } catch (err) {
         console.error('Error in fetchOrders:', err);
