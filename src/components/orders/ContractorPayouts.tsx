@@ -8,8 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, Plus, Trash2, Edit, Check, X } from "lucide-react";
 import { toast } from "sonner";
-import { Contractor } from "@/types/orders";
 import { supabase } from '@/integrations/supabase/client';
+
+export interface Contractor {
+  id: string | number;
+  name: string;
+  role: string;
+  payoutRate?: number;
+  payoutAmount?: number;
+  notes?: string;
+}
 
 export interface ContractorPayoutsProps {
   orderId: string | number;
@@ -47,7 +55,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .select('price')
-          .eq('id', orderId)
+          .eq('id', orderId.toString())
           .single();
 
         if (orderError) throw orderError;
@@ -56,37 +64,26 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
           setTotalOrderAmount(orderData.price);
         }
 
-        // Fetch contractors
-        const { data: contractorsData, error: contractorsError } = await supabase
-          .from('order_contractors')
-          .select('*')
-          .eq('order_id', orderId);
-
-        if (contractorsError) throw contractorsError;
-
-        if (contractorsData && contractorsData.length > 0) {
-          setContractors(contractorsData);
-        } else {
-          // Mock data if no contractors found
-          setContractors([
-            {
-              id: '1',
-              name: 'John Photographer',
-              role: 'photographer',
-              payoutRate: 70,
-              payoutAmount: orderData?.price * 0.7 || 0,
-              notes: 'Primary photographer'
-            },
-            {
-              id: '2',
-              name: 'Sarah Editor',
-              role: 'editor',
-              payoutRate: 20,
-              payoutAmount: orderData?.price * 0.2 || 0,
-              notes: 'Photo editing'
-            }
-          ]);
-        }
+        // For now, use mock data instead of trying to fetch from a non-existent table
+        // In a real implementation, you would create and use an actual order_contractors table
+        setContractors([
+          {
+            id: '1',
+            name: 'John Photographer',
+            role: 'photographer',
+            payoutRate: 70,
+            payoutAmount: orderData?.price * 0.7 || 0,
+            notes: 'Primary photographer'
+          },
+          {
+            id: '2',
+            name: 'Sarah Editor',
+            role: 'editor',
+            payoutRate: 20,
+            payoutAmount: orderData?.price * 0.2 || 0,
+            notes: 'Photo editing'
+          }
+        ]);
       } catch (err) {
         console.error('Error fetching contractor data:', err);
         toast.error('Failed to load contractor information');
