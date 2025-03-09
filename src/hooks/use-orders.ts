@@ -51,6 +51,29 @@ export async function addDummyOrder() {
   }
 }
 
+// Function to clear all orders
+export async function clearAllOrders() {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all orders
+    
+    if (error) {
+      console.error('Error clearing orders:', error);
+      toast.error('Failed to clear orders');
+      return false;
+    }
+    
+    toast.success('All orders cleared successfully');
+    return true;
+  } catch (err) {
+    console.error('Error clearing orders:', err);
+    toast.error('Error clearing orders');
+    return false;
+  }
+}
+
 export function useOrders() {
   const queryClient = useQueryClient();
   
@@ -84,11 +107,20 @@ export function useOrders() {
     }
   });
 
+  const clearAllOrdersMutation = useMutation({
+    mutationFn: clearAllOrders,
+    onSuccess: () => {
+      // Invalidate orders query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
+  });
+
   return {
     orders,
     isLoading,
     error,
     refetch,
-    addDummyOrder: () => addDummyOrderMutation.mutate()
+    addDummyOrder: () => addDummyOrderMutation.mutate(),
+    clearAllOrders: () => clearAllOrdersMutation.mutate()
   };
 }

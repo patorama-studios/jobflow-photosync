@@ -4,9 +4,11 @@ import { OrdersHeader } from "./OrdersHeader";
 import { OrdersContent } from "./OrdersContent";
 import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog"; 
 import { useOrders } from "@/hooks/use-orders";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 export const OrdersView = memo(function OrdersView() {
-  const { orders, isLoading } = useOrders();
+  const { orders, isLoading, clearAllOrders } = useOrders();
   
   const [view, setView] = useState<"list" | "grid">("list");
   const [openCreateOrder, setOpenCreateOrder] = useState(false);
@@ -23,6 +25,10 @@ export const OrdersView = memo(function OrdersView() {
     setOpenCreateOrder(open);
   }, []);
 
+  const handleClearAllOrders = useCallback(() => {
+    clearAllOrders();
+  }, [clearAllOrders]);
+
   return (
     <div className="container mx-auto space-y-8">
       <OrdersHeader
@@ -31,6 +37,20 @@ export const OrdersView = memo(function OrdersView() {
         onOpenCreateOrder={openCreateOrderDialog}
         orders={orders || []}
       />
+      
+      {orders && orders.length > 0 && (
+        <div className="flex justify-end">
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={handleClearAllOrders}
+            className="flex items-center gap-1"
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear All Orders
+          </Button>
+        </div>
+      )}
       
       <div className="space-y-4">
         <OrdersContent 

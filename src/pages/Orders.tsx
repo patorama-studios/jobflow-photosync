@@ -6,7 +6,7 @@ import { OrdersView } from '@/components/orders/OrdersView';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useOrders } from '@/hooks/use-orders';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, RefreshCw } from 'lucide-react';
 
 // Lazy load the OrderDetails component
 const OrderDetails = lazy(() => import('./OrderDetails'));
@@ -19,7 +19,7 @@ const OrderDetailsLoader = () => (
 );
 
 const OrdersPage = memo(() => {
-  const { addDummyOrder } = useOrders();
+  const { addDummyOrder, clearAllOrders, refetch } = useOrders();
   const navigate = useNavigate();
   
   return (
@@ -30,15 +30,26 @@ const OrdersPage = memo(() => {
             <div className="py-6">
               <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-semibold">Orders & Appointments</h1>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={addDummyOrder}
-                  className="flex items-center gap-1"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  Add Dummy Order
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => refetch()}
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addDummyOrder}
+                    className="flex items-center gap-1"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Add Dummy Order
+                  </Button>
+                </div>
               </div>
               <OrdersView />
             </div>
