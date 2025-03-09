@@ -44,8 +44,8 @@ export const SafeIcon = ({
   [key: string]: any 
 }) => {
   try {
-    const Icon = useIcon(name);
-    return <Icon {...props} />;
+    const IconComponent = useIcon(name);
+    return <IconComponent {...props} />;
   } catch (error) {
     console.error(`Failed to render icon: ${name}`, error);
     return <FallbackIcon />;

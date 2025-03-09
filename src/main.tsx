@@ -5,6 +5,19 @@ import App from './App.tsx'
 import './index.css'
 import { installGlobalErrorMonitoring } from './utils/pre-commit-check.ts'
 
+// Fix for React library import issues - preload key packages
+const preloadLibraries = async () => {
+  try {
+    // Dynamically import react-is
+    const reactIs = await import('react-is');
+    // Make it available globally for debugging
+    window.__REACT_IS__ = reactIs;
+    console.log('React-is loaded successfully:', Object.keys(reactIs));
+  } catch (err) {
+    console.error('Failed to preload React libraries:', err);
+  }
+};
+
 // Fix for lodash import issue with Recharts - using window assignment instead of require
 window.lodash = window._ = {};
 if (typeof window !== 'undefined') {
@@ -54,11 +67,23 @@ const applyThemeAndFont = () => {
 // Execute theme application immediately
 applyThemeAndFont();
 
+// Preload React libraries
+preloadLibraries();
+
 // Set up a global error handler
 window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error);
   // Increment error count for monitoring
   window.__CONSOLE_ERROR_COUNT__ = (window.__CONSOLE_ERROR_COUNT__ || 0) + 1;
+  
+  // Look for specific React-related errors
+  if (event.error && event.error.message && 
+     (event.error.message.includes('react-is') || 
+      event.error.message.includes('isFragment'))) {
+    console.error('React dependency error detected:', event.error.message);
+    displayFallbackUI('React component error. This is likely due to a library version conflict. Refreshing may help.');
+    return;
+  }
   
   // Specific handling for the Recharts/lodash error
   if (event.error && event.error.message && 
@@ -219,6 +244,7 @@ declare global {
   interface Window {
     __REACT_ROUTER_HISTORY__?: unknown;
     __CONSOLE_ERROR_COUNT__?: number;
+    __REACT_IS__?: any; // For react-is global
     _?: any; // For lodash global
     lodash?: any; // For lodash global
   }

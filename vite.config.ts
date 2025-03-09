@@ -30,9 +30,10 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Add alias for lodash to ensure consistent imports
+      // Add alias for critical libraries to ensure consistent imports
       "lodash": path.resolve(__dirname, "node_modules/lodash"),
       "lodash/*": path.resolve(__dirname, "node_modules/lodash/*"),
+      "react-is": path.resolve(__dirname, "node_modules/react-is"),
     },
   },
   // Enable asset optimizations
@@ -57,6 +58,11 @@ export default defineConfig(({ mode }) => ({
           // Core libraries
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'vendor-react';
+          }
+          
+          // React utilities
+          if (id.includes('node_modules/react-is')) {
+            return 'vendor-react-utils';
           }
           
           // Router
@@ -110,7 +116,8 @@ export default defineConfig(({ mode }) => ({
     // Improve first load time by pre-bundling these dependencies
     include: [
       'react', 
-      'react-dom', 
+      'react-dom',
+      'react-is',
       'react-router-dom', 
       '@tanstack/react-query',
       'clsx',
