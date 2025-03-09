@@ -13,6 +13,7 @@ const Clients = lazy(() => import('../pages/Client'));
 const Settings = lazy(() => import('../pages/Settings'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 const Debug = lazy(() => import('../pages/Debug'));
+const CalendarPage = lazy(() => import('../pages/CalendarPage'));
 
 // Main routes configuration
 const routes: RouteObject[] = [
@@ -51,6 +52,10 @@ const routes: RouteObject[] = [
   {
     path: '/debug',
     element: <Debug />
+  },
+  {
+    path: '/calendar',
+    element: <CalendarPage />
   },
   ...diagnosticRoutes, // Include diagnostic routes
   {

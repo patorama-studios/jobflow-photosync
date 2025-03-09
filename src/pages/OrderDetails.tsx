@@ -53,7 +53,7 @@ const OrderDetails = () => {
     return (
       <MainLayout>
         <PageTransition>
-          <OrderNotFound />
+          <OrderNotFound orderId={orderId || ''} />
         </PageTransition>
       </MainLayout>
     );

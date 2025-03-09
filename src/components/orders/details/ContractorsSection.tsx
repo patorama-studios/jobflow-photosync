@@ -6,15 +6,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Order } from '@/types/order-types';
 import { Contractor } from '@/types/orders';
 import { generateRandomId } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 
 interface ContractorsSectionProps {
-  contractors: Contractor[];
+  order: Order;
+  contractors?: Contractor[];
 }
 
-export function ContractorsSection({ contractors }: ContractorsSectionProps) {
+export function ContractorsSection({ order, contractors = [] }: ContractorsSectionProps) {
   const [isContractorDialogOpen, setIsContractorDialogOpen] = useState(false);
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
   const [newContractor, setNewContractor] = useState<Contractor>({
