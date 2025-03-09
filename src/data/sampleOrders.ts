@@ -1,7 +1,7 @@
-
 import { addDays } from 'date-fns';
+import { Order as OrderType } from '@/types/orders'; // Import correct Order type
 
-// Define the Order type for the sample data
+// Define the Order type for the sample data - aligning with the existing types
 export interface Order {
   id: number;
   orderNumber: string;
@@ -143,7 +143,6 @@ export const generateSampleOrders = (): Order[] => {
       mediaUploaded: true,
       mediaLinks: ['/images/sample3.jpg', '/images/sample4.jpg']
     },
-    // Adding more sample orders for better calendar visualization
     {
       id: 6,
       orderNumber: "ORD-2023-006",

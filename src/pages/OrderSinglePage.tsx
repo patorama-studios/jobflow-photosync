@@ -11,6 +11,7 @@ import { ContractorsSection } from '@/components/orders/details/ContractorsSecti
 import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
 import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
 import MainLayout from '@/components/layout/MainLayout';
+import { Order as OrderType } from '@/types/orders'; // Import the correct Order type
 
 export default function OrderSinglePage() {
   // Use our custom hook to handle all the order details logic
@@ -83,7 +84,10 @@ export default function OrderSinglePage() {
         </div>
 
         <div className="mt-8">
-          <ContractorsSection order={order} />
+          <ContractorsSection 
+            order={order} 
+            contractors={[]} // Pass an empty array as default
+          />
         </div>
 
         <DeleteOrderDialog

@@ -16,21 +16,21 @@ export interface Order {
   type?: string;
   
   // Additional properties needed by various components
-  orderNumber?: string;
+  orderNumber: string; // Make this required to match orders.ts
   order_number?: string;
-  client?: string;
+  client: string; // Make this required to match orders.ts
   clientEmail?: string;
   client_email?: string;
   clientPhone?: string;
   client_phone?: string;
-  address?: string;
+  address: string; // Make this required to match orders.ts
   city?: string;
   state?: string;
   zip?: string;
   price?: number;
-  propertyType?: string;
+  propertyType: string; // Make this required to match orders.ts
   property_type?: string;
-  squareFeet?: number;
+  squareFeet: number; // Make this required to match orders.ts
   square_feet?: number;
   package?: string;
   drivingTimeMin?: number;

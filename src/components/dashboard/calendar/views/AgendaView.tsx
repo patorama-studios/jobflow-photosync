@@ -1,4 +1,3 @@
-
 import React, { memo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Order } from '@/types/order-types';
@@ -37,9 +36,15 @@ export const AgendaView = memo(({ orders }: AgendaViewProps) => {
           const supabaseOrdersData: Order[] = data.map(item => ({
             ...item,
             id: item.id,
-            scheduledDate: item.scheduled_date || '',
-            scheduledTime: item.scheduled_time || '',
+            orderNumber: item.order_number || `Order-${item.id}`,
+            client: item.client || 'Unknown Client',
+            address: item.address || 'No address provided',
+            propertyType: item.property_type || 'Residential',
+            squareFeet: item.square_feet || 0,
+            scheduledDate: item.scheduled_date || new Date().toISOString(),
+            scheduledTime: item.scheduled_time || '12:00 PM',
             status: item.status || 'pending',
+            photographer: item.photographer || 'Unassigned',
           }));
           
           setSupabaseOrders(supabaseOrdersData);
@@ -53,7 +58,6 @@ export const AgendaView = memo(({ orders }: AgendaViewProps) => {
     fetchOrders();
   }, []);
   
-  // Combine local orders with Supabase orders
   const allOrders = [...orders, ...supabaseOrders];
   
   // Filter for upcoming appointments only

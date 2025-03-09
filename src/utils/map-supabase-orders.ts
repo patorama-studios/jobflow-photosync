@@ -4,9 +4,9 @@ import { Order } from '../types/order-types';
 export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
   return supabaseOrders.map((order): Order => ({
     id: order.id,
-    orderNumber: order.order_number,
+    orderNumber: order.order_number || `Order-${order.id}`, // Ensure this is never undefined
     order_number: order.order_number,
-    client: order.client,
+    client: order.client || 'Unknown Client', // Ensure this is never undefined
     customerName: order.client, // Add for compatibility
     clientEmail: order.client_email,
     client_email: order.client_email,
@@ -15,17 +15,17 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     photographer: order.photographer || '',
     photographerPayoutRate: order.photographer_payout_rate,
     photographer_payout_rate: order.photographer_payout_rate,
-    price: order.price,
-    propertyType: order.property_type,
+    price: order.price || 0,
+    propertyType: order.property_type || 'Residential', // Ensure this is never undefined
     property_type: order.property_type,
-    scheduledDate: order.scheduled_date,
+    scheduledDate: order.scheduled_date || new Date().toISOString(), // Ensure this is never undefined
     scheduled_date: order.scheduled_date,
-    scheduledTime: order.scheduled_time,
+    scheduledTime: order.scheduled_time || '12:00 PM', // Ensure this is never undefined
     scheduled_time: order.scheduled_time,
-    squareFeet: order.square_feet,
+    squareFeet: order.square_feet || 0, // Ensure this is never undefined
     square_feet: order.square_feet,
-    status: order.status,
-    address: order.address,
+    status: order.status || 'pending',
+    address: order.address || 'No address provided', // Ensure this is never undefined
     propertyAddress: order.address, // Add for compatibility
     city: order.city || '',
     state: order.state || '',
