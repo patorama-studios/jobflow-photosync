@@ -1,6 +1,6 @@
 
 import React, { useEffect, Suspense } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -50,8 +50,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: any; resetErrorBo
 );
 
 function App() {
-  const location = useLocation();
-  
   // Initialize performance monitoring
   useEffect(() => {
     console.log("App component mounted");
@@ -65,8 +63,6 @@ function App() {
     
     // Debug current route
     console.log("Current path:", window.location.pathname);
-    console.log("Current location:", location);
-    console.log("Current routes config:", routes);
     
     // In development, redirect to dashboard by default if we're at root
     if (import.meta.env.DEV && window.location.pathname === '/') {
@@ -77,10 +73,10 @@ function App() {
     return () => {
       cleanupPerformance();
     };
-  }, [location]);
+  }, []);
 
   // If we're at the root path, redirect to dashboard in development
-  if (import.meta.env.DEV && location.pathname === '/') {
+  if (import.meta.env.DEV && window.location.pathname === '/') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -105,7 +101,7 @@ function App() {
               <Route path="*" element={
                 <div className="flex flex-col items-center justify-center min-h-screen p-4">
                   <h2 className="text-xl font-semibold mb-2">Route Not Found</h2>
-                  <p className="text-gray-600 mb-4">Current path: {location.pathname}</p>
+                  <p className="text-gray-600 mb-4">Current path: {window.location.pathname}</p>
                   <div className="flex flex-wrap gap-2">
                     <button 
                       onClick={() => window.location.href = '/'}

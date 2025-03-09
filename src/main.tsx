@@ -1,5 +1,6 @@
 
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 import { installGlobalErrorMonitoring } from './utils/pre-commit-check.ts'
@@ -168,18 +169,15 @@ const mountApp = () => {
       createMinimalUI();
     }, 5000);
     
-    // Try rendering the app
-    try {
-      // Wrap the App in an error boundary
-      root.render(<App />);
-      clearTimeout(appLoadTimeout);
-      console.log('App render completed');
-    } catch (error) {
-      console.error('Error during initial App render:', error);
-      clearTimeout(appLoadTimeout);
-      createMinimalUI();
-      throw error;
-    }
+    // Wrap App in BrowserRouter before rendering
+    root.render(
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    );
+    
+    clearTimeout(appLoadTimeout);
+    console.log('App render completed');
     
     // Show a simple initialization message in the console
     console.log('%c✨ Patorama Studios App Initialized ✨', 'color: #3b82f6; font-weight: bold; font-size: 14px;');
