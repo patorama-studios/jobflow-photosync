@@ -19,6 +19,7 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
   isDelivering
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   // Format date for display
   const formattedDate = order.scheduledDate ? formatDate(new Date(order.scheduledDate)) : 'No date scheduled';
@@ -31,6 +32,25 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
       case 'scheduled': return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
       case 'canceled': return 'bg-red-100 text-red-800 hover:bg-red-200';
       default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
+  // This function now returns a Promise to match the expected type
+  const handleConfirmDelete = async (): Promise<void> => {
+    try {
+      setIsDeleting(true);
+      // Simulate deletion and navigation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // This will trigger the delete action and navigate to /orders
+      if (order.id) {
+        window.location.href = '/orders';
+      }
+    } catch (error) {
+      console.error("Error during delete:", error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -92,13 +112,8 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
       <DeleteOrderDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        onConfirmDelete={() => {
-          // This will trigger the delete action and navigate to /orders
-          // The navigation is handled in the useOrderDetails hook
-          if (order.id) {
-            window.location.href = '/orders';
-          }
-        }}
+        onConfirmDelete={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

@@ -28,6 +28,7 @@ const OrderSinglePage = () => {
   
   const [activeTab, setActiveTab] = useState('details');
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Format order number - remove "ORD-" prefix
   const formatOrderNumber = (orderNumber: string) => {
@@ -42,9 +43,16 @@ const OrderSinglePage = () => {
     setIsDeliveryDialogOpen(true);
   };
 
-  // Handle delete confirmation
-  const handleConfirmDelete = () => {
-    confirmDelete();
+  // Handle delete confirmation - now returns a Promise to match expected type
+  const handleConfirmDelete = async (): Promise<void> => {
+    try {
+      setIsDeleting(true);
+      await confirmDelete();
+    } catch (error) {
+      console.error("Error during delete:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (isLoading) {
@@ -103,6 +111,7 @@ const OrderSinglePage = () => {
             isOpen={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
             onConfirmDelete={handleConfirmDelete}
+            isDeleting={isDeleting}
           />
           
           <DeliverEmailDialog
