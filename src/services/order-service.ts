@@ -129,11 +129,29 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
 
 export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: boolean; data: Order | null; error: string | null }> => {
   try {
-    // Prepare the order data for Supabase
+    // Convert order data to the format expected by Supabase
     const orderData = {
-      ...order,
-      scheduled_date: order.scheduledDate,
-      scheduled_time: order.scheduledTime
+      address: order.address || order.propertyAddress || '',
+      city: order.city || '',
+      client: order.customerName || order.client || '',
+      client_email: order.clientEmail || order.client_email || '',
+      client_phone: order.clientPhone || order.client_phone || '',
+      customer_notes: order.customerNotes || order.customer_notes || '',
+      internal_notes: order.internalNotes || order.internal_notes || '',
+      notes: order.notes || '',
+      order_number: order.orderNumber || order.order_number || `ORD-${Date.now()}`,
+      package: order.package || '',
+      photographer: order.photographer || '',
+      photographer_payout_rate: order.photographerPayoutRate || order.photographer_payout_rate || 0,
+      price: order.price || order.amount || 0,
+      property_type: order.propertyType || order.property_type || '',
+      scheduled_date: order.scheduledDate || order.scheduled_date || '',
+      scheduled_time: order.scheduledTime || order.scheduled_time || '',
+      square_feet: order.squareFeet || order.square_feet || 0,
+      state: order.state || '',
+      status: order.status || 'pending',
+      stripe_payment_id: order.stripePaymentId || order.stripe_payment_id || '',
+      zip: order.zip || ''
     };
     
     const { data, error } = await supabase
