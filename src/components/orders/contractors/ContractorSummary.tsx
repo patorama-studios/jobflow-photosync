@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Users, Briefcase, DollarSign } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
-import { get } from 'lodash'; 
 
 interface ContractorSummaryProps {
   contractors: Contractor[];
