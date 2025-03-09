@@ -35,7 +35,7 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
     }, 2000); // Wait 2 seconds before checking status
     
     return () => clearTimeout(timer);
-  }, [isLoading, session, location.pathname, localLoading, retryCount]);
+  }, [isLoading, session, location.pathname, retryCount]); // Removed localLoading from dependencies to avoid infinite loops
 
   // If we've hit an error after multiple retries
   if (hasError) {

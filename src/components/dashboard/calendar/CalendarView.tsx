@@ -36,10 +36,18 @@ export const CalendarView = memo(({
     );
   }, [orders, selectedDate]);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    onSelectDate(date);
-    onDateSelected(date);
-  };
+  // Memoize the date selection handler to prevent recreation on each render
+  const handleDateSelect = useMemo(() => {
+    return (date: Date | undefined) => {
+      onSelectDate(date);
+      onDateSelected(date);
+    };
+  }, [onSelectDate, onDateSelected]);
+
+  // Debugging
+  React.useEffect(() => {
+    console.log('CalendarView rendering with view:', view);
+  }, [view]);
 
   return (
     <div className="w-full">

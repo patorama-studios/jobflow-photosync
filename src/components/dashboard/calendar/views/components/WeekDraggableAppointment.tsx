@@ -23,6 +23,7 @@ export const WeekDraggableAppointment = memo(({
   
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
     if (onClick) {
       onClick(order);
     }
@@ -42,6 +43,7 @@ export const WeekDraggableAppointment = memo(({
         backgroundColor: statusColor,
         zIndex: 10,
       }}
+      data-order-id={order.id} // Add data attribute for debugging
     >
       <div className="truncate text-xs px-1 text-white">
         {order.client || order.customerName} - {order.scheduledTime}
