@@ -4,6 +4,9 @@ import App from './App.tsx'
 import './index.css'
 import { installGlobalErrorMonitoring } from './utils/pre-commit-check.ts'
 
+// Fix for lodash import issue with Recharts
+window.lodash = window._ = require('lodash');
+
 // Apply theme and font immediately to prevent layout shifts
 const applyThemeAndFont = () => {
   try {
@@ -43,6 +46,14 @@ window.addEventListener('error', (event) => {
   // Increment error count for monitoring
   window.__CONSOLE_ERROR_COUNT__ = (window.__CONSOLE_ERROR_COUNT__ || 0) + 1;
   
+  // Specific handling for the Recharts/lodash error
+  if (event.error && event.error.message && event.error.message.includes('lodash') && 
+      event.error.message.includes('does not provide an export named')) {
+    console.error('Detected lodash import error. Attempting recovery...');
+    displayFallbackUI('Application error with charting library. This is likely due to a library conflict with lodash imports.');
+    return;
+  }
+  
   // Add fallback UI for critical errors
   if (document.body.children.length === 0 || 
       (document.getElementById('root') && document.getElementById('root').children.length === 0)) {
@@ -63,10 +74,16 @@ function displayFallbackUI(message) {
     <h2 style="color: #e11d48; margin-bottom: 10px;">Application Error</h2>
     <p style="margin-bottom: 15px;">${message}</p>
     <p style="margin-bottom: 15px;">Please try refreshing the page. If the problem persists, contact support.</p>
-    <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" 
-            onclick="window.location.reload()">
-      Refresh Page
-    </button>
+    <div>
+      <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;" 
+              onclick="window.location.reload()">
+        Refresh Page
+      </button>
+      <button style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" 
+              onclick="window.location.href = '/dashboard'">
+        Try Dashboard Directly
+      </button>
+    </div>
   `;
   
   if (document.getElementById('root')) {
@@ -85,6 +102,30 @@ setTimeout(() => {
     console.error('Failed to initialize error monitoring:', err);
   }
 }, 0);
+
+// Simple function to create a minimal UI if App component fails to load
+function createMinimalUI() {
+  const rootElement = document.getElementById("root");
+  if (!rootElement) return;
+  
+  rootElement.innerHTML = `
+    <div style="padding: 2rem; text-align: center; max-width: 600px; margin: 0 auto;">
+      <h1 style="font-size: 1.5rem; margin-bottom: 1rem;">Patorama Studios</h1>
+      <p style="margin-bottom: 1rem;">The application is having trouble loading. Let's try a direct route.</p>
+      <div>
+        <a href="/dashboard" style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem; margin-right: 0.5rem;">
+          Dashboard
+        </a>
+        <a href="/orders" style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem; margin-right: 0.5rem;">
+          Orders
+        </a>
+        <a href="/debug" style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
+          Debug
+        </a>
+      </div>
+    </div>
+  `;
+}
 
 // Improved mount function with debugging for deployment issues
 const mountApp = () => {
@@ -105,9 +146,24 @@ const mountApp = () => {
     const root = createRoot(rootElement);
     
     console.log('Rendering app...');
-    root.render(<App />);
     
-    console.log('App render completed');
+    // Set a timeout to detect if App is taking too long to render
+    const appLoadTimeout = setTimeout(() => {
+      console.error('App render timed out - creating minimal UI');
+      createMinimalUI();
+    }, 5000);
+    
+    // Try rendering the app
+    try {
+      root.render(<App />);
+      clearTimeout(appLoadTimeout);
+      console.log('App render completed');
+    } catch (error) {
+      console.error('Error during initial App render:', error);
+      clearTimeout(appLoadTimeout);
+      createMinimalUI();
+      throw error;
+    }
     
     // Show a simple initialization message in the console
     console.log('%c✨ Patorama Studios App Initialized ✨', 'color: #3b82f6; font-weight: bold; font-size: 14px;');
@@ -149,5 +205,7 @@ declare global {
   interface Window {
     __REACT_ROUTER_HISTORY__?: unknown;
     __CONSOLE_ERROR_COUNT__?: number;
+    _?: any; // For lodash global
+    lodash?: any; // For lodash global
   }
 }

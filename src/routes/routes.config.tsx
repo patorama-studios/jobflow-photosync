@@ -2,56 +2,67 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-// Layouts
-import MainLayout from '@/components/layout/MainLayout';
+// Direct import for pages to ensure they're loaded correctly
+const Home = React.lazy(() => import('@/pages/Home'));
+const Login = React.lazy(() => import('@/pages/Login'));
+const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
+const CalendarPage = React.lazy(() => import('@/pages/CalendarPage'));
+const Orders = React.lazy(() => import('@/pages/Orders'));
+const OrderSinglePage = React.lazy(() => import('@/pages/OrderSinglePage'));
+const OrderDetails = React.lazy(() => import('@/pages/OrderDetails'));
+const Clients = React.lazy(() => import('@/pages/Client'));
+const ClientDetails = React.lazy(() => import('@/pages/ClientDetails'));
+const CompanyDetails = React.lazy(() => import('@/pages/CompanyDetails'));
+const Customers = React.lazy(() => import('@/pages/Customers'));
+const CustomerDetails = React.lazy(() => import('@/pages/CustomerDetails'));
+const Production = React.lazy(() => import('@/pages/Production'));
+const ProductionBoard = React.lazy(() => import('@/pages/ProductionBoard'));
+const ProductionOrderDetails = React.lazy(() => import('@/pages/ProductionOrderDetails'));
+const ProductionUpload = React.lazy(() => import('@/pages/ProductionUpload'));
+const Settings = React.lazy(() => import('@/pages/Settings'));
+const NotFound = React.lazy(() => import('@/pages/NotFound'));
+const LearningHub = React.lazy(() => import('@/pages/LearningHub'));
+const NotificationsCenter = React.lazy(() => import('@/pages/NotificationsCenter'));
+const Products = React.lazy(() => import('@/pages/Products'));
+const PropertyWebsite = React.lazy(() => import('@/pages/PropertyWebsite'));
+const ProductDelivery = React.lazy(() => import('@/pages/ProductDelivery'));
+const Verify = React.lazy(() => import('@/pages/Verify'));
+const FileDownloads = React.lazy(() => import('@/pages/FileDownloads'));
+const GenerateData = React.lazy(() => import('@/pages/GenerateData'));
+const Debug = React.lazy(() => import('@/pages/Debug'));
 
-// Pages
-import Home from '@/pages/Home';
-import Login from '@/pages/Login';
-import Dashboard from '@/pages/Dashboard';
-import CalendarPage from '@/pages/CalendarPage';
-import Orders from '@/pages/Orders';
-import OrderSinglePage from '@/pages/OrderSinglePage';
-import OrderDetails from '@/pages/OrderDetails';
-import Clients from '@/pages/Client';
-import ClientDetails from '@/pages/ClientDetails';
-import CompanyDetails from '@/pages/CompanyDetails';
-import Customers from '@/pages/Customers';
-import CustomerDetails from '@/pages/CustomerDetails';
-import Production from '@/pages/Production';
-import ProductionBoard from '@/pages/ProductionBoard';
-import ProductionOrderDetails from '@/pages/ProductionOrderDetails';
-import ProductionUpload from '@/pages/ProductionUpload';
-import Settings from '@/pages/Settings';
-import NotFound from '@/pages/NotFound';
-import LearningHub from '@/pages/LearningHub';
-import NotificationsCenter from '@/pages/NotificationsCenter';
-import Products from '@/pages/Products';
-import PropertyWebsite from '@/pages/PropertyWebsite';
-import ProductDelivery from '@/pages/ProductDelivery';
-import Verify from '@/pages/Verify';
-import FileDownloads from '@/pages/FileDownloads';
-import GenerateData from '@/pages/GenerateData';
-import Debug from '@/pages/Debug';
+// Page loader with suspense
+const PageLoader = ({ children }: { children: React.ReactNode }) => (
+  <React.Suspense fallback={
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading page...</p>
+      </div>
+    </div>
+  }>
+    {children}
+  </React.Suspense>
+);
 
 const routes = [
   {
     path: '/',
-    element: <Home />,
+    element: <PageLoader><Home /></PageLoader>,
   },
   {
     path: '/login',
-    element: <Login />,
+    element: <PageLoader><Login /></PageLoader>,
   },
   {
     path: '/verify',
-    element: <Verify />,
+    element: <PageLoader><Verify /></PageLoader>,
   },
   {
     path: '/dashboard',
     element: (
       <ProtectedRoute>
-        <Dashboard />
+        <PageLoader><Dashboard /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -59,7 +70,7 @@ const routes = [
     path: '/calendar',
     element: (
       <ProtectedRoute>
-        <CalendarPage />
+        <PageLoader><CalendarPage /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -67,7 +78,7 @@ const routes = [
     path: '/orders',
     element: (
       <ProtectedRoute>
-        <Orders />
+        <PageLoader><Orders /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -75,7 +86,7 @@ const routes = [
     path: '/orders/:orderId',
     element: (
       <ProtectedRoute>
-        <OrderSinglePage />
+        <PageLoader><OrderSinglePage /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -83,7 +94,7 @@ const routes = [
     path: '/orders/:orderId/:tab',
     element: (
       <ProtectedRoute>
-        <OrderSinglePage />
+        <PageLoader><OrderSinglePage /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -91,7 +102,7 @@ const routes = [
     path: '/orders/:orderId/edit',
     element: (
       <ProtectedRoute>
-        <OrderDetails />
+        <PageLoader><OrderDetails /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -99,7 +110,7 @@ const routes = [
     path: '/clients',
     element: (
       <ProtectedRoute>
-        <Clients />
+        <PageLoader><Clients /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -107,7 +118,7 @@ const routes = [
     path: '/clients/:clientId',
     element: (
       <ProtectedRoute>
-        <ClientDetails />
+        <PageLoader><ClientDetails /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -115,7 +126,7 @@ const routes = [
     path: '/companies/:companyId',
     element: (
       <ProtectedRoute>
-        <CompanyDetails />
+        <PageLoader><CompanyDetails /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -123,7 +134,7 @@ const routes = [
     path: '/customers',
     element: (
       <ProtectedRoute>
-        <Customers />
+        <PageLoader><Customers /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -131,7 +142,7 @@ const routes = [
     path: '/customers/:customerId',
     element: (
       <ProtectedRoute>
-        <CustomerDetails />
+        <PageLoader><CustomerDetails /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -139,7 +150,7 @@ const routes = [
     path: '/production',
     element: (
       <ProtectedRoute>
-        <Production />
+        <PageLoader><Production /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -147,7 +158,7 @@ const routes = [
     path: '/production/board',
     element: (
       <ProtectedRoute>
-        <ProductionBoard />
+        <PageLoader><ProductionBoard /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -155,7 +166,7 @@ const routes = [
     path: '/production/order/:orderId',
     element: (
       <ProtectedRoute>
-        <ProductionOrderDetails />
+        <PageLoader><ProductionOrderDetails /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -163,7 +174,7 @@ const routes = [
     path: '/production/upload/:orderId?',
     element: (
       <ProtectedRoute>
-        <ProductionUpload />
+        <PageLoader><ProductionUpload /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -171,7 +182,7 @@ const routes = [
     path: '/settings/*',
     element: (
       <ProtectedRoute>
-        <Settings />
+        <PageLoader><Settings /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -179,7 +190,7 @@ const routes = [
     path: '/learning',
     element: (
       <ProtectedRoute>
-        <LearningHub />
+        <PageLoader><LearningHub /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -187,7 +198,7 @@ const routes = [
     path: '/notifications',
     element: (
       <ProtectedRoute>
-        <NotificationsCenter />
+        <PageLoader><NotificationsCenter /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -195,27 +206,27 @@ const routes = [
     path: '/products',
     element: (
       <ProtectedRoute>
-        <Products />
+        <PageLoader><Products /></PageLoader>
       </ProtectedRoute>
     ),
   },
   {
     path: '/property-website/:orderId',
-    element: <PropertyWebsite />,
+    element: <PageLoader><PropertyWebsite /></PageLoader>,
   },
   {
     path: '/delivery/:orderId',
-    element: <ProductDelivery />,
+    element: <PageLoader><ProductDelivery /></PageLoader>,
   },
   {
     path: '/download/:orderId',
-    element: <FileDownloads />,
+    element: <PageLoader><FileDownloads /></PageLoader>,
   },
   {
     path: '/generate-data',
     element: (
       <ProtectedRoute>
-        <GenerateData />
+        <PageLoader><GenerateData /></PageLoader>
       </ProtectedRoute>
     ),
   },
@@ -223,13 +234,13 @@ const routes = [
     path: '/debug',
     element: (
       <ProtectedRoute>
-        <Debug />
+        <PageLoader><Debug /></PageLoader>
       </ProtectedRoute>
     ),
   },
   {
     path: '*',
-    element: <NotFound />,
+    element: <PageLoader><NotFound /></PageLoader>,
   },
 ];
 
