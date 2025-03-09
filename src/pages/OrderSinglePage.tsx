@@ -10,6 +10,7 @@ import { RefundsSection } from '@/components/orders/details/RefundsSection';
 import { ContractorsSection } from '@/components/orders/details/ContractorsSection';
 import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
 import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
+import MainLayout from '@/components/layout/MainLayout';
 
 export default function OrderSinglePage() {
   // Use our custom hook to handle all the order details logic
@@ -34,31 +35,33 @@ export default function OrderSinglePage() {
     navigate
   } = useOrderDetailsView();
 
+  // Content to be rendered based on loading/error state
+  let content;
+
   // Show loading state
   if (isLoading) {
-    return <OrderDetailsLoading />;
+    content = <OrderDetailsLoading />;
   }
-
   // Show error state
-  if (error) {
-    return <OrderDetailsError error={error} />;
+  else if (error) {
+    content = <OrderDetailsError error={error} />;
   }
-
   // Show not found state
-  if (!order) {
-    return <OrderNotFound orderId={orderId} />;
+  else if (!order) {
+    content = <OrderNotFound orderId={orderId || ''} />;
   }
-
-  return (
-    <OrderErrorBoundary>
+  // Show order details
+  else {
+    content = (
       <div className="container py-6">
         <OrderDetailsHeader
           order={order}
+          orderId={orderId}
           isEditing={isEditing}
-          onEditClick={handleEditClick}
-          onCancelClick={handleCancelClick}
-          onSaveClick={handleSaveClick}
-          onDeleteClick={handleDeleteClick}
+          handleEditClick={handleEditClick}
+          handleDeleteClick={handleDeleteClick}
+          handleCancelClick={handleCancelClick}
+          handleSaveClick={handleSaveClick}
         />
 
         <div className="mt-6">
@@ -85,10 +88,19 @@ export default function OrderSinglePage() {
 
         <DeleteOrderDialog
           isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          onConfirm={confirmDelete}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirmDelete={confirmDelete}
         />
       </div>
-    </OrderErrorBoundary>
+    );
+  }
+
+  // Wrap everything in the MainLayout to ensure header and sidebar are present
+  return (
+    <MainLayout>
+      <OrderErrorBoundary>
+        {content}
+      </OrderErrorBoundary>
+    </MainLayout>
   );
 }
