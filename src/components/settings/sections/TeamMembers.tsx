@@ -69,7 +69,7 @@ export function TeamMembers() {
       // Add default email if missing
       const enrichedData = data?.map(profile => ({
         ...profile,
-        // If email is missing, create a placeholder from username or id
+        // Fix: Check for email in the profile and provide a fallback if it doesn't exist
         email: profile.email || `${profile.username || profile.id}@example.com`
       })) || [];
       
