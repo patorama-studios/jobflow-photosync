@@ -1,6 +1,6 @@
 
 import React, { lazy, Suspense, memo } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { OrdersView } from '@/components/orders/OrdersView';
 import MainLayout from '@/components/layout/MainLayout';
@@ -20,6 +20,7 @@ const OrderDetailsLoader = () => (
 
 const OrdersPage = memo(() => {
   const { addDummyOrder } = useOrders();
+  const navigate = useNavigate();
   
   return (
     <MainLayout>
@@ -43,7 +44,7 @@ const OrdersPage = memo(() => {
             </div>
           </PageTransition>
         } />
-        <Route path=":orderId" element={
+        <Route path=":orderId/*" element={
           <Suspense fallback={<OrderDetailsLoader />}>
             <OrderDetails />
           </Suspense>
@@ -55,5 +56,4 @@ const OrdersPage = memo(() => {
 
 OrdersPage.displayName = 'OrdersPage';
 
-// Make sure to export as default to fix potential import issues
 export default OrdersPage;

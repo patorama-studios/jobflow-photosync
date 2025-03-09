@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { OrderActions } from "@/components/orders/OrderActions";
@@ -12,6 +12,8 @@ interface OrderRowProps {
 }
 
 const OrderRow = ({ order, onRowClick }: OrderRowProps) => {
+  const navigate = useNavigate();
+  
   // Format date if it exists, otherwise show placeholder
   const formattedDate = order.scheduledDate 
     ? format(new Date(order.scheduledDate), "MMM d, yyyy")
@@ -33,20 +35,22 @@ const OrderRow = ({ order, onRowClick }: OrderRowProps) => {
     }
   };
 
+  // Handle row click with proper navigation
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Only trigger if the click wasn't on a button or action element
+    if (!(e.target as HTMLElement).closest('button')) {
+      e.preventDefault();
+      navigate(`/orders/${order.id}`);
+    }
+  };
+
   return (
     <TableRow 
-      className="hover:bg-muted/50"
-      onClick={(e) => {
-        // Only trigger onRowClick if the click wasn't on a button or action element
-        if (!(e.target as HTMLElement).closest('button')) {
-          onRowClick(order.id);
-        }
-      }}
+      className="hover:bg-muted/50 cursor-pointer"
+      onClick={handleRowClick}
     >
       <TableCell className="font-medium">
-        <Link to={`/orders/${order.id}`} className="hover:underline">
-          {order.orderNumber || order.order_number || `#${order.id.toString().slice(0, 8)}`}
-        </Link>
+        {order.orderNumber || order.order_number || `#${order.id.toString().slice(0, 8)}`}
       </TableCell>
       <TableCell>
         {order.customerName || order.client || "Unknown Client"}

@@ -9,7 +9,6 @@ const Orders = React.lazy(() => import('@/pages/Orders'));
 const Calendar = React.lazy(() => import('@/pages/Calendar'));
 const Settings = React.lazy(() => import('@/pages/Settings'));
 const Login = React.lazy(() => import('@/pages/Login'));
-const OrderDetails = React.lazy(() => import('@/pages/OrderDetails'));
 const Production = React.lazy(() => import('@/pages/Production'));
 const Customers = React.lazy(() => import('@/pages/Customers'));
 const CustomerDetails = React.lazy(() => import('@/pages/CustomerDetails'));
@@ -61,21 +60,11 @@ export const routes = [
     ),
   },
   {
-    path: "/orders",
+    path: "/orders/*",
     element: (
       <ProtectedRoute>
         <React.Suspense fallback={<PageLoadingFallback />}>
           <Orders />
-        </React.Suspense>
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/orders/:orderId",
-    element: (
-      <ProtectedRoute>
-        <React.Suspense fallback={<PageLoadingFallback />}>
-          <OrderDetails />
         </React.Suspense>
       </ProtectedRoute>
     ),
