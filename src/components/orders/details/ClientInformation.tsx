@@ -1,104 +1,132 @@
 
 import React from 'react';
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Order } from '@/types/orders';
+import { Input } from "@/components/ui/input";
+import { Order } from "@/types/order-types";
 
 interface ClientInformationProps {
-  editedOrder: Order | null;
+  order: Order | null;
   isEditing: boolean;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function ClientInformation({ editedOrder, isEditing, handleInputChange }: ClientInformationProps) {
+export const ClientInformation: React.FC<ClientInformationProps> = ({
+  order,
+  isEditing,
+  onInputChange
+}) => {
+  if (!order) return null;
+
   return (
-    <Card className="mt-8">
+    <Card>
       <CardHeader>
         <CardTitle>Client Information</CardTitle>
-        <CardDescription>Details about the client</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="client">Client Name</Label>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="customerName">Client Name</Label>
+          {isEditing ? (
             <Input
-              type="text"
-              id="client"
-              name="client"
-              value={editedOrder?.client || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
+              id="customerName"
+              name="customerName"
+              value={order.customerName || order.client || ''}
+              onChange={onInputChange}
             />
+          ) : (
+            <div className="p-2 bg-muted rounded-md">{order.customerName || order.client || 'N/A'}</div>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="clientEmail">Email</Label>
+            {isEditing ? (
+              <Input
+                id="clientEmail"
+                name="clientEmail"
+                type="email"
+                value={order.clientEmail || order.client_email || ''}
+                onChange={onInputChange}
+              />
+            ) : (
+              <div className="p-2 bg-muted rounded-md">{order.clientEmail || order.client_email || 'N/A'}</div>
+            )}
           </div>
-          <div>
-            <Label htmlFor="client_email">Client Email</Label>
+          
+          <div className="space-y-2">
+            <Label htmlFor="clientPhone">Phone</Label>
+            {isEditing ? (
+              <Input
+                id="clientPhone"
+                name="clientPhone"
+                value={order.clientPhone || order.client_phone || ''}
+                onChange={onInputChange}
+              />
+            ) : (
+              <div className="p-2 bg-muted rounded-md">{order.clientPhone || order.client_phone || 'N/A'}</div>
+            )}
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="propertyAddress">Address</Label>
+          {isEditing ? (
             <Input
-              type="email"
-              id="client_email"
-              name="client_email"
-              value={editedOrder?.client_email || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
+              id="propertyAddress"
+              name="propertyAddress"
+              value={order.propertyAddress || order.address || ''}
+              onChange={onInputChange}
             />
-          </div>
-          <div>
-            <Label htmlFor="client_phone">Client Phone</Label>
-            <Input
-              type="tel"
-              id="client_phone"
-              name="client_phone"
-              value={editedOrder?.client_phone || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </div>
-          <div>
-            <Label htmlFor="address">Address</Label>
-            <Input
-              type="text"
-              id="address"
-              name="address"
-              value={editedOrder?.address || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </div>
-          <div>
+          ) : (
+            <div className="p-2 bg-muted rounded-md">{order.propertyAddress || order.address || 'N/A'}</div>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
             <Label htmlFor="city">City</Label>
-            <Input
-              type="text"
-              id="city"
-              name="city"
-              value={editedOrder?.city || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
+            {isEditing ? (
+              <Input
+                id="city"
+                name="city"
+                value={order.city || ''}
+                onChange={onInputChange}
+              />
+            ) : (
+              <div className="p-2 bg-muted rounded-md">{order.city || 'N/A'}</div>
+            )}
           </div>
-          <div>
+          
+          <div className="space-y-2">
             <Label htmlFor="state">State</Label>
-            <Input
-              type="text"
-              id="state"
-              name="state"
-              value={editedOrder?.state || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
+            {isEditing ? (
+              <Input
+                id="state"
+                name="state"
+                value={order.state || ''}
+                onChange={onInputChange}
+              />
+            ) : (
+              <div className="p-2 bg-muted rounded-md">{order.state || 'N/A'}</div>
+            )}
           </div>
-          <div>
-            <Label htmlFor="zip">Zip Code</Label>
-            <Input
-              type="text"
-              id="zip"
-              name="zip"
-              value={editedOrder?.zip || ""}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
+          
+          <div className="space-y-2">
+            <Label htmlFor="zip">ZIP</Label>
+            {isEditing ? (
+              <Input
+                id="zip"
+                name="zip"
+                value={order.zip || ''}
+                onChange={onInputChange}
+              />
+            ) : (
+              <div className="p-2 bg-muted rounded-md">{order.zip || 'N/A'}</div>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
-}
+};

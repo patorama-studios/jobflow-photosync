@@ -112,8 +112,7 @@ export function ProductOverrides() {
           client_id,
           override_price,
           standard_price,
-          discount,
-          companies (name)
+          discount
         `);
 
       if (error) {
@@ -122,37 +121,52 @@ export function ProductOverrides() {
 
       console.log("Fetched product overrides:", data);
 
+      // Get company names for each override
+      const companyPromises = [];
+      for (const override of data) {
+        const promise = supabase
+          .from('companies')
+          .select('name')
+          .eq('id', override.client_id)
+          .single();
+        companyPromises.push(promise);
+      }
+
+      const companyResults = await Promise.all(companyPromises);
+      
       // Group overrides by company
-      const groupedOverrides = data.reduce((acc, curr) => {
-        const companyId = curr.client_id;
-        const companyName = curr.companies ? curr.companies.name : 'Unknown Company';
+      const overridesMap = new Map<string, ProductOverride>();
+      
+      for (let i = 0; i < data.length; i++) {
+        const override = data[i];
+        const companyResult = companyResults[i];
+        const companyName = companyResult.data?.name || 'Unknown Company';
+        const companyId = override.client_id;
         
         // Find or create the override for this company
-        let override = acc.find(o => o.companyId === companyId);
+        let overrideObj = overridesMap.get(companyId);
         
-        if (!override) {
-          override = {
-            id: curr.id,
-            name: curr.name || `${companyName} Override`,
+        if (!overrideObj) {
+          overrideObj = {
+            id: crypto.randomUUID(),
+            name: `${companyName} Pricing`,
             companyId,
             companyName,
             overriddenProducts: []
           };
-          acc.push(override);
+          overridesMap.set(companyId, overrideObj);
         }
         
         // Add this product to the override
-        override.overriddenProducts.push({
-          productId: curr.id,
-          productName: curr.name,
-          regularPrice: curr.standard_price,
-          overridePrice: curr.override_price
+        overrideObj.overriddenProducts.push({
+          productId: override.id,
+          productName: override.name,
+          regularPrice: override.standard_price,
+          overridePrice: override.override_price
         });
-        
-        return acc;
-      }, [] as ProductOverride[]);
+      }
       
-      setOverrides(groupedOverrides);
+      setOverrides(Array.from(overridesMap.values()));
     } catch (error) {
       console.error("Error fetching product overrides:", error);
       toast.error("Failed to load product overrides");
@@ -303,7 +317,7 @@ export function ProductOverrides() {
 
       const { data, error } = await supabase
         .from('product_overrides')
-        .insert(overridesToInsert)
+        .insert(overridesToInsert || [])
         .select();
 
       if (error) {

@@ -53,6 +53,7 @@ export function useNotificationSettings() {
       if (data && data.value) {
         // Properly cast the JSON value to the expected type
         const parsedSettings = data.value as unknown as NotificationSetting[];
+        console.log('Loaded notification settings from Supabase:', parsedSettings);
         setSettings(parsedSettings);
       } else {
         // No settings found, create default ones
@@ -75,30 +76,35 @@ export function useNotificationSettings() {
     fetchNotificationSettings();
   }, [fetchNotificationSettings]);
   
-  const updateChannelForType = useCallback((type: string, channel: 'email' | 'sms' | 'push', value: boolean) => {
-    setSettings(prev => 
-      prev.map(setting => 
-        setting.type === type 
-          ? { ...setting, channels: { ...setting.channels, [channel]: value } } 
-          : setting
-      )
-    );
-    
-    // Save changes
-    saveNotificationSettings(settings.map(setting => 
+  const updateChannelForType = useCallback(async (type: string, channel: 'email' | 'sms' | 'push', value: boolean) => {
+    // Create a new array with the updated setting
+    const updatedSettings = settings.map(setting => 
       setting.type === type 
         ? { ...setting, channels: { ...setting.channels, [channel]: value } } 
         : setting
-    ));
+    );
+    
+    // Update local state
+    setSettings(updatedSettings);
+    
+    // Save changes to Supabase
+    const success = await saveNotificationSettings(updatedSettings);
+    
+    if (success) {
+      toast.success(`${type} ${channel} notifications ${value ? 'enabled' : 'disabled'}`);
+    }
   }, [settings]);
   
   const saveNotificationSettings = async (updatedSettings: NotificationSetting[]) => {
     try {
+      console.log('Saving notification settings to Supabase:', updatedSettings);
+      
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'notification_preferences',
-          value: updatedSettings as unknown as JsonValue
+          value: updatedSettings as unknown as JsonValue,
+          is_global: true
         });
       
       if (error) {
@@ -107,7 +113,6 @@ export function useNotificationSettings() {
         return false;
       }
       
-      toast.success('Notification settings saved successfully');
       return true;
     } catch (error) {
       console.error('Unexpected error saving notification settings:', error);

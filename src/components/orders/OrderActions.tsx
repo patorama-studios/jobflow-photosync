@@ -14,6 +14,7 @@ import { MoreHorizontal, Eye, Edit, Trash, Loader2 } from "lucide-react";
 import { DeleteOrderDialog } from "./details/DeleteOrderDialog";
 import { deleteOrder } from "@/services/order-service";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface OrderActionsProps {
   orderId: string;
@@ -23,6 +24,7 @@ interface OrderActionsProps {
 
 export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActionsProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -53,6 +55,16 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
       
       if (success) {
         toast.success("Order deleted successfully");
+        
+        // Invalidate orders query cache
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        
+        // If we're on a specific order's page, navigate back to orders
+        if (window.location.pathname.includes(orderId)) {
+          navigate('/orders', { replace: true });
+        }
+        
+        // Call the callback if provided
         if (onOrderDeleted) {
           onOrderDeleted();
         }
@@ -62,6 +74,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
       toast.error("An unexpected error occurred while deleting the order");
     } finally {
       setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 

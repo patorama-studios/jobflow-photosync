@@ -1,24 +1,25 @@
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Edit, Trash2 } from 'lucide-react';
-import { useOrderDetails } from '@/hooks/use-order-details';
-import { useContractors } from '@/hooks/use-contractors';
-import { useRefunds } from '@/hooks/use-refunds';
-import { Order as OrderType } from '@/types/order-types';
-import { Order as UIOrder } from '@/types/orders';
 
+import React, { useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { useOrderDetails } from '@/hooks/use-order-details';
+import { Order as OrderType } from '@/types/order-types';
 import { Button } from "@/components/ui/button";
 import { OrderInformation } from '@/components/orders/details/OrderInformation';
 import { ClientInformation } from '@/components/orders/details/ClientInformation';
 import { PhotographerInformation } from '@/components/orders/details/PhotographerInformation';
 import { OrderNotes } from '@/components/orders/details/OrderNotes';
-import { ContractorsSection } from '@/components/orders/details/ContractorsSection';
-import { RefundsSection } from '@/components/orders/details/RefundsSection';
 import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { useHeaderSettings } from '@/hooks/useHeaderSettings';
+import { PageTransition } from '@/components/layout/PageTransition';
+import MainLayout from '@/components/layout/MainLayout';
 
 const OrderDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  console.log("OrderDetails - Order ID from params:", id);
+  const { orderId } = useParams<{ orderId: string }>();
+  const navigate = useNavigate();
+  const { setTitle, setShowBackButton, setBackButtonAction } = useHeaderSettings();
   
   const { 
     order, 
@@ -27,8 +28,6 @@ const OrderDetails = () => {
     error, 
     isEditing, 
     isDeleteDialogOpen,
-    refundsForOrder, 
-    setRefundsForOrder,
     setIsDeleteDialogOpen,
     handleEditClick,
     handleCancelClick,
@@ -37,102 +36,183 @@ const OrderDetails = () => {
     handleSaveClick,
     handleDeleteClick,
     confirmDelete
-  } = useOrderDetails(id);
-  
-  const { contractors, isLoading: isContractorsLoading, error: contractorsError } = useContractors();
-  const { refunds, isLoading: isRefundsLoading, error: refundsError } = useRefunds();
+  } = useOrderDetails(orderId);
 
   useEffect(() => {
-    if (order && refunds) {
-      const orderRefunds = refunds
-        .filter(refund => refund.orderId === order.id);
-      setRefundsForOrder(orderRefunds);
+    // Set header title and back button
+    if (order) {
+      setTitle(`Order ${order.orderNumber || order.order_number || orderId}`);
+    } else {
+      setTitle('Order Details');
     }
-  }, [order, refunds, setRefundsForOrder]);
+    
+    setShowBackButton(true);
+    setBackButtonAction(() => navigate('/orders'));
+    
+    // Clean up when component unmounts
+    return () => {
+      setTitle(null);
+      setShowBackButton(false);
+    };
+  }, [order, orderId, setTitle, setShowBackButton, setBackButtonAction, navigate]);
 
-  if (isLoading || isContractorsLoading || isRefundsLoading) {
-    return <p>Loading order details...</p>;
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <PageTransition>
+          <div className="container py-8">
+            <div className="mb-6">
+              <Skeleton className="h-10 w-64 mb-4" />
+              <div className="flex gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton className="h-64" />
+              <Skeleton className="h-64" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+          </div>
+        </PageTransition>
+      </MainLayout>
+    );
   }
 
-  if (error || contractorsError || refundsError) {
-    return <p>Error: {error || contractorsError || refundsError}</p>;
+  if (error) {
+    return (
+      <MainLayout>
+        <PageTransition>
+          <div className="container py-8">
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Error Loading Order</h2>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <Link to="/orders">
+                <Button>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Return to Orders
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </PageTransition>
+      </MainLayout>
+    );
   }
 
-  if (!order) {
-    return <p>Order not found.</p>;
+  if (!order && !isLoading) {
+    return (
+      <MainLayout>
+        <PageTransition>
+          <div className="container py-8">
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Order Not Found</h2>
+              <p className="text-gray-600 mb-6">The order you're looking for doesn't exist or has been removed.</p>
+              <Link to="/orders">
+                <Button>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Return to Orders
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </PageTransition>
+      </MainLayout>
+    );
   }
-
-  // Type assertion to resolve type mismatch
-  const typedOrder = order as unknown as UIOrder;
-  const typedEditedOrder = editedOrder as unknown as UIOrder;
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Order Details</h1>
-        <div className="space-x-2">
-          {!isEditing ? (
-            <>
-              <Button variant="outline" onClick={handleEditClick}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Order
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteClick}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Order
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="secondary" onClick={handleCancelClick}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveClick}>Save</Button>
-            </>
-          )}
+    <MainLayout>
+      <PageTransition>
+        <div className="container py-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-semibold">
+                Order {order?.orderNumber || order?.order_number || orderId}
+              </h1>
+              <p className="text-muted-foreground">
+                {order?.scheduledDate || order?.scheduled_date 
+                  ? new Date(order.scheduledDate || order.scheduled_date).toLocaleDateString() 
+                  : 'No date scheduled'}
+                {order?.status && (
+                  <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    order.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </span>
+                )}
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              {!isEditing ? (
+                <>
+                  <Button onClick={handleEditClick} className="flex items-center">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button 
+                    onClick={handleDeleteClick} 
+                    variant="destructive" 
+                    className="flex items-center"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={handleCancelClick} variant="outline">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveClick}>
+                    Save Changes
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <OrderInformation 
+              order={isEditing ? editedOrder : order} 
+              isEditing={isEditing}
+              onInputChange={handleInputChange}
+              onStatusChange={handleStatusChange}
+            />
+            
+            <ClientInformation 
+              order={isEditing ? editedOrder : order} 
+              isEditing={isEditing}
+              onInputChange={handleInputChange}
+            />
+            
+            <PhotographerInformation 
+              order={isEditing ? editedOrder : order} 
+              isEditing={isEditing}
+              onInputChange={handleInputChange}
+            />
+            
+            <OrderNotes 
+              order={isEditing ? editedOrder : order} 
+              isEditing={isEditing}
+              onInputChange={handleInputChange}
+            />
+          </div>
+  
+          <DeleteOrderDialog
+            isOpen={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            onConfirmDelete={confirmDelete}
+          />
         </div>
-      </div>
-
-      <OrderInformation 
-        editedOrder={typedEditedOrder}
-        isEditing={isEditing}
-        handleInputChange={handleInputChange}
-        handleStatusChange={handleStatusChange}
-      />
-
-      <ClientInformation
-        editedOrder={typedEditedOrder}
-        isEditing={isEditing}
-        handleInputChange={handleInputChange}
-      />
-
-      <PhotographerInformation
-        editedOrder={typedEditedOrder}
-        isEditing={isEditing}
-        handleInputChange={handleInputChange}
-      />
-
-      <OrderNotes
-        editedOrder={typedEditedOrder}
-        isEditing={isEditing}
-        handleInputChange={handleInputChange}
-      />
-
-      <ContractorsSection 
-        contractors={contractors} 
-      />
-
-      <RefundsSection 
-        refundsForOrder={refundsForOrder}
-        order={typedOrder}
-      />
-
-      <DeleteOrderDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirmDelete={confirmDelete}
-      />
-    </div>
+      </PageTransition>
+    </MainLayout>
   );
 };
 

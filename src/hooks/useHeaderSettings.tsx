@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useAppSettings } from './useAppSettings';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface HeaderSettings {
   color: string;
@@ -42,44 +43,92 @@ const logProviderError = () => {
 };
 
 export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { value: persistedSettings, setValue: saveSettings, isLoading } = useAppSettings('headerSettings', defaultSettings);
   const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
   const [title, setTitle] = useState<string | null>(null);
   const [showBackButton, setShowBackButton] = useState(false);
   const [backButtonAction, setBackButtonAction] = useState<() => void>(() => () => {
     console.log('Back button action not set');
   });
+  const [isLoading, setIsLoading] = useState(true);
   
   // Used to track if settings have been loaded and initialized
   const initialized = useRef(false);
 
-  // Load settings when persisted settings are available and only once
+  // Load settings from Supabase
   useEffect(() => {
-    if (!isLoading && persistedSettings && !initialized.current) {
-      setSettings(persistedSettings as HeaderSettings);
-      initialized.current = true;
+    const fetchHeaderSettings = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'headerSettings')
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data?.value) {
+          console.log('Loaded header settings from Supabase:', data.value);
+          setSettings(data.value as HeaderSettings);
+        } else {
+          console.log('No header settings found, using defaults');
+          // Save default settings if none exist
+          await saveToSupabase(defaultSettings);
+          setSettings(defaultSettings);
+        }
+        
+        initialized.current = true;
+      } catch (error) {
+        console.error('Error loading header settings:', error);
+        toast.error('Failed to load header settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHeaderSettings();
+  }, []);
+
+  // Function to save settings to Supabase
+  const saveToSupabase = async (settingsToSave: HeaderSettings) => {
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'headerSettings',
+          value: settingsToSave,
+          is_global: true
+        });
+
+      if (error) {
+        throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving header settings to Supabase:', error);
+      toast.error('Failed to save header settings');
+      return false;
     }
-  }, [persistedSettings, isLoading]);
+  };
 
   // Memoize updateSettings to prevent it from changing on every render
-  const updateSettings = useCallback((newSettings: Partial<HeaderSettings>) => {
+  const updateSettings = useCallback(async (newSettingsPartial: Partial<HeaderSettings>) => {
     setSettings(prevSettings => {
       const updatedSettings = {
         ...prevSettings,
-        ...newSettings
+        ...newSettingsPartial
       };
       
-      // Only save if there are actual changes to prevent loops
-      if (JSON.stringify(updatedSettings) !== JSON.stringify(prevSettings)) {
-        // Using a timeout to avoid state update during render cycle
-        setTimeout(() => {
-          saveSettings(updatedSettings);
-        }, 0);
-      }
+      // Save to Supabase
+      saveToSupabase(updatedSettings);
       
       return updatedSettings;
     });
-  }, [saveSettings]);
+  }, []);
 
   const onBackButtonClick = useCallback(() => {
     backButtonAction();

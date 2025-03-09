@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
   TableHeader, 
@@ -17,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Coupon {
   id: string;
@@ -25,55 +26,18 @@ interface Coupon {
   type: "percentage" | "fixed";
   value: number;
   enabled: boolean;
-  startDate?: Date;
-  endDate?: Date;
-  usageLimit?: number;
-  usedCount: number;
+  start_date?: string;
+  end_date?: string;
+  usage_limit?: number;
+  used_count: number;
 }
-
-// Sample data
-const sampleCoupons: Coupon[] = [
-  {
-    id: "coupon-1",
-    code: "WELCOME20",
-    description: "20% off for new customers",
-    type: "percentage",
-    value: 20,
-    enabled: true,
-    startDate: new Date(2023, 0, 1),
-    endDate: new Date(2023, 11, 31),
-    usageLimit: 100,
-    usedCount: 45
-  },
-  {
-    id: "coupon-2",
-    code: "SUMMER10",
-    description: "$10 off summer promotion",
-    type: "fixed",
-    value: 10,
-    enabled: true,
-    startDate: new Date(2023, 5, 1),
-    endDate: new Date(2023, 8, 30),
-    usageLimit: 200,
-    usedCount: 87
-  },
-  {
-    id: "coupon-3",
-    code: "LOYALTY25",
-    description: "25% off for loyal customers",
-    type: "percentage",
-    value: 25,
-    enabled: false,
-    usageLimit: 50,
-    usedCount: 0
-  }
-];
 
 export function CouponCodes() {
   const { toast } = useToast();
-  const [coupons, setCoupons] = useState<Coupon[]>(sampleCoupons);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [newCoupon, setNewCoupon] = useState<Partial<Coupon>>({
     code: "",
@@ -81,12 +45,73 @@ export function CouponCodes() {
     type: "percentage",
     value: 0,
     enabled: true,
-    usedCount: 0
+    used_count: 0
   });
+
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+
+  const fetchCoupons = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .order('code', { ascending: true });
+
+      if (error) {
+        if (error.code === '42P01') {
+          // Table doesn't exist yet, create it
+          await createCouponsTable();
+          setCoupons([]);
+        } else {
+          throw error;
+        }
+      } else {
+        setCoupons(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load coupon codes"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createCouponsTable = async () => {
+    try {
+      // In a real app, this would be done with a database migration
+      // For this demo, we'll do it client-side
+      const { error } = await supabase.rpc('create_coupons_table');
+      
+      if (error) {
+        console.error("Error creating coupons table:", error);
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error creating coupons table:", error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize coupons system"
+      });
+    }
+  };
 
   const handleEditCoupon = (coupon: Coupon) => {
     setEditingCoupon(coupon);
-    setNewCoupon({...coupon});
+    
+    // Convert date strings to Date objects if they exist
+    const formattedCoupon = {
+      ...coupon,
+      startDate: coupon.start_date ? new Date(coupon.start_date) : undefined,
+      endDate: coupon.end_date ? new Date(coupon.end_date) : undefined
+    };
+    
+    setNewCoupon({...formattedCoupon});
     setIsDialogOpen(true);
   };
 
@@ -98,31 +123,62 @@ export function CouponCodes() {
       type: "percentage",
       value: 0,
       enabled: true,
-      usedCount: 0
+      used_count: 0
     });
     setIsDialogOpen(true);
   };
 
-  const handleDeleteCoupon = (id: string) => {
-    setCoupons(coupons.filter(coupon => coupon.id !== id));
-    toast({
-      title: "Coupon deleted",
-      description: "The coupon has been removed"
-    });
+  const handleDeleteCoupon = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('coupons')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setCoupons(coupons.filter(coupon => coupon.id !== id));
+      
+      toast({
+        title: "Coupon deleted",
+        description: "The coupon has been removed"
+      });
+    } catch (error) {
+      console.error("Error deleting coupon:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete coupon"
+      });
+    }
   };
 
-  const handleToggleCoupon = (id: string, enabled: boolean) => {
-    setCoupons(coupons.map(coupon => 
-      coupon.id === id ? { ...coupon, enabled } : coupon
-    ));
-    
-    toast({
-      title: enabled ? "Coupon enabled" : "Coupon disabled",
-      description: `The coupon has been ${enabled ? "enabled" : "disabled"}`
-    });
+  const handleToggleCoupon = async (id: string, enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('coupons')
+        .update({ enabled })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setCoupons(coupons.map(coupon => 
+        coupon.id === id ? { ...coupon, enabled } : coupon
+      ));
+      
+      toast({
+        title: enabled ? "Coupon enabled" : "Coupon disabled",
+        description: `The coupon has been ${enabled ? "enabled" : "disabled"}`
+      });
+    } catch (error) {
+      console.error("Error toggling coupon:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update coupon"
+      });
+    }
   };
 
-  const handleSaveCoupon = () => {
+  const handleSaveCoupon = async () => {
     if (!newCoupon.code || !newCoupon.description) {
       toast({
         title: "Missing information",
@@ -166,42 +222,110 @@ export function CouponCodes() {
       return;
     }
 
-    if (editingCoupon) {
-      // Update existing coupon
-      setCoupons(coupons.map(coupon => 
-        coupon.id === editingCoupon.id ? { ...coupon, ...newCoupon } as Coupon : coupon
-      ));
+    try {
+      // Prepare data for Supabase
+      const couponData = {
+        code: newCoupon.code,
+        description: newCoupon.description,
+        type: newCoupon.type,
+        value: newCoupon.value,
+        enabled: newCoupon.enabled,
+        start_date: newCoupon.start_date,
+        end_date: newCoupon.end_date,
+        usage_limit: newCoupon.usage_limit,
+        used_count: newCoupon.used_count || 0
+      };
+
+      if (editingCoupon) {
+        // Update existing coupon
+        const { error } = await supabase
+          .from('coupons')
+          .update(couponData)
+          .eq('id', editingCoupon.id);
+
+        if (error) throw error;
+        
+        setCoupons(coupons.map(coupon => 
+          coupon.id === editingCoupon.id ? { ...coupon, ...couponData, id: editingCoupon.id } : coupon
+        ));
+        
+        toast({
+          title: "Coupon updated",
+          description: `${newCoupon.code} has been updated successfully`
+        });
+      } else {
+        // Create new coupon
+        const { data, error } = await supabase
+          .from('coupons')
+          .insert([couponData])
+          .select();
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setCoupons([...coupons, data[0]]);
+        }
+        
+        toast({
+          title: "Coupon created",
+          description: `${newCoupon.code} has been created successfully`
+        });
+      }
       
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving coupon:", error);
       toast({
-        title: "Coupon updated",
-        description: `${newCoupon.code} has been updated successfully`
-      });
-    } else {
-      // Create new coupon
-      const newId = Math.random().toString(36).substring(2, 9);
-      setCoupons([
-        ...coupons,
-        {
-          id: newId,
-          code: newCoupon.code || "",
-          description: newCoupon.description || "",
-          type: newCoupon.type || "percentage",
-          value: newCoupon.value || 0,
-          enabled: newCoupon.enabled || true,
-          startDate: newCoupon.startDate,
-          endDate: newCoupon.endDate,
-          usageLimit: newCoupon.usageLimit,
-          usedCount: 0
-        } as Coupon
-      ]);
-      
-      toast({
-        title: "Coupon created",
-        description: `${newCoupon.code} has been created successfully`
+        title: "Error",
+        description: "Failed to save coupon code"
       });
     }
+  };
 
-    setIsDialogOpen(false);
+  const getValidityString = (coupon: Coupon) => {
+    if (coupon.start_date && coupon.end_date) {
+      const startDate = format(new Date(coupon.start_date), 'MMM d, yyyy');
+      const endDate = format(new Date(coupon.end_date), 'MMM d, yyyy');
+      return `${startDate} - ${endDate}`;
+    } else if (coupon.start_date) {
+      return `Starting ${format(new Date(coupon.start_date), 'MMM d, yyyy')}`;
+    } else if (coupon.end_date) {
+      return `Until ${format(new Date(coupon.end_date), 'MMM d, yyyy')}`;
+    } else {
+      return 'No date limits';
+    }
+  };
+
+  const getDiscountString = (coupon: Coupon) => {
+    if (coupon.type === "percentage") {
+      return `${coupon.value}% off`;
+    } else {
+      return `$${coupon.value} off`;
+    }
+  };
+
+  const getUsageString = (coupon: Coupon) => {
+    if (coupon.usage_limit) {
+      return `${coupon.used_count} / ${coupon.usage_limit}`;
+    } else {
+      return 'Unlimited';
+    }
+  };
+
+  const getUsagePercentage = (coupon: Coupon) => {
+    if (coupon.usage_limit) {
+      return Math.round((coupon.used_count / coupon.usage_limit) * 100);
+    } else {
+      return 0;
+    }
+  };
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    setNewCoupon({...newCoupon, start_date: date ? date.toISOString() : undefined});
+  };
+
+  const handleEndDateChange = (date: Date | undefined) => {
+    setNewCoupon({...newCoupon, end_date: date ? date.toISOString() : undefined});
   };
 
   return (
@@ -219,7 +343,11 @@ export function CouponCodes() {
         </Button>
       </div>
 
-      {coupons.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center p-8 border rounded-md">
+          <p className="text-muted-foreground">Loading coupon codes...</p>
+        </div>
+      ) : coupons.length === 0 ? (
         <div className="text-center p-8 border rounded-md">
           <p className="text-muted-foreground mb-4">No coupon codes found</p>
           <Button variant="outline" size="sm" onClick={handleAddCoupon}>
@@ -252,42 +380,35 @@ export function CouponCodes() {
                     {coupon.type === "percentage" ? (
                       <div className="flex items-center">
                         <Percent className="h-4 w-4 mr-1 text-muted-foreground" />
-                        {coupon.value}% off
+                        {getDiscountString(coupon)}
                       </div>
                     ) : (
                       <div className="flex items-center">
                         <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
-                        {coupon.value} off
+                        {getDiscountString(coupon)}
                       </div>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  {coupon.startDate || coupon.endDate ? (
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span>
-                        {coupon.startDate ? format(coupon.startDate, 'MMM d, yyyy') : 'Always'} - {' '}
-                        {coupon.endDate ? format(coupon.endDate, 'MMM d, yyyy') : 'No expiry'}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">No date limits</span>
-                  )}
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{getValidityString(coupon)}</span>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {coupon.usageLimit ? (
+                  {coupon.usage_limit ? (
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm">{coupon.usedCount} / {coupon.usageLimit}</span>
+                        <span className="text-sm">{getUsageString(coupon)}</span>
                         <span className="text-xs text-muted-foreground">
-                          {Math.round((coupon.usedCount / coupon.usageLimit) * 100)}%
+                          {getUsagePercentage(coupon)}%
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div 
                           className="bg-primary h-1.5 rounded-full" 
-                          style={{ width: `${(coupon.usedCount / coupon.usageLimit) * 100}%` }}
+                          style={{ width: `${getUsagePercentage(coupon)}%` }}
                         ></div>
                       </div>
                     </div>
@@ -399,13 +520,29 @@ export function CouponCodes() {
                 id="usage-limit"
                 type="number"
                 min="0"
-                value={newCoupon.usageLimit || ''}
+                value={newCoupon.usage_limit || ''}
                 onChange={(e) => {
                   const value = e.target.value === '' ? undefined : parseInt(e.target.value);
-                  setNewCoupon({...newCoupon, usageLimit: value});
+                  setNewCoupon({...newCoupon, usage_limit: value});
                 }}
                 placeholder="Leave empty for unlimited usage"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Validity Period (optional)</Label>
+              <div className="flex space-x-2">
+                <Input
+                  type="date"
+                  value={newCoupon.start_date ? format(new Date(newCoupon.start_date), 'yyyy-MM-dd') : ''}
+                  onChange={(e) => handleStartDateChange(e.target.value ? new Date(e.target.value) : undefined)}
+                />
+                <Input
+                  type="date"
+                  value={newCoupon.end_date ? format(new Date(newCoupon.end_date), 'yyyy-MM-dd') : ''}
+                  onChange={(e) => handleEndDateChange(e.target.value ? new Date(e.target.value) : undefined)}
+                />
+              </div>
             </div>
 
             <div className="flex items-center space-x-2 pt-2">
