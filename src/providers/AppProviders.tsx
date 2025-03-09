@@ -20,8 +20,10 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      onError: (error) => {
-        console.error('Query error:', error);
+      meta: {
+        onError: (error: Error) => {
+          console.error('Query error:', error);
+        }
       }
     },
   });
