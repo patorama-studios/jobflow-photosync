@@ -1,45 +1,69 @@
 
 import React, { memo } from 'react';
 import { Order } from '@/types/order-types';
-import { MapPin, Timer } from 'lucide-react';
 
-interface DraggableAppointmentProps {
+interface WeekDraggableAppointmentProps {
   order: Order;
-  position: { top: number, left: number, width: number };
+  position: {
+    top: number;
+    left: number;
+    width: number;
+  };
   onDragStart: (e: React.DragEvent, order: Order) => void;
+  onClick?: (order: Order) => void;
 }
 
-export const WeekDraggableAppointment = memo(({ 
-  order, 
+export const WeekDraggableAppointment = memo(({
+  order,
   position,
-  onDragStart
-}: DraggableAppointmentProps) => {
+  onDragStart,
+  onClick
+}: WeekDraggableAppointmentProps) => {
+  const statusColor = getStatusColor(order.status);
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onClick) {
+      onClick(order);
+    }
+  };
+  
   return (
-    <div 
+    <div
       draggable
       onDragStart={(e) => onDragStart(e, order)}
-      className="absolute bg-primary/10 border-l-4 border-primary rounded-r-md px-2 py-1 cursor-move hover:bg-primary/20 transition-colors"
-      style={{ 
-        top: `${position.top}px`, 
-        left: `${position.left}%`, 
+      onClick={handleClick}
+      className="absolute rounded border cursor-pointer transition-shadow hover:shadow-md"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}%`,
         width: `${position.width}%`,
-        height: '60px',
+        height: '15px',
+        backgroundColor: statusColor,
         zIndex: 10,
       }}
     >
-      <div className="text-xs font-medium truncate">{order.scheduledTime} - {order.client}</div>
-      <div className="text-xs flex items-center mt-1 truncate">
-        <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-        <span className="truncate">{order.address}</span>
+      <div className="truncate text-xs px-1 text-white">
+        {order.client || order.customerName} - {order.scheduledTime}
       </div>
-      {order.drivingTimeMin && (
-        <div className="text-xs flex items-center mt-1">
-          <Timer className="h-3 w-3 mr-1 flex-shrink-0" />
-          {Math.floor(order.drivingTimeMin / 60)}h {order.drivingTimeMin % 60}m
-        </div>
-      )}
     </div>
   );
 });
+
+// Helper function to get color based on status
+function getStatusColor(status?: string): string {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return '#10b981'; // green
+    case 'cancelled':
+      return '#ef4444'; // red
+    case 'scheduled':
+      return '#3b82f6'; // blue
+    case 'pending':
+      return '#f59e0b'; // amber
+    default:
+      return '#6b7280'; // gray
+  }
+}
 
 WeekDraggableAppointment.displayName = 'WeekDraggableAppointment';

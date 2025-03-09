@@ -8,12 +8,14 @@ interface WeekAppointmentsProps {
   weekAppointments: Array<{ order: Order, position: { top: number, left: number, width: number } }>;
   dates: Date[];
   onDragStart: (e: React.DragEvent, order: Order) => void;
+  onAppointmentClick?: (order: Order) => void;
 }
 
 export const WeekAppointments = memo(({ 
   weekAppointments,
   dates,
-  onDragStart
+  onDragStart,
+  onAppointmentClick
 }: WeekAppointmentsProps) => {
   return (
     <div className="relative">
@@ -38,6 +40,7 @@ export const WeekAppointments = memo(({
               width: widthPos
             }}
             onDragStart={onDragStart}
+            onClick={onAppointmentClick ? () => onAppointmentClick(order) : undefined}
           />
         );
       })}

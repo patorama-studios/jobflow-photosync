@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Order } from '@/types/order-types';
 import { fetchOrderDetails, saveOrderChanges, deleteOrder } from '@/services/order-service';
@@ -58,18 +57,24 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
           console.error("Error loading order:", fetchError);
           setError(fetchError);
           setOrder(null);
+          toast.error(`Error loading order: ${fetchError}`);
         } else if (!fetchedOrder) {
+          console.error("Order not found:", orderId);
           setError("Order not found");
           setOrder(null);
+          toast.error("Order not found");
         } else {
+          console.log("Order details loaded successfully:", fetchedOrder);
           setOrder(fetchedOrder);
           setEditedOrder(fetchedOrder);
+          toast.success("Order details loaded");
         }
       } catch (err: any) {
         if (isMounted) {
           console.error("Exception in loadOrderDetails:", err);
           setError(err.message || "An unexpected error occurred");
           setOrder(null);
+          toast.error(err.message || "An unexpected error occurred");
         }
       } finally {
         if (isMounted) {

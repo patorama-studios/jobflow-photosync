@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,6 +10,7 @@ import { CalendarView } from './calendar/CalendarView';
 import { JobList } from './calendar/JobList';
 import { CalendarSkeleton } from './calendar/CalendarSkeleton';
 import { isSameDay, format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define the interface for the JobCountBadge component props
 interface JobCountBadgeProps {
@@ -39,37 +41,106 @@ const JobCountBadge = memo(({ selectedDate, orders }: JobCountBadgeProps) => {
 JobCountBadge.displayName = 'JobCountBadge';
 
 interface JobCalendarProps {
-  calendarView?: "month" | "week" | "day";
+  calendarView?: "month" | "week" | "day" | "agenda";
   onTimeSlotClick?: (time: string) => void;
   onDayClick?: (date: Date) => void;
 }
 
 export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClick }: JobCalendarProps) {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(true);
-  const { orders, isLoading: ordersLoading } = useSampleOrders();
+  const { orders: sampleOrders, isLoading: ordersLoading } = useSampleOrders();
+  const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
   const { toast } = useToast();
   
   const [viewDates, setViewDates] = useState<Date[]>([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [view, setView] = useState<"month" | "week" | "day" | "agenda">(
+    isMobile ? "agenda" : (calendarView || "month")
+  );
+  
+  // Set up mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile && view !== "agenda") {
+        setView("agenda");
+      } else if (!mobile && view === "agenda" && calendarView !== "agenda") {
+        setView(calendarView || "month");
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [calendarView, view]);
+  
+  // Fetch orders from Supabase
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .not('scheduled_date', 'is', null);
+        
+        if (error) {
+          console.error('Error fetching orders:', error);
+          toast({
+            title: "Error loading orders",
+            description: "Failed to fetch scheduled appointments",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data) {
+          // Convert to Order type with required fields
+          const supabaseOrdersData: Order[] = data.map(item => ({
+            ...item,
+            id: item.id,
+            scheduledDate: item.scheduled_date || '',
+            scheduledTime: item.scheduled_time || '',
+            status: item.status || 'pending',
+          }));
+          
+          setSupabaseOrders(supabaseOrdersData);
+        }
+      } catch (err) {
+        console.error('Error in fetchOrders:', err);
+        toast({
+          title: "Error loading orders",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchOrders();
+  }, [toast]);
+  
+  // Combine sample orders with Supabase orders
+  const allOrders = useMemo(() => [...sampleOrders, ...supabaseOrders], [sampleOrders, supabaseOrders]);
   
   // Update view dates when calendarView or selectedDate changes
   useEffect(() => {
     if (!selectedDate) return;
     
-    if (calendarView === "week") {
+    if (view === "week") {
       const start = startOfWeek(selectedDate);
       const end = endOfWeek(selectedDate);
       setViewDates(eachDayOfInterval({ start, end }));
-    } else if (calendarView === "day") {
+    } else if (view === "day") {
       setViewDates([selectedDate]);
     } else {
       // For month view, handled by the calendar component
       setViewDates([]);
     }
-  }, [calendarView, selectedDate]);
+  }, [view, selectedDate]);
 
   useEffect(() => {
-    console.log("JobCalendar component mounted with view:", calendarView);
+    console.log("JobCalendar component mounted with view:", view);
     
     if (ordersLoading) {
       setIsLoading(true);
@@ -85,7 +156,7 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
       console.log("JobCalendar component unmounted");
       cancelAnimationFrame(timer);
     };
-  }, [calendarView, ordersLoading]);
+  }, [view, ordersLoading]);
 
   // Handle date change with error handling
   const handleDateSelect = useCallback((date: Date | undefined) => {
@@ -117,6 +188,13 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
       onTimeSlotClick(time);
     }
   }, [onTimeSlotClick, selectedDate]);
+  
+  // Handle order click to navigate to order details
+  const handleOrderClick = useCallback((order: Order) => {
+    if (order.id) {
+      navigate(`/orders/${order.id}`);
+    }
+  }, [navigate]);
 
   if (isLoading || ordersLoading) {
     return <CalendarSkeleton />;
@@ -127,32 +205,34 @@ export function JobCalendar({ calendarView = "month", onTimeSlotClick, onDayClic
       <CardHeader className="pb-2">
         <CardTitle className="flex justify-between items-center">
           <span>
-            {calendarView === "month" 
+            {view === "month" 
               ? "Monthly Calendar" 
-              : calendarView === "week" 
+              : view === "week" 
                 ? "Weekly Schedule" 
-                : "Daily Schedule"}
+                : view === "day"
+                  ? "Daily Schedule"
+                  : "Upcoming Appointments"}
           </span>
-          <JobCountBadge selectedDate={selectedDate} orders={orders} />
+          <JobCountBadge selectedDate={selectedDate} orders={allOrders} />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`grid gap-8 ${calendarView === "month" ? "grid-cols-1" : "grid-cols-1"}`}>
+        <div className={`grid gap-8 ${view === "month" ? "grid-cols-1" : "grid-cols-1"}`}>
           <CalendarView 
-            orders={orders}
+            orders={allOrders}
             selectedDate={selectedDate}
             onSelectDate={handleDateSelect}
             onDateSelected={handleDateSelect}
             onTimeSlotClick={handleTimeSlotClick}
-            view={calendarView}
+            view={view}
             viewDates={viewDates}
           />
           
           {/* Always show the job list in month view */}
-          {calendarView === "month" && (
+          {view === "month" && (
             <JobList
               selectedDate={selectedDate}
-              orders={orders}
+              orders={allOrders}
             />
           )}
         </div>

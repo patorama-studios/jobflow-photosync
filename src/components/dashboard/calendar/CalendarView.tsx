@@ -1,9 +1,10 @@
 
 import React, { memo, useMemo } from 'react';
-import { Order } from '@/hooks/useSampleOrders';
+import { Order } from '@/types/order-types';
 import { MonthView } from './views/MonthView';
 import { WeekView } from './views/WeekView';
 import { DayView } from './views/DayView';
+import { AgendaView } from './views/AgendaView';
 import { isSameDay } from 'date-fns';
 
 interface CalendarViewProps {
@@ -12,7 +13,7 @@ interface CalendarViewProps {
   onSelectDate: (date: Date | undefined) => void;
   onDateSelected: (date: Date | undefined) => void;
   onTimeSlotClick?: (time: string) => void;
-  view?: "month" | "week" | "day";
+  view?: "month" | "week" | "day" | "agenda";
   viewDates?: Date[];
 }
 
@@ -65,6 +66,12 @@ export const CalendarView = memo(({
           date={selectedDate}
           orders={orders}
           onTimeSlotClick={onTimeSlotClick}
+        />
+      )}
+      
+      {view === "agenda" && (
+        <AgendaView
+          orders={orders}
         />
       )}
     </div>
