@@ -162,10 +162,8 @@ export const InvoicingTab: React.FC<InvoicingTabProps> = ({
       <RefundDialog 
         open={isRefundDialogOpen} 
         onOpenChange={setIsRefundDialogOpen}
-        orderData={order}
-        onRefundProcessed={(refund) => {
-          setRefundsForOrder([...refundsForOrder, refund]);
-        }}
+        orderId={order.id}
+        orderTotal={order.price || order.amount || 0}
       />
     </div>
   );

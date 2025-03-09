@@ -1,209 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Plus, Trash2, Edit, Check, X } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
-
-export interface Contractor {
-  id: string | number;
-  name: string;
-  role: string;
-  payoutRate?: number;
-  payoutAmount?: number;
-  notes?: string;
-}
-
-export interface ContractorPayoutsProps {
-  orderId: string | number;
-}
+import { Plus } from "lucide-react";
+import { ContractorPayoutsProps } from './contractors/types';
+import { ContractorDisplay } from './contractors/ContractorDisplay';
+import { ContractorForm } from './contractors/ContractorForm';
+import { NewContractorForm } from './contractors/NewContractorForm';
+import { ContractorSummary } from './contractors/ContractorSummary';
+import { useContractorPayouts } from './contractors/useContractorPayouts';
 
 export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId }) => {
-  const [contractors, setContractors] = useState<Contractor[]>([]);
-  const [totalOrderAmount, setTotalOrderAmount] = useState<number>(0);
-  const [editingContractorId, setEditingContractorId] = useState<string | number | null>(null);
-  const [newContractor, setNewContractor] = useState<Partial<Contractor>>({
-    name: '',
-    role: 'photographer',
-    payoutRate: undefined,
-    payoutAmount: undefined,
-    notes: ''
-  });
-  const [showNewContractorForm, setShowNewContractorForm] = useState(false);
-
-  const contractorRoles = [
-    { value: 'photographer', label: 'Photographer' },
-    { value: 'editor', label: 'Editor' },
-    { value: 'assistant', label: 'Assistant' },
-    { value: 'videographer', label: 'Videographer' },
-    { value: 'drone_operator', label: 'Drone Operator' },
-    { value: 'other', label: 'Other' }
-  ];
-
-  useEffect(() => {
-    // Fetch order total and contractors
-    const fetchData = async () => {
-      if (!orderId) return;
-
-      try {
-        // Fetch order details to get total amount
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .select('price')
-          .eq('id', orderId.toString())
-          .single();
-
-        if (orderError) throw orderError;
-        
-        if (orderData && orderData.price) {
-          setTotalOrderAmount(orderData.price);
-        }
-
-        // For now, use mock data instead of trying to fetch from a non-existent table
-        // In a real implementation, you would create and use an actual order_contractors table
-        setContractors([
-          {
-            id: '1',
-            name: 'John Photographer',
-            role: 'photographer',
-            payoutRate: 70,
-            payoutAmount: orderData?.price * 0.7 || 0,
-            notes: 'Primary photographer'
-          },
-          {
-            id: '2',
-            name: 'Sarah Editor',
-            role: 'editor',
-            payoutRate: 20,
-            payoutAmount: orderData?.price * 0.2 || 0,
-            notes: 'Photo editing'
-          }
-        ]);
-      } catch (err) {
-        console.error('Error fetching contractor data:', err);
-        toast.error('Failed to load contractor information');
-      }
-    };
-
-    fetchData();
-  }, [orderId]);
-
-  const handleEditContractor = (contractor: Contractor) => {
-    setEditingContractorId(contractor.id);
-  };
-
-  const handleSaveContractor = (editedContractor: Contractor) => {
-    const updatedContractors = contractors.map(c => 
-      c.id === editedContractor.id ? editedContractor : c
-    );
-    setContractors(updatedContractors);
-    setEditingContractorId(null);
-    
-    toast.success(`${editedContractor.name}'s payment details have been updated.`);
-  };
-
-  const handleDeleteContractor = (contractorId: string | number) => {
-    const updatedContractors = contractors.filter(c => c.id !== contractorId);
-    setContractors(updatedContractors);
-    
-    toast.success("The contractor has been removed from this order.");
-  };
-
-  const handleAddNewContractor = () => {
-    if (!newContractor.name) {
-      toast.error("Please enter a name for the contractor.");
-      return;
-    }
-
-    const newContractorWithId: Contractor = {
-      ...newContractor as Contractor,
-      id: `temp-${Date.now()}`  // In a real app, this would be a UUID or DB-generated ID
-    };
-
-    setContractors([...contractors, newContractorWithId]);
-    setNewContractor({
-      name: '',
-      role: 'photographer',
-      payoutRate: undefined,
-      payoutAmount: undefined,
-      notes: ''
-    });
-    setShowNewContractorForm(false);
-
-    toast.success(`${newContractorWithId.name} has been added to this order.`);
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: keyof Contractor,
-    contractor?: Contractor
-  ) => {
-    const value = field === 'payoutRate' || field === 'payoutAmount' 
-      ? parseFloat(e.target.value) 
-      : e.target.value;
-
-    if (contractor) {
-      // Editing existing contractor
-      const updatedContractor = { ...contractor, [field]: value };
-      
-      // If payoutRate changes, calculate payoutAmount
-      if (field === 'payoutRate' && !isNaN(value as number)) {
-        updatedContractor.payoutAmount = totalOrderAmount * (value as number) / 100;
-      }
-      
-      // If payoutAmount changes, calculate payoutRate
-      if (field === 'payoutAmount' && !isNaN(value as number) && totalOrderAmount > 0) {
-        updatedContractor.payoutRate = ((value as number) / totalOrderAmount) * 100;
-      }
-      
-      const updatedContractors = contractors.map(c => 
-        c.id === contractor.id ? updatedContractor : c
-      );
-      setContractors(updatedContractors);
-    } else {
-      // Adding new contractor
-      const updatedNewContractor = { ...newContractor, [field]: value };
-      
-      // If payoutRate changes, calculate payoutAmount
-      if (field === 'payoutRate' && !isNaN(value as number)) {
-        updatedNewContractor.payoutAmount = totalOrderAmount * (value as number) / 100;
-      }
-      
-      // If payoutAmount changes, calculate payoutRate
-      if (field === 'payoutAmount' && !isNaN(value as number) && totalOrderAmount > 0) {
-        updatedNewContractor.payoutRate = ((value as number) / totalOrderAmount) * 100;
-      }
-      
-      setNewContractor(updatedNewContractor);
-    }
-  };
-
-  const handleSelectChange = (
-    value: string,
-    field: keyof Contractor,
-    contractor?: Contractor
-  ) => {
-    if (contractor) {
-      // Editing existing contractor
-      const updatedContractor = { ...contractor, [field]: value };
-      const updatedContractors = contractors.map(c => 
-        c.id === contractor.id ? updatedContractor : c
-      );
-      setContractors(updatedContractors);
-    } else {
-      // Adding new contractor
-      setNewContractor(prev => ({ ...prev, [field]: value }));
-    }
-  };
-
-  const calculateTotalPayouts = () => {
-    return contractors.reduce((sum, contractor) => sum + (contractor.payoutAmount || 0), 0);
-  };
+  const {
+    contractors,
+    totalOrderAmount,
+    editingContractorId,
+    newContractor,
+    showNewContractorForm,
+    setShowNewContractorForm,
+    handleEditContractor,
+    handleSaveContractor,
+    handleDeleteContractor,
+    handleAddNewContractor,
+    handleInputChange,
+    handleSelectChange
+  } = useContractorPayouts(orderId);
 
   return (
     <div className="space-y-6">
@@ -213,144 +33,18 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
           <Card key={contractor.id} className="border border-gray-200">
             <CardContent className="p-4">
               {editingContractorId === contractor.id ? (
-                // Edit mode
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <h3 className="font-medium">Edit Contractor</h3>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setEditingContractorId(null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleSaveContractor(contractor)}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`name-${contractor.id}`}>Name</Label>
-                      <Input
-                        id={`name-${contractor.id}`}
-                        value={contractor.name}
-                        onChange={(e) => handleInputChange(e, 'name', contractor)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor={`role-${contractor.id}`}>Role</Label>
-                      <Select 
-                        value={contractor.role} 
-                        onValueChange={(value) => handleSelectChange(value, 'role', contractor)}
-                      >
-                        <SelectTrigger id={`role-${contractor.id}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {contractorRoles.map(role => (
-                            <SelectItem key={role.value} value={role.value}>
-                              {role.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`rate-${contractor.id}`}>Payout Rate (%)</Label>
-                      <Input
-                        id={`rate-${contractor.id}`}
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={contractor.payoutRate !== undefined ? contractor.payoutRate : ''}
-                        onChange={(e) => handleInputChange(e, 'payoutRate', contractor)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor={`amount-${contractor.id}`}>Payout Amount ($)</Label>
-                      <Input
-                        id={`amount-${contractor.id}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={contractor.payoutAmount !== undefined ? contractor.payoutAmount : ''}
-                        onChange={(e) => handleInputChange(e, 'payoutAmount', contractor)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor={`notes-${contractor.id}`}>Notes</Label>
-                    <Textarea
-                      id={`notes-${contractor.id}`}
-                      value={contractor.notes || ''}
-                      onChange={(e) => handleInputChange(e, 'notes', contractor)}
-                      placeholder="Add notes about this payment..."
-                    />
-                  </div>
-                </div>
+                <ContractorForm 
+                  contractor={contractor}
+                  onSave={handleSaveContractor}
+                  onCancel={() => editingContractorId && setEditingContractorId(null)}
+                  totalOrderAmount={totalOrderAmount}
+                />
               ) : (
-                // Display mode
-                <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src="" alt={contractor.name} />
-                      <AvatarFallback>
-                        {contractor.name.split(' ').map(part => part[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-medium">{contractor.name}</h3>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {contractor.role.replace('_', ' ')}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-lg font-semibold flex items-center">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        {contractor.payoutAmount?.toFixed(2) || '0.00'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {contractor.payoutRate !== undefined ? 
-                          `${contractor.payoutRate.toFixed(1)}% of total` : 
-                          'Manual amount'}
-                      </p>
-                    </div>
-                    
-                    <div className="flex space-x-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleEditContractor(contractor)}
-                      >
-                        <Edit className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDeleteContractor(contractor.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <ContractorDisplay
+                  contractor={contractor}
+                  onEdit={handleEditContractor}
+                  onDelete={handleDeleteContractor}
+                />
               )}
             </CardContent>
           </Card>
@@ -360,86 +54,16 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
       {/* Add New Contractor Form */}
       {showNewContractorForm ? (
         <Card className="border border-dashed border-primary/50 bg-primary/5">
-          <CardContent className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-name">Name</Label>
-                <Input
-                  id="new-name"
-                  value={newContractor.name}
-                  onChange={(e) => handleInputChange(e, 'name')}
-                  placeholder="Enter contractor name"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="new-role">Role</Label>
-                <Select 
-                  value={newContractor.role} 
-                  onValueChange={(value) => handleSelectChange(value, 'role')}
-                >
-                  <SelectTrigger id="new-role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contractorRoles.map(role => (
-                      <SelectItem key={role.value} value={role.value}>
-                        {role.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-rate">Payout Rate (%)</Label>
-                <Input
-                  id="new-rate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={newContractor.payoutRate !== undefined ? newContractor.payoutRate : ''}
-                  onChange={(e) => handleInputChange(e, 'payoutRate')}
-                  placeholder="Enter percentage"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="new-amount">Payout Amount ($)</Label>
-                <Input
-                  id="new-amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newContractor.payoutAmount !== undefined ? newContractor.payoutAmount : ''}
-                  onChange={(e) => handleInputChange(e, 'payoutAmount')}
-                  placeholder="Enter amount"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="new-notes">Notes</Label>
-              <Textarea
-                id="new-notes"
-                value={newContractor.notes || ''}
-                onChange={(e) => handleInputChange(e, 'notes')}
-                placeholder="Add notes about this payment..."
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowNewContractorForm(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleAddNewContractor}>Add Contractor</Button>
-            </div>
+          <CardContent>
+            <NewContractorForm
+              onAdd={handleAddNewContractor}
+              onCancel={() => setShowNewContractorForm(false)}
+              newContractor={newContractor}
+              setNewContractor={setNewContractor}
+              totalOrderAmount={totalOrderAmount}
+              handleInputChange={handleInputChange}
+              handleSelectChange={handleSelectChange}
+            />
           </CardContent>
         </Card>
       ) : (
@@ -455,17 +79,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
       
       {/* Summary Section */}
       {contractors.length > 0 && (
-        <div className="bg-muted p-4 rounded-md">
-          <div className="flex justify-between items-center">
-            <h3 className="font-medium">Total Payout</h3>
-            <p className="text-lg font-semibold">
-              ${calculateTotalPayouts().toFixed(2)}
-            </p>
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Across {contractors.length} contractor{contractors.length !== 1 ? 's' : ''}
-          </div>
-        </div>
+        <ContractorSummary contractors={contractors} />
       )}
     </div>
   );
