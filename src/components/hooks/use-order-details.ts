@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Order } from '@/types/order-types';
+import { Order, OrderStatus } from '@/types/order-types';
 import { fetchOrderDetails, saveOrderChanges, deleteOrder } from '@/services/order-service';
 import { useNavigate } from 'react-router-dom';
 
@@ -78,9 +78,19 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
   const handleStatusChange = (status: string) => {
     if (!editedOrder) return;
     
+    // Validate that status is a valid OrderStatus
+    const validStatuses: OrderStatus[] = [
+      "scheduled", "completed", "pending", "canceled", "cancelled",
+      "rescheduled", "in_progress", "editing", "review", "delivered", "unavailable"
+    ];
+    
+    const validStatus: OrderStatus = validStatuses.includes(status as OrderStatus) 
+      ? (status as OrderStatus) 
+      : "pending";
+    
     setEditedOrder({
       ...editedOrder,
-      status,
+      status: validStatus,
     });
   };
 

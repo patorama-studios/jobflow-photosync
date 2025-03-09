@@ -60,9 +60,6 @@ export const generateSampleOrders = (): Order[] => {
       scheduledTime: "11:30 AM",
       squareFeet: 3200,
       status: "scheduled" as OrderStatus,
-      customFields: {
-        specialInstructions: "Staged home, no editing needed"
-      },
       customerNotes: "This is a luxury property, emphasize the view and high-end finishes."
     },
     {
