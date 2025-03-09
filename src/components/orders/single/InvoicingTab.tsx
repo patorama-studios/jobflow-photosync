@@ -3,12 +3,15 @@ import React from 'react';
 import { Order } from '@/types/order-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Receipt, CreditCard, AlertCircle } from 'lucide-react';
+import { RefundRecord } from '@/types/orders';
 
 interface InvoicingTabProps {
   order: Order;
+  refundsForOrder: RefundRecord[];
+  setRefundsForOrder: React.Dispatch<React.SetStateAction<RefundRecord[]>>;
 }
 
-export function InvoicingTab({ order }: InvoicingTabProps) {
+export function InvoicingTab({ order, refundsForOrder, setRefundsForOrder }: InvoicingTabProps) {
   return (
     <div className="mt-4 space-y-6">
       <Card>
@@ -48,6 +51,23 @@ export function InvoicingTab({ order }: InvoicingTabProps) {
                 <div className="font-medium">Payment Details</div>
                 <div className="text-sm text-muted-foreground mt-1">
                   Payment ID: {order.stripePaymentId}
+                </div>
+              </div>
+            )}
+            
+            {refundsForOrder && refundsForOrder.length > 0 && (
+              <div className="p-4 border rounded-md">
+                <div className="font-medium">Refund History</div>
+                <div className="text-sm space-y-2 mt-2">
+                  {refundsForOrder.map((refund) => (
+                    <div key={refund.id} className="border-b pb-2">
+                      <div className="flex justify-between">
+                        <span>{new Date(refund.date).toLocaleDateString()}</span>
+                        <span className="font-medium">${refund.amount}</span>
+                      </div>
+                      <div className="text-muted-foreground">{refund.reason}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

@@ -1,25 +1,54 @@
 
-import React, { useState } from 'react';
-import { OrderErrorBoundary } from '@/components/orders/debug/OrderErrorBoundary';
-import { useOrderDetailsView } from '@/hooks/use-order-details-view';
-import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
-import { OrderDetailsContent } from '@/components/orders/details/OrderDetailsContent';
-import { OrderDetailsError } from '@/components/orders/details/OrderDetailsError';
-import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
-import { RefundsSection } from '@/components/orders/details/RefundsSection';
-import { ContractorsSection } from '@/components/orders/details/ContractorsSection';
-import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
-import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
-import MainLayout from '@/components/layout/MainLayout';
+import React, { Suspense } from 'react';
+import { useParams } from 'react-router-dom';
 import { Order } from '@/types/order-types';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
-import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
-import { ProductionTab } from '@/components/orders/single/ProductionTab';
-import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
+import { Button } from "@/components/ui/button";
+import { useOrderDetailsView } from '@/hooks/use-order-details-view';
+import { PageTransition } from '@/components/layout/PageTransition';
+import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
+import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
+import { OrderTabsContainer } from '@/components/orders/single/OrderTabsContainer';
+import MainLayout from '@/components/layout/MainLayout';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
+
+// Loading state component
+const OrderLoading = () => (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center mb-6">
+      <div>
+        <Skeleton className="h-8 w-48 mb-2" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-10 w-24" />
+        <Skeleton className="h-10 w-24" />
+      </div>
+    </div>
+    <Card>
+      <div className="p-6 space-y-6">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    </Card>
+  </div>
+);
+
+// Error state component
+const OrderError = ({ message }: { message: string }) => (
+  <div className="flex flex-col items-center justify-center p-10 text-center">
+    <AlertCircle className="h-10 w-10 text-destructive mb-4" />
+    <h2 className="text-xl font-semibold">Error Loading Order</h2>
+    <p className="text-muted-foreground mt-2">{message}</p>
+    <Button className="mt-6" variant="outline" onClick={() => window.location.reload()}>
+      Try Again
+    </Button>
+  </div>
+);
 
 export default function OrderSinglePage() {
-  // Use our custom hook to handle all the order details logic
   const {
     orderId,
     order,
@@ -41,99 +70,58 @@ export default function OrderSinglePage() {
     navigate
   } = useOrderDetailsView();
 
-  const [activeTab, setActiveTab] = useState("details");
-
-  // Content to be rendered based on loading/error state
-  let content;
-
-  // Show loading state
   if (isLoading) {
-    content = <OrderDetailsLoading />;
-  }
-  // Show error state
-  else if (error) {
-    content = <OrderDetailsError error={error} />;
-  }
-  // Show not found state
-  else if (!order) {
-    content = <OrderNotFound orderId={orderId || ''} />;
-  }
-  // Show order details
-  else {
-    content = (
-      <div className="container py-6">
-        <OrderDetailsHeader
-          order={order}
-          orderId={orderId}
-          isEditing={isEditing}
-          handleEditClick={handleEditClick}
-          handleDeleteClick={handleDeleteClick}
-          handleCancelClick={handleCancelClick}
-          handleSaveClick={handleSaveClick}
-        />
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="w-full grid grid-cols-4">
-            <TabsTrigger value="details">Order Details</TabsTrigger>
-            <TabsTrigger value="production">Production</TabsTrigger>
-            <TabsTrigger value="communication">Communication</TabsTrigger>
-            <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="details">
-            <OrderDetailsTab 
-              order={order} 
-              editedOrder={editedOrder} 
-              isEditing={isEditing} 
-              onInputChange={handleInputChange} 
-              onStatusChange={handleStatusChange}
-            />
-          </TabsContent>
-
-          <TabsContent value="production">
-            <ProductionTab order={order} />
-          </TabsContent>
-
-          <TabsContent value="communication">
-            <CommunicationTab order={order} />
-          </TabsContent>
-
-          <TabsContent value="invoicing">
-            <InvoicingTab order={order} />
-          </TabsContent>
-        </Tabs>
-
-        <div className="mt-8">
-          <RefundsSection 
-            order={order} 
-            refundsForOrder={refundsForOrder}
-            setRefundsForOrder={setRefundsForOrder}
-          />
-        </div>
-
-        <div className="mt-8">
-          <ContractorsSection 
-            order={order} 
-            contractors={[]} // Pass an empty array as default
-          />
-        </div>
-
-        <DeleteOrderDialog
-          isOpen={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onConfirmDelete={confirmDelete}
-          isDeleting={false}
-        />
-      </div>
+    return (
+      <MainLayout>
+        <PageTransition>
+          <OrderLoading />
+        </PageTransition>
+      </MainLayout>
     );
   }
 
-  // Wrap everything in the MainLayout to ensure header and sidebar are present
+  if (error || !order) {
+    return (
+      <MainLayout>
+        <PageTransition>
+          <OrderError message={error || "Order not found"} />
+        </PageTransition>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
-      <OrderErrorBoundary>
-        {content}
-      </OrderErrorBoundary>
+      <PageTransition>
+        <div className="py-6">
+          <OrderDetailsHeader
+            order={order}
+            orderId={orderId}
+            isEditing={isEditing}
+            handleEditClick={handleEditClick}
+            handleDeleteClick={handleDeleteClick}
+            handleCancelClick={handleCancelClick}
+            handleSaveClick={handleSaveClick}
+          />
+
+          <OrderTabsContainer 
+            order={order}
+            editedOrder={editedOrder}
+            isEditing={isEditing}
+            onInputChange={handleInputChange}
+            onStatusChange={handleStatusChange}
+            refundsForOrder={refundsForOrder}
+            setRefundsForOrder={setRefundsForOrder}
+          />
+
+          <DeleteOrderDialog
+            isOpen={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            onConfirmDelete={confirmDelete}
+            isDeleting={false}
+          />
+        </div>
+      </PageTransition>
     </MainLayout>
   );
 }

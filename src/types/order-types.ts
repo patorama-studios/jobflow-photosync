@@ -1,11 +1,23 @@
 
+export type OrderStatus = 
+  | "scheduled" 
+  | "completed" 
+  | "pending" 
+  | "canceled" 
+  | "cancelled" // Added for compatibility 
+  | "rescheduled" 
+  | "in_progress"
+  | "editing"
+  | "review"
+  | "delivered";
+
 export interface Order {
   id: string | number;
   customerName?: string;
   propertyAddress?: string;
   scheduledDate: string;
   scheduledTime: string;
-  status: string;
+  status: OrderStatus;
   photographer: string;
   amount?: number;
   completedDate?: string;

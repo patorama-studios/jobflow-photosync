@@ -1,5 +1,19 @@
 
-import { Order } from '../types/order-types';
+import { Order, OrderStatus } from '../types/order-types';
+
+// Helper function to convert string status to OrderStatus type
+const validateStatus = (status: string | null | undefined): OrderStatus => {
+  if (!status) return "pending";
+  
+  const validStatuses: OrderStatus[] = [
+    "scheduled", "completed", "pending", "canceled", "cancelled",
+    "rescheduled", "in_progress", "editing", "review", "delivered"
+  ];
+  
+  return validStatuses.includes(status as OrderStatus) 
+    ? (status as OrderStatus) 
+    : "pending";
+};
 
 export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
   return supabaseOrders.map((order): Order => ({
@@ -24,7 +38,7 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     scheduled_time: order.scheduled_time,
     squareFeet: order.square_feet || 0, // Ensure this is never undefined
     square_feet: order.square_feet,
-    status: order.status || 'pending',
+    status: validateStatus(order.status),
     address: order.address || 'No address provided', // Ensure this is never undefined
     propertyAddress: order.address, // Add for compatibility
     city: order.city || '',
