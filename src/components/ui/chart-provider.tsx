@@ -1,6 +1,7 @@
 
 import React, { Suspense } from 'react';
 import { Skeleton } from './skeleton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface ChartProviderProps {
   children: React.ReactNode;
@@ -27,26 +28,3 @@ export const ChartProvider: React.FC<ChartProviderProps> = ({
     </Suspense>
   );
 };
-
-// Simple error boundary component
-class ErrorBoundary extends React.Component<{
-  fallback: React.ReactNode;
-  children: React.ReactNode;
-}> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('Chart error:', error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
-}

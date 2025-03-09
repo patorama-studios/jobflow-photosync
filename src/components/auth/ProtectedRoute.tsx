@@ -3,6 +3,7 @@ import { useEffect, useState, memo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import PageLoading from '../loading/PageLoading';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 export const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, isLoading } = useAuth();
@@ -37,6 +38,12 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
     return () => clearTimeout(timer);
   }, [isLoading, session, location.pathname, retryCount]); // Removed localLoading from dependencies to avoid infinite loops
 
+  // ALWAYS bypass auth in development mode
+  if (import.meta.env.DEV) {
+    console.log('DEV MODE: Protected route is bypassing auth check for:', location.pathname);
+    return <ErrorBoundary>{children}</ErrorBoundary>;
+  }
+
   // If we've hit an error after multiple retries
   if (hasError) {
     return (
@@ -58,13 +65,6 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
     return <PageLoading forceRefreshAfter={10} />;
   }
 
-  // Show children even if no session for development environment
-  // to allow easier testing before auth is fully implemented
-  if (import.meta.env.DEV && !session && !isLoading) {
-    console.log('DEV MODE: Showing protected content without authentication');
-    return <>{children}</>;
-  }
-
   // Redirect to login if definitely not authenticated
   if (!isLoading && !session) {
     console.log('ProtectedRoute - No session, redirecting to login from:', location.pathname);
@@ -73,7 +73,7 @@ export const ProtectedRoute = memo(({ children }: { children: React.ReactNode })
 
   // Either authenticated or forcing decision after timeout
   console.log('ProtectedRoute - Rendering protected content for:', location.pathname);
-  return <>{children}</>;
+  return <ErrorBoundary>{children}</ErrorBoundary>;
 });
 
 ProtectedRoute.displayName = 'ProtectedRoute';

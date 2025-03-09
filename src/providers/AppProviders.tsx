@@ -15,25 +15,39 @@ interface AppProvidersProps {
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClient }) => {
-  // Wrap each provider in its own ErrorBoundary to prevent cascade failures
+  // Configure query client for better error handling
+  queryClient.setDefaultOptions({
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Query error:', error);
+      }
+    },
+  });
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
-          <Router>
-            <AuthProvider>
-              <NotificationsProvider>
-                <AIAssistantProvider>
-                  <React.Suspense fallback={<div>Loading application...</div>}>
-                    <HeaderSettingsProvider>
-                      {children}
-                    </HeaderSettingsProvider>
-                  </React.Suspense>
-                </AIAssistantProvider>
-              </NotificationsProvider>
-            </AuthProvider>
-          </Router>
-        </ThemeProvider>
+        <Router>
+          <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
+            <ErrorBoundary>
+              <AuthProvider>
+                <NotificationsProvider>
+                  <AIAssistantProvider>
+                    <React.Suspense fallback={<div className="p-4">Loading application...</div>}>
+                      <HeaderSettingsProvider>
+                        <ErrorBoundary>
+                          {children}
+                        </ErrorBoundary>
+                      </HeaderSettingsProvider>
+                    </React.Suspense>
+                  </AIAssistantProvider>
+                </NotificationsProvider>
+              </AuthProvider>
+            </ErrorBoundary>
+          </ThemeProvider>
+        </Router>
       </QueryClientProvider>
     </ErrorBoundary>
   );

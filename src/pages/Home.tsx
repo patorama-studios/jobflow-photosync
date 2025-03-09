@@ -3,13 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import PageLoading from '@/components/loading/PageLoading';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function Home() {
   const { session, isLoading } = useAuth();
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Add logging for debugging
+  // Add comprehensive logging for debugging
   useEffect(() => {
     console.log('Home component mounted', { 
       isLoading, 
@@ -31,6 +32,12 @@ export default function Home() {
 
     return () => clearTimeout(timeoutId);
   }, [isLoading, session, retryCount]);
+
+  // For development environment, bypass auth completely
+  if (import.meta.env.DEV) {
+    console.log('DEV MODE: Bypassing auth check and redirecting to dashboard');
+    return <Navigate to="/dashboard" replace />;
+  }
 
   // If we encounter an error after multiple retries
   if (hasError) {
