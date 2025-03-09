@@ -18,6 +18,7 @@ export function ProductSettings() {
   const [activeTab, setActiveTab] = useState("main-products");
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [productType, setProductType] = useState<"main" | "addon">("main");
+  const [isSaving, setIsSaving] = useState(false);
   const { saveUIProduct, refetch } = useProducts();
 
   const handleAddProduct = (type: "main" | "addon") => {
@@ -28,7 +29,14 @@ export function ProductSettings() {
 
   const handleSaveProduct = async (product: Product) => {
     console.log("Handling save product in ProductSettings:", product);
+    setIsSaving(true);
+    
     try {
+      // Make sure a valid ID exists
+      if (!product.id) {
+        product.id = crypto.randomUUID();
+      }
+      
       await saveUIProduct(product);
       await refetch();
       setIsProductDialogOpen(false);
@@ -39,6 +47,8 @@ export function ProductSettings() {
     } catch (error) {
       console.error("Error saving product:", error);
       toast.error(`Failed to save product: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -66,6 +76,7 @@ export function ProductSettings() {
             <Button 
               onClick={() => handleAddProduct(activeTab === "main-products" ? "main" : "addon")}
               size="sm"
+              disabled={isSaving}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add {activeTab === "main-products" ? "Product" : "Add-On"}

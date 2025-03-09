@@ -28,6 +28,7 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .eq('is_active', true)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -51,7 +52,7 @@ export function useProducts() {
     setError(null);
     
     try {
-      // First check if we have app_settings with product details
+      // Get detailed add-on products from app_settings
       const { data: settingsData, error: settingsError } = await supabase
         .from('app_settings')
         .select('*')
@@ -59,12 +60,11 @@ export function useProducts() {
       
       if (settingsError) throw settingsError;
       
-      console.log("Add-ons settings data:", settingsData);
+      console.log("App settings data for products:", settingsData);
       
       // Filter settings to find add-ons
       const addonSettings = settingsData?.filter(setting => {
         try {
-          // Safely cast the value to UIProduct
           const productDetails = setting.value as Record<string, any>;
           return productDetails && productDetails.type === 'addon';
         } catch (e) {
@@ -86,8 +86,8 @@ export function useProducts() {
               description: productValue.description,
               price: productValue.price,
               is_active: productValue.isActive ?? true,
-              created_at: setting.created_at,
-              updated_at: setting.updated_at
+              created_at: setting.created_at || new Date().toISOString(),
+              updated_at: setting.updated_at || new Date().toISOString()
             };
           } catch (e) {
             console.error("Error mapping addon:", e, setting);
@@ -99,17 +99,15 @@ export function useProducts() {
         return addons;
       }
       
-      // If no add-ons found in settings, check the products table
+      // If no add-ons found in settings, look in products table with description containing 'addon'
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_active', true)
+        .ilike('description', '%addon%')
         .order('name', { ascending: true });
 
       if (error) throw error;
       
-      // For now, we don't have a way to distinguish add-ons in the products table
-      // so we'll return all products. In a real app, you'd have a product_type field.
       console.log("Fallback to products table for addons:", data);
       return data || [];
     } catch (err: any) {
@@ -126,16 +124,18 @@ export function useProducts() {
     try {
       setIsLoading(true);
       
+      const productData = {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        is_active: product.is_active !== undefined ? product.is_active : true,
+        updated_at: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('products')
-        .upsert({
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          is_active: product.is_active !== undefined ? product.is_active : true,
-          updated_at: new Date().toISOString()
-        })
+        .upsert(productData)
         .select()
         .single();
       
@@ -144,7 +144,7 @@ export function useProducts() {
       console.log("Product saved successfully:", data);
       
       // Refresh the products list
-      fetchProducts();
+      await fetchProducts();
       
       toast.success(`Product ${product.id ? 'updated' : 'created'} successfully`);
       return data;
@@ -184,7 +184,7 @@ export function useProducts() {
         console.log("Product details deleted from app_settings");
       }
       
-      // Then update the product in the products table
+      // Then update the product in the products table to mark as inactive
       const { error } = await supabase
         .from('products')
         .update({ 
@@ -215,8 +215,18 @@ export function useProducts() {
   const saveUIProduct = useCallback(async (uiProduct: UIProduct) => {
     console.log("Saving UI product:", uiProduct);
     try {
+      // Make sure the ID is valid UUID format
+      let productId = uiProduct.id;
+      if (!productId || productId.length < 36) {
+        // Generate a proper UUID
+        productId = crypto.randomUUID();
+        console.log("Generated new UUID for product:", productId);
+        uiProduct.id = productId;
+      }
+      
+      // Create the product object for the products table
       const dbProduct: Partial<Product> = {
-        id: uiProduct.id,
+        id: productId,
         name: uiProduct.title,
         description: uiProduct.description || null,
         price: uiProduct.hasVariants ? 
@@ -230,16 +240,20 @@ export function useProducts() {
       // Save the simplified version in the products table
       const savedProduct = await saveProduct(dbProduct);
       
-      // Convert the UI product to a JSON-safe format before storing
-      const jsonSafeProduct = JSON.parse(JSON.stringify(uiProduct));
+      // Prepare the product details for app_settings
+      // Make sure to convert the entire object to a JSON-safe format
+      const jsonSafeProduct = JSON.parse(JSON.stringify({
+        ...uiProduct,
+        id: productId
+      }));
       
       console.log("Storing detailed product data in app_settings:", jsonSafeProduct);
       
-      // Store the detailed product data in app_settings as a JSON object
+      // Store the detailed product data in app_settings
       const { error: settingsError } = await supabase
         .from('app_settings')
         .upsert({
-          key: `product_details_${uiProduct.id}`,
+          key: `product_details_${productId}`,
           value: jsonSafeProduct,
           is_global: true,
           updated_at: new Date().toISOString()

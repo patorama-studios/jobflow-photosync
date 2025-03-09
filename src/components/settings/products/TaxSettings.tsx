@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
   TableHeader, 
@@ -11,65 +11,79 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Trash, Plus, Percent, DollarSign } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TaxRate {
   id: string;
   name: string;
   type: "percentage" | "fixed" | "combined";
   percentage?: number;
-  fixedAmount?: number;
+  fixed_amount?: number;
   enabled: boolean;
-  isInternetBankingFee?: boolean;
+  is_payment_fee?: boolean;
 }
 
-// Sample data
-const sampleTaxRates: TaxRate[] = [
-  {
-    id: "tax-1",
-    name: "Sales Tax",
-    type: "percentage",
-    percentage: 7.5,
-    enabled: true
-  },
-  {
-    id: "tax-2",
-    name: "Service Fee",
-    type: "fixed",
-    fixedAmount: 10,
-    enabled: true
-  },
-  {
-    id: "tax-3",
-    name: "Processing Fee",
-    type: "combined",
-    percentage: 2.9,
-    fixedAmount: 0.30,
-    enabled: true,
-    isInternetBankingFee: true
-  }
-];
-
 export function TaxSettings() {
-  const { toast } = useToast();
-  const [taxRates, setTaxRates] = useState<TaxRate[]>(sampleTaxRates);
+  const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTax, setEditingTax] = useState<TaxRate | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   const [newTax, setNewTax] = useState<Partial<TaxRate>>({
     name: "",
     type: "percentage",
     percentage: 0,
-    fixedAmount: 0,
+    fixed_amount: 0,
     enabled: true,
-    isInternetBankingFee: false
+    is_payment_fee: false
   });
 
+  useEffect(() => {
+    fetchTaxRates();
+  }, []);
+
+  const fetchTaxRates = async () => {
+    setIsLoading(true);
+    try {
+      console.log("Fetching tax rates from Supabase...");
+      const { data, error } = await supabase
+        .from('tax_settings')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Fetched tax rates:", data);
+      const formattedTaxRates: TaxRate[] = data.map(rate => ({
+        id: rate.id,
+        name: rate.name,
+        type: rate.type as "percentage" | "fixed" | "combined",
+        percentage: rate.percentage,
+        fixed_amount: rate.fixed_amount,
+        enabled: rate.enabled,
+        is_payment_fee: rate.is_payment_fee
+      }));
+
+      setTaxRates(formattedTaxRates);
+    } catch (error) {
+      console.error("Error fetching tax rates:", error);
+      toast.error("Failed to load tax rates");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleEditTax = (tax: TaxRate) => {
+    console.log("Editing tax:", tax);
     setEditingTax(tax);
     setNewTax({...tax});
     setIsDialogOpen(true);
@@ -81,109 +95,183 @@ export function TaxSettings() {
       name: "",
       type: "percentage",
       percentage: 0,
-      fixedAmount: 0,
+      fixed_amount: 0,
       enabled: true,
-      isInternetBankingFee: false
+      is_payment_fee: false
     });
     setIsDialogOpen(true);
   };
 
-  const handleDeleteTax = (id: string) => {
-    setTaxRates(taxRates.filter(tax => tax.id !== id));
-    toast({
-      title: "Tax rate deleted",
-      description: "The tax rate has been removed"
-    });
-  };
-
-  const handleToggleTax = (id: string, enabled: boolean) => {
-    setTaxRates(taxRates.map(tax => 
-      tax.id === id ? { ...tax, enabled } : tax
-    ));
+  const handleDeleteTax = async (id: string) => {
+    console.log("Deleting tax rate with ID:", id);
+    setIsDeleting(id);
     
-    toast({
-      title: enabled ? "Tax rate enabled" : "Tax rate disabled",
-      description: `The tax rate has been ${enabled ? "enabled" : "disabled"}`
-    });
+    try {
+      const { error } = await supabase
+        .from('tax_settings')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state after successful deletion
+      setTaxRates(taxRates.filter(tax => tax.id !== id));
+      toast.success("Tax rate deleted successfully");
+    } catch (error) {
+      console.error("Error deleting tax rate:", error);
+      toast.error("Failed to delete tax rate");
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
-  const handleSaveTax = () => {
+  const handleToggleTax = async (id: string, enabled: boolean) => {
+    console.log("Toggling tax rate:", id, enabled);
+    
+    try {
+      const { error } = await supabase
+        .from('tax_settings')
+        .update({ enabled, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state after successful update
+      setTaxRates(taxRates.map(tax => 
+        tax.id === id ? { ...tax, enabled } : tax
+      ));
+      
+      toast.success(enabled ? "Tax rate enabled" : "Tax rate disabled");
+    } catch (error) {
+      console.error("Error updating tax rate:", error);
+      toast.error("Failed to update tax rate");
+    }
+  };
+
+  const handleSaveTax = async () => {
     if (!newTax.name) {
-      toast({
-        title: "Missing information",
-        description: "Please enter a name for the tax rate",
-        variant: "destructive"
-      });
+      toast.error("Please enter a name for the tax rate");
       return;
     }
 
     // Validate based on type
     if (newTax.type === "percentage" || newTax.type === "combined") {
       if (!newTax.percentage || newTax.percentage <= 0) {
-        toast({
-          title: "Invalid percentage",
-          description: "Please enter a valid percentage greater than zero",
-          variant: "destructive"
-        });
+        toast.error("Please enter a valid percentage greater than zero");
         return;
       }
     }
 
     if (newTax.type === "fixed" || newTax.type === "combined") {
-      if (!newTax.fixedAmount || newTax.fixedAmount <= 0) {
-        toast({
-          title: "Invalid amount",
-          description: "Please enter a valid amount greater than zero",
-          variant: "destructive"
-        });
+      if (!newTax.fixed_amount || newTax.fixed_amount <= 0) {
+        toast.error("Please enter a valid amount greater than zero");
         return;
       }
     }
 
-    if (editingTax) {
-      // Update existing tax
-      setTaxRates(taxRates.map(tax => 
-        tax.id === editingTax.id ? { ...tax, ...newTax } as TaxRate : tax
-      ));
-      
-      toast({
-        title: "Tax rate updated",
-        description: `${newTax.name} has been updated successfully`
-      });
-    } else {
-      // Create new tax
-      const newId = Math.random().toString(36).substring(2, 9);
-      setTaxRates([
-        ...taxRates,
-        {
-          id: newId,
-          name: newTax.name || "",
-          type: newTax.type || "percentage",
-          percentage: newTax.percentage,
-          fixedAmount: newTax.fixedAmount,
-          enabled: newTax.enabled || true,
-          isInternetBankingFee: newTax.isInternetBankingFee || false
-        } as TaxRate
-      ]);
-      
-      toast({
-        title: "Tax rate created",
-        description: `${newTax.name} has been created successfully`
-      });
-    }
+    try {
+      if (editingTax) {
+        // Update existing tax
+        console.log("Updating tax rate:", newTax);
+        const { error } = await supabase
+          .from('tax_settings')
+          .update({
+            name: newTax.name,
+            type: newTax.type,
+            percentage: newTax.percentage,
+            fixed_amount: newTax.fixed_amount,
+            enabled: newTax.enabled,
+            is_payment_fee: newTax.is_payment_fee,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingTax.id);
 
-    setIsDialogOpen(false);
+        if (error) {
+          throw error;
+        }
+        
+        // Update local state
+        setTaxRates(taxRates.map(tax => 
+          tax.id === editingTax.id ? { ...tax, ...newTax as TaxRate } : tax
+        ));
+        
+        toast.success(`${newTax.name} has been updated successfully`);
+      } else {
+        // Create new tax
+        console.log("Creating new tax rate:", newTax);
+        const { data, error } = await supabase
+          .from('tax_settings')
+          .insert({
+            name: newTax.name,
+            type: newTax.type,
+            percentage: newTax.percentage,
+            fixed_amount: newTax.fixed_amount,
+            enabled: newTax.enabled,
+            is_payment_fee: newTax.is_payment_fee
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw error;
+        }
+        
+        // Add new tax to local state
+        setTaxRates([...taxRates, {
+          id: data.id,
+          name: data.name,
+          type: data.type,
+          percentage: data.percentage,
+          fixed_amount: data.fixed_amount,
+          enabled: data.enabled,
+          is_payment_fee: data.is_payment_fee
+        }]);
+        
+        toast.success(`${newTax.name} has been created successfully`);
+      }
+
+      // Close dialog after successful save
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving tax rate:", error);
+      toast.error("Failed to save tax rate");
+    }
   };
 
   const renderTaxRateValue = (tax: TaxRate) => {
     if (tax.type === "percentage") {
       return `${tax.percentage}%`;
     } else if (tax.type === "fixed") {
-      return `$${tax.fixedAmount?.toFixed(2)}`;
+      return `$${tax.fixed_amount?.toFixed(2)}`;
     } else {
-      return `${tax.percentage}% + $${tax.fixedAmount?.toFixed(2)}`;
+      return `${tax.percentage}% + $${tax.fixed_amount?.toFixed(2)}`;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-medium">Tax & Fee Settings</h3>
+            <p className="text-sm text-muted-foreground">
+              Configure tax rates and additional fees for your products
+            </p>
+          </div>
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -224,7 +312,7 @@ export function TaxSettings() {
                 <TableCell className="font-medium">
                   <div className="flex items-center">
                     {tax.name}
-                    {tax.isInternetBankingFee && (
+                    {tax.is_payment_fee && (
                       <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
                         Payment Fee
                       </span>
@@ -261,8 +349,10 @@ export function TaxSettings() {
                     size="sm" 
                     className="text-destructive"
                     onClick={() => handleDeleteTax(tax.id)}
+                    disabled={isDeleting === tax.id}
                   >
                     <Trash className="h-4 w-4" />
+                    {isDeleting === tax.id && <span className="ml-2">Deleting...</span>}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -348,19 +438,19 @@ export function TaxSettings() {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={newTax.fixedAmount || ''}
-                  onChange={(e) => setNewTax({...newTax, fixedAmount: parseFloat(e.target.value) || 0})}
+                  value={newTax.fixed_amount || ''}
+                  onChange={(e) => setNewTax({...newTax, fixed_amount: parseFloat(e.target.value) || 0})}
                 />
               </div>
             )}
 
             <div className="flex items-center space-x-2 pt-2">
               <Switch
-                id="internet-banking-fee"
-                checked={newTax.isInternetBankingFee || false}
-                onCheckedChange={(checked) => setNewTax({...newTax, isInternetBankingFee: checked})}
+                id="payment-fee"
+                checked={newTax.is_payment_fee || false}
+                onCheckedChange={(checked) => setNewTax({...newTax, is_payment_fee: checked})}
               />
-              <Label htmlFor="internet-banking-fee">This is a payment processing fee</Label>
+              <Label htmlFor="payment-fee">This is a payment processing fee</Label>
             </div>
           </div>
 

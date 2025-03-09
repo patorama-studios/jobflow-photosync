@@ -851,6 +851,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          fixed_amount: number | null
+          id: string
+          is_payment_fee: boolean
+          name: string
+          percentage: number | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          fixed_amount?: number | null
+          id?: string
+          is_payment_fee?: boolean
+          name: string
+          percentage?: number | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          fixed_amount?: number | null
+          id?: string
+          is_payment_fee?: boolean
+          name?: string
+          percentage?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       billing_summary: {

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
   TableHeader, 
@@ -13,9 +13,23 @@ import { Edit, Trash, Plus, Building } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useProducts } from "@/hooks/use-products";
+
+interface Company {
+  id: string;
+  name: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface ProductOverride {
   id: string;
@@ -30,72 +44,16 @@ interface ProductOverride {
   }>;
 }
 
-// Sample data
-const sampleOverrides: ProductOverride[] = [
-  {
-    id: "override-1",
-    name: "Agency Partner Discount",
-    companyId: "company-1",
-    companyName: "ABC Realty",
-    overriddenProducts: [
-      {
-        productId: "prod-1",
-        productName: "Standard Photo Package",
-        regularPrice: 149,
-        overridePrice: 129
-      },
-      {
-        productId: "prod-2",
-        productName: "Virtual Tour",
-        regularPrice: 149,
-        overridePrice: 129
-      }
-    ]
-  },
-  {
-    id: "override-2",
-    name: "Premium Partner Discount",
-    companyId: "company-2", 
-    companyName: "XYZ Properties",
-    overriddenProducts: [
-      {
-        productId: "prod-1",
-        productName: "Standard Photo Package",
-        regularPrice: 149,
-        overridePrice: 119
-      },
-      {
-        productId: "prod-3",
-        productName: "Floor Plan",
-        regularPrice: 75,
-        overridePrice: 60
-      }
-    ]
-  }
-];
-
-// Sample companies for select dropdown
-const sampleCompanies = [
-  { id: "company-1", name: "ABC Realty" },
-  { id: "company-2", name: "XYZ Properties" },
-  { id: "company-3", name: "123 Real Estate" },
-  { id: "company-4", name: "City View Homes" },
-];
-
-// Sample products for select dropdown
-const sampleProducts = [
-  { id: "prod-1", name: "Standard Photo Package", price: 149 },
-  { id: "prod-2", name: "Virtual Tour", price: 149 },
-  { id: "prod-3", name: "Floor Plan", price: 75 },
-  { id: "addon-1", name: "Twilight Photos", price: 99 },
-  { id: "addon-2", name: "Aerial Photography", price: 149 },
-];
-
 export function ProductOverrides() {
-  const { toast } = useToast();
-  const [overrides, setOverrides] = useState<ProductOverride[]>(sampleOverrides);
+  const { products } = useProducts();
+  const [overrides, setOverrides] = useState<ProductOverride[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOverride, setEditingOverride] = useState<ProductOverride | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   
   const [newOverride, setNewOverride] = useState<Partial<ProductOverride>>({
     name: "",
@@ -106,7 +64,105 @@ export function ProductOverrides() {
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [overridePrice, setOverridePrice] = useState<string>("");
 
+  useEffect(() => {
+    fetchCompanies();
+    fetchOverrides();
+  }, []);
+
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const formattedProducts = products.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: product.price
+      }));
+      setAvailableProducts(formattedProducts);
+    }
+  }, [products]);
+
+  const fetchCompanies = async () => {
+    try {
+      console.log("Fetching companies from Supabase...");
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name');
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Fetched companies:", data);
+      setCompanies(data || []);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      toast.error("Failed to load companies");
+    }
+  };
+
+  const fetchOverrides = async () => {
+    setIsLoading(true);
+    try {
+      console.log("Fetching product overrides from Supabase...");
+      const { data, error } = await supabase
+        .from('product_overrides')
+        .select(`
+          id,
+          name,
+          client_id,
+          override_price,
+          standard_price,
+          discount,
+          companies (name)
+        `);
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Fetched product overrides:", data);
+
+      // Group overrides by company
+      const groupedOverrides = data.reduce((acc, curr) => {
+        const companyId = curr.client_id;
+        const companyName = curr.companies ? curr.companies.name : 'Unknown Company';
+        
+        // Find or create the override for this company
+        let override = acc.find(o => o.companyId === companyId);
+        
+        if (!override) {
+          override = {
+            id: curr.id,
+            name: curr.name || `${companyName} Override`,
+            companyId,
+            companyName,
+            overriddenProducts: []
+          };
+          acc.push(override);
+        }
+        
+        // Add this product to the override
+        override.overriddenProducts.push({
+          productId: curr.id,
+          productName: curr.name,
+          regularPrice: curr.standard_price,
+          overridePrice: curr.override_price
+        });
+        
+        return acc;
+      }, [] as ProductOverride[]);
+      
+      setOverrides(groupedOverrides);
+    } catch (error) {
+      console.error("Error fetching product overrides:", error);
+      toast.error("Failed to load product overrides");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleEditOverride = (override: ProductOverride) => {
+    console.log("Editing override:", override);
     setEditingOverride(override);
     setNewOverride({
       name: override.name,
@@ -126,45 +182,60 @@ export function ProductOverrides() {
     setIsDialogOpen(true);
   };
 
-  const handleDeleteOverride = (id: string) => {
-    setOverrides(overrides.filter(override => override.id !== id));
-    toast({
-      title: "Override deleted",
-      description: "The product override has been removed"
-    });
+  const handleDeleteOverride = async (id: string) => {
+    console.log("Deleting override with ID:", id);
+    setIsDeleting(id);
+    
+    try {
+      // Find the override to get all product IDs
+      const override = overrides.find(o => o.id === id);
+      if (!override) {
+        throw new Error("Override not found");
+      }
+      
+      // Delete all product overrides for this company
+      const { error } = await supabase
+        .from('product_overrides')
+        .delete()
+        .eq('client_id', override.companyId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state after successful deletion
+      setOverrides(overrides.filter(o => o.id !== id));
+      toast.success("Product override deleted successfully");
+    } catch (error) {
+      console.error("Error deleting product override:", error);
+      toast.error("Failed to delete product override");
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const handleAddProduct = () => {
     if (!selectedProductId || !overridePrice) {
-      toast({
-        title: "Missing information",
-        description: "Please select a product and enter an override price",
-        variant: "destructive"
-      });
+      toast.error("Please select a product and enter an override price");
       return;
     }
 
-    const product = sampleProducts.find(p => p.id === selectedProductId);
-    if (!product) return;
+    const product = availableProducts.find(p => p.id === selectedProductId);
+    if (!product) {
+      toast.error("Selected product not found");
+      return;
+    }
 
     // Check if product is already in the list
     const exists = newOverride.overriddenProducts?.some(p => p.productId === selectedProductId);
     if (exists) {
-      toast({
-        title: "Product already added",
-        description: "This product is already in the override list",
-        variant: "destructive"
-      });
+      toast.error("This product is already in the override list");
       return;
     }
 
     const price = parseFloat(overridePrice);
     if (isNaN(price) || price <= 0) {
-      toast({
-        title: "Invalid price",
-        description: "Please enter a valid price greater than zero",
-        variant: "destructive"
-      });
+      toast.error("Please enter a valid price greater than zero");
       return;
     }
 
@@ -192,59 +263,90 @@ export function ProductOverrides() {
     });
   };
 
-  const handleSaveOverride = () => {
+  const handleSaveOverride = async () => {
     if (!newOverride.name || !newOverride.companyId || !newOverride.overriddenProducts?.length) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields and add at least one product",
-        variant: "destructive"
-      });
+      toast.error("Please fill in all required fields and add at least one product");
       return;
     }
 
-    const company = sampleCompanies.find(c => c.id === newOverride.companyId);
-    if (!company) return;
-
-    if (editingOverride) {
-      // Update existing override
-      setOverrides(overrides.map(override => 
-        override.id === editingOverride.id 
-          ? {
-              ...override,
-              name: newOverride.name || "",
-              companyId: newOverride.companyId || "",
-              companyName: company.name,
-              overriddenProducts: newOverride.overriddenProducts || []
-            }
-          : override
-      ));
-      
-      toast({
-        title: "Override updated",
-        description: `${newOverride.name} has been updated successfully`
-      });
-    } else {
-      // Create new override
-      const newId = Math.random().toString(36).substring(2, 9);
-      setOverrides([
-        ...overrides,
-        {
-          id: newId,
-          name: newOverride.name || "",
-          companyId: newOverride.companyId || "",
-          companyName: company.name,
-          overriddenProducts: newOverride.overriddenProducts || []
-        }
-      ]);
-      
-      toast({
-        title: "Override created",
-        description: `${newOverride.name} has been created successfully`
-      });
+    const company = companies.find(c => c.id === newOverride.companyId);
+    if (!company) {
+      toast.error("Selected company not found");
+      return;
     }
 
-    setIsDialogOpen(false);
+    setIsSubmitting(true);
+
+    try {
+      console.log("Saving product override:", newOverride);
+
+      if (editingOverride) {
+        // Delete existing overrides for this company
+        await supabase
+          .from('product_overrides')
+          .delete()
+          .eq('client_id', newOverride.companyId);
+      }
+
+      // Insert new overrides
+      const overridesToInsert = newOverride.overriddenProducts?.map(product => {
+        const discount = ((product.regularPrice - product.overridePrice) / product.regularPrice * 100).toFixed(2) + '%';
+        
+        return {
+          client_id: newOverride.companyId,
+          name: product.productName,
+          standard_price: product.regularPrice,
+          override_price: product.overridePrice,
+          discount: discount
+        };
+      });
+
+      const { data, error } = await supabase
+        .from('product_overrides')
+        .insert(overridesToInsert)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh overrides after successful save
+      await fetchOverrides();
+      
+      toast.success(`${newOverride.name} has been ${editingOverride ? 'updated' : 'created'} successfully`);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving product override:", error);
+      toast.error("Failed to save product override");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-medium">Company-Specific Pricing</h3>
+            <p className="text-sm text-muted-foreground">
+              Create custom pricing for specific companies
+            </p>
+          </div>
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -311,8 +413,10 @@ export function ProductOverrides() {
                       size="sm" 
                       className="text-destructive"
                       onClick={() => handleDeleteOverride(override.id)}
+                      disabled={isDeleting === override.id}
                     >
                       <Trash className="h-4 w-4" />
+                      {isDeleting === override.id && <span className="ml-2">Deleting...</span>}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -352,7 +456,7 @@ export function ProductOverrides() {
                     <SelectValue placeholder="Select company" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sampleCompanies.map((company) => (
+                    {companies.map((company) => (
                       <SelectItem key={company.id} value={company.id}>
                         {company.name}
                       </SelectItem>
@@ -372,7 +476,7 @@ export function ProductOverrides() {
                       <SelectValue placeholder="Select product" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sampleProducts.map((product) => (
+                      {availableProducts.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.name} - ${product.price}
                         </SelectItem>
@@ -447,8 +551,8 @@ export function ProductOverrides() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveOverride}>
-              {editingOverride ? "Update Override" : "Create Override"}
+            <Button onClick={handleSaveOverride} disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : (editingOverride ? "Update Override" : "Create Override")}
             </Button>
           </DialogFooter>
         </DialogContent>
