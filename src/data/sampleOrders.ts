@@ -1,40 +1,5 @@
 import { addDays } from 'date-fns';
-import { Order as OrderType } from '@/types/orders'; // Import correct Order type
-
-// Define the Order type for the sample data - aligning with the existing types
-export interface Order {
-  id: number;
-  orderNumber: string;
-  address: string;
-  client: string;
-  clientEmail?: string;
-  clientPhone?: string;
-  photographer: string;
-  photographerPayoutRate?: number;
-  price: number;
-  propertyType: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  squareFeet: number;
-  status: string;
-  additionalAppointments?: {
-    date: string;
-    time: string;
-    description: string;
-  }[];
-  customFields?: Record<string, string>;
-  customerNotes?: string;
-  internalNotes?: string;
-  mediaUploaded?: boolean;
-  mediaLinks?: string[];
-  drivingTimeMin?: number;
-  previousLocation?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  package?: string;
-  stripePaymentId?: string;
-}
+import { Order, OrderStatus } from '@/types/order-types'; // Import correct Order type
 
 // Generate sample orders data
 export const generateSampleOrders = (): Order[] => {
@@ -51,7 +16,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), -2).toISOString(),
       scheduledTime: "10:00 AM",
       squareFeet: 1800,
-      status: "completed",
+      status: "completed" as OrderStatus,
       additionalAppointments: [
         {
           date: addDays(new Date(), 5).toISOString(),
@@ -59,11 +24,6 @@ export const generateSampleOrders = (): Order[] => {
           description: "Follow-up shots"
         }
       ],
-      customFields: {
-        specialInstructions: "Focus on kitchen and master bathroom",
-        accessCode: "1234",
-        lockboxLocation: "Front door"
-      },
       customerNotes: "Customer prefers shots with natural lighting. Property will be staged by 9:30 AM.",
       internalNotes: "This is a VIP client, ensure all shots are perfect. Previous order had issues with bathroom lighting.",
       mediaUploaded: true,
@@ -83,7 +43,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 1).toISOString(),
       scheduledTime: "2:00 PM",
       squareFeet: 2500,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customerNotes: "Focus on the open layout and natural light. Avoid showing the storage area.",
       internalNotes: "Client is very particular about angles. Check previous orders for reference."
     },
@@ -99,7 +59,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 3).toISOString(),
       scheduledTime: "11:30 AM",
       squareFeet: 3200,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customFields: {
         specialInstructions: "Staged home, no editing needed"
       },
@@ -117,7 +77,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 5).toISOString(),
       scheduledTime: "9:00 AM",
       squareFeet: 1200,
-      status: "pending",
+      status: "pending" as OrderStatus,
       additionalAppointments: [
         {
           date: addDays(new Date(), 6).toISOString(),
@@ -139,7 +99,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), -5).toISOString(),
       scheduledTime: "3:30 PM",
       squareFeet: 1600,
-      status: "completed",
+      status: "completed" as OrderStatus,
       mediaUploaded: true,
       mediaLinks: ['/images/sample3.jpg', '/images/sample4.jpg']
     },
@@ -155,7 +115,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 1).toISOString(),
       scheduledTime: "9:00 AM",
       squareFeet: 1750,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customerNotes: "Please capture the unique architectural features."
     },
     {
@@ -170,7 +130,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 2).toISOString(),
       scheduledTime: "1:00 PM",
       squareFeet: 2200,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customerNotes: "New construction home, focus on modern features."
     },
     {
@@ -185,7 +145,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 2).toISOString(),
       scheduledTime: "10:00 AM",
       squareFeet: 2800,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customerNotes: "Large property with extensive gardens. Exterior shots are priority."
     },
     {
@@ -200,7 +160,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 3).toISOString(),
       scheduledTime: "4:00 PM",
       squareFeet: 3500,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customerNotes: "Capture the lake views from all angles. Schedule during sunset if possible."
     },
     {
@@ -215,7 +175,7 @@ export const generateSampleOrders = (): Order[] => {
       scheduledDate: addDays(new Date(), 3).toISOString(),
       scheduledTime: "11:00 AM",
       squareFeet: 1100,
-      status: "scheduled",
+      status: "scheduled" as OrderStatus,
       customerNotes: "High-rise condo with city views. Emphasized the floor-to-ceiling windows."
     }
   ];

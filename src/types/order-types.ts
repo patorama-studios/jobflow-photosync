@@ -9,7 +9,8 @@ export type OrderStatus =
   | "in_progress"
   | "editing"
   | "review"
-  | "delivered";
+  | "delivered"
+  | "unavailable"; // Added for Google Calendar events
 
 export interface Order {
   id: string | number;

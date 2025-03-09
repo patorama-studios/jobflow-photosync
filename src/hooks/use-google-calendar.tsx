@@ -1,142 +1,89 @@
 
 import { useState, useEffect } from 'react';
-import { convertOrdersToEvents, convertOrdersToTypedOrders } from '@/utils/calendar-event-converter';
-import { CalendarEvent } from '@/types/calendar';
-import { Order } from '@/types/order-types';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { usePhotographers } from './use-photographers';
-import { useCalendarState } from './use-calendar-state';
+import { Order, OrderStatus } from '@/types/order-types';
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 
-export function useGoogleCalendar(
-  selectedPhotographers: number[] = [],
-  defaultView: "month" | "week" | "day" | "card" = "month"
-) {
-  const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
-  const [isLoadingSupabase, setIsLoadingSupabase] = useState(true);
-  const [viewMode, setViewMode] = useState<"month" | "week" | "day" | "card">(defaultView);
-  const { photographers } = usePhotographers();
-  const calendarState = useCalendarState();
-  const { 
-    events, setEvents, 
-    date
-  } = calendarState;
+// Mock function for getting Google Calendar events
+const fetchGoogleCalendarEvents = async (): Promise<any[]> => {
+  // This would actually fetch from Google API in production
+  // For now, return mock data
+  return [
+    {
+      id: 'google-event-1',
+      title: 'Client Meeting',
+      start: new Date(),
+      end: new Date(new Date().getTime() + 60 * 60 * 1000),
+      type: 'google',
+    },
+    {
+      id: 'google-event-2',
+      title: 'Photography Session',
+      start: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      end: new Date(new Date().getTime() + 25 * 60 * 60 * 1000),
+      type: 'google',
+    },
+  ];
+};
 
-  // Fetch orders from Supabase
-  useEffect(() => {
-    async function fetchOrdersFromSupabase() {
-      try {
-        setIsLoadingSupabase(true);
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*');
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          // Map the data to our Order type
-          const mappedOrders: Order[] = data.map(order => ({
-            id: order.id,
-            orderNumber: order.order_number,
-            order_number: order.order_number,
-            address: order.address,
-            city: order.city,
-            state: order.state,
-            zip: order.zip,
-            client: order.client,
-            customerName: order.client,
-            propertyAddress: order.address,
-            clientEmail: order.client_email,
-            client_email: order.client_email,
-            clientPhone: order.client_phone,
-            client_phone: order.client_phone,
-            photographer: order.photographer,
-            photographerPayoutRate: order.photographer_payout_rate,
-            photographer_payout_rate: order.photographer_payout_rate,
-            price: order.price,
-            propertyType: order.property_type,
-            property_type: order.property_type,
-            scheduledDate: order.scheduled_date,
-            scheduled_date: order.scheduled_date,
-            scheduledTime: order.scheduled_time,
-            scheduled_time: order.scheduled_time,
-            squareFeet: order.square_feet,
-            square_feet: order.square_feet,
-            status: order.status,
-            package: order.package,
-            customerNotes: order.customer_notes,
-            customer_notes: order.customer_notes,
-            internalNotes: order.internal_notes,
-            internal_notes: order.internal_notes,
-            notes: order.notes,
-          }));
-          
-          setSupabaseOrders(mappedOrders);
-        }
-      } catch (err) {
-        console.error('Error fetching orders from Supabase:', err);
-        toast.error('Error loading orders from database');
-      } finally {
-        setIsLoadingSupabase(false);
-      }
-    }
+// Convert Google Calendar events to Order format
+const convertToOrders = (events: any[]): Order[] => {
+  return events.map((event) => {
+    const date = event.start instanceof Date ? event.start : new Date(event.start);
     
-    fetchOrdersFromSupabase();
+    // Create an Order object from the Google Calendar event
+    return {
+      id: event.id,
+      orderNumber: `Google-${event.id.substring(0, 6)}`,
+      order_number: `Google-${event.id.substring(0, 6)}`,
+      address: event.location || 'No location specified',
+      city: '',
+      state: '',
+      zip: '',
+      client: event.title || 'Google Calendar Event',
+      customerName: event.title || 'Google Calendar Event',
+      propertyAddress: event.location || 'No location specified',
+      clientEmail: '',
+      client_email: '',
+      clientPhone: '',
+      client_phone: '',
+      photographer: 'Not assigned',
+      price: 0,
+      propertyType: 'Unknown',
+      property_type: 'Unknown',
+      scheduledDate: date.toISOString(),
+      scheduled_date: date.toISOString(),
+      scheduledTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      scheduled_time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      squareFeet: 0,
+      square_feet: 0,
+      status: 'unavailable' as OrderStatus, // Use a specific status for Google events
+      notes: event.description || '',
+    };
+  });
+};
+
+export function useGoogleCalendar() {
+  const [events, setEvents] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      try {
+        const googleEvents = await fetchGoogleCalendarEvents();
+        const convertedEvents = convertToOrders(googleEvents);
+        setEvents(convertedEvents);
+      } catch (err: any) {
+        console.error('Error fetching Google Calendar events:', err);
+        setError(err.message || 'Failed to fetch Google Calendar events');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
   }, []);
 
-  // Get all active orders
-  const { orders: sampleOrders } = useSampleOrders();
-  const activeOrders = supabaseOrders.length > 0 ? supabaseOrders : sampleOrders;
-
-  // Convert orders to calendar events
-  useEffect(() => {
-    const calendarEvents = convertOrdersToEvents(activeOrders);
-    setEvents(calendarEvents);
-  }, [activeOrders, setEvents]);
-
-  // Filter events based on selected photographers
-  const filteredEvents = selectedPhotographers.length > 0
-    ? events.filter((event) => selectedPhotographers.includes(event.photographerId))
-    : events;
-
-  // Get the filtered orders for the selected date
-  const typedOrders = convertOrdersToTypedOrders(activeOrders);
-  const filteredOrders = typedOrders.filter(order => {
-    // Filter by photographer if needed
-    if (selectedPhotographers.length > 0) {
-      const photographerMatch = photographers.some(p => 
-        selectedPhotographers.includes(p.id) && order.photographer === p.name
-      );
-      if (!photographerMatch) return false;
-    }
-    
-    // Always filter by date
-    const orderDate = new Date(order.scheduledDate);
-    return orderDate.toDateString() === date.toDateString();
-  });
-
-  // Handle slot selection (clicking on an empty time slot)
-  const handleSelectSlot = (
-    slotInfo: { start: Date },
-    onTimeSlotClick?: (time: string) => void,
-    onDayClick?: (date: Date) => void
-  ) => {
-    calendarState.handleSelectSlot(slotInfo, onTimeSlotClick, onDayClick);
-  };
-
-  return {
-    viewMode,
-    setViewMode,
-    filteredEvents,
-    activeOrders,
-    filteredOrders,
-    handleSelectSlot,
-    calendarState,
-    isLoadingSupabase
-  };
+  return { events, isLoading, error };
 }
-
-// Import needed to use the hook, but not used directly in the hook
-import { useSampleOrders } from './useSampleOrders';

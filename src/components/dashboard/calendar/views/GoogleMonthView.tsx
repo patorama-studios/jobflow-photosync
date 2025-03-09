@@ -1,163 +1,172 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import { Order, OrderStatus } from '@/types/order-types';
+import { useGoogleCalendar } from '@/hooks/use-google-calendar';
+import { useOrders } from '@/hooks/use-orders';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CalendarIcon, RefreshCw } from 'lucide-react';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import './calendar-styles.css';
 
-import React, { useMemo } from 'react';
-import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
-import { Order } from '@/hooks/useSampleOrders';
-import { cn } from '@/lib/utils';
+// Set up the localizer for the calendar
+const localizer = momentLocalizer(moment);
 
 interface GoogleMonthViewProps {
-  date: Date;
-  orders: Order[];
-  onSelectDate: (date: Date) => void;
+  selectedDate?: Date;
+  onSelectDate?: (date: Date) => void;
 }
 
-export const GoogleMonthView: React.FC<GoogleMonthViewProps> = ({
-  date,
-  orders,
-  onSelectDate,
-}) => {
-  // Generate days for the month view
-  const days = useMemo(() => {
-    const monthStart = startOfMonth(date);
-    const monthEnd = endOfMonth(date);
-    
-    // Get days starting from the first day of the week of the month
-    const calendarStart = startOfMonth(date);
-    const firstDayOfWeek = calendarStart.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
-    // Adjust to start from Sunday (or Monday depending on locale)
-    const adjustedStart = addDays(calendarStart, -firstDayOfWeek);
-    
-    // Generate 42 days (6 weeks) to ensure we cover the whole month plus surrounding days
-    return eachDayOfInterval({ 
-      start: adjustedStart, 
-      end: addDays(adjustedStart, 41)
-    });
-  }, [date]);
+export default function GoogleMonthView({ 
+  selectedDate, 
+  onSelectDate 
+}: GoogleMonthViewProps) {
+  const [currentDate, setCurrentDate] = useState(selectedDate || new Date());
+  const { events: googleEvents, isLoading: isLoadingGoogle } = useGoogleCalendar();
+  const { orders, isLoading: isLoadingOrders, refetch } = useOrders();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Group orders by date
-  const ordersByDate = useMemo(() => {
-    const grouped: { [key: string]: Order[] } = {};
+  // Combine Google events and orders
+  const events = useMemo(() => {
+    const allEvents = [...(orders || [])];
     
-    orders.forEach(order => {
-      if (!order.scheduledDate) return;
+    // Only add Google events if they don't overlap with existing orders
+    if (googleEvents) {
+      googleEvents.forEach(googleEvent => {
+        // Check if this is a Google event (status will be 'unavailable')
+        if (googleEvent.status === 'unavailable' as OrderStatus) {
+          // Check if there's no existing order at the same time
+          const hasOverlap = allEvents.some(order => 
+            order.scheduledDate === googleEvent.scheduledDate && 
+            order.scheduledTime === googleEvent.scheduledTime
+          );
+          
+          if (!hasOverlap) {
+            allEvents.push(googleEvent);
+          }
+        }
+      });
+    }
+    
+    return allEvents;
+  }, [orders, googleEvents]);
+
+  // Convert orders to calendar events
+  const calendarEvents = useMemo(() => {
+    return events.map(event => {
+      const startDate = new Date(event.scheduledDate);
+      const [hours, minutes] = event.scheduledTime.split(':');
+      startDate.setHours(parseInt(hours, 10), parseInt(minutes, 10));
       
-      const dateKey = format(new Date(order.scheduledDate), 'yyyy-MM-dd');
+      // End time is 1 hour after start time by default
+      const endDate = new Date(startDate);
+      endDate.setHours(endDate.getHours() + 1);
       
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
+      return {
+        id: event.id,
+        title: `${event.client} - ${event.address}`,
+        start: startDate,
+        end: endDate,
+        resource: event,
+      };
+    });
+  }, [events]);
+
+  // Handle refreshing the calendar data
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  // Handle date navigation
+  const handleNavigate = (date: Date) => {
+    setCurrentDate(date);
+    if (onSelectDate) {
+      onSelectDate(date);
+    }
+  };
+
+  // Handle event selection
+  const handleSelectEvent = (event: any) => {
+    console.log('Selected event:', event);
+    // You can add navigation to the order details page here
+  };
+
+  // Custom event styling based on status
+  const eventStyleGetter = (event: any) => {
+    const resource = event.resource;
+    let backgroundColor = '#3174ad'; // Default blue
+    
+    if (resource) {
+      if (resource.status === 'completed') {
+        backgroundColor = '#4caf50'; // Green for completed
+      } else if (resource.status === 'canceled' || resource.status === 'cancelled') {
+        backgroundColor = '#f44336'; // Red for canceled
+      } else if (resource.status === 'pending') {
+        backgroundColor = '#ff9800'; // Orange for pending
+      } else if (resource.status === 'unavailable') {
+        backgroundColor = '#9e9e9e'; // Grey for Google events
       }
-      
-      grouped[dateKey].push(order);
-    });
+    }
     
-    return grouped;
-  }, [orders]);
-
-  // Check if a day is closed
-  const isDayClosed = (day: Date) => {
-    // Example condition: weekends are closed
-    return day.getDay() === 0; // Sunday
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: '4px',
+        opacity: 0.8,
+        color: 'white',
+        border: '0px',
+        display: 'block'
+      }
+    };
   };
 
-  const handleDayClick = (day: Date, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onSelectDate(day);
-  };
+  // Loading state
+  if (isLoadingOrders || isLoadingGoogle) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-[600px] w-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white border rounded-md shadow-sm">
-      {/* Day headers */}
-      <div className="grid grid-cols-7 border-b">
-        {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((dayName, i) => (
-          <div 
-            key={dayName} 
-            className="p-2 text-center text-sm font-medium text-gray-500"
-          >
-            {dayName}
-          </div>
-        ))}
+    <div className="calendar-container">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold flex items-center">
+          <CalendarIcon className="mr-2 h-5 w-5" />
+          Calendar View
+        </h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
       
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 grid-rows-6 h-[calc(100vh-320px)]">
-        {days.map((day, i) => {
-          const isCurrentMonth = isSameMonth(day, date);
-          const isSelectedDay = isSameDay(day, date);
-          const isTodayDate = isToday(day);
-          const dayKey = format(day, 'yyyy-MM-dd');
-          const dayOrders = ordersByDate[dayKey] || [];
-          const closed = isDayClosed(day);
-          
-          return (
-            <div 
-              key={i}
-              className={cn(
-                "border-r border-b p-1 relative overflow-hidden cursor-pointer",
-                !isCurrentMonth && "bg-gray-50",
-                isSelectedDay && "bg-blue-50",
-              )}
-              onClick={(e) => handleDayClick(day, e)}
-            >
-              <div className="flex justify-between">
-                <div 
-                  className={cn(
-                    "text-sm w-6 h-6 flex items-center justify-center font-medium",
-                    isTodayDate && "rounded-full bg-primary text-white",
-                    !isTodayDate && isSelectedDay && "text-primary"
-                  )}
-                >
-                  {format(day, 'd')}
-                </div>
-                
-                {closed && (
-                  <div className="text-xs bg-gray-200 px-1 rounded text-gray-700">
-                    Closed
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-1 space-y-1 max-h-[80%] overflow-hidden">
-                {dayOrders.slice(0, 3).map((order, idx) => {
-                  // Determine color based on the photographer or job type
-                  let bgColor = "bg-blue-100 border-blue-500";
-                  
-                  if (order.photographer.includes("Emma")) {
-                    bgColor = "bg-yellow-100 border-yellow-500";
-                  } else if (order.photographer.includes("Michael")) {
-                    bgColor = "bg-orange-100 border-orange-500";
-                  } else if (order.photographer.includes("Sophia")) {
-                    bgColor = "bg-pink-100 border-pink-500";
-                  }
-                  
-                  // For unavailable blocks
-                  if (order.status === "unavailable") {
-                    bgColor = "bg-red-100 border-red-500";
-                  }
-                  
-                  return (
-                    <div 
-                      key={`${order.id}-${idx}`}
-                      className={`text-xs p-1 truncate border-l-2 rounded-r-sm ${bgColor}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle event click differently if needed
-                      }}
-                    >
-                      {order.scheduledTime} {order.address.split(',')[0]}
-                    </div>
-                  );
-                })}
-                
-                {dayOrders.length > 3 && (
-                  <div className="text-xs text-gray-500 pl-1">
-                    +{dayOrders.length - 3} more
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="calendar-wrapper" style={{ height: 700 }}>
+        <Calendar
+          localizer={localizer}
+          events={calendarEvents}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: '100%' }}
+          onNavigate={handleNavigate}
+          date={currentDate}
+          onSelectEvent={handleSelectEvent}
+          eventPropGetter={eventStyleGetter}
+          views={['month', 'week', 'day']}
+          defaultView="month"
+          tooltipAccessor={(event) => event.title}
+        />
       </div>
     </div>
   );
-};
+}

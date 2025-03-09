@@ -7,7 +7,7 @@ const validateStatus = (status: string | null | undefined): OrderStatus => {
   
   const validStatuses: OrderStatus[] = [
     "scheduled", "completed", "pending", "canceled", "cancelled",
-    "rescheduled", "in_progress", "editing", "review", "delivered"
+    "rescheduled", "in_progress", "editing", "review", "delivered", "unavailable"
   ];
   
   return validStatuses.includes(status as OrderStatus) 

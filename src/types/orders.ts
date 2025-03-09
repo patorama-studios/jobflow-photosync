@@ -9,7 +9,9 @@ export type OrderStatus =
   | "in_progress"
   | "editing"
   | "review"
-  | "delivered";
+  | "delivered"
+  | "cancelled"
+  | "unavailable";
 
 // Define the interface for an order
 export interface Order {
@@ -55,6 +57,19 @@ export interface Order {
   internal_notes?: string;
   customer_notes?: string;
   stripe_payment_id?: string;
+  
+  // Additional properties for compatibility with older components
+  customerName?: string;
+  propertyAddress?: string;
+  amount?: number;
+  completedDate?: string;
+  products?: string[];
+  contactNumber?: string;
+  contactEmail?: string;
+  type?: string;
+  additionalAppointments?: any[];
+  mediaLinks?: any[];
+  mediaUploaded?: boolean;
 }
 
 // Define interface for Contractor

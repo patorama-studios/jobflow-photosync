@@ -1,9 +1,23 @@
 
-import { Order } from '@/types/order-types';
+import { Order, OrderStatus } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleOrders } from '@/data/sampleOrders'; 
 import { toast } from 'sonner';
 import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
+
+// Helper function to validate status
+const validateStatus = (status: string | null | undefined): OrderStatus => {
+  if (!status) return "pending";
+  
+  const validStatuses: OrderStatus[] = [
+    "scheduled", "completed", "pending", "canceled", "cancelled",
+    "rescheduled", "in_progress", "editing", "review", "delivered", "unavailable"
+  ];
+  
+  return validStatuses.includes(status as OrderStatus) 
+    ? (status as OrderStatus) 
+    : "pending";
+};
 
 export const fetchOrders = async (): Promise<{ orders: Order[], error: string | null }> => {
   try {
@@ -45,7 +59,12 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
       // Fallback to sample orders for development
       const sampleOrder = sampleOrders.find(o => o.id.toString() === orderIdString);
       if (sampleOrder) {
-        return { order: sampleOrder, error: null };
+        // Ensure sample order has the correct status type
+        const validOrder = {
+          ...sampleOrder,
+          status: validateStatus(sampleOrder.status)
+        };
+        return { order: validOrder, error: null };
       }
       
       return { order: null, error: error.message };
