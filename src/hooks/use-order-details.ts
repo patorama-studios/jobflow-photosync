@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Order } from '@/types/order-types';
 import { fetchOrderDetails, saveOrderChanges, deleteOrder } from '@/services/order-service';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface UseOrderDetailsResult {
   order: Order | null | undefined;
@@ -34,25 +35,54 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
     const loadOrderDetails = async () => {
+      if (!orderId) {
+        if (isMounted) {
+          setIsLoading(false);
+          setError("No order ID provided");
+        }
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
       console.log("Loading order details for ID:", orderId);
-      const { order: fetchedOrder, error: fetchError } = await fetchOrderDetails(orderId);
-      
-      if (fetchError) {
-        setError(fetchError);
-        setOrder(null);
-      } else {
-        setOrder(fetchedOrder);
-        setEditedOrder(fetchedOrder);
+      try {
+        const { order: fetchedOrder, error: fetchError } = await fetchOrderDetails(orderId);
+        
+        if (!isMounted) return;
+        
+        if (fetchError) {
+          console.error("Error loading order:", fetchError);
+          setError(fetchError);
+          setOrder(null);
+        } else if (!fetchedOrder) {
+          setError("Order not found");
+          setOrder(null);
+        } else {
+          setOrder(fetchedOrder);
+          setEditedOrder(fetchedOrder);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          console.error("Exception in loadOrderDetails:", err);
+          setError(err.message || "An unexpected error occurred");
+          setOrder(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      
-      setIsLoading(false);
     };
 
     loadOrderDetails();
+
+    return () => {
+      isMounted = false;
+    };
   }, [orderId]);
 
   // Edit operations
@@ -88,17 +118,23 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
     if (!editedOrder) return;
     
     try {
+      setIsLoading(true);
       const { success, error: saveError } = await saveOrderChanges(editedOrder);
       
       if (saveError) {
         setError(saveError);
+        toast.error(`Failed to save: ${saveError}`);
       } else if (success) {
         setOrder(editedOrder);
         setIsEditing(false);
+        toast.success("Order updated successfully");
       }
     } catch (err: any) {
       console.error('Error saving order:', err);
       setError(err.message || 'An unexpected error occurred while saving');
+      toast.error(err.message || 'An unexpected error occurred while saving');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,11 +149,13 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
       
       if (deleteError) {
         setError(deleteError);
+        toast.error(`Failed to delete: ${deleteError}`);
         setIsDeleteDialogOpen(false);
         return;
       } 
       
       if (success) {
+        toast.success("Order deleted successfully");
         // Redirect to orders page after successful deletion
         navigate('/orders', { replace: true });
         setIsDeleteDialogOpen(false);
@@ -125,6 +163,7 @@ export function useOrderDetails(orderId?: string | number): UseOrderDetailsResul
     } catch (err: any) {
       console.error('Error deleting order:', err);
       setError(err.message || 'An unexpected error occurred while deleting');
+      toast.error(err.message || 'An unexpected error occurred while deleting');
       setIsDeleteDialogOpen(false);
     }
   };

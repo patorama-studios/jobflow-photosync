@@ -23,26 +23,29 @@ export function useOrderDetailsView() {
     handleStatusChange,
     handleSaveClick,
     handleDeleteClick,
-    confirmDelete
+    confirmDelete,
+    refundsForOrder,
+    setRefundsForOrder
   } = useOrderDetails(orderId);
 
   useEffect(() => {
     // Set header title and back button
-    if (order) {
+    if (!isLoading && order) {
       setTitle(`Order ${order.orderNumber || order.order_number || orderId}`);
     } else {
       setTitle('Order Details');
     }
     
     setShowBackButton(true);
-    setBackButtonAction(() => navigate('/orders'));
+    setBackButtonAction(() => () => navigate('/orders'));
     
     // Clean up when component unmounts
     return () => {
       setTitle(null);
       setShowBackButton(false);
+      setBackButtonAction(undefined);
     };
-  }, [order, orderId, setTitle, setShowBackButton, setBackButtonAction, navigate]);
+  }, [order, orderId, isLoading, setTitle, setShowBackButton, setBackButtonAction, navigate]);
 
   return {
     orderId,
@@ -52,6 +55,8 @@ export function useOrderDetailsView() {
     error,
     isEditing,
     isDeleteDialogOpen,
+    refundsForOrder,
+    setRefundsForOrder,
     setIsDeleteDialogOpen,
     handleEditClick,
     handleCancelClick,
