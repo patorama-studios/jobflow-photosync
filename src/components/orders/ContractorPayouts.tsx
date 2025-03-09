@@ -9,6 +9,7 @@ import { ContractorForm } from './contractors/ContractorForm';
 import { NewContractorForm } from './contractors/NewContractorForm';
 import { ContractorSummary } from './contractors/ContractorSummary';
 import { useContractorPayouts } from './contractors/useContractorPayouts';
+import { ChartProvider } from '@/components/ui/chart-provider';
 
 export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId }) => {
   const {
@@ -82,7 +83,9 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId })
       
       {/* Summary Section */}
       {contractors.length > 0 && (
-        <ContractorSummary contractors={contractors} />
+        <ChartProvider>
+          <ContractorSummary contractors={contractors} />
+        </ChartProvider>
       )}
     </div>
   );
