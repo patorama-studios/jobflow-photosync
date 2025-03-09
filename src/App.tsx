@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
-import { routes } from './routes/routes.config';
+import routes from './routes/routes.config';
 import { initializePerformance } from './utils/performance';
 import { AppProviders } from './providers/AppProviders';
 import { createQueryClient } from './config/queryClient';

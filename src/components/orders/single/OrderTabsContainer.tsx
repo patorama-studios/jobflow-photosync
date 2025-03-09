@@ -1,75 +1,76 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { Order } from '@/types/order-types';
 import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
 import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
 import { ProductionTab } from '@/components/orders/single/ProductionTab';
 import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
+import { useNavigate, useParams } from 'react-router-dom';
+import { RefundRecord } from '@/types/orders';
 
 interface OrderTabsContainerProps {
-  order: Order;
-  activeTab: string;
-  setActiveTab: (value: string) => void;
+  order: Order | null;
 }
 
-export const OrderTabsContainer: React.FC<OrderTabsContainerProps> = ({
-  order,
-  activeTab,
-  setActiveTab
-}) => {
+export const OrderTabsContainer: React.FC<OrderTabsContainerProps> = ({ order }) => {
+  const navigate = useNavigate();
+  const { orderId, tab = 'details' } = useParams<{ orderId: string; tab?: string }>();
+  const [refundsForOrder, setRefundsForOrder] = useState<RefundRecord[]>([]);
+  
+  // For demo purposes, set some mock refunds
+  React.useEffect(() => {
+    if (order) {
+      setRefundsForOrder([
+        {
+          id: 'ref-1',
+          amount: 25.00,
+          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          reason: 'Partial refund requested by client',
+          isFullRefund: false,
+          status: 'completed',
+          stripeRefundId: 're_123456789'
+        }
+      ]);
+    }
+  }, [order]);
+
+  const handleTabChange = (value: string) => {
+    navigate(`/orders/${orderId}/${value}`);
+  };
+
   return (
-    <Tabs 
-      defaultValue="details" 
-      value={activeTab} 
-      onValueChange={setActiveTab}
-      className="mt-6"
-    >
-      <div className="flex justify-between items-center">
-        <TabsList className="h-12 p-0 bg-transparent space-x-8">
-          <TabsTrigger 
-            value="details" 
-            className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
-          >
-            Summary
-          </TabsTrigger>
-          <TabsTrigger 
-            value="invoicing" 
-            className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
-          >
-            Invoicing
-          </TabsTrigger>
-          <TabsTrigger 
-            value="production" 
-            className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
-          >
-            Production &amp; Delivery
-          </TabsTrigger>
-          <TabsTrigger 
-            value="communication" 
-            className="px-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none h-12"
-          >
-            Communication
-          </TabsTrigger>
-        </TabsList>
-      </div>
+    <Tabs defaultValue={tab} className="w-full" onValueChange={handleTabChange}>
+      <TabsList className="grid grid-cols-4 mb-6">
+        <TabsTrigger value="details">Order Details</TabsTrigger>
+        <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
+        <TabsTrigger value="production">Production</TabsTrigger>
+        <TabsTrigger value="communication">Communication</TabsTrigger>
+      </TabsList>
       
-      <Separator className="mb-6 mt-0" />
-      
-      <TabsContent value="details" className="mt-6">
-        <OrderDetailsTab order={order} />
+      <TabsContent value="details">
+        <OrderDetailsTab 
+          order={order}
+          editedOrder={order}
+          isEditing={false}
+          onInputChange={() => {}}
+          onStatusChange={() => {}}
+        />
       </TabsContent>
       
-      <TabsContent value="invoicing" className="mt-6">
-        <InvoicingTab order={order} />
+      <TabsContent value="invoicing">
+        <InvoicingTab 
+          order={order}
+          refundsForOrder={refundsForOrder}
+          setRefundsForOrder={setRefundsForOrder}
+        />
       </TabsContent>
       
-      <TabsContent value="production" className="mt-6">
+      <TabsContent value="production">
         <ProductionTab order={order} />
       </TabsContent>
       
-      <TabsContent value="communication" className="mt-6">
+      <TabsContent value="communication">
         <CommunicationTab order={order} />
       </TabsContent>
     </Tabs>

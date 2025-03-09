@@ -11,11 +11,12 @@ import { InvoiceItems } from '@/components/orders/InvoiceItems';
 import { RefundDialog } from '@/components/orders/RefundDialog';
 import { RefundHistory } from '@/components/orders/RefundHistory';
 import { ContractorPayouts } from '@/components/orders/ContractorPayouts';
+import { RefundRecord } from '@/types/orders';
 
 interface InvoicingTabProps {
   order: Order | null;
-  refundsForOrder: any[];
-  setRefundsForOrder: (refunds: any[]) => void;
+  refundsForOrder: RefundRecord[];
+  setRefundsForOrder: (refunds: RefundRecord[]) => void;
 }
 
 export const InvoicingTab: React.FC<InvoicingTabProps> = ({
@@ -159,7 +160,7 @@ export const InvoicingTab: React.FC<InvoicingTabProps> = ({
       </div>
 
       <RefundDialog 
-        isOpen={isRefundDialogOpen} 
+        open={isRefundDialogOpen} 
         onOpenChange={setIsRefundDialogOpen}
         orderData={order}
         onRefundProcessed={(refund) => {

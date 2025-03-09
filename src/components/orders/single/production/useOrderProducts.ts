@@ -22,7 +22,7 @@ export const useOrderProducts = (orderId?: string | number) => {
         const { data, error } = await supabase
           .from('order_products')
           .select('*')
-          .eq('order_id', orderId);
+          .eq('order_id', orderId.toString());
 
         if (error) {
           throw error;

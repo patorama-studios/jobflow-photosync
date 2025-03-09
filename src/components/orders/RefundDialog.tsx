@@ -1,187 +1,157 @@
 
 import React, { useState } from 'react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { RefundRecord } from '@/types/orders';
-import { toast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { Order } from "@/types/order-types";
+import { RefundRecord } from "@/types/orders";
+import { supabase } from '@/integrations/supabase/client';
 
-const refundSchema = z.object({
-  amount: z.coerce.number().positive('Amount must be positive'),
-  reason: z.string().min(1, 'Reason is required'),
-  type: z.enum(['full', 'partial']),
-});
-
-type RefundFormValues = z.infer<typeof refundSchema>;
-
-interface RefundDialogProps {
+export interface RefundDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  orderId: number | string;
-  orderTotal: number;
-  stripePaymentId: string;
-  onRefundComplete: (refund: RefundRecord) => void;
+  orderData: Order;
+  onRefundProcessed: (refund: RefundRecord) => void;
 }
 
-export function RefundDialog({
-  open,
-  onOpenChange,
-  orderId,
-  orderTotal,
-  stripePaymentId,
-  onRefundComplete,
-}: RefundDialogProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<RefundFormValues>({
-    resolver: zodResolver(refundSchema),
-    defaultValues: {
-      amount: orderTotal,
-      reason: '',
-      type: 'full',
-    },
-  });
-  
-  const refundType = watch('type');
-  
-  // When refund type changes, update amount
-  React.useEffect(() => {
-    if (refundType === 'full') {
-      setValue('amount', orderTotal);
+export const RefundDialog: React.FC<RefundDialogProps> = ({ 
+  open, 
+  onOpenChange, 
+  orderData, 
+  onRefundProcessed 
+}) => {
+  const [amount, setAmount] = useState<string>('');
+  const [reason, setReason] = useState<string>('');
+  const [isFullRefund, setIsFullRefund] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const handleFullRefundChange = (checked: boolean) => {
+    setIsFullRefund(checked);
+    if (checked && orderData.price) {
+      setAmount(orderData.price.toString());
+    } else {
+      setAmount('');
     }
-  }, [refundType, orderTotal, setValue]);
-  
-  const onSubmit = async (data: RefundFormValues) => {
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!amount || !reason) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const refundAmount = parseFloat(amount);
+    
+    if (isNaN(refundAmount) || refundAmount <= 0) {
+      toast.error("Please enter a valid refund amount");
+      return;
+    }
+
+    if (orderData.price && refundAmount > orderData.price) {
+      toast.error("Refund amount cannot exceed the order total");
+      return;
+    }
+
+    setIsProcessing(true);
+
     try {
-      setIsProcessing(true);
-      
-      // In a real implementation, this would call your backend to process the refund
-      // For now, we'll just simulate a successful refund
-      
-      console.log('Processing refund:', {
-        orderId,
-        stripePaymentId,
-        amount: data.amount,
-        reason: data.reason,
-        isFullRefund: data.type === 'full'
-      });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create a refund record
-      const refundRecord: RefundRecord = {
+      // Simulate processing with Stripe
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Create a new refund record
+      const newRefund: RefundRecord = {
         id: `refund-${Date.now()}`,
-        amount: data.amount,
+        amount: refundAmount,
         date: new Date().toISOString(),
-        reason: data.reason,
-        isFullRefund: data.type === 'full',
+        reason,
+        isFullRefund,
         status: 'completed',
-        stripeRefundId: `re_${Math.random().toString(36).substring(2, 10)}`
+        stripeRefundId: `rf_${Math.random().toString(36).substring(2, 12)}`
       };
-      
-      // Notify the parent component
-      onRefundComplete(refundRecord);
-      
-      // Close the dialog and reset the form
+
+      // In a real app, we would save this to the database
+      const { error } = await supabase
+        .from('refunds')
+        .insert([newRefund]);
+        
+      if (error) throw error;
+
+      onRefundProcessed(newRefund);
       onOpenChange(false);
-      reset();
+      toast.success(`Refund of $${refundAmount.toFixed(2)} processed successfully`);
       
-      // Show success toast
-      toast({
-        title: `${data.type === 'full' ? 'Full' : 'Partial'} Refund Processed`,
-        description: `$${data.amount.toFixed(2)} has been refunded to the customer.`,
-      });
+      // Reset form
+      setAmount('');
+      setReason('');
+      setIsFullRefund(false);
+      
     } catch (error) {
       console.error('Error processing refund:', error);
-      
-      toast({
-        title: "Refund Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
+      toast.error("Failed to process refund. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
-  
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isProcessing) {
-        onOpenChange(isOpen);
-        if (!isOpen) reset();
-      }
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
-            Create a refund for this order. This will attempt to refund the customer's payment method.
+            Create a refund for this order. This will process the refund through your connected payment processor.
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <RadioGroup
-              value={refundType}
-              onValueChange={(value) => setValue('type', value as 'full' | 'partial')}
-              className="flex flex-col space-y-1"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="full" id="refund-full" />
-                <Label htmlFor="refund-full">Full Refund (${orderTotal.toFixed(2)})</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="partial" id="refund-partial" />
-                <Label htmlFor="refund-partial">Partial Refund</Label>
-              </div>
-            </RadioGroup>
-            
-            {refundType === 'partial' && (
-              <div className="mt-2">
-                <Label htmlFor="amount">Refund Amount</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5">$</span>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max={orderTotal}
-                    className="pl-7"
-                    {...register('amount')}
-                  />
-                </div>
-                {errors.amount && (
-                  <p className="text-sm text-destructive mt-1">{errors.amount.message}</p>
-                )}
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="full-refund" 
+                checked={isFullRefund}
+                onCheckedChange={handleFullRefundChange}
+              />
+              <Label htmlFor="full-refund">Full Refund</Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Total order amount: ${orderData.price?.toFixed(2) || '0.00'}
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="amount">Refund Amount</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={orderData.price?.toString() || "9999"}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="pl-7"
+                disabled={isFullRefund}
+                required
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="reason">Reason for Refund</Label>
             <Textarea
               id="reason"
-              placeholder="Explain why you are processing this refund..."
-              {...register('reason')}
+              placeholder="Please specify the reason for this refund..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required
             />
-            {errors.reason && (
-              <p className="text-sm text-destructive">{errors.reason.message}</p>
-            )}
           </div>
           
           <DialogFooter>
@@ -193,7 +163,10 @@ export function RefundDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isProcessing}>
+            <Button 
+              type="submit" 
+              disabled={isProcessing}
+            >
               {isProcessing ? 'Processing...' : 'Process Refund'}
             </Button>
           </DialogFooter>
@@ -201,4 +174,4 @@ export function RefundDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

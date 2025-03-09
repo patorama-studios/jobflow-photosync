@@ -1,26 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, Plus, Trash2, Edit, Check, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Contractor } from "@/types/orders";
+import { supabase } from '@/integrations/supabase/client';
 
-interface ContractorPayoutsProps {
-  contractors: Contractor[];
-  onContractorsChange: (contractors: Contractor[]) => void;
-  totalOrderAmount: number;
+export interface ContractorPayoutsProps {
+  orderId: string | number;
 }
 
-export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
-  contractors,
-  onContractorsChange,
-  totalOrderAmount
-}) => {
+export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({ orderId }) => {
+  const [contractors, setContractors] = useState<Contractor[]>([]);
+  const [totalOrderAmount, setTotalOrderAmount] = useState<number>(0);
   const [editingContractorId, setEditingContractorId] = useState<string | number | null>(null);
   const [newContractor, setNewContractor] = useState<Partial<Contractor>>({
     name: '',
@@ -30,7 +27,6 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
     notes: ''
   });
   const [showNewContractorForm, setShowNewContractorForm] = useState(false);
-  const { toast } = useToast();
 
   const contractorRoles = [
     { value: 'photographer', label: 'Photographer' },
@@ -41,6 +37,65 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
     { value: 'other', label: 'Other' }
   ];
 
+  useEffect(() => {
+    // Fetch order total and contractors
+    const fetchData = async () => {
+      if (!orderId) return;
+
+      try {
+        // Fetch order details to get total amount
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('price')
+          .eq('id', orderId)
+          .single();
+
+        if (orderError) throw orderError;
+        
+        if (orderData && orderData.price) {
+          setTotalOrderAmount(orderData.price);
+        }
+
+        // Fetch contractors
+        const { data: contractorsData, error: contractorsError } = await supabase
+          .from('order_contractors')
+          .select('*')
+          .eq('order_id', orderId);
+
+        if (contractorsError) throw contractorsError;
+
+        if (contractorsData && contractorsData.length > 0) {
+          setContractors(contractorsData);
+        } else {
+          // Mock data if no contractors found
+          setContractors([
+            {
+              id: '1',
+              name: 'John Photographer',
+              role: 'photographer',
+              payoutRate: 70,
+              payoutAmount: orderData?.price * 0.7 || 0,
+              notes: 'Primary photographer'
+            },
+            {
+              id: '2',
+              name: 'Sarah Editor',
+              role: 'editor',
+              payoutRate: 20,
+              payoutAmount: orderData?.price * 0.2 || 0,
+              notes: 'Photo editing'
+            }
+          ]);
+        }
+      } catch (err) {
+        console.error('Error fetching contractor data:', err);
+        toast.error('Failed to load contractor information');
+      }
+    };
+
+    fetchData();
+  }, [orderId]);
+
   const handleEditContractor = (contractor: Contractor) => {
     setEditingContractorId(contractor.id);
   };
@@ -49,32 +104,22 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
     const updatedContractors = contractors.map(c => 
       c.id === editedContractor.id ? editedContractor : c
     );
-    onContractorsChange(updatedContractors);
+    setContractors(updatedContractors);
     setEditingContractorId(null);
     
-    toast({
-      title: "Contractor Updated",
-      description: `${editedContractor.name}'s payment details have been updated.`,
-    });
+    toast.success(`${editedContractor.name}'s payment details have been updated.`);
   };
 
   const handleDeleteContractor = (contractorId: string | number) => {
     const updatedContractors = contractors.filter(c => c.id !== contractorId);
-    onContractorsChange(updatedContractors);
+    setContractors(updatedContractors);
     
-    toast({
-      title: "Contractor Removed",
-      description: "The contractor has been removed from this order.",
-    });
+    toast.success("The contractor has been removed from this order.");
   };
 
   const handleAddNewContractor = () => {
     if (!newContractor.name) {
-      toast({
-        title: "Name Required",
-        description: "Please enter a name for the contractor.",
-        variant: "destructive"
-      });
+      toast.error("Please enter a name for the contractor.");
       return;
     }
 
@@ -83,7 +128,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
       id: `temp-${Date.now()}`  // In a real app, this would be a UUID or DB-generated ID
     };
 
-    onContractorsChange([...contractors, newContractorWithId]);
+    setContractors([...contractors, newContractorWithId]);
     setNewContractor({
       name: '',
       role: 'photographer',
@@ -93,10 +138,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
     });
     setShowNewContractorForm(false);
 
-    toast({
-      title: "Contractor Added",
-      description: `${newContractorWithId.name} has been added to this order.`,
-    });
+    toast.success(`${newContractorWithId.name} has been added to this order.`);
   };
 
   const handleInputChange = (
@@ -125,7 +167,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
       const updatedContractors = contractors.map(c => 
         c.id === contractor.id ? updatedContractor : c
       );
-      onContractorsChange(updatedContractors);
+      setContractors(updatedContractors);
     } else {
       // Adding new contractor
       const updatedNewContractor = { ...newContractor, [field]: value };
@@ -155,7 +197,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
       const updatedContractors = contractors.map(c => 
         c.id === contractor.id ? updatedContractor : c
       );
-      onContractorsChange(updatedContractors);
+      setContractors(updatedContractors);
     } else {
       // Adding new contractor
       setNewContractor(prev => ({ ...prev, [field]: value }));
@@ -321,10 +363,7 @@ export const ContractorPayouts: React.FC<ContractorPayoutsProps> = ({
       {/* Add New Contractor Form */}
       {showNewContractorForm ? (
         <Card className="border border-dashed border-primary/50 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-lg">Add New Contractor</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="new-name">Name</Label>

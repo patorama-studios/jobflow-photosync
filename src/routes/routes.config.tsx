@@ -81,6 +81,14 @@ const routes = [
     ),
   },
   {
+    path: '/orders/:orderId/:tab',
+    element: (
+      <ProtectedRoute>
+        <OrderSinglePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/orders/:orderId/edit',
     element: (
       <ProtectedRoute>
@@ -207,7 +215,7 @@ const routes = [
   {
     path: '/generate-data',
     element: (
-      <ProtectedRoute adminOnly>
+      <ProtectedRoute>
         <GenerateData />
       </ProtectedRoute>
     ),
