@@ -64,27 +64,29 @@ export function ProductsList() {
       toast.success("Product deleted successfully");
     } catch (error) {
       console.error("Error deleting product:", error);
-      toast.error("Failed to delete product");
+      toast.error(`Failed to delete product: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsDeleting(null);
     }
   };
 
   const handleEditProduct = (product: Product) => {
+    console.log("Editing product:", product);
     setEditProduct(product);
     setIsEditDialogOpen(true);
   };
 
   const handleSaveEditedProduct = async (product: Product) => {
     try {
+      console.log("Saving edited product:", product);
       await saveUIProduct(product);
+      await refetch();
       setIsEditDialogOpen(false);
       setEditProduct(null);
-      refetch();
       toast.success("Product updated successfully");
     } catch (error) {
       console.error("Error updating product:", error);
-      toast.error("Failed to update product");
+      toast.error(`Failed to update product: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

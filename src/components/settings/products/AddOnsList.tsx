@@ -26,87 +26,74 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ProductDialog } from "./dialogs/ProductDialog";
 
 export function AddOnsList() {
-  const { products, isLoading, error, refetch, deleteProduct, saveUIProduct } = useProducts();
+  const { fetchAddOns, isLoading, error, deleteProduct, saveUIProduct } = useProducts();
   const [addonsList, setAddonsList] = useState<Product[]>([]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Mock data for addons - in a real app this would come from your API
-  useEffect(() => {
-    // In a real app, you would get addons from the API
-    // For now, use mock data
-    const mockAddons: Product[] = [
-      {
-        id: "addon1",
-        title: "Rush Service",
-        description: "24 hour turnaround time",
-        price: 49.99,
-        isActive: true,
-        hasVariants: false,
-        isServiceable: false,
-        type: "addon",
-      },
-      {
-        id: "addon2",
-        title: "Additional Exposures",
-        description: "Extra photo exposures for difficult lighting conditions",
-        price: 29.99,
-        isActive: true,
-        hasVariants: false,
-        isServiceable: false,
-        type: "addon",
-      },
-      {
-        id: "addon3",
-        title: "Floor Plan",
-        description: "Professional floor plan drawing",
-        price: 75,
-        isActive: true,
-        hasVariants: false,
-        isServiceable: false,
-        type: "addon",
+  // Fetch add-ons from Supabase
+  const loadAddOns = async () => {
+    try {
+      const addons = await fetchAddOns();
+      if (addons && addons.length > 0) {
+        // Convert DB addons to UI format
+        const convertedAddons = addons.map(addon => ({
+          id: addon.id,
+          title: addon.name,
+          description: addon.description || '',
+          price: addon.price,
+          isActive: addon.is_active,
+          hasVariants: false,
+          isServiceable: false,
+          type: "addon" as const,
+          variants: []
+        }));
+        setAddonsList(convertedAddons);
+      } else {
+        setAddonsList([]);
       }
-    ];
-    
-    setAddonsList(mockAddons);
+    } catch (err) {
+      console.error("Error fetching add-ons:", err);
+      toast.error("Failed to load add-ons");
+    }
+  };
+
+  useEffect(() => {
+    loadAddOns();
   }, []);
 
   const handleDeleteAddon = async (addonId: string) => {
     try {
       setIsDeleting(addonId);
-      // In a real app, you would call an API
-      // For now, update local state
+      await deleteProduct(addonId);
       setAddonsList(prevList => prevList.filter(addon => addon.id !== addonId));
-      
       toast.success("Add-on deleted successfully");
     } catch (error) {
       console.error("Error deleting add-on:", error);
-      toast.error("Failed to delete add-on");
+      toast.error(`Failed to delete add-on: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsDeleting(null);
     }
   };
 
   const handleEditAddon = (addon: Product) => {
+    console.log("Editing add-on:", addon);
     setEditProduct(addon);
     setIsEditDialogOpen(true);
   };
 
   const handleSaveEditedAddon = async (addon: Product) => {
     try {
-      // In a real app, you would call an API
-      // For now, update local state
-      setAddonsList(prevList => 
-        prevList.map(item => item.id === addon.id ? addon : item)
-      );
-      
+      console.log("Saving edited add-on:", addon);
+      await saveUIProduct(addon);
+      await loadAddOns(); // Refresh the list after saving
       setIsEditDialogOpen(false);
       setEditProduct(null);
       toast.success("Add-on updated successfully");
     } catch (error) {
       console.error("Error updating add-on:", error);
-      toast.error("Failed to update add-on");
+      toast.error(`Failed to update add-on: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 

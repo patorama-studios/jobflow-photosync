@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductsList } from "../products/ProductsList";
@@ -27,7 +28,7 @@ export function ProductSettings() {
   const handleSaveProduct = async (product: Product) => {
     try {
       await saveUIProduct(product);
-      refetch();
+      await refetch();
       setIsProductDialogOpen(false);
       
       // Show success message
@@ -35,7 +36,7 @@ export function ProductSettings() {
       toast.success(`${productTypeName} saved successfully`);
     } catch (error) {
       console.error("Error saving product:", error);
-      toast.error("Failed to save product");
+      toast.error(`Failed to save product: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
