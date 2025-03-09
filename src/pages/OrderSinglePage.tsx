@@ -1,32 +1,28 @@
 
-import React, { useEffect, Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
+import { OrderErrorBoundary } from '@/components/orders/debug/OrderErrorBoundary';
 import { useOrderDetailsView } from '@/hooks/use-order-details-view';
-import { PageTransition } from '@/components/layout/PageTransition';
-import MainLayout from '@/components/layout/MainLayout';
-import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
+import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
+import { OrderDetailsContent } from '@/components/orders/details/OrderDetailsContent';
 import { OrderDetailsError } from '@/components/orders/details/OrderDetailsError';
+import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
+import { RefundsSection } from '@/components/orders/details/RefundsSection';
+import { ContractorsSection } from '@/components/orders/details/ContractorsSection';
+import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
 import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
-import { OrderSinglePageHeader } from '@/components/orders/single/OrderSinglePageHeader';
-import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
-import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
-import { ProductionTab } from '@/components/orders/single/ProductionTab';
-import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
-import { toast } from 'sonner';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-const OrderSinglePage = () => {
-  console.log("OrderSinglePage rendering, params:", useParams());
-  
-  const { 
+export default function OrderSinglePage() {
+  // Use our custom hook to handle all the order details logic
+  const {
     orderId,
-    order, 
-    editedOrder, 
-    isLoading, 
-    error, 
-    isEditing, 
+    order,
+    editedOrder,
+    isLoading,
+    error,
+    isEditing,
     isDeleteDialogOpen,
+    refundsForOrder,
+    setRefundsForOrder,
     setIsDeleteDialogOpen,
     handleEditClick,
     handleCancelClick,
@@ -35,135 +31,64 @@ const OrderSinglePage = () => {
     handleSaveClick,
     handleDeleteClick,
     confirmDelete,
-    refundsForOrder,
-    setRefundsForOrder
+    navigate
   } = useOrderDetailsView();
 
-  // For debugging
-  useEffect(() => {
-    console.log("OrderSinglePage rendering with order:", order);
-    console.log("Loading state:", isLoading);
-    console.log("Error state:", error);
-    console.log("Current route:", window.location.pathname);
-  }, [order, isLoading, error]);
-
-  // Add a fallback for when orderId is not available
-  if (!orderId) {
-    console.error("OrderSinglePage: No order ID provided in URL params");
-    return (
-      <MainLayout>
-        <PageTransition>
-          <OrderDetailsError error="No order ID provided in URL" />
-        </PageTransition>
-      </MainLayout>
-    );
-  }
-
+  // Show loading state
   if (isLoading) {
-    console.log("OrderSinglePage: Showing loading state");
-    return (
-      <MainLayout>
-        <PageTransition>
-          <OrderDetailsLoading />
-        </PageTransition>
-      </MainLayout>
-    );
+    return <OrderDetailsLoading />;
   }
 
+  // Show error state
   if (error) {
-    console.error("OrderSinglePage: Error loading order:", error);
-    return (
-      <MainLayout>
-        <PageTransition>
-          <OrderDetailsError error={error} />
-        </PageTransition>
-      </MainLayout>
-    );
+    return <OrderDetailsError error={error} />;
   }
 
-  if (!order && !isLoading) {
-    console.log("OrderSinglePage: Order not found for ID:", orderId);
-    return (
-      <MainLayout>
-        <PageTransition>
-          <OrderNotFound />
-        </PageTransition>
-      </MainLayout>
-    );
+  // Show not found state
+  if (!order) {
+    return <OrderNotFound orderId={orderId} />;
   }
 
   return (
-    <MainLayout>
-      <PageTransition>
-        <ErrorBoundary>
-          <div className="container py-6 max-w-7xl">
-            {order && (
-              <OrderSinglePageHeader
-                order={order}
-                orderId={orderId}
-                isEditing={isEditing}
-                handleEditClick={handleEditClick}
-                handleDeleteClick={handleDeleteClick}
-                handleCancelClick={handleCancelClick}
-                handleSaveClick={handleSaveClick}
-              />
-            )}
-            
-            <Tabs defaultValue="details" className="mt-6">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="details">Order Details</TabsTrigger>
-                <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
-                <TabsTrigger value="production">Production & Delivery</TabsTrigger>
-                <TabsTrigger value="communication">Communication</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="mt-6">
-                <Suspense fallback={<OrderDetailsLoading />}>
-                  <ErrorBoundary>
-                    <OrderDetailsTab 
-                      order={order}
-                      editedOrder={editedOrder}
-                      isEditing={isEditing}
-                      onInputChange={handleInputChange}
-                      onStatusChange={handleStatusChange}
-                    />
-                  </ErrorBoundary>
-                </Suspense>
-              </TabsContent>
-              
-              <TabsContent value="invoicing" className="mt-6">
-                <Suspense fallback={<OrderDetailsLoading />}>
-                  <ErrorBoundary>
-                    <InvoicingTab 
-                      order={order}
-                      refundsForOrder={refundsForOrder}
-                      setRefundsForOrder={setRefundsForOrder}
-                    />
-                  </ErrorBoundary>
-                </Suspense>
-              </TabsContent>
-              
-              <TabsContent value="production" className="mt-6">
-                <Suspense fallback={<OrderDetailsLoading />}>
-                  <ErrorBoundary>
-                    <ProductionTab order={order} />
-                  </ErrorBoundary>
-                </Suspense>
-              </TabsContent>
-              
-              <TabsContent value="communication" className="mt-6">
-                <Suspense fallback={<OrderDetailsLoading />}>
-                  <ErrorBoundary>
-                    <CommunicationTab order={order} />
-                  </ErrorBoundary>
-                </Suspense>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </ErrorBoundary>
-      </PageTransition>
-    </MainLayout>
-  );
-};
+    <OrderErrorBoundary>
+      <div className="container py-6">
+        <OrderDetailsHeader
+          order={order}
+          isEditing={isEditing}
+          onEditClick={handleEditClick}
+          onCancelClick={handleCancelClick}
+          onSaveClick={handleSaveClick}
+          onDeleteClick={handleDeleteClick}
+        />
 
-export default OrderSinglePage;
+        <div className="mt-6">
+          <OrderDetailsContent
+            order={order}
+            editedOrder={editedOrder}
+            isEditing={isEditing}
+            onInputChange={handleInputChange}
+            onStatusChange={handleStatusChange}
+          />
+        </div>
+
+        <div className="mt-8">
+          <RefundsSection 
+            order={order} 
+            refundsForOrder={refundsForOrder}
+            setRefundsForOrder={setRefundsForOrder}
+          />
+        </div>
+
+        <div className="mt-8">
+          <ContractorsSection order={order} />
+        </div>
+
+        <DeleteOrderDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+        />
+      </div>
+    </OrderErrorBoundary>
+  );
+}

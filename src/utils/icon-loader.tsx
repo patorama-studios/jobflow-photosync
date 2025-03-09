@@ -21,21 +21,23 @@ const FallbackIcon = () => (
   </svg>
 );
 
-// Custom hook to safely get icons
+/**
+ * Get an icon component from lucide-react by name
+ */
 export const useIcon = (iconName: string) => {
   try {
-    // Try to get the icon from lucide-react
-    const Icon = LucideIcons[iconName as keyof typeof LucideIcons];
-    
-    // Return the icon if it exists, otherwise return fallback
-    return Icon || FallbackIcon;
+    // Get the icon component from lucide-react
+    const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons];
+    return IconComponent || FallbackIcon;
   } catch (error) {
     console.error(`Error loading icon: ${iconName}`, error);
     return FallbackIcon;
   }
 };
 
-// Safe icon component that handles errors
+/**
+ * A component that renders an icon from lucide-react by name
+ */
 export const SafeIcon = ({ 
   name, 
   ...props 
@@ -44,15 +46,18 @@ export const SafeIcon = ({
   [key: string]: any 
 }) => {
   try {
-    const IconComponent = useIcon(name);
-    return <IconComponent {...props} />;
+    const LucideIcon = useIcon(name);
+    // Type assertion to solve TypeScript issue
+    return React.createElement(LucideIcon as React.ComponentType<any>, props);
   } catch (error) {
     console.error(`Failed to render icon: ${name}`, error);
     return <FallbackIcon />;
   }
 };
 
-// Export a function to safely get icon components
+/**
+ * Get an icon component for direct usage
+ */
 export const getIcon = (iconName: string) => {
   try {
     return LucideIcons[iconName as keyof typeof LucideIcons] || FallbackIcon;
@@ -62,7 +67,9 @@ export const getIcon = (iconName: string) => {
   }
 };
 
-// Export all icons with safety wrapper
+/**
+ * Proxy object that returns icon components by property access
+ */
 export const Icons = new Proxy({}, {
   get: (_, prop) => {
     if (typeof prop === 'string') {
