@@ -18,6 +18,7 @@ interface OrderDetailsHeaderProps {
   handleDeleteClick?: () => void;
   handleCancelClick?: () => void;
   handleSaveClick?: () => Promise<void>;
+  onRefresh?: () => void; // Add onRefresh prop
 }
 
 export function OrderDetailsHeader({ 
@@ -30,7 +31,8 @@ export function OrderDetailsHeader({
   handleEditClick,
   handleDeleteClick,
   handleCancelClick,
-  handleSaveClick
+  handleSaveClick,
+  onRefresh
 }: OrderDetailsHeaderProps) {
   // Get status badge color
   const getStatusColor = (status: string) => {
@@ -79,6 +81,12 @@ export function OrderDetailsHeader({
       </div>
       
       <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+        {onRefresh && (
+          <Button variant="outline" className="flex items-center gap-1" onClick={onRefresh}>
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        )}
         <Button variant="outline" className="flex items-center gap-1">
           <FileDown className="h-4 w-4" />
           Export

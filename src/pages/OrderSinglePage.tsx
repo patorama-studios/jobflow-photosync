@@ -95,7 +95,8 @@ export default function OrderSinglePage() {
             onTabChange={setActiveTab}
           >
             <OrderDetailsTab 
-              order={editedOrder || order}
+              order={order}
+              editedOrder={editedOrder}
               isEditing={isEditing}
               onInputChange={handleInputChange}
               onStatusChange={handleStatusChange}
@@ -116,9 +117,8 @@ export default function OrderSinglePage() {
           <DeleteOrderDialog
             isOpen={isDeleteDialogOpen}
             onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={() => {}}
+            onConfirm={confirmDelete}
             onOpenChange={setIsDeleteDialogOpen}
-            onConfirmDelete={confirmDelete}
             orderNumber={order.orderNumber || `Order #${order.id}`}
           />
         </div>

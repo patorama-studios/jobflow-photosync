@@ -112,6 +112,7 @@ export default function OrderDetails() {
             isEditing={isEditing}
             handleCancelClick={handleCancelClick}
             handleSaveClick={handleSaveClick}
+            onRefresh={() => refetch()}
           />
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
