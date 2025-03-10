@@ -2,14 +2,15 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createOrder } from '@/services/order-service';
 import { OrderStatus } from '@/types/order-types';
-import { ToggleSection } from '../calendar/appointment/components/ToggleSection';
+
+// Import our new section components
+import { ClientSection } from './form/ClientSection';
+import { PropertySection } from './form/PropertySection';
+import { SchedulingSection } from './form/SchedulingSection';
+import { NotesSection } from './form/NotesSection';
 
 interface CreateOrderDialogProps {
   isOpen: boolean;
@@ -104,228 +105,37 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Client Information Section */}
-          <ToggleSection
-            title="Client Information"
+          <ClientSection 
             isOpen={clientSectionOpen}
             onToggle={() => setClientSectionOpen(!clientSectionOpen)}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="client">Client Name*</Label>
-                <Input 
-                  id="client" 
-                  name="client" 
-                  value={formData.client} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="clientEmail">Client Email*</Label>
-                <Input 
-                  id="clientEmail" 
-                  name="clientEmail" 
-                  type="email" 
-                  value={formData.clientEmail} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="clientPhone">Client Phone</Label>
-                <Input 
-                  id="clientPhone" 
-                  name="clientPhone" 
-                  value={formData.clientPhone} 
-                  onChange={handleInputChange} 
-                />
-              </div>
-            </div>
-          </ToggleSection>
+            formData={formData}
+            handleInputChange={handleInputChange}
+          />
           
           {/* Property Information Section */}
-          <ToggleSection
-            title="Property Information"
+          <PropertySection 
             isOpen={propertySectionOpen}
             onToggle={() => setPropertySectionOpen(!propertySectionOpen)}
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="propertyType">Property Type*</Label>
-                <Select 
-                  value={formData.propertyType} 
-                  onValueChange={(value) => handleSelectChange('propertyType', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select property type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Residential">Residential</SelectItem>
-                    <SelectItem value="Commercial">Commercial</SelectItem>
-                    <SelectItem value="Apartment">Apartment</SelectItem>
-                    <SelectItem value="Condo">Condo</SelectItem>
-                    <SelectItem value="Townhouse">Townhouse</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="address">Property Address*</Label>
-                <Input 
-                  id="address" 
-                  name="address" 
-                  value={formData.address} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City*</Label>
-                  <Input 
-                    id="city" 
-                    name="city" 
-                    value={formData.city} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="state">State*</Label>
-                  <Input 
-                    id="state" 
-                    name="state" 
-                    value={formData.state} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="zip">ZIP Code*</Label>
-                  <Input 
-                    id="zip" 
-                    name="zip" 
-                    value={formData.zip} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="squareFeet">Square Feet*</Label>
-                  <Input 
-                    id="squareFeet" 
-                    name="squareFeet" 
-                    type="number" 
-                    value={formData.squareFeet.toString()} 
-                    onChange={handleInputChange} 
-                    required 
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="package">Package*</Label>
-                <Input 
-                  id="package" 
-                  name="package" 
-                  value={formData.package} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="price">Price*</Label>
-                <Input 
-                  id="price" 
-                  name="price" 
-                  type="number" 
-                  value={formData.price.toString()} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-            </div>
-          </ToggleSection>
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleSelectChange={handleSelectChange}
+          />
           
           {/* Scheduling Section */}
-          <ToggleSection
-            title="Scheduling Information"
+          <SchedulingSection 
             isOpen={schedulingSectionOpen}
             onToggle={() => setSchedulingSectionOpen(!schedulingSectionOpen)}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="scheduledDate">Scheduled Date*</Label>
-                <Input 
-                  id="scheduledDate" 
-                  name="scheduledDate" 
-                  type="date" 
-                  value={formData.scheduledDate} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="scheduledTime">Scheduled Time*</Label>
-                <Input 
-                  id="scheduledTime" 
-                  name="scheduledTime" 
-                  value={formData.scheduledTime} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="photographer">Photographer</Label>
-                <Input 
-                  id="photographer" 
-                  name="photographer" 
-                  value={formData.photographer} 
-                  onChange={handleInputChange} 
-                />
-              </div>
-            </div>
-          </ToggleSection>
+            formData={formData}
+            handleInputChange={handleInputChange}
+          />
           
           {/* Notes Section */}
-          <ToggleSection
-            title="Order Notes"
+          <NotesSection 
             isOpen={notesSectionOpen}
             onToggle={() => setNotesSectionOpen(!notesSectionOpen)}
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerNotes">Customer Notes</Label>
-                <Textarea 
-                  id="customerNotes" 
-                  name="customerNotes" 
-                  value={formData.customerNotes} 
-                  onChange={handleInputChange} 
-                  className="min-h-[80px]" 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="internalNotes">Internal Notes</Label>
-                <Textarea 
-                  id="internalNotes" 
-                  name="internalNotes" 
-                  value={formData.internalNotes} 
-                  onChange={handleInputChange} 
-                  className="min-h-[80px]" 
-                />
-              </div>
-            </div>
-          </ToggleSection>
+            formData={formData}
+            handleInputChange={handleInputChange}
+          />
           
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
