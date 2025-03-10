@@ -16,6 +16,7 @@ import { AppsSettings } from "./sections/AppsSettings";
 import { TeamSettings } from "./sections/TeamSettings";
 import { ProductionStatusSettings } from "./sections/production-status/ProductionStatusSettings";
 import { EsoftIntegrationSettings } from "./sections/EsoftIntegrationSettings";
+import { UserProfileSettings } from "./sections/UserProfileSettings";
 import { Card } from "@/components/ui/card";
 
 interface SettingsPanelProps {
@@ -25,6 +26,7 @@ interface SettingsPanelProps {
 export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: SettingsPanelProps) {
   return (
     <Card className="p-6">
+      {activeCategory === "user-profile" && <UserProfileSettings />}
       {activeCategory === "user" && <UserSettings />}
       {activeCategory === "team" && <TeamSettings />}
       {activeCategory === "notifications" && <NotificationPreferences />}

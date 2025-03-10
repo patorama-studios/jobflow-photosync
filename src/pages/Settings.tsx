@@ -8,6 +8,7 @@ import { useHeaderSettings } from "@/hooks/useHeaderSettings";
 
 // Define the different settings categories
 export type SettingsCategory = 
+  | "user-profile"
   | "user"
   | "notifications"
   | "organization"
@@ -25,7 +26,7 @@ export type SettingsCategory =
   | "esoft-integration";
 
 export function SettingsPage() {
-  const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user");
+  const [activeCategory, setActiveCategory] = useState<SettingsCategory>("user-profile");
   const { updateSettings } = useHeaderSettings();
 
   // Update the header settings once when the component mounts

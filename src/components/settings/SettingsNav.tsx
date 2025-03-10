@@ -18,6 +18,7 @@ import {
   Plug2,
   Users,
   ListChecks,
+  UserCircle,
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -38,7 +39,8 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
     [key: string]: SettingsCategoryItem[];
   } = {
     account: [
-      { id: "user", label: "User Profile", icon: <User className="mr-2 h-4 w-4" /> },
+      { id: "user-profile", label: "My Profile", icon: <UserCircle className="mr-2 h-4 w-4" /> },
+      { id: "user", label: "Team Members", icon: <User className="mr-2 h-4 w-4" /> },
       { id: "team", label: "Team", icon: <Users className="mr-2 h-4 w-4" /> },
       { id: "notifications", label: "Notifications", icon: <Bell className="mr-2 h-4 w-4" /> },
       { id: "organization", label: "Organization", icon: <Building className="mr-2 h-4 w-4" /> },

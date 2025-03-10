@@ -127,8 +127,12 @@ export function useTeamMembers() {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase delete error:", error);
+        throw error;
+      }
       
+      // Update local state only after successful deletion from database
       setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
       toast.success("Team member removed successfully");
       return true;
