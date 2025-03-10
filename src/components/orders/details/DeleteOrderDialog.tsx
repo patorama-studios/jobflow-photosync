@@ -17,6 +17,8 @@ interface DeleteOrderDialogProps {
   onConfirm: () => void;
   orderNumber: string;
   isDeleting?: boolean;
+  // Add the onOpenChange prop that components are using
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function DeleteOrderDialog({ 
@@ -24,10 +26,21 @@ export function DeleteOrderDialog({
   onClose, 
   onConfirm, 
   orderNumber,
-  isDeleting = false
+  isDeleting = false,
+  onOpenChange
 }: DeleteOrderDialogProps) {
+  // Handle both onClose and onOpenChange 
+  const handleOpenChange = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+    if (!open) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Order</DialogTitle>

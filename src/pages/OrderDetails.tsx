@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, ArrowLeft, Edit, FileDown, Trash, RefreshCw } from 'lucide-react';
+import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useOrderDetails } from '@/hooks/use-order-details';
 import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
 import { OrderDetailsTab } from '@/components/orders/details/OrderDetailsTab';
@@ -28,9 +28,8 @@ export default function OrderDetails() {
     deleteOrder 
   } = useOrderDetails(orderId || '');
   
-  const handleDeleteOrder = async () => {
-    await deleteOrder();
-    navigate('/orders');
+  const handleDeleteOrder = () => {
+    deleteOrder();
   };
   
   const handleBackClick = () => {
@@ -133,6 +132,7 @@ export default function OrderDetails() {
             onClose={() => setIsDeleteDialogOpen(false)}
             onConfirm={handleDeleteOrder}
             orderNumber={order.orderNumber || order.order_number || String(order.id)}
+            onOpenChange={(open) => setIsDeleteDialogOpen(open)}
           />
         </div>
       </PageTransition>

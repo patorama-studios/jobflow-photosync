@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order-types';
@@ -63,6 +63,6 @@ export function useOrderDetails(orderId: string) {
     isLoading,
     error: error ? (error as Error).message : null,
     refetch,
-    deleteOrder: deleteMutation.mutate
+    deleteOrder: deleteMutation.mutate,
   };
 }
