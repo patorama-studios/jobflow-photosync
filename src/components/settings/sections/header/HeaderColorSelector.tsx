@@ -32,6 +32,11 @@ export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSel
     updateSettings({ color });
   };
 
+  // Helper function to determine if text should be white based on background color
+  const shouldUseWhiteText = (color: string) => {
+    return color === '#000000' || color.toLowerCase() === 'black';
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -49,14 +54,14 @@ export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSel
             className="h-10 relative"
             style={{ 
               backgroundColor: color.value,
-              color: (color.value === '#000000' || color.name === 'Black') ? 'white' : 'black'
+              color: shouldUseWhiteText(color.value) ? 'white' : 'black'
             }}
             onClick={() => handleColorChange(color.value)}
           >
             {settings.color === color.value && (
-              <Check className={`h-4 w-4 absolute ${(color.value === '#000000' || color.name === 'Black') ? 'text-white' : 'text-black'}`} />
+              <Check className={`h-4 w-4 absolute ${shouldUseWhiteText(color.value) ? 'text-white' : 'text-black'}`} />
             )}
-            <span className={`text-xs ${(color.value === '#000000' || color.name === 'Black') ? 'text-white' : ''}`}>
+            <span className={`text-xs ${shouldUseWhiteText(color.value) ? 'text-white' : ''}`}>
               {color.name}
             </span>
           </Button>
@@ -66,7 +71,7 @@ export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSel
       <div className="flex items-center gap-2 mt-4">
         <Input 
           type="color" 
-          value={settings.color || '#ffffff'}
+          value={settings.color.startsWith('#') ? settings.color : '#ffffff'}
           onChange={(e) => handleColorChange(e.target.value)}
           className="w-12 h-12 p-1"
         />

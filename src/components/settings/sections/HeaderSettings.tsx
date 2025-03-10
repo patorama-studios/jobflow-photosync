@@ -9,12 +9,14 @@ import { HeaderColorSelector } from './header/HeaderColorSelector';
 import { ResetButton } from './header/ResetButton';
 import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export function HeaderSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { settings: savedSettings, updateSettings } = useHeaderSettings();
   const [localSettings, setLocalSettings] = useState({ ...savedSettings });
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
   // Update local settings when saved settings change
@@ -30,14 +32,35 @@ export function HeaderSettings() {
     });
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (hasChanges) {
-      updateSettings(localSettings);
-      setHasChanges(false);
-      toast({
-        title: "Settings saved",
-        description: "Header settings have been updated",
-      });
+      setIsSaving(true);
+      try {
+        const saveSuccess = await updateSettings(localSettings);
+        
+        if (saveSuccess) {
+          setHasChanges(false);
+          toast({
+            title: "Settings saved",
+            description: "Header settings have been updated and will persist across sessions",
+          });
+        } else {
+          toast({
+            title: "Save failed",
+            description: "There was a problem saving your header settings",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error saving header settings:', error);
+        toast({
+          title: "Save failed",
+          description: "An unexpected error occurred while saving settings",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -91,9 +114,16 @@ export function HeaderSettings() {
         
         <Button 
           onClick={handleSave}
-          disabled={!hasChanges}
+          disabled={!hasChanges || isSaving}
         >
-          Save Header Settings
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Header Settings'
+          )}
         </Button>
       </div>
     </div>

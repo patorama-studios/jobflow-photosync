@@ -33,6 +33,7 @@ export function Header() {
     return 'PS';
   };
 
+  // Apply the stored header settings
   const headerStyle = {
     backgroundColor: settings.color || 'hsl(var(--background))',
     height: `${settings.height}px` || '64px'

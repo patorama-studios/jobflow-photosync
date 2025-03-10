@@ -14,7 +14,7 @@ export interface HeaderSettings {
 
 interface HeaderSettingsContextType {
   settings: HeaderSettings;
-  updateSettings: (settings: Partial<HeaderSettings>) => void;
+  updateSettings: (settings: Partial<HeaderSettings>) => Promise<boolean>;
   title: string | null;
   showBackButton: boolean;
   onBackButtonClick: () => void;
@@ -59,6 +59,7 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
     const fetchHeaderSettings = async () => {
       try {
         setIsLoading(true);
+        console.log('Fetching header settings from Supabase...');
         
         const { data, error } = await supabase
           .from('app_settings')
@@ -67,6 +68,7 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
           .maybeSingle();
 
         if (error) {
+          console.error('Error fetching header settings:', error);
           throw error;
         }
 
@@ -106,8 +108,10 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   }, []);
 
   // Function to save settings to Supabase
-  const saveToSupabase = async (settingsToSave: HeaderSettings) => {
+  const saveToSupabase = async (settingsToSave: HeaderSettings): Promise<boolean> => {
     try {
+      console.log('Saving header settings to Supabase:', settingsToSave);
+      
       // Convert HeaderSettings to a JSON object that can be stored in Supabase
       const jsonValue = {
         color: settingsToSave.color,
@@ -124,12 +128,17 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
           key: 'headerSettings',
           value: jsonValue,
           is_global: true
+        }, {
+          onConflict: 'key'
         });
 
       if (error) {
+        console.error('Error saving header settings to Supabase:', error);
+        toast.error('Failed to save header settings');
         throw error;
       }
       
+      console.log('Header settings saved successfully to Supabase');
       return true;
     } catch (error) {
       console.error('Error saving header settings to Supabase:', error);
@@ -139,19 +148,28 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   };
 
   // Memoize updateSettings to prevent it from changing on every render
-  const updateSettings = useCallback(async (newSettingsPartial: Partial<HeaderSettings>) => {
-    setSettings(prevSettings => {
+  const updateSettings = useCallback(async (newSettingsPartial: Partial<HeaderSettings>): Promise<boolean> => {
+    try {
       const updatedSettings = {
-        ...prevSettings,
+        ...settings,
         ...newSettingsPartial
       };
       
-      // Save to Supabase
-      saveToSupabase(updatedSettings);
+      // Save to Supabase first
+      const saveSuccess = await saveToSupabase(updatedSettings);
       
-      return updatedSettings;
-    });
-  }, []);
+      if (saveSuccess) {
+        // Only update local state if save was successful
+        setSettings(updatedSettings);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      return false;
+    }
+  }, [settings]);
 
   const onBackButtonClick = useCallback(() => {
     backButtonAction();
@@ -186,7 +204,7 @@ export const useHeaderSettings = () => {
 
 // Add a dummy provider for testing purposes
 export const MockHeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
-  const mockUpdateSettings = () => {};
+  const mockUpdateSettings = async () => true;
   const mockOnClick = () => {};
   const mockSetAction = () => {};
   
