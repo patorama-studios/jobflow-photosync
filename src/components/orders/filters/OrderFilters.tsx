@@ -7,9 +7,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Order } from "@/types/order-types";
+import { Order, OrderStatus } from "@/types/order-types";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { validateStatus } from '@/utils/order-status-utils';
 
 interface OrderFiltersProps {
   orders: Order[];
@@ -25,7 +26,7 @@ export function OrderFilters({ orders, onFiltersChange }: OrderFiltersProps) {
     from: undefined,
     to: undefined,
   });
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>("all");
   
   // Extract unique statuses from orders for the dropdown
   const statuses = Array.from(new Set(orders.map(order => order.status))).filter(Boolean);
@@ -47,7 +48,7 @@ export function OrderFilters({ orders, onFiltersChange }: OrderFiltersProps) {
         (!dateRange.to || !orderDate) ? true : orderDate <= dateRange.to;
       
       // Apply status filter (handling "all" value)
-      const matchesStatus = status === "" || status === "all" ? true : order.status === status;
+      const matchesStatus = status === "all" ? true : order.status === status;
       
       return matchesSearch && matchesDateRange && matchesStatus;
     });
@@ -58,10 +59,10 @@ export function OrderFilters({ orders, onFiltersChange }: OrderFiltersProps) {
   const clearFilters = () => {
     setSearchQuery("");
     setDateRange({ from: undefined, to: undefined });
-    setStatus("");
+    setStatus("all");
   };
   
-  const hasActiveFilters = searchQuery || dateRange.from || dateRange.to || status;
+  const hasActiveFilters = searchQuery || dateRange.from || dateRange.to || (status !== "all");
 
   return (
     <div className="border-b p-4 space-y-4">

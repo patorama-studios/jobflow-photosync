@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order-types';
 import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 import { toast } from 'sonner';
+import { deleteAllOrders } from '@/services/order-service';
 
 export function useOrders() {
   const queryClient = useQueryClient();
@@ -32,10 +33,26 @@ export function useOrders() {
     }
   });
 
+  // Add a function to handle clearing all orders
+  const clearAllOrders = async () => {
+    try {
+      const result = await deleteAllOrders();
+      if (result.success) {
+        toast.success('All orders have been cleared');
+        refetch();
+      } else {
+        toast.error(`Failed to clear orders: ${result.error}`);
+      }
+    } catch (error: any) {
+      toast.error(`Error clearing orders: ${error.message}`);
+    }
+  };
+
   return {
     orders,
     isLoading,
     error,
-    refetch
+    refetch,
+    clearAllOrders
   };
 }

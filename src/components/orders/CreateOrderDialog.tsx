@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createOrder } from '@/services/order-service';
+import { OrderStatus } from '@/types/order-types';
 
 interface CreateOrderDialogProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
     photographer: '',
     photographerPayoutRate: 100,
     package: 'Standard Photography Package',
-    status: 'scheduled',
+    status: 'scheduled' as OrderStatus,
     customerNotes: '',
     internalNotes: ''
   });
