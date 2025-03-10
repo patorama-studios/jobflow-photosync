@@ -65,8 +65,10 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
         console.log("Order successfully deleted");
         toast.success("Order deleted successfully");
         
-        // Invalidate orders query cache
+        // Force invalidate orders query cache to refresh the list
+        console.log("Invalidating orders query after deletion");
         await queryClient.invalidateQueries({ queryKey: ['orders'] });
+        await queryClient.refetchQueries({ queryKey: ['orders'] });
         
         // If we're on a specific order's page, navigate back to orders
         if (window.location.pathname.includes(orderId)) {

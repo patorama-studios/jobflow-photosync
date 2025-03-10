@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteOrder } from '@/services/order-service';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UseOrderDeletionProps {
   orderId?: string | number;
@@ -22,6 +23,7 @@ export function useOrderDeletion({
 }: UseOrderDeletionProps): UseOrderDeletionResult {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
@@ -29,6 +31,8 @@ export function useOrderDeletion({
 
   const confirmDelete = async (): Promise<void> => {
     try {
+      console.log("Confirming deletion via hook for order:", orderId);
+      
       const { success, error: deleteError } = await deleteOrder(orderId);
       
       if (deleteError) {
@@ -40,6 +44,12 @@ export function useOrderDeletion({
       
       if (success) {
         toast.success("Order deleted successfully");
+        
+        // Force invalidate and refresh the orders query
+        console.log("Invalidating orders query after deletion");
+        await queryClient.invalidateQueries({ queryKey: ['orders'] });
+        await queryClient.refetchQueries({ queryKey: ['orders'] });
+        
         // Redirect to orders page after successful deletion
         navigate('/orders', { replace: true });
         setIsDeleteDialogOpen(false);

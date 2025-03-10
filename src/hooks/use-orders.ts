@@ -54,6 +54,7 @@ export async function addDummyOrder() {
 // Function to clear all orders
 export async function clearAllOrders() {
   try {
+    console.log('Attempting to clear all orders...');
     const { error } = await supabase
       .from('orders')
       .delete()
@@ -61,15 +62,15 @@ export async function clearAllOrders() {
     
     if (error) {
       console.error('Error clearing orders:', error);
-      toast.error('Failed to clear orders');
+      toast.error('Failed to clear orders: ' + error.message);
       return false;
     }
     
     toast.success('All orders cleared successfully');
     return true;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error clearing orders:', err);
-    toast.error('Error clearing orders');
+    toast.error('Error clearing orders: ' + (err.message || 'Unknown error'));
     return false;
   }
 }
@@ -85,6 +86,7 @@ export function useOrders() {
   } = useQuery({
     queryKey: ['orders'],
     queryFn: async (): Promise<Order[]> => {
+      console.log('Fetching orders...');
       const { data, error } = await supabase
         .from('orders')
         .select('*')
@@ -95,6 +97,7 @@ export function useOrders() {
         throw new Error(error.message);
       }
       
+      console.log('Orders fetched:', data?.length || 0);
       return mapSupabaseOrdersToOrderType(data || []);
     }
   });
@@ -103,15 +106,19 @@ export function useOrders() {
     mutationFn: addDummyOrder,
     onSuccess: () => {
       // Invalidate orders query to refresh the list
+      console.log('Invalidating orders query after adding dummy order');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     }
   });
 
   const clearAllOrdersMutation = useMutation({
     mutationFn: clearAllOrders,
-    onSuccess: () => {
-      // Invalidate orders query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    onSuccess: (succeeded) => {
+      if (succeeded) {
+        // Invalidate orders query to refresh the list
+        console.log('Invalidating orders query after clearing all orders');
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+      }
     }
   });
 

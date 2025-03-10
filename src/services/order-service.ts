@@ -119,31 +119,7 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
     console.log('Deleting order with ID:', orderId);
     const orderIdString = String(orderId); // Convert to string to ensure compatibility
     
-    // First, check if the order exists
-    const { data: orderExists, error: checkError } = await supabase
-      .from('orders')
-      .select('id')
-      .eq('id', orderIdString)
-      .single();
-      
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" which we handle below
-      console.error('Error checking order existence:', checkError);
-      return { success: false, error: checkError.message };
-    }
-    
-    if (!orderExists && checkError?.code === 'PGRST116') {
-      // Order doesn't exist, check if it's a sample order for development
-      const sampleOrderIndex = sampleOrders.findIndex(o => o.id.toString() === orderIdString);
-      if (sampleOrderIndex >= 0) {
-        // For development, just "delete" the sample order by marking it as deleted
-        console.log('Deleting sample order:', sampleOrders[sampleOrderIndex]);
-        // This is just a simulation for the UI, no actual DB change
-        return { success: true, error: null };
-      }
-      return { success: false, error: 'Order not found' };
-    }
-    
-    // If we're here, the order exists in the database, so delete it
+    // Perform the delete operation directly
     const { error } = await supabase
       .from('orders')
       .delete()
@@ -154,7 +130,7 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
       return { success: false, error: error.message };
     }
     
-    console.log('Order deleted successfully');
+    console.log('Order deleted successfully', orderIdString);
     return { success: true, error: null };
   } catch (err: any) {
     console.error('Error in deleteOrder:', err);

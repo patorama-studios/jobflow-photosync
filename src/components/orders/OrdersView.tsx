@@ -1,17 +1,18 @@
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import { OrdersHeader } from "./OrdersHeader";
 import { OrdersContent } from "./OrdersContent";
 import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointmentDialog"; 
 import { useOrders } from "@/hooks/use-orders";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
 
 export const OrdersView = memo(function OrdersView() {
-  const { orders, isLoading, clearAllOrders } = useOrders();
+  const { orders, isLoading, clearAllOrders, refetch } = useOrders();
   
   const [view, setView] = useState<"list" | "grid">("list");
   const [openCreateOrder, setOpenCreateOrder] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   
   const handleViewChange = useCallback((newView: "list" | "grid") => {
     setView(newView);
@@ -26,8 +27,22 @@ export const OrdersView = memo(function OrdersView() {
   }, []);
 
   const handleClearAllOrders = useCallback(() => {
+    console.log("Attempting to clear all orders...");
+    setIsClearing(true);
     clearAllOrders();
+    // Set a timeout to ensure the isClearing state gets reset even if something goes wrong
+    setTimeout(() => setIsClearing(false), 2000);
   }, [clearAllOrders]);
+
+  // Effect to reset isClearing when orders are updated
+  useEffect(() => {
+    setIsClearing(false);
+  }, [orders]);
+
+  const handleRefresh = useCallback(() => {
+    console.log("Manually refreshing orders...");
+    refetch();
+  }, [refetch]);
 
   return (
     <div className="container mx-auto space-y-8">
@@ -39,15 +54,34 @@ export const OrdersView = memo(function OrdersView() {
       />
       
       {orders && orders.length > 0 && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRefresh}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
           <Button 
             variant="destructive" 
             size="sm"
             onClick={handleClearAllOrders}
+            disabled={isClearing}
             className="flex items-center gap-1"
           >
-            <Trash2 className="h-4 w-4" />
-            Clear All Orders
+            {isClearing ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Clearing...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Clear All Orders
+              </>
+            )}
           </Button>
         </div>
       )}
