@@ -9,11 +9,29 @@ import { cn } from '@/lib/utils';
 
 interface OrderDetailsHeaderProps {
   order: Order;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  // Add additional props that components are trying to use
+  orderId?: string;
+  isEditing?: boolean;
+  handleEditClick?: () => void;
+  handleDeleteClick?: () => void;
+  handleCancelClick?: () => void;
+  handleSaveClick?: () => Promise<void>;
 }
 
-export function OrderDetailsHeader({ order, onEdit, onDelete }: OrderDetailsHeaderProps) {
+export function OrderDetailsHeader({ 
+  order, 
+  onEdit, 
+  onDelete,
+  // Support both old and new prop patterns
+  orderId,
+  isEditing,
+  handleEditClick,
+  handleDeleteClick,
+  handleCancelClick,
+  handleSaveClick
+}: OrderDetailsHeaderProps) {
   // Get status badge color
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -36,6 +54,10 @@ export function OrderDetailsHeader({ order, onEdit, onDelete }: OrderDetailsHead
   const formattedDate = order.scheduledDate 
     ? format(new Date(order.scheduledDate), "MMMM d, yyyy")
     : "Not scheduled";
+
+  // Use provided handlers or fall back to the simpler ones
+  const handleEdit = handleEditClick || onEdit;
+  const handleDelete = handleDeleteClick || onDelete;
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -61,22 +83,43 @@ export function OrderDetailsHeader({ order, onEdit, onDelete }: OrderDetailsHead
           <FileDown className="h-4 w-4" />
           Export
         </Button>
-        <Button 
-          variant="outline" 
-          className="flex items-center gap-1"
-          onClick={onEdit}
-        >
-          <Edit className="h-4 w-4" />
-          Edit
-        </Button>
-        <Button 
-          variant="destructive" 
-          className="flex items-center gap-1"
-          onClick={onDelete}
-        >
-          <Trash className="h-4 w-4" />
-          Delete
-        </Button>
+        {isEditing ? (
+          <>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1"
+              onClick={handleCancelClick}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              className="flex items-center gap-1"
+              onClick={handleSaveClick}
+            >
+              Save Changes
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1"
+              onClick={handleEdit}
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="flex items-center gap-1"
+              onClick={handleDelete}
+            >
+              <Trash className="h-4 w-4" />
+              Delete
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

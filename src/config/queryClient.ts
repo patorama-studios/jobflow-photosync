@@ -12,3 +12,6 @@ export const createQueryClient = () => new QueryClient({
     },
   },
 });
+
+// Create and export a queryClient instance
+export const queryClient = createQueryClient();

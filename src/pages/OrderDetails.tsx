@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { Button } from '@/components/ui/button';
@@ -8,33 +8,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { useOrderDetails } from '@/hooks/use-order-details';
 import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
 import { OrderDetailsTab } from '@/components/orders/details/OrderDetailsTab';
 import { OrderActivityTab } from '@/components/orders/details/OrderActivityTab';
 import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
+import { useOrderDetailsView } from '@/hooks/use-order-details-view';
 
 export default function OrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("details");
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const { 
     order, 
     isLoading, 
     error, 
-    refetch, 
-    deleteOrder 
-  } = useOrderDetails(orderId || '');
-  
-  const handleDeleteOrder = () => {
-    deleteOrder();
-  };
-  
-  const handleBackClick = () => {
-    navigate('/orders');
-  };
+    refetch,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    activeTab,
+    setActiveTab,
+    isEditing,
+    handleDeleteClick,
+    handleConfirmDelete,
+    handleEditClick,
+    handleCancelClick,
+    handleSaveClick,
+    handleBackClick
+  } = useOrderDetailsView(orderId || '');
 
   if (isLoading) {
     return (
@@ -108,8 +107,11 @@ export default function OrderDetails() {
           
           <OrderDetailsHeader
             order={order}
-            onEdit={() => navigate(`/orders/${orderId}/edit`)}
-            onDelete={() => setIsDeleteDialogOpen(true)}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+            isEditing={isEditing}
+            handleCancelClick={handleCancelClick}
+            handleSaveClick={handleSaveClick}
           />
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -130,9 +132,9 @@ export default function OrderDetails() {
           <DeleteOrderDialog
             isOpen={isDeleteDialogOpen}
             onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={handleDeleteOrder}
+            onConfirm={handleConfirmDelete}
             orderNumber={order.orderNumber || order.order_number || String(order.id)}
-            onOpenChange={(open) => setIsDeleteDialogOpen(open)}
+            onOpenChange={setIsDeleteDialogOpen}
           />
         </div>
       </PageTransition>

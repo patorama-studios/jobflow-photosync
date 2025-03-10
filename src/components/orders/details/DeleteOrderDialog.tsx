@@ -17,8 +17,9 @@ interface DeleteOrderDialogProps {
   onConfirm: () => void;
   orderNumber: string;
   isDeleting?: boolean;
-  // Add the onOpenChange prop that components are using
   onOpenChange?: (open: boolean) => void;
+  // Add support for the onConfirmDelete prop that other components are using
+  onConfirmDelete?: () => Promise<void>;
 }
 
 export function DeleteOrderDialog({ 
@@ -27,7 +28,8 @@ export function DeleteOrderDialog({
   onConfirm, 
   orderNumber,
   isDeleting = false,
-  onOpenChange
+  onOpenChange,
+  onConfirmDelete
 }: DeleteOrderDialogProps) {
   // Handle both onClose and onOpenChange 
   const handleOpenChange = (open: boolean) => {
@@ -36,6 +38,15 @@ export function DeleteOrderDialog({
     }
     if (!open) {
       onClose();
+    }
+  };
+
+  // Handle the different confirmation callbacks
+  const handleConfirm = () => {
+    if (onConfirmDelete) {
+      onConfirmDelete();
+    } else if (onConfirm) {
+      onConfirm();
     }
   };
 
@@ -55,7 +66,7 @@ export function DeleteOrderDialog({
           </Button>
           <Button 
             variant="destructive" 
-            onClick={onConfirm} 
+            onClick={handleConfirm} 
             disabled={isDeleting}
           >
             {isDeleting ? (
