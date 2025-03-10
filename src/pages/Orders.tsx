@@ -10,15 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Plus, FileDown, RefreshCw } from 'lucide-react';
 import { useOrders } from '@/hooks/use-orders';
 import { useToast } from '@/components/ui/use-toast';
+import { CreateOrderDialog } from '@/components/orders/CreateOrderDialog';
 
 export default function Orders() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { orders, isLoading, refetch } = useOrders();
   const [filteredOrders, setFilteredOrders] = useState(orders || []);
+  const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
   
   const handleCreateOrder = () => {
-    navigate('/orders/new');
+    setIsCreateOrderOpen(true);
   };
   
   const handleExportOrders = () => {
@@ -88,6 +90,17 @@ export default function Orders() {
           </Card>
         </div>
       </PageTransition>
+      
+      {isCreateOrderOpen && (
+        <CreateOrderDialog 
+          isOpen={isCreateOrderOpen} 
+          onClose={() => setIsCreateOrderOpen(false)}
+          onOrderCreated={() => {
+            refetch();
+            setIsCreateOrderOpen(false);
+          }}
+        />
+      )}
     </MainLayout>
   );
 }

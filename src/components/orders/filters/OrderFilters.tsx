@@ -46,8 +46,8 @@ export function OrderFilters({ orders, onFiltersChange }: OrderFiltersProps) {
         (!dateRange.from || !orderDate) ? true : orderDate >= dateRange.from &&
         (!dateRange.to || !orderDate) ? true : orderDate <= dateRange.to;
       
-      // Apply status filter
-      const matchesStatus = status ? order.status === status : true;
+      // Apply status filter (handling "all" value)
+      const matchesStatus = status === "" || status === "all" ? true : order.status === status;
       
       return matchesSearch && matchesDateRange && matchesStatus;
     });
