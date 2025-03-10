@@ -61,11 +61,11 @@ export const deleteAllOrders = async (): Promise<{ success: boolean, error: stri
     
     console.log(`Found ${orderCount} orders to delete`);
     
-    // Now delete all orders
+    // Now delete all orders without using the problematic gt() with UUID
     const { error } = await supabase
       .from('orders')
       .delete()
-      .gt('id', '0'); // Delete all orders
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Use a dummy UUID that won't exist
     
     if (error) {
       console.error('Error deleting all orders:', error);
