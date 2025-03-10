@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createOrder } from '@/services/order-service';
 import { OrderStatus } from '@/types/order-types';
+import { ToggleSection } from '../calendar/appointment/components/ToggleSection';
 
 interface CreateOrderDialogProps {
   isOpen: boolean;
@@ -38,6 +39,12 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
     customerNotes: '',
     internalNotes: ''
   });
+
+  // Toggleable sections
+  const [clientSectionOpen, setClientSectionOpen] = useState(true);
+  const [propertySectionOpen, setPropertySectionOpen] = useState(false);
+  const [schedulingSectionOpen, setSchedulingSectionOpen] = useState(false);
+  const [notesSectionOpen, setNotesSectionOpen] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -74,6 +81,7 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
         if (onOrderCreated) {
           onOrderCreated();
         }
+        onClose();
       } else {
         toast.error(`Failed to create order: ${result.error}`);
       }
@@ -95,7 +103,12 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+          {/* Client Information Section */}
+          <ToggleSection
+            title="Client Information"
+            isOpen={clientSectionOpen}
+            onToggle={() => setClientSectionOpen(!clientSectionOpen)}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="client">Client Name*</Label>
@@ -129,7 +142,16 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
                   onChange={handleInputChange} 
                 />
               </div>
-              
+            </div>
+          </ToggleSection>
+          
+          {/* Property Information Section */}
+          <ToggleSection
+            title="Property Information"
+            isOpen={propertySectionOpen}
+            onToggle={() => setPropertySectionOpen(!propertySectionOpen)}
+          >
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="propertyType">Property Type*</Label>
                 <Select 
@@ -148,66 +170,96 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address">Property Address*</Label>
-              <Input 
-                id="address" 
-                name="address" 
-                value={formData.address} 
-                onChange={handleInputChange} 
-                required 
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              
               <div className="space-y-2">
-                <Label htmlFor="city">City*</Label>
+                <Label htmlFor="address">Property Address*</Label>
                 <Input 
-                  id="city" 
-                  name="city" 
-                  value={formData.city} 
+                  id="address" 
+                  name="address" 
+                  value={formData.address} 
+                  onChange={handleInputChange} 
+                  required 
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City*</Label>
+                  <Input 
+                    id="city" 
+                    name="city" 
+                    value={formData.city} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="state">State*</Label>
+                  <Input 
+                    id="state" 
+                    name="state" 
+                    value={formData.state} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="zip">ZIP Code*</Label>
+                  <Input 
+                    id="zip" 
+                    name="zip" 
+                    value={formData.zip} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="squareFeet">Square Feet*</Label>
+                  <Input 
+                    id="squareFeet" 
+                    name="squareFeet" 
+                    type="number" 
+                    value={formData.squareFeet.toString()} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="package">Package*</Label>
+                <Input 
+                  id="package" 
+                  name="package" 
+                  value={formData.package} 
                   onChange={handleInputChange} 
                   required 
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="state">State*</Label>
+                <Label htmlFor="price">Price*</Label>
                 <Input 
-                  id="state" 
-                  name="state" 
-                  value={formData.state} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="zip">ZIP Code*</Label>
-                <Input 
-                  id="zip" 
-                  name="zip" 
-                  value={formData.zip} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="squareFeet">Square Feet*</Label>
-                <Input 
-                  id="squareFeet" 
-                  name="squareFeet" 
+                  id="price" 
+                  name="price" 
                   type="number" 
-                  value={formData.squareFeet.toString()} 
+                  value={formData.price.toString()} 
                   onChange={handleInputChange} 
                   required 
                 />
               </div>
             </div>
-            
+          </ToggleSection>
+          
+          {/* Scheduling Section */}
+          <ToggleSection
+            title="Scheduling Information"
+            isOpen={schedulingSectionOpen}
+            onToggle={() => setSchedulingSectionOpen(!schedulingSectionOpen)}
+          >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="scheduledDate">Scheduled Date*</Label>
@@ -233,20 +285,6 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="price">Price*</Label>
-                <Input 
-                  id="price" 
-                  name="price" 
-                  type="number" 
-                  value={formData.price.toString()} 
-                  onChange={handleInputChange} 
-                  required 
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
                 <Label htmlFor="photographer">Photographer</Label>
                 <Input 
                   id="photographer" 
@@ -255,41 +293,39 @@ export function CreateOrderDialog({ isOpen, onClose, onOrderCreated }: CreateOrd
                   onChange={handleInputChange} 
                 />
               </div>
+            </div>
+          </ToggleSection>
+          
+          {/* Notes Section */}
+          <ToggleSection
+            title="Order Notes"
+            isOpen={notesSectionOpen}
+            onToggle={() => setNotesSectionOpen(!notesSectionOpen)}
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="customerNotes">Customer Notes</Label>
+                <Textarea 
+                  id="customerNotes" 
+                  name="customerNotes" 
+                  value={formData.customerNotes} 
+                  onChange={handleInputChange} 
+                  className="min-h-[80px]" 
+                />
+              </div>
               
               <div className="space-y-2">
-                <Label htmlFor="package">Package*</Label>
-                <Input 
-                  id="package" 
-                  name="package" 
-                  value={formData.package} 
+                <Label htmlFor="internalNotes">Internal Notes</Label>
+                <Textarea 
+                  id="internalNotes" 
+                  name="internalNotes" 
+                  value={formData.internalNotes} 
                   onChange={handleInputChange} 
-                  required 
+                  className="min-h-[80px]" 
                 />
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="customerNotes">Customer Notes</Label>
-              <Textarea 
-                id="customerNotes" 
-                name="customerNotes" 
-                value={formData.customerNotes} 
-                onChange={handleInputChange} 
-                className="min-h-[80px]" 
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="internalNotes">Internal Notes</Label>
-              <Textarea 
-                id="internalNotes" 
-                name="internalNotes" 
-                value={formData.internalNotes} 
-                onChange={handleInputChange} 
-                className="min-h-[80px]" 
-              />
-            </div>
-          </div>
+          </ToggleSection>
           
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>

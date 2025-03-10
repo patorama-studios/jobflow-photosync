@@ -1,77 +1,52 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteOrder } from '@/services/order-service';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { deleteOrder } from '@/services/orders/order-delete-service';
 
-interface UseOrderDeletionProps {
-  orderId?: string | number;
-  setError: (error: string | null) => void;
-}
-
-interface UseOrderDeletionResult {
-  isDeleteDialogOpen: boolean;
-  setIsDeleteDialogOpen: (open: boolean) => void;
-  handleDeleteClick: () => void;
-  confirmDelete: () => Promise<void>;
-  isDeleting: boolean;
-}
-
-export function useOrderDeletion({
-  orderId,
-  setError
-}: UseOrderDeletionProps): UseOrderDeletionResult {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+export function useOrderDeletion() {
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async (): Promise<void> => {
-    if (!orderId || isDeleting) return;
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!orderId) {
+      toast.error('Invalid order ID');
+      return false;
+    }
+    
+    setIsDeleting(true);
     
     try {
-      setIsDeleting(true);
-      console.log("Confirming deletion via hook for order:", orderId);
+      const result = await deleteOrder(orderId);
       
-      const { success, error: deleteError } = await deleteOrder(orderId);
-      
-      if (deleteError) {
-        console.error("Delete error:", deleteError);
-        setError(deleteError);
-        toast.error(`Failed to delete: ${deleteError}`);
-        return;
-      } 
-      
-      if (success) {
-        toast.success("Order deleted successfully");
-        
-        // Force invalidate and refresh the orders query
-        console.log("Invalidating and refetching orders query after deletion");
-        await queryClient.invalidateQueries({ queryKey: ['orders'] });
-        
-        // Redirect to orders page after successful deletion
-        navigate('/orders', { replace: true });
+      if (result.success) {
+        toast.success('Order deleted successfully');
+        return true;
+      } else {
+        toast.error(`Failed to delete order: ${result.error}`);
+        return false;
       }
-    } catch (err: any) {
-      console.error('Error deleting order:', err);
-      setError(err.message || 'An unexpected error occurred while deleting');
-      toast.error(err.message || 'An unexpected error occurred while deleting');
+    } catch (error: any) {
+      toast.error(`Error deleting order: ${error.message}`);
+      return false;
     } finally {
       setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
     }
   };
 
+  const deleteOrderAndRedirect = async (orderId: string) => {
+    const success = await handleDeleteOrder(orderId);
+    
+    if (success) {
+      navigate('/orders');
+    }
+    
+    return success;
+  };
+
   return {
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    handleDeleteClick,
-    confirmDelete,
-    isDeleting
+    isDeleting,
+    handleDeleteOrder,
+    deleteOrderAndRedirect
   };
 }

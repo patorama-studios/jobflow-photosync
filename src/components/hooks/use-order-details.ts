@@ -1,157 +1,123 @@
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchOrderDetails } from '@/services/orders/order-fetch-service';
+import { saveOrderChanges } from '@/services/orders/order-modify-service';
+import { toast } from 'sonner';
 import { Order, OrderStatus } from '@/types/order-types';
-import { fetchOrderDetails, saveOrderChanges, deleteOrder } from '@/services/order-service';
-import { useNavigate } from 'react-router-dom';
 
-interface UseOrderDetailsResult {
-  order: Order | null | undefined;
-  isLoading: boolean;
-  error: string | null;
-  editedOrder: Order | null;
-  isEditing: boolean;
-  isDeleteDialogOpen: boolean;
-  refundsForOrder: any[];
-  setRefundsForOrder: (refunds: any[]) => void;
-  setIsDeleteDialogOpen: (open: boolean) => void;
-  handleEditClick: () => void;
-  handleCancelClick: () => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  handleStatusChange: (status: string) => void;
-  handleSaveClick: () => void;
-  handleDeleteClick: () => void;
-  confirmDelete: () => Promise<void>;
-}
+export function useOrderDetails(orderId: string) {
+  const [localOrder, setLocalOrder] = useState<Order | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
 
-export function useOrderDetails(orderId?: string | number): UseOrderDetailsResult {
-  const [order, setOrder] = useState<Order | null | undefined>(null);
-  const [editedOrder, setEditedOrder] = useState<Order | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-  const [refundsForOrder, setRefundsForOrder] = useState<any[]>([]);
-  const navigate = useNavigate();
+  // Fetch order details with react-query
+  const {
+    data: order,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      const { order, error } = await fetchOrderDetails(orderId);
+      if (error) throw new Error(error);
+      return order;
+    },
+    enabled: !!orderId
+  });
 
+  // Set the local order state whenever the fetched order changes
   useEffect(() => {
-    const loadOrderDetails = async () => {
-      setIsLoading(true);
-      setError(null);
+    if (order) {
+      setLocalOrder(order);
+    }
+  }, [order]);
 
-      console.log("Loading order details for ID:", orderId);
-      const { order: fetchedOrder, error: fetchError } = await fetchOrderDetails(orderId);
-      
-      if (fetchError) {
-        setError(fetchError);
-        setOrder(null);
-      } else {
-        setOrder(fetchedOrder);
-        setEditedOrder(fetchedOrder);
-      }
-      
-      setIsLoading(false);
-    };
-
-    loadOrderDetails();
-  }, [orderId]);
-
-  // Edit operations
+  // Function to handle order editing
   const handleEditClick = () => {
     setIsEditing(true);
   };
 
+  // Function to handle cancelling edit mode
   const handleCancelClick = () => {
+    // Reset the local order to the original order data
+    if (order) {
+      setLocalOrder(order);
+    }
     setIsEditing(false);
-    setEditedOrder(order);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    if (!editedOrder) return;
+  // Function to update a field in the local order state
+  const updateOrderField = (field: keyof Order, value: any) => {
+    if (!localOrder) return;
     
-    const { name, value } = e.target;
-    setEditedOrder({
-      ...editedOrder,
-      [name]: value,
+    setLocalOrder(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value
+      };
     });
   };
 
-  const handleStatusChange = (status: string) => {
-    if (!editedOrder) return;
+  // Function to update multiple fields at once
+  const updateOrderFields = (fields: Partial<Order>) => {
+    if (!localOrder) return;
     
-    // Validate that status is a valid OrderStatus
-    const validStatuses: OrderStatus[] = [
-      "scheduled", "completed", "pending", "canceled", "cancelled",
-      "rescheduled", "in_progress", "editing", "review", "delivered", "unavailable"
-    ];
-    
-    const validStatus: OrderStatus = validStatuses.includes(status as OrderStatus) 
-      ? (status as OrderStatus) 
-      : "pending";
-    
-    setEditedOrder({
-      ...editedOrder,
-      status: validStatus,
+    setLocalOrder(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ...fields
+      };
     });
   };
 
+  // Function to save changes
   const handleSaveClick = async () => {
-    if (!editedOrder) return;
+    if (!localOrder) return;
+    
+    setIsSaving(true);
     
     try {
-      const { success, error: saveError } = await saveOrderChanges(editedOrder);
+      const result = await saveOrderChanges(localOrder);
       
-      if (saveError) {
-        setError(saveError);
-      } else if (success) {
-        setOrder(editedOrder);
+      if (result.success) {
+        toast.success('Order details saved successfully');
         setIsEditing(false);
+        refetch(); // Refresh order data from the server
+      } else {
+        toast.error(`Failed to save changes: ${result.error}`);
       }
-    } catch (err: any) {
-      console.error('Error saving order:', err);
-      setError(err.message || 'An unexpected error occurred while saving');
+    } catch (error: any) {
+      toast.error(`Error saving changes: ${error.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // Delete operations
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
+  // Function to update order status
+  const updateOrderStatus = (newStatus: OrderStatus) => {
+    updateOrderField('status', newStatus);
   };
 
-  const confirmDelete = async (): Promise<void> => {
-    try {
-      const { success, error: deleteError } = await deleteOrder(orderId);
-      
-      if (deleteError) {
-        setError(deleteError);
-      } else if (success) {
-        // Redirect to orders page after successful deletion
-        navigate('/orders');
-      }
-      
-      setIsDeleteDialogOpen(false);
-    } catch (err: any) {
-      console.error('Error deleting order:', err);
-      setError(err.message || 'An unexpected error occurred while deleting');
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
-  return { 
-    order, 
-    isLoading, 
+  return {
+    order: localOrder,
+    originalOrder: order,
+    isLoading,
     error,
-    editedOrder,
     isEditing,
-    isDeleteDialogOpen,
-    refundsForOrder,
-    setRefundsForOrder,
-    setIsDeleteDialogOpen,
+    isSaving,
+    activeTab,
+    setActiveTab,
     handleEditClick,
     handleCancelClick,
-    handleInputChange,
-    handleStatusChange,
     handleSaveClick,
-    handleDeleteClick,
-    confirmDelete
+    updateOrderField,
+    updateOrderFields,
+    updateOrderStatus,
+    refetch
   };
 }

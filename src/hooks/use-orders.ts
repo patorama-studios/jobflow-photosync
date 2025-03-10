@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order-types';
 import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 import { toast } from 'sonner';
-import { deleteAllOrders } from '@/services/order-service';
+import { deleteAllOrders } from '@/services/orders/order-delete-service';
 
 export function useOrders() {
   const queryClient = useQueryClient();
