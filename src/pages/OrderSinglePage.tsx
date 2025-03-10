@@ -1,80 +1,61 @@
 
-import React, { Suspense } from 'react';
-import { useParams } from 'react-router-dom';
-import { Order } from '@/types/order-types';
-import { Button } from "@/components/ui/button";
-import { useOrderDetailsView } from '@/hooks/use-order-details-view';
-import { PageTransition } from '@/components/layout/PageTransition';
-import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
-import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
-import { OrderTabsContainer } from '@/components/orders/single/OrderTabsContainer';
+import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Card } from '@/components/ui/card';
+import { PageTransition } from '@/components/layout/PageTransition';
+import { OrderSinglePageHeader } from '@/components/orders/single/OrderSinglePageHeader';
+import { OrderTabsContainer } from '@/components/orders/single/OrderTabsContainer';
+import { OrderDetailsTab } from '@/components/orders/single/OrderDetailsTab';
+import { InvoicingTab } from '@/components/orders/single/InvoicingTab';
+import { ProductionTab } from '@/components/orders/single/ProductionTab';
+import { CommunicationTab } from '@/components/orders/single/CommunicationTab';
+import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
-
-// Loading state component
-const OrderLoading = () => (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center mb-6">
-      <div>
-        <Skeleton className="h-8 w-48 mb-2" />
-        <Skeleton className="h-4 w-32" />
-      </div>
-      <div className="flex gap-2">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-24" />
-      </div>
-    </div>
-    <Card>
-      <div className="p-6 space-y-6">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    </Card>
-  </div>
-);
-
-// Error state component
-const OrderError = ({ message }: { message: string }) => (
-  <div className="flex flex-col items-center justify-center p-10 text-center">
-    <AlertCircle className="h-10 w-10 text-destructive mb-4" />
-    <h2 className="text-xl font-semibold">Error Loading Order</h2>
-    <p className="text-muted-foreground mt-2">{message}</p>
-    <Button className="mt-6" variant="outline" onClick={() => window.location.reload()}>
-      Try Again
-    </Button>
-  </div>
-);
+import { Button } from '@/components/ui/button';
+import { useOrderSinglePage } from '@/hooks/use-order-single-page';
 
 export default function OrderSinglePage() {
   const {
-    orderId,
     order,
-    editedOrder,
     isLoading,
     error,
-    isEditing,
-    isDeleteDialogOpen,
+    orderId,
+    editedOrder,
     refundsForOrder,
     setRefundsForOrder,
+    isDeleteDialogOpen,
     setIsDeleteDialogOpen,
-    handleEditClick,
-    handleCancelClick,
-    handleInputChange,
-    handleStatusChange,
-    handleSaveClick,
+    activeTab,
+    setActiveTab,
+    isEditing,
     handleDeleteClick,
     confirmDelete,
-    navigate
-  } = useOrderDetailsView();
+    handleEditClick,
+    handleCancelClick,
+    handleSaveClick,
+    handleBackClick,
+    handleInputChange,
+    handleStatusChange,
+    navigate,
+  } = useOrderSinglePage();
 
   if (isLoading) {
     return (
       <MainLayout>
         <PageTransition>
-          <OrderLoading />
+          <div className="container p-6 mx-auto">
+            <Skeleton className="h-12 w-60 mb-6" />
+            <Skeleton className="h-4 w-40 mb-2" />
+            <Skeleton className="h-4 w-32 mb-8" />
+            
+            <Skeleton className="h-10 w-full mb-8" />
+            
+            <div className="space-y-10">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-60 w-full" />
+            </div>
+          </div>
         </PageTransition>
       </MainLayout>
     );
@@ -84,7 +65,12 @@ export default function OrderSinglePage() {
     return (
       <MainLayout>
         <PageTransition>
-          <OrderError message={error || "Order not found"} />
+          <div className="container p-6 mx-auto text-center py-20">
+            <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Error Loading Order</h2>
+            <p className="text-muted-foreground mb-8">{error || "The order could not be found or has been deleted."}</p>
+            <Button onClick={handleBackClick}>Return to Orders</Button>
+          </div>
         </PageTransition>
       </MainLayout>
     );
@@ -93,32 +79,47 @@ export default function OrderSinglePage() {
   return (
     <MainLayout>
       <PageTransition>
-        <div className="py-6">
-          <OrderDetailsHeader
+        <div className="container p-6 mx-auto">
+          <OrderSinglePageHeader 
             order={order}
-            orderId={orderId}
             isEditing={isEditing}
-            handleEditClick={handleEditClick}
-            handleDeleteClick={handleDeleteClick}
-            handleCancelClick={handleCancelClick}
-            handleSaveClick={handleSaveClick}
+            onEdit={handleEditClick}
+            onCancel={handleCancelClick}
+            onSave={handleSaveClick}
+            onDelete={handleDeleteClick}
+            onBack={handleBackClick}
           />
-
+          
           <OrderTabsContainer 
-            order={order}
-            editedOrder={editedOrder}
-            isEditing={isEditing}
-            onInputChange={handleInputChange}
-            onStatusChange={handleStatusChange}
-            refundsForOrder={refundsForOrder}
-            setRefundsForOrder={setRefundsForOrder}
-          />
-
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          >
+            <OrderDetailsTab 
+              order={editedOrder || order}
+              isEditing={isEditing}
+              onInputChange={handleInputChange}
+              onStatusChange={handleStatusChange}
+            />
+            <InvoicingTab 
+              order={order}
+              refunds={refundsForOrder}
+              setRefunds={setRefundsForOrder}
+            />
+            <ProductionTab 
+              order={order}
+            />
+            <CommunicationTab 
+              order={order}
+            />
+          </OrderTabsContainer>
+          
           <DeleteOrderDialog
             isOpen={isDeleteDialogOpen}
+            onClose={() => setIsDeleteDialogOpen(false)}
+            onConfirm={() => {}}
             onOpenChange={setIsDeleteDialogOpen}
             onConfirmDelete={confirmDelete}
-            isDeleting={false}
+            orderNumber={order.orderNumber || `Order #${order.id}`}
           />
         </div>
       </PageTransition>

@@ -22,7 +22,7 @@ interface OrderActionsProps {
   onOrderDeleted?: () => void;
 }
 
-export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActionsProps) {
+export function OrderActions({ orderId, orderNumber = "", onOrderDeleted }: OrderActionsProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -44,6 +44,10 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
     e.stopPropagation();
     e.preventDefault();
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsDeleteDialogOpen(false);
   };
 
   const confirmDelete = async (): Promise<void> => {
@@ -119,9 +123,12 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
 
       <DeleteOrderDialog
         isOpen={isDeleteDialogOpen}
+        onClose={handleClose}
+        onConfirm={() => {}}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirmDelete={confirmDelete}
         isDeleting={isDeleting}
+        orderNumber={orderNumber || `Order #${orderId}`}
       />
     </>
   );

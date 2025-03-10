@@ -93,7 +93,7 @@ export function OrderDetailsHeader({
               Cancel
             </Button>
             <Button 
-              variant="primary" 
+              variant="default" 
               className="flex items-center gap-1"
               onClick={handleSaveClick}
             >
