@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
@@ -96,7 +95,6 @@ export function useOrders() {
         console.log('Invalidating orders query after clearing all orders');
         toast.success(`Successfully deleted ${result.count || 'all'} orders`);
         queryClient.invalidateQueries({ queryKey: ['orders'] });
-        queryClient.refetchQueries({ queryKey: ['orders'] });
       } else {
         toast.error(`Failed to clear orders: ${result.error}`);
       }

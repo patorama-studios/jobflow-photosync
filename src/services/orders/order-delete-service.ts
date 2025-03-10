@@ -59,11 +59,13 @@ export const deleteAllOrders = async (): Promise<{ success: boolean, error: stri
       return { success: false, error: countError.message };
     }
     
+    console.log(`Found ${orderCount} orders to delete`);
+    
     // Now delete all orders
     const { error } = await supabase
       .from('orders')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all orders
+      .gt('id', '0'); // Delete all orders
     
     if (error) {
       console.error('Error deleting all orders:', error);

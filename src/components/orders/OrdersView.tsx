@@ -6,6 +6,7 @@ import { CreateAppointmentDialog } from "@/components/calendar/CreateAppointment
 import { useOrders } from "@/hooks/use-orders";
 import { Button } from "@/components/ui/button";
 import { Trash2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 export const OrdersView = memo(function OrdersView() {
   const { orders, isLoading, clearAllOrders, refetch } = useOrders();
@@ -30,9 +31,14 @@ export const OrdersView = memo(function OrdersView() {
     console.log("Attempting to clear all orders...");
     setIsClearing(true);
     clearAllOrders();
+    
     // Set a timeout to ensure the isClearing state gets reset even if something goes wrong
-    setTimeout(() => setIsClearing(false), 2000);
-  }, [clearAllOrders]);
+    setTimeout(() => {
+      setIsClearing(false);
+      // Force refetch to ensure UI is updated
+      refetch();
+    }, 1500);
+  }, [clearAllOrders, refetch]);
 
   // Effect to reset isClearing when orders are updated
   useEffect(() => {
@@ -41,6 +47,7 @@ export const OrdersView = memo(function OrdersView() {
 
   const handleRefresh = useCallback(() => {
     console.log("Manually refreshing orders...");
+    toast.info("Refreshing orders list...");
     refetch();
   }, [refetch]);
 
