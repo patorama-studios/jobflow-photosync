@@ -1,85 +1,68 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order-types';
-import { useNavigate } from 'react-router-dom';
-import { useOrderLoading } from './use-order-loading';
-import { useOrderEditing } from './use-order-editing';
-import { useOrderDeletion } from './use-order-deletion';
+import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
+import { deleteOrder as deleteOrderService } from '@/services/order-service';
+import { toast } from 'sonner';
 
-interface UseOrderDetailsResult {
-  order: Order | null | undefined;
-  isLoading: boolean;
-  error: string | null;
-  editedOrder: Order | null;
-  isEditing: boolean;
-  isDeleteDialogOpen: boolean;
-  refundsForOrder: any[];
-  setRefundsForOrder: (refunds: any[]) => void;
-  setIsDeleteDialogOpen: (open: boolean) => void;
-  handleEditClick: () => void;
-  handleCancelClick: () => void;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  handleStatusChange: (status: string) => void;
-  handleSaveClick: () => void;
-  handleDeleteClick: () => void;
-  confirmDelete: () => Promise<void>;
-}
-
-export function useOrderDetails(orderId?: string | number): UseOrderDetailsResult {
-  const [refundsForOrder, setRefundsForOrder] = useState<any[]>([]);
-  const navigate = useNavigate();
-
-  // Load order data
-  const { 
-    order, 
-    setOrder, 
-    isLoading, 
-    error, 
-    setError 
-  } = useOrderLoading({ orderId });
-
-  // Handle order editing
+export function useOrderDetails(orderId: string) {
+  const queryClient = useQueryClient();
+  
+  // Fetch order details
   const {
-    editedOrder,
-    isEditing,
-    handleEditClick,
-    handleCancelClick,
-    handleInputChange,
-    handleStatusChange,
-    handleSaveClick
-  } = useOrderEditing({
-    order,
-    setOrder,
-    setError
-  });
-
-  // Handle order deletion
-  const {
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    handleDeleteClick,
-    confirmDelete
-  } = useOrderDeletion({
-    orderId,
-    setError
-  });
-
-  return { 
-    order, 
-    isLoading, 
+    data: order,
+    isLoading,
     error,
-    editedOrder,
-    isEditing,
-    isDeleteDialogOpen,
-    refundsForOrder,
-    setRefundsForOrder,
-    setIsDeleteDialogOpen,
-    handleEditClick,
-    handleCancelClick,
-    handleInputChange,
-    handleStatusChange,
-    handleSaveClick,
-    handleDeleteClick,
-    confirmDelete
+    refetch
+  } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      if (!orderId) {
+        throw new Error('Order ID is required');
+      }
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching order details:', error);
+        throw new Error(error.message);
+      }
+      
+      const orders = mapSupabaseOrdersToOrderType([data]);
+      return orders[0];
+    },
+    enabled: !!orderId
+  });
+  
+  // Delete order mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const result = await deleteOrderService(orderId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete order');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      toast.success('Order deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete order: ${error.message}`);
+    }
+  });
+  
+  return {
+    order,
+    isLoading,
+    error: error ? (error as Error).message : null,
+    refetch,
+    deleteOrder: deleteMutation.mutate
   };
 }

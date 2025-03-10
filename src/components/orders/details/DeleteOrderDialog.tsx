@@ -1,51 +1,48 @@
 
-import React from "react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
 
 interface DeleteOrderDialogProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirmDelete: () => Promise<void>;
+  onClose: () => void;
+  onConfirm: () => void;
+  orderNumber: string;
   isDeleting?: boolean;
 }
 
-export function DeleteOrderDialog({
-  isOpen,
-  onOpenChange,
-  onConfirmDelete,
+export function DeleteOrderDialog({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  orderNumber,
   isDeleting = false
 }: DeleteOrderDialogProps) {
-  const handleConfirm = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await onConfirmDelete();
-  };
-
   return (
-    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Order</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the order
-            and remove it from our servers.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Order</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete order <span className="font-medium">{orderNumber}</span>?
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isDeleting}>
+            Cancel
+          </Button>
           <Button 
             variant="destructive" 
-            onClick={handleConfirm}
+            onClick={onConfirm} 
             disabled={isDeleting}
           >
             {isDeleting ? (
@@ -54,11 +51,11 @@ export function DeleteOrderDialog({
                 Deleting...
               </>
             ) : (
-              "Delete"
+              'Delete Order'
             )}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,78 +1,83 @@
 
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Order } from "@/types/order-types";
+import { Order } from '@/types/order-types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash, FileDown, RefreshCw } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface OrderDetailsHeaderProps {
   order: Order;
-  orderId: string | undefined;
-  isEditing: boolean;
-  handleEditClick: () => void;
-  handleDeleteClick: () => void;
-  handleCancelClick: () => void;
-  handleSaveClick: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-export const OrderDetailsHeader: React.FC<OrderDetailsHeaderProps> = ({
-  order,
-  orderId,
-  isEditing,
-  handleEditClick,
-  handleDeleteClick,
-  handleCancelClick,
-  handleSaveClick
-}) => {
+export function OrderDetailsHeader({ order, onEdit, onDelete }: OrderDetailsHeaderProps) {
+  // Get status badge color
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return "bg-green-100 text-green-800";
+      case 'scheduled':
+        return "bg-blue-100 text-blue-800";
+      case 'pending':
+        return "bg-amber-100 text-amber-800";
+      case 'cancelled':
+      case 'canceled':
+        return "bg-red-100 text-red-800";
+      case 'in_progress':
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+  
+  const formattedDate = order.scheduledDate 
+    ? format(new Date(order.scheduledDate), "MMMM d, yyyy")
+    : "Not scheduled";
+
   return (
-    <div className="flex justify-between items-center mb-6">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-3xl font-semibold">
-          Order {order?.orderNumber || order?.order_number || orderId}
+        <h1 className="text-3xl font-bold">
+          {order.orderNumber || order.order_number || `Order #${order.id}`}
         </h1>
-        <p className="text-muted-foreground">
-          {order?.scheduledDate || order?.scheduled_date 
-            ? new Date(order.scheduledDate || order.scheduled_date).toLocaleDateString() 
-            : 'No date scheduled'}
-          {order?.status && (
-            <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              order.status === 'completed' ? 'bg-green-100 text-green-800' :
-              order.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-              order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-            </span>
-          )}
-        </p>
+        <div className="flex flex-wrap items-center gap-2 mt-1">
+          <p className="text-muted-foreground">
+            {formattedDate} {order.scheduledTime || order.scheduled_time}
+          </p>
+          <Badge 
+            variant="outline"
+            className={cn("capitalize", getStatusColor(order.status))}
+          >
+            {order.status}
+          </Badge>
+        </div>
       </div>
       
-      <div className="flex gap-2">
-        {!isEditing ? (
-          <>
-            <Button onClick={handleEditClick} className="flex items-center">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button 
-              onClick={handleDeleteClick} 
-              variant="destructive" 
-              className="flex items-center"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button onClick={handleCancelClick} variant="outline">
-              Cancel
-            </Button>
-            <Button onClick={handleSaveClick}>
-              Save Changes
-            </Button>
-          </>
-        )}
+      <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+        <Button variant="outline" className="flex items-center gap-1">
+          <FileDown className="h-4 w-4" />
+          Export
+        </Button>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-1"
+          onClick={onEdit}
+        >
+          <Edit className="h-4 w-4" />
+          Edit
+        </Button>
+        <Button 
+          variant="destructive" 
+          className="flex items-center gap-1"
+          onClick={onDelete}
+        >
+          <Trash className="h-4 w-4" />
+          Delete
+        </Button>
       </div>
     </div>
   );
-};
+}
