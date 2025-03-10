@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/config/queryClient';
-import { HeaderSettingsProvider } from '@/contexts/ThemeContext';
+import { useHeaderSettings, HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
 
 // Eager loaded components
 import Home from './pages/Home';
