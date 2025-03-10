@@ -2,6 +2,7 @@
 import React from 'react';
 import { Order } from '@/types/order-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TabsContent } from '@/components/ui/tabs';
 
 export interface InvoicingTabProps {
   order: Order;

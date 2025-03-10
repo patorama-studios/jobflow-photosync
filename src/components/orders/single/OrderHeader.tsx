@@ -111,9 +111,12 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
 
       <DeleteOrderDialog
         isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        orderNumber={order.orderNumber || String(order.id)}
+        isDeleting={isDeleting}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirmDelete={handleConfirmDelete}
-        isDeleting={isDeleting}
       />
     </div>
   );
