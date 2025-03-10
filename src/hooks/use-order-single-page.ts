@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useOrderDetails } from './use-order-details';
 import { toast } from 'sonner';
-import { Order } from '@/types/order-types';
-import { RefetchOptions } from '@tanstack/react-query';
+import { Order, OrderStatus } from '@/types/order-types';
+import { validateStatus } from '@/utils/order-status-utils';
 
 export function useOrderSinglePage() {
   const navigate = useNavigate();
@@ -14,17 +14,19 @@ export function useOrderSinglePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [refundsForOrder, setRefundsForOrder] = useState<any[]>([]);
   
-  // Default empty order for editing
+  // Default empty order for editing with proper OrderStatus type
   const emptyOrder: Order = {
     id: '',
-    status: '',
-    customerName: '',
-    customerEmail: '',
-    customerPhone: '',
+    status: 'pending', // Using a valid OrderStatus instead of empty string
     orderNumber: '',
-    total: 0,
+    address: '',
+    propertyType: '',
+    squareFeet: 0,
+    client: '',
+    price: 0,
     scheduledDate: '',
-    createdAt: '',
+    scheduledTime: '',
+    photographer: '',
   };
   
   const [editedOrder, setEditedOrder] = useState<Order>(emptyOrder);
@@ -95,7 +97,7 @@ export function useOrderSinglePage() {
     }));
   };
   
-  const handleStatusChange = (status: string) => {
+  const handleStatusChange = (status: OrderStatus) => {
     setEditedOrder(prev => ({
       ...prev,
       status
