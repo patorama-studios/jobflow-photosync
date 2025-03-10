@@ -39,7 +39,7 @@ export default function Home() {
     return () => clearTimeout(timeoutId);
   }, [isLoading, session, retryCount]);
 
-  // ALWAYS bypass auth in development mode
+  // ALWAYS go to dashboard in development mode
   if (import.meta.env.DEV) {
     console.log('DEV MODE: Bypassing auth check and redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
