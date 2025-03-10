@@ -13,9 +13,6 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Orders = lazy(() => import('./pages/Orders'));
 const OrderDetails = lazy(() => import('./pages/OrderDetails'));
-const Clients = lazy(() => import('./pages/Clients'));
-const Reports = lazy(() => import('./pages/Reports'));
-const Integrations = lazy(() => import('./pages/Integrations'));
 
 // Fallback loading component
 const PageLoading = () => (
@@ -33,10 +30,7 @@ function App() {
         <Route path="/calendar/*" element={<Calendar />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/orders/:orderId" element={<OrderDetails />} />
-        <Route path="/clients/*" element={<Clients />} />
-        <Route path="/reports/*" element={<Reports />} />
         <Route path="/settings/*" element={<Settings />} />
-        <Route path="/integrations/*" element={<Integrations />} />
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
