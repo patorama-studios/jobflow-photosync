@@ -15,6 +15,7 @@ interface UseOrderDeletionResult {
   setIsDeleteDialogOpen: (open: boolean) => void;
   handleDeleteClick: () => void;
   confirmDelete: () => Promise<void>;
+  isDeleting: boolean;
 }
 
 export function useOrderDeletion({
@@ -22,6 +23,7 @@ export function useOrderDeletion({
   setError
 }: UseOrderDeletionProps): UseOrderDeletionResult {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -30,12 +32,16 @@ export function useOrderDeletion({
   };
 
   const confirmDelete = async (): Promise<void> => {
+    if (!orderId || isDeleting) return;
+    
     try {
+      setIsDeleting(true);
       console.log("Confirming deletion via hook for order:", orderId);
       
       const { success, error: deleteError } = await deleteOrder(orderId);
       
       if (deleteError) {
+        console.error("Delete error:", deleteError);
         setError(deleteError);
         toast.error(`Failed to delete: ${deleteError}`);
         setIsDeleteDialogOpen(false);
@@ -46,18 +52,18 @@ export function useOrderDeletion({
         toast.success("Order deleted successfully");
         
         // Force invalidate and refresh the orders query
-        console.log("Invalidating orders query after deletion");
+        console.log("Invalidating and refetching orders query after deletion");
         await queryClient.invalidateQueries({ queryKey: ['orders'] });
-        await queryClient.refetchQueries({ queryKey: ['orders'] });
         
         // Redirect to orders page after successful deletion
         navigate('/orders', { replace: true });
-        setIsDeleteDialogOpen(false);
       }
     } catch (err: any) {
       console.error('Error deleting order:', err);
       setError(err.message || 'An unexpected error occurred while deleting');
       toast.error(err.message || 'An unexpected error occurred while deleting');
+    } finally {
+      setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }
   };
@@ -66,6 +72,7 @@ export function useOrderDeletion({
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     handleDeleteClick,
-    confirmDelete
+    confirmDelete,
+    isDeleting
   };
 }

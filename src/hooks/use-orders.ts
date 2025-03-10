@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 import { Order } from '@/types/order-types';
 import { toast } from 'sonner';
+import { deleteAllOrders } from '@/services/order-service';
 
 // Function to add a dummy order for testing
 export async function addDummyOrder() {
@@ -51,30 +52,6 @@ export async function addDummyOrder() {
   }
 }
 
-// Function to clear all orders
-export async function clearAllOrders() {
-  try {
-    console.log('Attempting to clear all orders...');
-    const { error } = await supabase
-      .from('orders')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all orders
-    
-    if (error) {
-      console.error('Error clearing orders:', error);
-      toast.error('Failed to clear orders: ' + error.message);
-      return false;
-    }
-    
-    toast.success('All orders cleared successfully');
-    return true;
-  } catch (err: any) {
-    console.error('Error clearing orders:', err);
-    toast.error('Error clearing orders: ' + (err.message || 'Unknown error'));
-    return false;
-  }
-}
-
 export function useOrders() {
   const queryClient = useQueryClient();
   
@@ -112,13 +89,21 @@ export function useOrders() {
   });
 
   const clearAllOrdersMutation = useMutation({
-    mutationFn: clearAllOrders,
-    onSuccess: (succeeded) => {
-      if (succeeded) {
+    mutationFn: deleteAllOrders,
+    onSuccess: (result) => {
+      if (result.success) {
         // Invalidate orders query to refresh the list
         console.log('Invalidating orders query after clearing all orders');
+        toast.success(`Successfully deleted ${result.count || 'all'} orders`);
         queryClient.invalidateQueries({ queryKey: ['orders'] });
+        queryClient.refetchQueries({ queryKey: ['orders'] });
+      } else {
+        toast.error(`Failed to clear orders: ${result.error}`);
       }
+    },
+    onError: (error: any) => {
+      console.error('Error clearing orders:', error);
+      toast.error(`Error clearing orders: ${error.message || 'Unknown error'}`);
     }
   });
 

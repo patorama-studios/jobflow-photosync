@@ -14,7 +14,19 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
     console.log('Deleting order with ID:', orderId);
     const orderIdString = String(orderId); // Convert to string to ensure compatibility
     
-    // Perform the delete operation directly
+    // First, check if the order exists
+    const { data: orderExists, error: checkError } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('id', orderIdString)
+      .single();
+    
+    if (checkError || !orderExists) {
+      console.error('Order not found or error checking:', checkError);
+      return { success: false, error: checkError?.message || 'Order not found' };
+    }
+    
+    // Perform the delete operation
     const { error } = await supabase
       .from('orders')
       .delete()
@@ -33,10 +45,21 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
   }
 };
 
-export const deleteAllOrders = async (): Promise<{ success: boolean, error: string | null }> => {
+export const deleteAllOrders = async (): Promise<{ success: boolean, error: string | null, count?: number }> => {
   try {
     console.log('Deleting all orders');
     
+    // First, count how many orders we're about to delete
+    const { count: orderCount, error: countError } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true });
+    
+    if (countError) {
+      console.error('Error counting orders:', countError);
+      return { success: false, error: countError.message };
+    }
+    
+    // Now delete all orders
     const { error } = await supabase
       .from('orders')
       .delete()
@@ -47,8 +70,8 @@ export const deleteAllOrders = async (): Promise<{ success: boolean, error: stri
       return { success: false, error: error.message };
     }
     
-    console.log('All orders deleted successfully');
-    return { success: true, error: null };
+    console.log(`${orderCount} orders deleted successfully`);
+    return { success: true, error: null, count: orderCount };
   } catch (err: any) {
     console.error('Error in deleteAllOrders:', err);
     return { success: false, error: err.message || 'An unexpected error occurred' };
