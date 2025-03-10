@@ -21,7 +21,7 @@ export const deleteOrder = async (orderId?: string | number): Promise<{ success:
       .eq('id', orderIdString)
       .single();
     
-    if (checkError || !orderExists) {
+    if (checkError) {
       console.error('Order not found or error checking:', checkError);
       return { success: false, error: checkError?.message || 'Order not found' };
     }

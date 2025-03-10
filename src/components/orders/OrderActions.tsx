@@ -27,6 +27,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleView = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -57,6 +58,7 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
       
       if (error) {
         console.error("Delete order error:", error);
+        setError(error);
         toast.error(`Failed to delete order: ${error}`);
         return;
       } 
@@ -68,7 +70,6 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
         // Force invalidate orders query cache to refresh the list
         console.log("Invalidating orders query after deletion");
         await queryClient.invalidateQueries({ queryKey: ['orders'] });
-        await queryClient.refetchQueries({ queryKey: ['orders'] });
         
         // If we're on a specific order's page, navigate back to orders
         if (window.location.pathname.includes(orderId)) {
@@ -80,8 +81,9 @@ export function OrderActions({ orderId, orderNumber, onOrderDeleted }: OrderActi
           onOrderDeleted();
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error during delete operation:", err);
+      setError(err.message || "An unexpected error occurred");
       toast.error("An unexpected error occurred while deleting the order");
     } finally {
       setIsDeleting(false);

@@ -44,7 +44,6 @@ export function useOrderDeletion({
         console.error("Delete error:", deleteError);
         setError(deleteError);
         toast.error(`Failed to delete: ${deleteError}`);
-        setIsDeleteDialogOpen(false);
         return;
       } 
       
