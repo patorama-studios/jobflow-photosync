@@ -5,6 +5,8 @@ import { Loader2 } from 'lucide-react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/config/queryClient';
 import { useHeaderSettings, HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
+import { AIAssistantProvider } from '@/contexts/AIAssistantContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Eager loaded components
 import Home from './pages/Home';
@@ -28,18 +30,22 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <HeaderSettingsProvider>
-        <Suspense fallback={<PageLoading />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/calendar/*" element={<Calendar />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/orders/:orderId" element={<OrderDetails />} />
-            <Route path="/settings/*" element={<Settings />} />
-            <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
-        </Suspense>
+        <AIAssistantProvider>
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoading />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/calendar/*" element={<Calendar />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/orders/:orderId" element={<OrderDetails />} />
+                <Route path="/settings/*" element={<Settings />} />
+                <Route path="/404" element={<NotFound />} />
+                <Route path="*" element={<Navigate to="/404" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </AIAssistantProvider>
       </HeaderSettingsProvider>
     </QueryClientProvider>
   );

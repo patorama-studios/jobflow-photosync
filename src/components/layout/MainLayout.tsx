@@ -16,6 +16,7 @@ import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Header } from './Header';
 import { useSidebarState } from './sidebar/useSidebarState';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 type MainLayoutProps = {
   children: React.ReactNode;
@@ -53,7 +54,9 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubm
   return (
     <div className="flex flex-col h-screen">
       {/* Fixed Header */}
-      <Header />
+      <ErrorBoundary>
+        <Header />
+      </ErrorBoundary>
       
       <div className="flex flex-1 overflow-hidden">
         {/* Only render the appropriate sidebar based on device type */}
@@ -90,7 +93,9 @@ const MainLayout: React.FC<MainLayoutProps> = memo(({ children, showCalendarSubm
         {/* Main content */}
         <div className="flex-1 overflow-y-auto pt-16"> {/* Add padding top for the header */}
           <div className="container py-6 px-1 md:px-2 lg:px-4 max-w-full">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
         </div>
       </div>
