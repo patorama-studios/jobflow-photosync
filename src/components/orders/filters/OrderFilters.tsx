@@ -28,7 +28,7 @@ export function OrderFilters({ orders, onFiltersChange }: OrderFiltersProps) {
   const [status, setStatus] = useState<string>("");
   
   // Extract unique statuses from orders for the dropdown
-  const statuses = Array.from(new Set(orders.map(order => order.status)));
+  const statuses = Array.from(new Set(orders.map(order => order.status))).filter(Boolean);
   
   // Apply filters whenever filter values change
   useEffect(() => {
@@ -123,7 +123,7 @@ export function OrderFilters({ orders, onFiltersChange }: OrderFiltersProps) {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               {statuses.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status.charAt(0).toUpperCase() + status.slice(1)}
