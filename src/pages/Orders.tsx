@@ -1,5 +1,5 @@
 
-import React, { lazy, Suspense, memo } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { OrdersView } from '@/components/orders/OrdersView';
@@ -18,7 +18,7 @@ const OrderDetailsLoader = () => (
   </div>
 );
 
-const OrdersPage = memo(() => {
+const OrdersPage = () => {
   const { addDummyOrder, clearAllOrders, refetch } = useOrders();
   const navigate = useNavigate();
   
@@ -63,8 +63,6 @@ const OrdersPage = memo(() => {
       </Routes>
     </MainLayout>
   );
-});
-
-OrdersPage.displayName = 'OrdersPage';
+};
 
 export default OrdersPage;

@@ -1,4 +1,3 @@
-
 import React, { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import diagnosticRoutes from './diagnostic-routes';
@@ -26,7 +25,7 @@ const routes: RouteObject[] = [
     element: <Dashboard />
   },
   {
-    path: '/orders',
+    path: '/orders/*',  // Updated to use wildcard pattern
     element: <Orders />
   },
   {
