@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
@@ -10,6 +10,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+      /* Ensure the body has a background color before JS loads */
+      body {
+        background-color: #ffffff;
+        color: #000000;
+      }
+      /* Dark mode will override this via JS */
+      .dark body {
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+    </style>
     <script>
       // Handle base URL for proper routing in all environments
       (function() {

@@ -87,7 +87,7 @@ export function FormSelect({
   label: string; 
   name: string; 
   value: string; 
-  onChange: (value: string) => void; 
+  onChange: (name: string, value: string) => void; 
   options: {value: string; label: string}[];
   required?: boolean;
 }) {
