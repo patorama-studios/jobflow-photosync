@@ -28,6 +28,39 @@ serve(async (req) => {
       )
     }
     
+    // For company_teams migration, create the tables if they don't exist
+    if (name === 'company_teams') {
+      // Create company_teams table
+      const { error: teamsError } = await supabaseClient.rpc('create_company_teams_table');
+      
+      if (teamsError) {
+        console.error('Error creating company_teams table:', teamsError);
+        return new Response(
+          JSON.stringify({ error: teamsError.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        )
+      }
+      
+      // Create company_team_members table
+      const { error: membersError } = await supabaseClient.rpc('create_company_team_members_table');
+      
+      if (membersError) {
+        console.error('Error creating company_team_members table:', membersError);
+        return new Response(
+          JSON.stringify({ error: membersError.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        )
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Company teams tables created successfully' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
     // Execute the migration function
     const { data, error } = await supabaseClient.rpc('run_migration', { migration_name: name })
     

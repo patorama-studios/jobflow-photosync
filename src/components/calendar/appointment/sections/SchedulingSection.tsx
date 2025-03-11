@@ -3,7 +3,6 @@ import React from 'react';
 import { ToggleSection } from '../components/ToggleSection';
 import { DateTimeSelector } from '../components/DateTimeSelector';
 import { DurationSelector } from '../components/DurationSelector';
-import { NotificationSelector } from '../components/NotificationSelector';
 import { SuggestedTimes } from '../components/SuggestedTimes';
 
 interface SchedulingSectionProps {
@@ -24,11 +23,9 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
   selectedDateTime,
   selectedTime,
   selectedDuration,
-  selectedNotification,
   onDateChange,
   onTimeChange,
   onDurationChange,
-  onNotificationMethodChange,
   isOpen,
   onToggle,
   isMobile
@@ -57,10 +54,7 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
         onDurationChange={onDurationChange}
       />
       
-      <NotificationSelector 
-        onNotificationMethodChange={onNotificationMethodChange}
-        defaultMethod={selectedNotification}
-      />
+      {/* NotificationSelector removed as requested - using email as standard */}
     </ToggleSection>
   );
 };

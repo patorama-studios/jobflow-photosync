@@ -1,102 +1,132 @@
 
-declare namespace google {
-  namespace maps {
-    namespace places {
-      class Autocomplete {
-        constructor(inputField: HTMLInputElement, options?: AutocompleteOptions);
-        addListener(eventName: string, handler: Function): google.maps.MapsEventListener;
-        getPlace(): google.maps.places.PlaceResult;
-        setBounds(bounds: google.maps.LatLngBounds | google.maps.LatLngBoundsLiteral): void;
-        setComponentRestrictions(restrictions: ComponentRestrictions): void;
-        setFields(fields: string[]): void;
-        setOptions(options: AutocompleteOptions): void;
-        setTypes(types: string[]): void;
-      }
-
-      interface AutocompleteOptions {
-        bounds?: google.maps.LatLngBounds | google.maps.LatLngBoundsLiteral;
-        componentRestrictions?: ComponentRestrictions;
-        fields?: string[];
-        placeIdOnly?: boolean;
-        strictBounds?: boolean;
-        types?: string[];
-      }
-
-      interface ComponentRestrictions {
-        country: string | string[];
-      }
-
-      interface PlaceResult {
-        address_components?: AddressComponent[];
-        adr_address?: string;
-        formatted_address?: string;
-        geometry?: PlaceGeometry;
-        html_attributions?: string[];
-        icon?: string;
-        id?: string;
-        name?: string;
-        place_id?: string;
-        plus_code?: string;
-        reference?: string;
-        scope?: string;
-        types?: string[];
-        url?: string;
-        utc_offset?: number;
-        vicinity?: string;
-      }
-
-      interface AddressComponent {
-        long_name: string;
-        short_name: string;
-        types: string[];
-      }
-
-      interface PlaceGeometry {
-        location: google.maps.LatLng;
-        viewport: google.maps.LatLngBounds;
-      }
+declare namespace google.maps {
+  namespace places {
+    class AutocompleteService {
+      getPlacePredictions(
+        request: AutocompletionRequest,
+        callback: (predictions: AutocompletePrediction[] | null, status: PlacesServiceStatus) => void
+      ): void;
     }
 
-    class LatLng {
-      constructor(lat: number, lng: number, noWrap?: boolean);
-      lat(): number;
-      lng(): number;
-      toString(): string;
-      toUrlValue(precision?: number): string;
-      toJSON(): google.maps.LatLngLiteral;
-      equals(other: google.maps.LatLng | google.maps.LatLngLiteral): boolean;
+    class PlacesService {
+      constructor(attrContainer: Element | Map);
+      getDetails(
+        request: PlaceDetailsRequest,
+        callback: (result: PlaceResult | null, status: PlacesServiceStatus) => void
+      ): void;
     }
 
-    interface LatLngLiteral {
-      lat: number;
-      lng: number;
+    interface AutocompletePrediction {
+      description: string;
+      place_id: string;
+      structured_formatting: {
+        main_text: string;
+        secondary_text: string;
+      };
+      matched_substrings?: PredictionSubstring[];
+      terms?: PredictionTerm[];
+      types?: string[];
     }
 
-    class LatLngBounds {
-      constructor(sw?: google.maps.LatLng | google.maps.LatLngLiteral, ne?: google.maps.LatLng | google.maps.LatLngLiteral);
-      contains(latLng: google.maps.LatLng | google.maps.LatLngLiteral): boolean;
-      equals(other: google.maps.LatLngBounds | google.maps.LatLngBoundsLiteral): boolean;
-      extend(point: google.maps.LatLng | google.maps.LatLngLiteral): google.maps.LatLngBounds;
-      getCenter(): google.maps.LatLng;
-      getNorthEast(): google.maps.LatLng;
-      getSouthWest(): google.maps.LatLng;
-      intersects(other: google.maps.LatLngBounds | google.maps.LatLngBoundsLiteral): boolean;
-      isEmpty(): boolean;
-      toJSON(): google.maps.LatLngBoundsLiteral;
-      toString(): string;
-      toUrlValue(precision?: number): string;
-      union(other: google.maps.LatLngBounds | google.maps.LatLngBoundsLiteral): google.maps.LatLngBounds;
+    interface PredictionTerm {
+      offset: number;
+      value: string;
     }
 
-    interface LatLngBoundsLiteral {
-      east: number;
-      north: number;
-      south: number;
-      west: number;
+    interface PredictionSubstring {
+      length: number;
+      offset: number;
     }
 
-    interface MapsEventListener {
-      remove(): void;
+    interface AutocompletionRequest {
+      input: string;
+      bounds?: LatLngBounds | LatLngBoundsLiteral;
+      componentRestrictions?: ComponentRestrictions;
+      location?: LatLng;
+      offset?: number;
+      radius?: number;
+      types?: string[];
     }
+
+    interface PlaceDetailsRequest {
+      placeId: string;
+      fields?: string[];
+    }
+
+    interface ComponentRestrictions {
+      country: string | string[];
+    }
+
+    interface PlaceResult {
+      address_components?: AddressComponent[];
+      formatted_address?: string;
+      geometry?: PlaceGeometry;
+      name?: string;
+      place_id?: string;
+      types?: string[];
+    }
+
+    interface AddressComponent {
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }
+
+    interface PlaceGeometry {
+      location: LatLng;
+      viewport: LatLngBounds;
+    }
+
+    const enum PlacesServiceStatus {
+      OK = 'OK',
+      ZERO_RESULTS = 'ZERO_RESULTS',
+      OVER_QUERY_LIMIT = 'OVER_QUERY_LIMIT',
+      REQUEST_DENIED = 'REQUEST_DENIED',
+      INVALID_REQUEST = 'INVALID_REQUEST',
+      UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+      NOT_FOUND = 'NOT_FOUND'
+    }
+
+    const enum AutocompleteStatus {
+      OK = 'OK',
+      ZERO_RESULTS = 'ZERO_RESULTS',
+      OVER_QUERY_LIMIT = 'OVER_QUERY_LIMIT',
+      REQUEST_DENIED = 'REQUEST_DENIED',
+      INVALID_REQUEST = 'INVALID_REQUEST'
+    }
+  }
+
+  class LatLng {
+    constructor(lat: number, lng: number, noWrap?: boolean);
+    lat(): number;
+    lng(): number;
+  }
+
+  class LatLngBounds {
+    constructor(sw?: LatLng, ne?: LatLng);
+    contains(latLng: LatLng): boolean;
+    equals(other: LatLngBounds | LatLngBoundsLiteral): boolean;
+    extend(point: LatLng): LatLngBounds;
+    getCenter(): LatLng;
+    getNorthEast(): LatLng;
+    getSouthWest(): LatLng;
+    intersects(other: LatLngBounds | LatLngBoundsLiteral): boolean;
+    isEmpty(): boolean;
+    toJSON(): LatLngBoundsLiteral;
+    toSpan(): LatLng;
+    toString(): string;
+    union(other: LatLngBounds | LatLngBoundsLiteral): LatLngBounds;
+  }
+
+  interface LatLngBoundsLiteral {
+    east: number;
+    north: number;
+    south: number;
+    west: number;
+  }
+
+  interface LatLngLiteral {
+    lat: number;
+    lng: number;
   }
 }

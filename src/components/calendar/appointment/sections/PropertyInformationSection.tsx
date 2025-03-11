@@ -13,27 +13,40 @@ interface PropertyInformationSectionProps {
   onToggle: () => void;
 }
 
+// Define types for Google Maps API
+interface GooglePrediction {
+  description: string;
+  place_id: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
 export const PropertyInformationSection: React.FC<PropertyInformationSectionProps> = ({
   form,
   isOpen,
   onToggle
 }) => {
   const [showManualFields, setShowManualFields] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<GooglePrediction[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
-  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteServiceRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
+  const dummyDivRef = useRef<HTMLDivElement>(null);
   
   // Initialize Google Maps Services
   useEffect(() => {
     if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.places) {
       autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
       
-      // Create a dummy div for PlacesService (it needs a DOM element)
-      const dummyDiv = document.createElement('div');
-      placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDiv);
+      // Create a dummy div for PlacesService
+      if (!dummyDivRef.current) {
+        dummyDivRef.current = document.createElement('div');
+      }
+      placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
     }
   }, []);
 
@@ -54,10 +67,10 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
       input: query,
       componentRestrictions: { country: 'au' }, // Restrict to Australia
       types: ['address']
-    }, (predictions: google.maps.places.AutocompletePrediction[] | null, status: google.maps.places.PlacesServiceStatus) => {
+    }, (predictions: GooglePrediction[] | null, status: any) => {
       setIsSearching(false);
       
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+      if (status !== google.maps.places.AutocompleteStatus.OK || !predictions) {
         setAddressSuggestions([]);
         return;
       }
@@ -66,7 +79,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     });
   };
   
-  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
+  const handleSelectAddress = (prediction: GooglePrediction) => {
     if (!placesServiceRef.current) {
       form.setValue('address', prediction.description);
       setAddressSuggestions([]);
@@ -77,7 +90,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     placesServiceRef.current.getDetails({
       placeId: prediction.place_id,
       fields: ['address_components', 'formatted_address']
-    }, (place: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
+    }, (place: any, status: any) => {
       if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
         form.setValue('address', prediction.description);
         setAddressSuggestions([]);
@@ -183,9 +196,11 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
                       onClick={() => handleSelectAddress(prediction)}
                     >
                       <div className="font-medium">{prediction.description}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {prediction.structured_formatting?.secondary_text}
-                      </div>
+                      {prediction.structured_formatting && (
+                        <div className="text-xs text-muted-foreground">
+                          {prediction.structured_formatting.secondary_text}
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -242,61 +257,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <FormField
-            control={form.control}
-            name="property_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Property Type</FormLabel>
-                <FormControl>
-                  <Input placeholder="Residential" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="square_feet"
-            render={({ field: { value, onChange, ...field } }) => (
-              <FormItem>
-                <FormLabel>Square Feet</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="2000" 
-                    value={value || ''} 
-                    onChange={(e) => onChange(Number(e.target.value))}
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field: { value, onChange, ...field } }) => (
-              <FormItem>
-                <FormLabel>Price</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="199" 
-                    value={value || ''} 
-                    onChange={(e) => onChange(Number(e.target.value))}
-                    {...field} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {/* We've removed Property Type, Square Feet, and Price fields as requested */}
       </div>
     </ToggleSection>
   );

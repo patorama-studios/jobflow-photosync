@@ -1,100 +1,81 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ClientTableContent } from '@/components/clients/table/ClientTableContent';
-import { useClients } from '@/hooks/use-clients';
+import { PlusCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ClientTable } from '../ClientTable';
+import { ClientTableContent } from '../table/ClientTableContent';
 import { AddClientDialog } from '../AddClientDialog';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useClients } from '@/hooks/use-clients';
 
-export function ClientsTabContent() {
+interface ClientsTabContentProps {
+  companyId?: string;
+}
+
+export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({ companyId }) => {
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
-  const { clients, isLoading, error, refetch } = useClients();
-  const [activeTab, setActiveTab] = useState("all");
-  
-  // State for filtered clients
-  const [filteredClients, setFilteredClients] = useState(clients || []);
-  
-  // Update filtered clients whenever clients or activeTab changes
-  useEffect(() => {
-    if (!clients) return;
-    
-    if (activeTab === "all") {
-      setFilteredClients(clients);
-    } else if (activeTab === "active") {
-      setFilteredClients(clients.filter(client => client.status === "active"));
-    } else if (activeTab === "inactive") {
-      setFilteredClients(clients.filter(client => client.status === "inactive"));
-    }
-  }, [clients, activeTab]);
-  
-  const handleAddClient = () => {
-    setIsAddClientDialogOpen(true);
+  const { clients, isLoading, refetch } = useClients(companyId);
+
+  // Count clients for pagination (simplified version)
+  const totalClients = clients?.length || 0;
+
+  // Handle success of client addition - returns a Promise<boolean>
+  const handleClientAdded = async () => {
+    await refetch();
+    return true;
   };
-  
-  const handleClientAdded = () => {
-    setIsAddClientDialogOpen(false);
-    toast.success("Client added successfully");
-    refetch();
-  };
-  
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-destructive mb-2">Error loading clients</p>
-          <Button onClick={() => refetch()}>Try Again</Button>
-        </div>
-      </div>
-    );
-  }
-  
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="flex-1"
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">
+          {companyId ? 'Company Clients' : 'All Clients'}
+        </h3>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => setIsAddClientDialogOpen(true)}
+          className="flex items-center gap-1"
         >
-          <TabsList>
-            <TabsTrigger value="all">All Clients</TabsTrigger>
-            <TabsTrigger value="active">
-              Active
-              <Badge className="ml-2" variant="secondary">
-                {clients?.filter(c => c.status === "active").length || 0}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="inactive">Inactive</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        <Button onClick={handleAddClient}>
-          <Plus className="h-4 w-4 mr-2" />
+          <PlusCircle className="h-4 w-4" />
           Add Client
         </Button>
       </div>
-      
-      <ScrollArea className="h-[calc(100vh-220px)]">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+
+      <Card className="overflow-hidden">
+        {clients && clients.length > 0 ? (
+          <ClientTableContent 
+            clients={clients} 
+            isLoading={isLoading}
+            totalClients={totalClients}
+          />
         ) : (
-          <TabsContent value={activeTab} forceMount className="mt-0">
-            <ClientTableContent clients={filteredClients} />
-          </TabsContent>
+          <div className="p-8 text-center">
+            <h3 className="font-medium text-lg">No clients found</h3>
+            <p className="text-muted-foreground mt-1">
+              Get started by adding your first client
+            </p>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsAddClientDialogOpen(true)}
+              className="mt-4"
+            >
+              <PlusCircle className="h-4 w-4 mr-1" />
+              Add Client
+            </Button>
+          </div>
         )}
-      </ScrollArea>
-      
-      <AddClientDialog 
-        isOpen={isAddClientDialogOpen} 
-        onClose={() => setIsAddClientDialogOpen(false)}
-        onClientAdded={handleClientAdded}
-      />
+      </Card>
+
+      {isAddClientDialogOpen && (
+        <AddClientDialog
+          isOpen={isAddClientDialogOpen}
+          onClose={() => setIsAddClientDialogOpen(false)}
+          companyId={companyId}
+          onClientAdded={handleClientAdded}
+        />
+      )}
     </div>
   );
-}
+};
