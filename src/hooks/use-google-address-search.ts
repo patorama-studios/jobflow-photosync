@@ -15,8 +15,8 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
-  const autocompleteServiceRef = useRef<any>(null);
-  const placesServiceRef = useRef<any>(null);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const dummyDivRef = useRef<HTMLDivElement | null>(null);
   
   // Initialize Google Maps Services
@@ -54,16 +54,16 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     
     autocompleteServiceRef.current.getPlacePredictions(
       options,
-      (predictions: any, status: any) => {
+      (predictions: google.maps.places.AutocompletePrediction[] | null, status: google.maps.places.PlacesServiceStatus) => {
         setIsSearching(false);
         
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions) {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
           setAddressSuggestions([]);
           return;
         }
         
         // Convert predictions to PlaceResult format
-        const results = predictions.map((prediction: any) => ({
+        const results = predictions.map((prediction: google.maps.places.AutocompletePrediction) => ({
           place_id: prediction.place_id,
           formatted_address: prediction.description,
           name: prediction.structured_formatting?.main_text || prediction.description
@@ -87,8 +87,8 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         placeId: prediction.place_id,
         fields: ['address_components', 'formatted_address']
       },
-      (place: any, status: any) => {
-        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) {
+      (place: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
           form.setValue('address', prediction.formatted_address || '');
           setAddressSuggestions([]);
           return;

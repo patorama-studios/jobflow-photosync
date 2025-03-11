@@ -1,11 +1,11 @@
 
-import { AddressComponents, AddressDetails } from '@/types/google-maps-types';
+import { AddressDetails } from '@/types/google-maps-types';
 
 export function extractAddressComponents(place: google.maps.places.PlaceResult): AddressDetails {
   // Create the initial address details object with default values
   const addressDetails: AddressDetails = {
     formattedAddress: place.formatted_address || '',
-    streetAddress: '',
+    street: '',
     city: '',
     state: '',
     postalCode: '',
@@ -17,7 +17,7 @@ export function extractAddressComponents(place: google.maps.places.PlaceResult):
   // Extract components from place.address_components
   if (place.address_components && place.address_components.length > 0) {
     // First, build a map of component types to their values
-    const components: AddressComponents = {};
+    const components: Record<string, string> = {};
     
     for (const component of place.address_components) {
       for (const type of component.types) {
@@ -35,7 +35,7 @@ export function extractAddressComponents(place: google.maps.places.PlaceResult):
     const route = components.route || '';
     
     // Build street address
-    addressDetails.streetAddress = streetNumber ? `${streetNumber} ${route}`.trim() : route;
+    addressDetails.street = streetNumber ? `${streetNumber} ${route}`.trim() : route;
     
     // Set city (prefer locality, but use sublocality or neighborhood as fallbacks)
     addressDetails.city = 
@@ -58,7 +58,7 @@ export function extractAddressComponents(place: google.maps.places.PlaceResult):
 // Helper function to check if an address is valid
 export function isValidAddress(address: AddressDetails): boolean {
   return !!(
-    address.streetAddress && 
+    address.street && 
     address.city && 
     address.state && 
     address.postalCode
