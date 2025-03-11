@@ -14,7 +14,7 @@ interface ClientsTabContentProps {
 
 export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({ companyId }) => {
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
-  const { clients, isLoading, refetch } = useClients(companyId);
+  const { clients, isLoading, refetch } = useClients();
 
   // Count clients for pagination (simplified version)
   const totalClients = clients?.length || 0;
@@ -70,7 +70,7 @@ export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({ companyId 
 
       {isAddClientDialogOpen && (
         <AddClientDialog
-          isOpen={isAddClientDialogOpen}
+          open={isAddClientDialogOpen}
           onClose={() => setIsAddClientDialogOpen(false)}
           companyId={companyId}
           onClientAdded={handleClientAdded}

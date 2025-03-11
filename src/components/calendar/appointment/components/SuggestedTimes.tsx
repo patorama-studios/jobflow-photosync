@@ -1,109 +1,79 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { format, addDays, isToday, isTomorrow } from 'date-fns';
-import { Clock } from 'lucide-react';
+import { format, addDays, setHours, setMinutes } from 'date-fns';
 
 interface SuggestedTimesProps {
-  selectedDate?: Date;
+  selectedDate: Date | undefined;
   onTimeSelect: (time: string) => void;
 }
 
-export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({ 
-  selectedDate, 
-  onTimeSelect 
+export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
+  selectedDate,
+  onTimeSelect
 }) => {
-  // Generate 5 suggested date+time combinations within the week
-  const suggestedDateTimes = useMemo(() => {
-    const result = [];
+  // Generate 5 suggested date/time combinations
+  const getSuggestedDateTimes = () => {
+    const suggestions = [];
     const baseDate = selectedDate || new Date();
     
-    // Standard business hours
-    const timeSlots = ['9:00 AM', '11:00 AM', '1:00 PM', '3:00 PM', '5:00 PM'];
+    // Common appointment times
+    const timeSlots = [
+      { hour: 9, minute: 0 },   // 9:00 AM
+      { hour: 11, minute: 0 },  // 11:00 AM
+      { hour: 13, minute: 0 },  // 1:00 PM
+      { hour: 15, minute: 0 },  // 3:00 PM
+      { hour: 17, minute: 0 }   // 5:00 PM
+    ];
     
-    // Generate today's slots if before 5 PM
-    const now = new Date();
-    const currentHour = now.getHours();
-    
-    for (let dayOffset = 0; dayOffset < 5; dayOffset++) {
-      const date = addDays(baseDate, dayOffset);
-      const dateStr = format(date, 'EEE, MMM d');
+    // Create dates for today and next few days at different times
+    for (let i = 0; i < 5; i++) {
+      // Determine which day and time to use (cycle through timeSlots)
+      const dayOffset = Math.floor(i / timeSlots.length);
+      const timeIndex = i % timeSlots.length;
       
-      // Add one time slot for each day
-      const timeIndex = dayOffset % timeSlots.length;
-      const time = timeSlots[timeIndex];
+      const dateTime = setMinutes(
+        setHours(
+          addDays(baseDate, dayOffset),
+          timeSlots[timeIndex].hour
+        ),
+        timeSlots[timeIndex].minute
+      );
       
-      // Skip times in the past for today
-      if (dayOffset === 0 && isToday(date)) {
-        const timeHour = time.includes('PM') 
-          ? (parseInt(time.split(':')[0]) + (time.split(':')[0] === '12' ? 0 : 12))
-          : (time.split(':')[0] === '12' ? 0 : parseInt(time.split(':')[0]));
-          
-        if (timeHour <= currentHour) continue;
-      }
+      const formattedDateTime = format(dateTime, "EEE, MMM d 'at' h:mm a");
+      const formattedTime = format(dateTime, "h:mm a");
       
-      let label = '';
-      if (isToday(date)) {
-        label = `Today at ${time}`;
-      } else if (isTomorrow(date)) {
-        label = `Tomorrow at ${time}`;
-      } else {
-        label = `${dateStr} at ${time}`;
-      }
-      
-      result.push({
-        date,
-        time,
-        label
-      });
-    }
-    
-    // Ensure we have exactly 5 suggestions by adding more from the following days if needed
-    let additionalDayOffset = 5;
-    while (result.length < 5) {
-      const date = addDays(baseDate, additionalDayOffset);
-      const dateStr = format(date, 'EEE, MMM d');
-      const time = timeSlots[additionalDayOffset % timeSlots.length];
-      const label = `${dateStr} at ${time}`;
-      
-      result.push({
-        date,
-        time,
-        label
+      suggestions.push({
+        display: formattedDateTime,
+        time: formattedTime,
+        date: dateTime
       });
       
-      additionalDayOffset++;
+      // Stop once we have 5 suggestions
+      if (suggestions.length >= 5) break;
     }
     
-    // Only return the first 5 suggestions
-    return result.slice(0, 5);
-  }, [selectedDate]);
-
-  const handleTimeClick = (suggestion: { date: Date, time: string, label: string }) => {
-    onTimeSelect(suggestion.time);
-    // Set the date in the parent component (in a real implementation, you'd want to update both)
+    return suggestions;
   };
 
+  const suggestedTimes = getSuggestedDateTimes();
+
   return (
-    <div className="mt-2">
-      <h4 className="text-sm font-medium mb-2">Suggested Times</h4>
-      <ScrollArea className="h-36 w-full">
-        <div className="flex flex-col gap-2 pb-1">
-          {suggestedDateTimes.map((suggestion, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              size="sm"
-              onClick={() => handleTimeClick(suggestion)}
-              className="justify-start text-left"
-            >
-              <Clock className="mr-2 h-4 w-4" />
-              {suggestion.label}
-            </Button>
-          ))}
-        </div>
-      </ScrollArea>
+    <div className="space-y-3">
+      <p className="text-sm font-medium">Suggested times based on availability:</p>
+      <div className="flex flex-wrap gap-2">
+        {suggestedTimes.map((suggestion, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            size="sm"
+            onClick={() => onTimeSelect(suggestion.time)}
+            className="text-xs"
+          >
+            {suggestion.display}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 };

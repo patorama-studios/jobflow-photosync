@@ -33,8 +33,8 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
-  const autocompleteServiceRef = useRef<any>(null);
-  const placesServiceRef = useRef<any>(null);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const dummyDivRef = useRef<HTMLDivElement>(null);
   
   // Initialize Google Maps Services
@@ -67,10 +67,10 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
       input: query,
       componentRestrictions: { country: 'au' }, // Restrict to Australia
       types: ['address']
-    }, (predictions: GooglePrediction[] | null, status: any) => {
+    }, (predictions: GooglePrediction[] | null, status: string) => {
       setIsSearching(false);
       
-      if (status !== google.maps.places.AutocompleteStatus.OK || !predictions) {
+      if (status !== 'OK' || !predictions) {
         setAddressSuggestions([]);
         return;
       }
@@ -90,8 +90,8 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     placesServiceRef.current.getDetails({
       placeId: prediction.place_id,
       fields: ['address_components', 'formatted_address']
-    }, (place: any, status: any) => {
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+    }, (place: google.maps.places.PlaceResult | null, status: string) => {
+      if (status !== 'OK' || !place) {
         form.setValue('address', prediction.description);
         setAddressSuggestions([]);
         return;
@@ -256,8 +256,6 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
             </div>
           </div>
         )}
-        
-        {/* We've removed Property Type, Square Feet, and Price fields as requested */}
       </div>
     </ToggleSection>
   );

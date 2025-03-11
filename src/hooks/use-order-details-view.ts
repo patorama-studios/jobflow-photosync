@@ -50,6 +50,18 @@ export function useOrderDetailsView(orderId: string) {
     });
   };
 
+  // Create a Promise-based confirm delete handler
+  const handleConfirmDeleteAsync = async (): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      try {
+        handleConfirmDelete();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   // Return all the state and handlers from all hooks
   return {
     // Order data
@@ -67,7 +79,7 @@ export function useOrderDetailsView(orderId: string) {
     
     // Action handlers
     handleDeleteClick,
-    handleConfirmDelete,
+    handleConfirmDelete: handleConfirmDeleteAsync,
     handleEditClick,
     handleCancelClick,
     handleSaveClick,

@@ -9,11 +9,9 @@ interface SchedulingSectionProps {
   selectedDateTime: Date | undefined;
   selectedTime: string;
   selectedDuration: number;
-  selectedNotification: string;
   onDateChange: (date: Date | undefined) => void;
   onTimeChange: (time: string) => void;
   onDurationChange: (duration: number) => void;
-  onNotificationMethodChange: (method: string) => void;
   isOpen: boolean;
   onToggle: () => void;
   isMobile: boolean;
@@ -54,7 +52,7 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
         onDurationChange={onDurationChange}
       />
       
-      {/* NotificationSelector removed as requested - using email as standard */}
+      {/* Using email as standard notification method */}
     </ToggleSection>
   );
 };

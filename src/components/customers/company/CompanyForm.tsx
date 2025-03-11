@@ -86,43 +86,51 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name: '20240519_company_teams' }),
+            body: JSON.stringify({ name: 'company_teams' }),
           })
           .then(response => response.json())
           .catch(err => {
             console.log('Migration may already be applied', err);
           });
           
-          // Create company team
-          const { data: teamData, error: teamError } = await supabase
-            .from('company_teams')
-            .insert({
-              company_id: newCompany.id,
-              name: teamName || `${data.name} Team`,
-              created_at: new Date().toISOString()
-            })
-            .select('*')
-            .single();
-          
+          // Create company team - need to use custom SQL since tables don't exist in supabase schema yet
+          const { data: teamData, error: teamError } = await supabase.rpc(
+            'create_company_teams_table'
+          );
+
           if (teamError) {
-            console.error('Error creating team:', teamError);
-            toast.error(`Failed to create team: ${teamError.message}`);
-          } else if (teamData) {
-            // Add team members
-            const teamId = teamData.id;
+            console.error('Error creating company_teams table:', teamError);
+            toast.error(`Failed to create team table: ${teamError.message}`);
+          } else {
+            // Now insert the team using raw SQL
+            const { data: insertedTeam, error: insertError } = await supabase.rpc(
+              'insert_company_team',
+              { 
+                p_company_id: newCompany.id,
+                p_name: teamName || `${data.name} Team`
+              }
+            );
             
-            for (const member of teamMembers) {
-              const { error: memberError } = await supabase
-                .from('company_team_members')
-                .insert({
-                  team_id: teamId,
-                  client_id: member.id,
-                  created_at: new Date().toISOString()
-                });
-                
-              if (memberError) {
-                console.error('Error adding team member:', memberError);
-                toast.error(`Failed to add team member ${member.name}: ${memberError.message}`);
+            if (insertError) {
+              console.error('Error inserting team:', insertError);
+              toast.error(`Failed to create team: ${insertError.message}`);
+            } else if (insertedTeam) {
+              // Add team members using RPC
+              for (const member of teamMembers) {
+                const { error: memberError } = await supabase.rpc(
+                  'insert_team_member',
+                  {
+                    p_team_id: insertedTeam.id,
+                    p_user_id: member.id,
+                    p_name: member.name,
+                    p_email: member.email || null
+                  }
+                );
+                  
+                if (memberError) {
+                  console.error('Error adding team member:', memberError);
+                  toast.error(`Failed to add team member ${member.name}: ${memberError.message}`);
+                }
               }
             }
           }

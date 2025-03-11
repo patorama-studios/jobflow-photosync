@@ -37,39 +37,32 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
     
     const orderIdString = String(orderId); // Convert to string to ensure compatibility
     
-    // First, try with the new order_id column
-    let { data, error } = await supabase
+    // Try with order_id column first
+    const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('order_id', orderIdString)
-      .single();
+      .eq('id', orderIdString)
+      .maybeSingle();
     
     if (error) {
-      console.error('Error fetching order details with order_id:', error);
+      console.error('Error fetching order details:', error);
       
-      // Try the old column name if the new one doesn't work
-      const fallbackResult = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderIdString)
-        .single();
-        
-      if (fallbackResult.error) {
-        // Fallback to sample orders for development
-        const sampleOrder = sampleOrders.find(o => o.id.toString() === orderIdString);
-        if (sampleOrder) {
-          // Ensure sample order has the correct status type
-          const validOrder = {
-            ...sampleOrder,
-            status: validateStatus(sampleOrder.status)
-          };
-          return { order: validOrder, error: null };
-        }
-        
-        return { order: null, error: error.message };
+      // Fallback to sample orders for development
+      const sampleOrder = sampleOrders.find(o => o.id.toString() === orderIdString);
+      if (sampleOrder) {
+        // Ensure sample order has the correct status type
+        const validOrder = {
+          ...sampleOrder,
+          status: validateStatus(sampleOrder.status)
+        };
+        return { order: validOrder, error: null };
       }
       
-      data = fallbackResult.data;
+      return { order: null, error: error.message };
+    }
+    
+    if (!data) {
+      return { order: null, error: 'Order not found' };
     }
     
     // Use the mapper function to handle a single order

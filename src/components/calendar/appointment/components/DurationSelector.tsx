@@ -13,31 +13,29 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
   onDurationChange
 }) => {
   const durations = [
-    { value: 30, label: '30 min' },
+    { value: 30, label: '30 minutes' },
+    { value: 45, label: '45 minutes' },
     { value: 60, label: '1 hour' },
     { value: 90, label: '1.5 hours' },
-    { value: 120, label: '2 hours' },
-    { value: 180, label: '3 hours' }
+    { value: 120, label: '2 hours' }
   ];
 
   return (
-    <div className="space-y-2 mt-4">
-      <Label>Appointment Duration</Label>
-      <RadioGroup
-        value={selectedDuration.toString()}
+    <div className="space-y-3">
+      <Label>Duration</Label>
+      <RadioGroup 
+        defaultValue={selectedDuration.toString()} 
+        className="flex flex-wrap gap-2" 
         onValueChange={(value) => onDurationChange(parseInt(value, 10))}
-        className="flex flex-wrap gap-2 mt-1"
       >
         {durations.map((duration) => (
           <div key={duration.value} className="flex items-center space-x-2">
             <RadioGroupItem 
               value={duration.value.toString()} 
-              id={`duration-${duration.value}`} 
+              id={`duration-${duration.value}`}
+              checked={selectedDuration === duration.value}
             />
-            <Label 
-              htmlFor={`duration-${duration.value}`}
-              className="cursor-pointer"
-            >
+            <Label htmlFor={`duration-${duration.value}`} className="cursor-pointer">
               {duration.label}
             </Label>
           </div>

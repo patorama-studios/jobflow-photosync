@@ -92,15 +92,6 @@ export default function OrderDetails() {
     );
   }
 
-  // Handler for confirming deletion with async support
-  const handleConfirmDeleteAsync = async () => {
-    try {
-      await handleConfirmDelete();
-    } catch (error) {
-      console.error('Error deleting order:', error);
-    }
-  };
-
   return (
     <MainLayout>
       <PageTransition>
@@ -142,7 +133,7 @@ export default function OrderDetails() {
           <DeleteOrderDialog
             isOpen={isDeleteDialogOpen}
             onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={handleConfirmDeleteAsync}
+            onConfirm={handleConfirmDelete}
             orderNumber={order.orderNumber || order.order_number || String(order.id)}
             onOpenChange={setIsDeleteDialogOpen}
           />

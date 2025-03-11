@@ -55,7 +55,54 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 3. Register the migration
+-- 3. Function to insert a company team
+CREATE OR REPLACE FUNCTION insert_company_team(p_company_id UUID, p_name TEXT)
+RETURNS SETOF company_teams AS $$
+DECLARE
+  new_team company_teams;
+BEGIN
+  INSERT INTO company_teams (company_id, name, created_at, updated_at)
+  VALUES (p_company_id, p_name, NOW(), NOW())
+  RETURNING * INTO new_team;
+  
+  RETURN NEXT new_team;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4. Function to insert a team member
+CREATE OR REPLACE FUNCTION insert_team_member(
+  p_team_id UUID, 
+  p_user_id UUID, 
+  p_name TEXT,
+  p_email TEXT
+)
+RETURNS SETOF company_team_members AS $$
+DECLARE
+  new_member company_team_members;
+BEGIN
+  INSERT INTO company_team_members (
+    team_id, 
+    user_id, 
+    name, 
+    email, 
+    created_at, 
+    updated_at
+  )
+  VALUES (
+    p_team_id, 
+    p_user_id, 
+    p_name, 
+    p_email, 
+    NOW(), 
+    NOW()
+  )
+  RETURNING * INTO new_member;
+  
+  RETURN NEXT new_member;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 5. Register the migration
 INSERT INTO migrations (name, applied_at)
 VALUES ('20240523_company_teams', NOW())
 ON CONFLICT (name) DO NOTHING;
