@@ -1,12 +1,11 @@
 
-import { RouteObject } from "react-router-dom";
+import { lazy } from 'react';
+import CustomersPage from '@/pages/Customers';
+import CustomerDetails from '@/pages/CustomerDetails';
+import CompanyDetails from '@/pages/CompanyDetails';
 
-export const companyRoutes: RouteObject[] = [
-  {
-    path: "/companies/:id",
-    lazy: async () => {
-      const { CompanyDetails } = await import("../pages/CompanyDetails");
-      return { Component: CompanyDetails };
-    }
-  }
+export const companyRoutes = [
+  { path: '/customers', element: CustomersPage },
+  { path: '/customers/:id', element: CustomerDetails },
+  { path: '/companies/:id', element: CompanyDetails },
 ];

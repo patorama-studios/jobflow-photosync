@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
@@ -8,9 +8,17 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { CompanyInfoFields } from './CompanyInfoFields';
 import { ContactInfoFields } from './ContactInfoFields';
 import { AddressFields } from './AddressFields';
+import { CompanyTeams } from './CompanyTeams';
 import { companyFormSchema, CompanyFormData } from './CompanyFormSchema';
 import { useCompanies } from '@/hooks/use-companies';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface TeamMember {
+  id: string;
+  name: string;
+  email?: string;
+}
 
 interface CompanyFormProps {
   onClose: () => void;
@@ -19,6 +27,9 @@ interface CompanyFormProps {
 
 export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
   const { addCompany } = useCompanies();
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamName, setTeamName] = useState('');
+  
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
@@ -33,6 +44,17 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
       zip: ''
     }
   });
+
+  const handleAddTeamMember = (member: TeamMember) => {
+    // Check if member already exists
+    if (!teamMembers.some(m => m.id === member.id)) {
+      setTeamMembers([...teamMembers, member]);
+    }
+  };
+
+  const handleRemoveTeamMember = (memberId: string) => {
+    setTeamMembers(teamMembers.filter(member => member.id !== memberId));
+  };
 
   const onSubmit = async (data: CompanyFormData) => {
     try {
@@ -54,6 +76,45 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
         outstanding_amount: 0
       });
       
+      if (newCompany && teamMembers.length > 0) {
+        try {
+          // Create team if we have team members
+          const { data: teamData, error: teamError } = await supabase
+            .from('company_teams')
+            .insert([{
+              company_id: newCompany.id,
+              name: teamName || `${data.name} Team`,
+              created_at: new Date().toISOString()
+            }])
+            .select();
+          
+          if (teamError) {
+            console.error('Error creating team:', teamError);
+            toast.error(`Failed to create team: ${teamError.message}`);
+          } else if (teamData && teamData[0]) {
+            // Add team members
+            const teamId = teamData[0].id;
+            const teamMembersData = teamMembers.map(member => ({
+              team_id: teamId,
+              client_id: member.id,
+              created_at: new Date().toISOString()
+            }));
+            
+            const { error: memberError } = await supabase
+              .from('company_team_members')
+              .insert(teamMembersData);
+              
+            if (memberError) {
+              console.error('Error adding team members:', memberError);
+              toast.error(`Failed to add team members: ${memberError.message}`);
+            }
+          }
+        } catch (teamErr: any) {
+          console.error('Error handling team creation:', teamErr);
+          toast.error(`Team creation error: ${teamErr.message}`);
+        }
+      }
+      
       toast.success('Company created successfully');
       onCompanyCreated(newCompany);
       onClose();
@@ -67,9 +128,28 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <CompanyInfoFields form={form} />
-        <ContactInfoFields form={form} />
-        <AddressFields form={form} />
+        <Tabs defaultValue="company">
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="company">Company Info</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="company" className="space-y-4">
+            <CompanyInfoFields form={form} />
+            <ContactInfoFields form={form} />
+            <AddressFields form={form} />
+          </TabsContent>
+          
+          <TabsContent value="team">
+            <CompanyTeams 
+              teamMembers={teamMembers}
+              onAddMember={handleAddTeamMember}
+              onRemoveMember={handleRemoveTeamMember}
+              teamName={teamName}
+              onTeamNameChange={setTeamName}
+            />
+          </TabsContent>
+        </Tabs>
         
         <DialogFooter className="mt-6">
           <Button type="button" variant="outline" onClick={onClose}>

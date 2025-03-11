@@ -1,9 +1,8 @@
-
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Order } from '@/types/order-types';
+import { Order, OrderStatus } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useOrders } from './use-orders';
@@ -95,9 +94,20 @@ const formSchema = z.object({
 export type FormValues = z.infer<typeof formSchema>;
 
 interface UseCreateAppointmentFormProps {
-  order?: Order;
-  onSubmit: (values: FormValues) => Promise<void>;
-  onCancel?: () => void;
+  selectedDate: Date;
+  initialTime?: string;
+  existingOrderData?: any;
+  onClose: () => void;
+  onAppointmentAdded?: (appointmentData: any) => Promise<boolean>;
+  defaultSections?: {
+    scheduling?: boolean;
+    address?: boolean;
+    customer?: boolean;
+    photographer?: boolean;
+    product?: boolean;
+    customItems?: boolean;
+    notes?: boolean;
+  };
 }
 
 // Helper function to transform order data to form values
@@ -170,18 +180,49 @@ const transformOrderToFormValues = (order: Order): FormValues => {
   };
 };
 
-export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreateAppointmentFormProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+export const useCreateAppointmentForm = ({ 
+  selectedDate, 
+  initialTime, 
+  existingOrderData, 
+  onClose, 
+  onAppointmentAdded,
+  defaultSections = {
+    scheduling: true,
+    address: false,
+    customer: false,
+    photographer: false,
+    product: false,
+    customItems: false,
+    notes: false
+  }
+}: UseCreateAppointmentFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDateTime, setSelectedDateTime] = useState<Date>(selectedDate);
+  const [selectedTime, setSelectedTime] = useState(initialTime || "09:00");
+  const [selectedDuration, setSelectedDuration] = useState(60);
+  const [selectedNotification, setSelectedNotification] = useState("email");
+  const [customItems, setCustomItems] = useState<{ name: string; price: number }[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  
+  // Sections open/closed state
+  const [schedulingOpen, setSchedulingOpen] = useState(defaultSections.scheduling !== false);
+  const [addressOpen, setAddressOpen] = useState(defaultSections.address === true);
+  const [customerOpen, setCustomerOpen] = useState(defaultSections.customer === true);
+  const [photographerOpen, setPhotographerOpen] = useState(defaultSections.photographer === true);
+  const [productOpen, setProductOpen] = useState(defaultSections.product === true);
+  const [customItemsOpen, setCustomItemsOpen] = useState(defaultSections.customItems === true);
+  const [notesOpen, setNotesOpen] = useState(defaultSections.notes === true);
+  
   const { refetch } = useOrders();
 
   const form = useForm<FormValues>({
-    resolver: order ? undefined : zodResolver(formSchema),
-    defaultValues: order ? transformOrderToFormValues(order) : {
+    resolver: zodResolver(formSchema),
+    defaultValues: existingOrderData ? transformOrderToFormValues(existingOrderData) : {
       customerName: "",
       propertyAddress: "",
-      scheduledDate: new Date(),
-      scheduledTime: "09:00",
-      status: "scheduled",
+      scheduledDate: selectedDate,
+      scheduledTime: initialTime || "09:00",
+      status: "scheduled" as OrderStatus,
       photographer: null,
       amount: 0,
       completedDate: undefined,
@@ -190,7 +231,7 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
       contactNumber: "",
       contactEmail: "",
       type: "",
-      orderNumber: "",
+      orderNumber: `ORD-${Date.now()}`,
       client: "",
       clientEmail: "",
       clientPhone: "",
@@ -224,122 +265,167 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
     mode: "onChange"
   });
 
-  const onSubmitHandler = async (values: FormValues) => {
-    setIsLoading(true);
-    try {
-      if (order) {
-        // Update existing order
-        const orderData = formValuesToOrderData(values);
-        const { data, error } = await supabase
-          .from('orders')
-          .update(orderData)
-          .eq('id', order.id)
-          .select();
+  const handleDateChange = (date: Date) => {
+    setSelectedDateTime(date);
+    form.setValue('scheduledDate', date);
+  };
 
-        if (error) {
-          console.error('Error updating order:', error);
-          toast.error(`Failed to update order: ${error.message}`);
-        } else {
-          toast.success('Order updated successfully!');
-          refetch();
-          // Use window.location for navigation instead of Next.js router
-          window.location.href = '/orders';
+  const handleTimeChange = (time: string) => {
+    setSelectedTime(time);
+    form.setValue('scheduledTime', time);
+  };
+
+  const handleDurationChange = (duration: number) => {
+    setSelectedDuration(duration);
+    form.setValue('hours_on_site', duration / 60); // Convert minutes to hours
+  };
+
+  const handleNotificationMethodChange = (method: string) => {
+    setSelectedNotification(method);
+  };
+
+  const handleAddCustomItem = (item: { name: string; price: number }) => {
+    setCustomItems([...customItems, item]);
+  };
+
+  const handleRemoveCustomItem = (index: number) => {
+    const updatedItems = [...customItems];
+    updatedItems.splice(index, 1);
+    setCustomItems(updatedItems);
+  };
+
+  const handleProductsChange = (products: string[]) => {
+    setSelectedProducts(products);
+    form.setValue('products', products);
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    setIsSubmitting(true);
+    try {
+      // Use the appointment start date and selected time to create a proper datetime
+      const appointmentDate = values.scheduledDate;
+      const [hours, minutes] = values.scheduledTime.split(':').map(Number);
+      appointmentDate.setHours(hours, minutes, 0, 0);
+      
+      // Calculate end time based on duration
+      const appointmentEndDate = new Date(appointmentDate);
+      appointmentEndDate.setMinutes(appointmentEndDate.getMinutes() + selectedDuration);
+      
+      // Prepare the order data
+      const orderData = {
+        customerName: values.customerName,
+        client: values.client,
+        client_email: values.clientEmail,
+        client_phone: values.clientPhone,
+        address: values.address,
+        city: values.city,
+        state: values.state,
+        zip: values.zip,
+        propertyAddress: values.address,
+        property_type: values.propertyType,
+        scheduled_date: appointmentDate.toISOString().split('T')[0],
+        scheduled_time: values.scheduledTime,
+        appointment_start: appointmentDate.toISOString(),
+        appointment_end: appointmentEndDate.toISOString(),
+        hours_on_site: selectedDuration / 60,
+        status: values.status as OrderStatus,
+        photographer: values.photographer?.name || '',
+        photographer_payout_rate: values.photographer?.payout_rate || 0,
+        price: values.price,
+        square_feet: values.squareFeet || 0,
+        products: selectedProducts,
+        notes: values.notes,
+        package: values.package,
+        order_number: values.orderNumber,
+        company_id: values.company_id,
+        customItems: customItems,
+      };
+      
+      // If onAppointmentAdded callback is provided, use it
+      if (onAppointmentAdded) {
+        const success = await onAppointmentAdded(orderData);
+        if (success) {
+          toast.success("Appointment added successfully");
+          onClose();
         }
       } else {
-        // Create new order
-        const orderData = formValuesToOrderData(values);
-        const { data, error } = await supabase
-          .from('orders')
-          .insert([orderData])
-          .select();
-
+        // Otherwise insert directly to Supabase
+        // For database insertion, format the data according to the table schema
+        const dbOrderData = {
+          client: orderData.client,
+          client_email: orderData.client_email,
+          client_phone: orderData.client_phone,
+          address: orderData.address,
+          city: orderData.city,
+          state: orderData.state,
+          zip: orderData.zip,
+          property_type: orderData.property_type,
+          scheduled_date: orderData.scheduled_date,
+          scheduled_time: orderData.scheduled_time,
+          appointment_start: orderData.appointment_start,
+          appointment_end: orderData.appointment_end,
+          hours_on_site: orderData.hours_on_site,
+          status: orderData.status,
+          photographer: orderData.photographer,
+          photographer_payout_rate: orderData.photographer_payout_rate,
+          price: orderData.price,
+          square_feet: orderData.square_feet,
+          package: orderData.package,
+          order_number: orderData.order_number,
+          notes: orderData.notes,
+          company_id: orderData.company_id,
+        };
+        
+        const { data, error } = await supabase.from('orders').insert([dbOrderData]);
+        
         if (error) {
           console.error('Error creating order:', error);
           toast.error(`Failed to create order: ${error.message}`);
         } else {
-          toast.success('Order created successfully!');
+          toast.success("Order created successfully");
           refetch();
-          // Use window.location for navigation instead of Next.js router
-          window.location.href = '/orders';
+          onClose();
         }
       }
     } catch (error: any) {
-      console.error('Unexpected error:', error);
-      toast.error(`Unexpected error: ${error.message}`);
+      console.error('Error submitting form:', error);
+      toast.error(`Error: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const onCancelHandler = () => {
-    if (onCancel) {
-      onCancel();
-    }
-  };
-
-  const formValuesToOrderData = (values: FormValues): Partial<Order> => {
-    const appointmentStart = values.scheduledDate ? new Date(values.scheduledDate) : new Date();
-    const [hours, minutes] = values.scheduledTime.split(':').map(Number);
-    appointmentStart.setHours(hours, minutes, 0, 0);
-  
-    const appointmentEnd = new Date(appointmentStart);
-    if (values.hours_on_site) {
-      appointmentEnd.setHours(appointmentStart.getHours() + values.hours_on_site);
-    } else {
-      appointmentEnd.setHours(appointmentStart.getHours() + 1);
-    }
-  
-    const orderData: Partial<Order> = {
-      customerName: values.customerName,
-      propertyAddress: values.propertyAddress,
-      scheduled_date: values.scheduledDate.toISOString().split('T')[0],
-      scheduled_time: values.scheduledTime,
-      status: values.status,
-      photographer: values.photographer?.name || "",
-      photographerPayoutRate: values.photographer?.payout_rate || 0,
-      amount: values.amount,
-      completedDate: values.completedDate ? values.completedDate.toISOString() : null,
-      products: values.products,
-      notes: values.notes,
-      contactNumber: values.contactNumber,
-      contactEmail: values.contactEmail,
-      type: values.type,
-      order_number: values.orderNumber,
-      client: values.client,
-      client_email: values.clientEmail,
-      client_phone: values.clientPhone,
-      address: values.address,
-      city: values.city,
-      state: values.state,
-      zip: values.zip,
-      price: values.price,
-      property_type: values.propertyType,
-      square_feet: values.squareFeet,
-      package: values.package,
-      drivingTimeMin: values.drivingTimeMin,
-      previousLocation: values.previousLocation,
-      internalNotes: values.internalNotes,
-      customerNotes: values.customerNotes,
-      stripePaymentId: values.stripePaymentId,
-      mediaUploaded: values.mediaUploaded,
-      appointment_start: appointmentStart.toISOString(),
-      appointment_end: appointmentEnd.toISOString(),
-      hours_on_site: values.hours_on_site,
-      timezone: values.timezone,
-      total_payout_amount: values.total_payout_amount,
-      total_order_price: values.total_order_price,
-      total_amount_paid: values.total_amount_paid,
-      company_id: values.company_id,
-      invoice_number: values.invoice_number,
-    };
-  
-    return orderData;
   };
 
   return {
     form,
-    isLoading,
-    onSubmit: onSubmitHandler,
-    onCancel: onCancelHandler,
+    isLoading: isSubmitting,
+    isSubmitting,
+    selectedDateTime,
+    selectedTime,
+    selectedDuration,
+    selectedNotification,
+    customItems,
+    selectedProducts,
+    schedulingOpen,
+    addressOpen, 
+    customerOpen,
+    photographerOpen,
+    productOpen,
+    customItemsOpen,
+    notesOpen,
+    setSchedulingOpen,
+    setAddressOpen,
+    setCustomerOpen,
+    setPhotographerOpen,
+    setProductOpen,
+    setCustomItemsOpen,
+    setNotesOpen,
+    handleDateChange,
+    handleTimeChange,
+    handleDurationChange,
+    handleNotificationMethodChange,
+    handleAddCustomItem,
+    handleRemoveCustomItem,
+    handleProductsChange,
+    onSubmit
   };
 };
