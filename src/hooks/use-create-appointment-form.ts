@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -5,7 +6,6 @@ import * as z from 'zod';
 import { Order } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { useOrders } from './use-orders';
 
 // Define the schema for Additional Appointment
@@ -100,9 +100,78 @@ interface UseCreateAppointmentFormProps {
   onCancel?: () => void;
 }
 
+// Helper function to transform order data to form values
+const transformOrderToFormValues = (order: Order): FormValues => {
+  const transformedAppointments = order.additionalAppointments?.map(appt => ({
+    id: appt.id ? appt.id.toString() : undefined,
+    order_id: order.id ? order.id.toString() : undefined,
+    date: appt.date ? new Date(appt.date) : new Date(),
+    time: appt.time || "",
+    description: appt.description || ""
+  })) || [];
+
+  const transformedMediaLinks = order.mediaLinks?.map(link => ({
+    id: link.id ? link.id.toString() : undefined,
+    order_id: order.id ? order.id.toString() : undefined,
+    url: link.url || "",
+    type: link.type || "",
+    title: link.title || ""
+  })) || [];
+
+  return {
+    customerName: order.customerName || "",
+    propertyAddress: order.propertyAddress || "",
+    scheduledDate: order.scheduled_date ? new Date(order.scheduled_date) : new Date(),
+    scheduledTime: order.scheduled_time || "09:00",
+    status: order.status || "",
+    photographer: {
+      id: order.photographer || "",
+      name: order.photographer || "",
+      email: order.client_email || "",
+      payout_rate: order.photographerPayoutRate || 0,
+    },
+    amount: order.amount || 0,
+    completedDate: order.completedDate ? new Date(order.completedDate) : undefined,
+    products: order.products || [],
+    notes: order.notes || "",
+    contactNumber: order.contactNumber || "",
+    contactEmail: order.contactEmail || "",
+    type: order.type || "",
+    orderNumber: order.order_number || "",
+    client: order.client || "",
+    clientEmail: order.client_email || "",
+    clientPhone: order.client_phone || "",
+    address: order.address || "",
+    city: order.city || "",
+    state: order.state || "",
+    zip: order.zip || "",
+    price: order.price || 0,
+    propertyType: order.property_type || "",
+    squareFeet: order.square_feet || 0,
+    package: order.package || "",
+    drivingTimeMin: order.drivingTimeMin || 0,
+    previousLocation: order.previousLocation || "",
+    photographerPayoutRate: order.photographerPayoutRate || 0,
+    internalNotes: order.internalNotes || "",
+    customerNotes: order.customerNotes || "",
+    stripePaymentId: order.stripePaymentId || "",
+    additionalAppointments: transformedAppointments,
+    mediaLinks: transformedMediaLinks,
+    mediaUploaded: order.mediaUploaded || false,
+    appointment_start: order.appointment_start || "",
+    appointment_end: order.appointment_end || "",
+    hours_on_site: order.hours_on_site || 0,
+    timezone: order.timezone || "",
+    total_payout_amount: order.total_payout_amount || 0,
+    total_order_price: order.total_order_price || 0,
+    total_amount_paid: order.total_amount_paid || 0,
+    company_id: order.company_id || "",
+    invoice_number: order.invoice_number || "",
+  };
+};
+
 export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreateAppointmentFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { refetch } = useOrders();
 
   const form = useForm<FormValues>({
@@ -173,7 +242,8 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
         } else {
           toast.success('Order updated successfully!');
           refetch();
-          router.push('/orders');
+          // Use window.location for navigation instead of Next.js router
+          window.location.href = '/orders';
         }
       } else {
         // Create new order
@@ -189,7 +259,8 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
         } else {
           toast.success('Order created successfully!');
           refetch();
-          router.push('/orders');
+          // Use window.location for navigation instead of Next.js router
+          window.location.href = '/orders';
         }
       }
     } catch (error: any) {
@@ -218,14 +289,14 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
       appointmentEnd.setHours(appointmentStart.getHours() + 1);
     }
   
-    const orderData: any = {
+    const orderData: Partial<Order> = {
       customerName: values.customerName,
       propertyAddress: values.propertyAddress,
       scheduled_date: values.scheduledDate.toISOString().split('T')[0],
       scheduled_time: values.scheduledTime,
       status: values.status,
       photographer: values.photographer?.name || "",
-      photographer_payout_rate: values.photographer?.payout_rate || 0,
+      photographerPayoutRate: values.photographer?.payout_rate || 0,
       amount: values.amount,
       completedDate: values.completedDate ? values.completedDate.toISOString() : null,
       products: values.products,
@@ -235,21 +306,21 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
       type: values.type,
       order_number: values.orderNumber,
       client: values.client,
-      clientEmail: values.clientEmail,
-      clientPhone: values.clientPhone,
+      client_email: values.clientEmail,
+      client_phone: values.clientPhone,
       address: values.address,
       city: values.city,
       state: values.state,
       zip: values.zip,
       price: values.price,
-      propertyType: values.propertyType,
+      property_type: values.propertyType,
       square_feet: values.squareFeet,
       package: values.package,
       drivingTimeMin: values.drivingTimeMin,
       previousLocation: values.previousLocation,
-      internal_notes: values.internalNotes,
-      customer_notes: values.customerNotes,
-      stripe_payment_id: values.stripePaymentId,
+      internalNotes: values.internalNotes,
+      customerNotes: values.customerNotes,
+      stripePaymentId: values.stripePaymentId,
       mediaUploaded: values.mediaUploaded,
       appointment_start: appointmentStart.toISOString(),
       appointment_end: appointmentEnd.toISOString(),
@@ -263,75 +334,6 @@ export const useCreateAppointmentForm = ({ order, onSubmit, onCancel }: UseCreat
     };
   
     return orderData;
-  };
-
-  const transformOrderToFormValues = (order: Order): FormValues => {
-    const transformedAppointments = order.additionalAppointments?.map(appt => ({
-      id: appt.id.toString(),
-      order_id: order.id.toString(),
-      date: appt.date ? new Date(appt.date) : new Date(),
-      time: appt.time || "",
-      description: appt.description || ""
-    })) || [];
-  
-    const transformedMediaLinks = order.mediaLinks?.map(link => ({
-      id: link.id.toString(),
-      order_id: order.id.toString(),
-      url: link.url || "",
-      type: link.type || "",
-      title: link.title || ""
-    })) || [];
-  
-    return {
-      customerName: order.customerName || "",
-      propertyAddress: order.propertyAddress || "",
-      scheduledDate: order.scheduled_date ? new Date(order.scheduled_date) : new Date(),
-      scheduledTime: order.scheduled_time || "09:00",
-      status: order.status,
-      photographer: {
-        id: order.photographer || "",
-        name: order.photographer || "",
-        email: order.client_email || "",
-        payout_rate: order.photographerPayoutRate || 0,
-      },
-      amount: order.amount || 0,
-      completedDate: order.completedDate ? new Date(order.completedDate) : undefined,
-      products: order.products || [],
-      notes: order.notes || "",
-      contactNumber: order.contactNumber || "",
-      contactEmail: order.contactEmail || "",
-      type: order.type || "",
-      orderNumber: order.order_number || "",
-      client: order.client || "",
-      clientEmail: order.client_email || "",
-      clientPhone: order.client_phone || "",
-      address: order.address || "",
-      city: order.city || "",
-      state: order.state || "",
-      zip: order.zip || "",
-      price: order.price,
-      propertyType: order.property_type || "",
-      squareFeet: order.square_feet || 0,
-      package: order.package || "",
-      drivingTimeMin: order.drivingTimeMin || 0,
-      previousLocation: order.previousLocation || "",
-      photographerPayoutRate: order.photographerPayoutRate || 0,
-      internalNotes: order.internalNotes || "",
-      customerNotes: order.customerNotes || "",
-      stripePaymentId: order.stripePaymentId || "",
-      additionalAppointments: transformedAppointments,
-      mediaLinks: transformedMediaLinks,
-      mediaUploaded: order.mediaUploaded || false,
-      appointment_start: order.appointment_start || "",
-      appointment_end: order.appointment_end || "",
-      hours_on_site: order.hours_on_site || 0,
-      timezone: order.timezone || "",
-      total_payout_amount: order.total_payout_amount || 0,
-      total_order_price: order.total_order_price || 0,
-      total_amount_paid: order.total_amount_paid || 0,
-      company_id: order.company_id || "",
-      invoice_number: order.invoice_number || "",
-    };
   };
 
   return {

@@ -9,12 +9,14 @@ import { Client, useClients } from "@/hooks/use-clients";
 import { Company, useCompanies } from "@/hooks/use-companies";
 import { AddClientDialog } from "@/components/calendar/appointment/components/AddClientDialog";
 import { AddCompanyDialog } from "@/components/customers/AddCompanyDialog";
+import { useNavigate } from "react-router-dom";
 
 export function CustomersView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("clients");
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
+  const navigate = useNavigate();
   
   const { clients, isLoading: isClientsLoading, error: clientsError, refetch: refetchClients } = useClients();
   const { companies, isLoading: isCompaniesLoading, error: companiesError, refetch: refetchCompanies } = useCompanies();
@@ -47,6 +49,14 @@ export function CustomersView() {
 
   const handleCompanyCreated = (company: Company) => {
     refetchCompanies();
+  };
+
+  const handleClientClick = (clientId: string) => {
+    navigate(`/customers/${clientId}`);
+  };
+
+  const handleCompanyClick = (companyId: string) => {
+    navigate(`/companies/${companyId}`);
   };
 
   return (
@@ -126,7 +136,7 @@ export function CustomersView() {
                       <tr 
                         key={client.id} 
                         className="border-b hover:bg-muted/50 cursor-pointer"
-                        onClick={() => window.location.href = `/customers/${client.id}`}
+                        onClick={() => handleClientClick(client.id)}
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -193,7 +203,7 @@ export function CustomersView() {
                       <tr 
                         key={company.id} 
                         className="border-b hover:bg-muted/50 cursor-pointer"
-                        onClick={() => window.location.href = `/companies/${company.id}`}
+                        onClick={() => handleCompanyClick(company.id)}
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">

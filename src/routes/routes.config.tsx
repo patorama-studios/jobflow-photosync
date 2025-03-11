@@ -1,66 +1,146 @@
-import React, { lazy } from 'react';
-import { RouteObject } from 'react-router-dom';
-import diagnosticRoutes from './diagnostic-routes';
+import React from "react";
+import { createBrowserRouter } from "react-router-dom";
+import Index from "@/pages/Index";
+import NotFound from "@/pages/NotFound";
+import Dashboard from "@/pages/Dashboard";
+import Orders from "@/pages/Orders";
+import OrderDetails from "@/pages/OrderDetails";
+import Login from "@/pages/Login";
+import Calendar from "@/pages/Calendar";
+import CalendarPage from "@/pages/CalendarPage";
+import Production from "@/pages/Production";
+import Settings from "@/pages/Settings";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import Verify from "@/pages/Verify";
+import Home from "@/pages/Home";
+import ProductionBoard from "@/pages/ProductionBoard";
+import ProductionOrderDetails from "@/pages/ProductionOrderDetails";
+import NotificationsCenter from "@/pages/NotificationsCenter";
+import ClientDetails from "@/pages/ClientDetails";
+import Customers from "@/pages/Customers";
+import CompanyDetails from "@/pages/CompanyDetails";
+import CustomerDetails from "@/pages/CustomerDetails";
+import ProductDelivery from "@/pages/ProductDelivery";
+import ProductionUpload from "@/pages/ProductionUpload";
+import PropertyWebsite from "@/pages/PropertyWebsite";
+import Debug from "@/pages/Debug";
+import IconTest from "@/pages/IconTest";
+import FileDownloads from "@/pages/FileDownloads";
+import OrderSinglePage from "@/pages/OrderSinglePage";
+import LearningHub from "@/pages/LearningHub";
+import GenerateData from "@/pages/GenerateData";
 
-// Lazy-loaded components
-const Home = lazy(() => import('../pages/Home'));
-const Dashboard = lazy(() => import('../pages/Dashboard'));
-const Orders = lazy(() => import('../pages/Orders'));
-const OrderDetails = lazy(() => import('../pages/OrderDetails'));
-const OrderSinglePage = lazy(() => import('../pages/OrderSinglePage'));
-const Clients = lazy(() => import('../pages/Client'));
-const Settings = lazy(() => import('../pages/Settings'));
-const NotFound = lazy(() => import('../pages/NotFound'));
-const Debug = lazy(() => import('../pages/Debug'));
-const CalendarPage = lazy(() => import('../pages/CalendarPage'));
-
-// Main routes configuration
-const routes: RouteObject[] = [
+export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Home />
+    path: "/",
+    element: <Index />,
   },
   {
-    path: '/dashboard',
-    element: <Dashboard />
+    path: "/login",
+    element: <Login />,
   },
   {
-    path: '/orders/*',  // Updated to use wildcard pattern
-    element: <Orders />
+    path: "/verify",
+    element: <Verify />,
   },
   {
-    path: '/orders/:orderId',
-    element: <OrderSinglePage />
+    path: "/home",
+    element: <Home />,
   },
   {
-    path: '/order-details/:orderId',
-    element: <OrderDetails />
+    path: "/dashboard",
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
   },
   {
-    path: '/clients',
-    element: <Clients />
+    path: "/customers",
+    element: <ProtectedRoute><Customers /></ProtectedRoute>,
   },
   {
-    path: '/settings',
-    element: <Settings />
+    path: "/customers/:id",
+    element: <ProtectedRoute><CustomerDetails /></ProtectedRoute>,
   },
   {
-    path: '/settings/:section',
-    element: <Settings />
+    path: "/clients/:id",
+    element: <ProtectedRoute><ClientDetails /></ProtectedRoute>,
   },
   {
-    path: '/debug',
-    element: <Debug />
+    path: "/companies/:id",
+    element: <ProtectedRoute><CompanyDetails /></ProtectedRoute>,
   },
   {
-    path: '/calendar',
-    element: <CalendarPage />
+    path: "/orders",
+    element: <ProtectedRoute><Orders /></ProtectedRoute>,
   },
-  ...diagnosticRoutes, // Include diagnostic routes
   {
-    path: '*',
-    element: <NotFound />
+    path: "/orders/:id",
+    element: <ProtectedRoute><OrderDetails /></ProtectedRoute>,
+  },
+  {
+    path: "/order/:id",
+    element: <ProtectedRoute><OrderSinglePage /></ProtectedRoute>,
+  },
+  {
+    path: "/calendar",
+    element: <ProtectedRoute><Calendar /></ProtectedRoute>,
+  },
+  {
+    path: "/calendar-page",
+    element: <ProtectedRoute><CalendarPage /></ProtectedRoute>,
+  },
+  {
+    path: "/production",
+    element: <ProtectedRoute><Production /></ProtectedRoute>,
+  },
+  {
+    path: "/production/board",
+    element: <ProtectedRoute><ProductionBoard /></ProtectedRoute>,
+  },
+  {
+    path: "/production/order/:id",
+    element: <ProtectedRoute><ProductionOrderDetails /></ProtectedRoute>,
+  },
+  {
+    path: "/production/upload/:id",
+    element: <ProtectedRoute><ProductionUpload /></ProtectedRoute>,
+  },
+  {
+    path: "/settings",
+    element: <ProtectedRoute><Settings /></ProtectedRoute>,
+  },
+  {
+    path: "/notifications",
+    element: <ProtectedRoute><NotificationsCenter /></ProtectedRoute>,
+  },
+  {
+    path: "/delivery/:id",
+    element: <ProtectedRoute><ProductDelivery /></ProtectedRoute>,
+  },
+  {
+    path: "/property-website/:id",
+    element: <ProtectedRoute><PropertyWebsite /></ProtectedRoute>,
+  },
+  {
+    path: "/debug",
+    element: <ProtectedRoute><Debug /></ProtectedRoute>,
+  },
+  {
+    path: "/icons",
+    element: <ProtectedRoute><IconTest /></ProtectedRoute>,
+  },
+  {
+    path: "/downloads/:id",
+    element: <ProtectedRoute><FileDownloads /></ProtectedRoute>,
+  },
+  {
+    path: "/learning",
+    element: <ProtectedRoute><LearningHub /></ProtectedRoute>,
+  },
+  {
+    path: "/generate-data",
+    element: <ProtectedRoute><GenerateData /></ProtectedRoute>,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   }
-];
-
-export default routes;
+]);
