@@ -85,7 +85,7 @@ export const CompanyTeams: React.FC<CompanyTeamsProps> = ({
       
       {isAddClientOpen && (
         <AddClientDialog 
-          isOpen={isAddClientOpen} 
+          open={isAddClientOpen} 
           onClose={() => setIsAddClientOpen(false)}
           onClientCreated={(client) => {
             handleClientSelect(client);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -28,7 +27,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   onToggle
 }) => {
   const [showManualFields, setShowManualFields] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<GooglePrediction[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
@@ -38,18 +37,16 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   
   // Initialize Google Maps Services
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.google && window.google.maps) {
-      if (window.google.maps.places) {
-        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-        
-        // Create a dummy div for PlacesService if it doesn't exist
-        if (!dummyDivRef.current) {
-          const div = document.createElement('div');
-          dummyDivRef.current = div;
-        }
-        
-        placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
+    if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.places) {
+      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      
+      // Create a dummy div for PlacesService if it doesn't exist
+      if (!dummyDivRef.current) {
+        const div = document.createElement('div');
+        dummyDivRef.current = div;
       }
+      
+      placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
     }
   }, []);
 
@@ -81,12 +78,12 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
           return;
         }
         
-        setAddressSuggestions(predictions as GooglePrediction[]);
+        setAddressSuggestions(predictions);
       }
     );
   };
   
-  const handleSelectAddress = (prediction: GooglePrediction) => {
+  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
     if (!placesServiceRef.current) {
       form.setValue('address', prediction.description);
       setAddressSuggestions([]);

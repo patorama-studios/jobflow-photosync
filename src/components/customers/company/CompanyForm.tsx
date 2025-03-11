@@ -93,30 +93,27 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
             console.log('Migration may already be applied', err);
           });
           
-          // Use SQL directly rather than RPC
-          // Create company team - need to use custom SQL since tables don't exist in supabase schema yet
+          // Use SQL directly via Raw SQL query rather than table access
           const { data: teamData, error: teamError } = await supabase
-            .from('company_teams')
-            .insert({
-              company_id: newCompany.id,
-              name: teamName || `${data.name} Team`
-            })
-            .select('id')
-            .single();
+            .rpc('create_company_team', {
+              company_id_param: newCompany.id,
+              team_name_param: teamName || `${data.name} Team`
+            });
 
           if (teamError) {
-            console.error('Error creating company_teams table:', teamError);
-            toast.error(`Failed to create team table: ${teamError.message}`);
+            console.error('Error creating company team:', teamError);
+            toast.error(`Failed to create team: ${teamError.message}`);
           } else if (teamData) {
-            // Now add team members
+            const teamId = teamData;
+            
+            // Now add team members using RPC instead of direct table access
             for (const member of teamMembers) {
               const { error: memberError } = await supabase
-                .from('team_members')
-                .insert({
-                  team_id: teamData.id,
-                  user_id: member.id,
-                  name: member.name,
-                  email: member.email || null
+                .rpc('add_team_member', {
+                  team_id_param: teamId,
+                  user_id_param: member.id,
+                  name_param: member.name,
+                  email_param: member.email || null
                 });
                   
               if (memberError) {

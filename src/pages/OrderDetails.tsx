@@ -120,7 +120,7 @@ export default function OrderDetails() {
             onDelete={handleDeleteClick}
             isEditing={isEditing}
             handleCancelClick={handleCancelClick}
-            handleSaveClick={handleSaveClick}
+            handleSaveClick={() => handleSaveClick(order)}
             onRefresh={() => refetch()}
           />
           
