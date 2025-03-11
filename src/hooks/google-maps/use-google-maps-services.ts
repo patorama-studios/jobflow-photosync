@@ -6,6 +6,7 @@ export const useGoogleMapsServices = () => {
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const dummyDivRef = useRef<HTMLDivElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Create dummy div for PlacesService if it doesn't exist
@@ -18,16 +19,23 @@ export const useGoogleMapsServices = () => {
 
     const initServices = () => {
       if (window.google && window.google.maps && window.google.maps.places) {
-        if (!autocompleteServiceRef.current) {
-          autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+        try {
+          if (!autocompleteServiceRef.current) {
+            autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+          }
+          
+          if (!placesServiceRef.current && dummyDivRef.current) {
+            placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
+          }
+          
+          setIsLoaded(true);
+          setIsLoading(false);
+          return true;
+        } catch (error) {
+          console.error("Error initializing Google Maps services:", error);
+          setIsLoading(false);
+          return false;
         }
-        
-        if (!placesServiceRef.current && dummyDivRef.current) {
-          placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
-        }
-        
-        setIsLoaded(true);
-        return true;
       }
       return false;
     };
@@ -37,8 +45,9 @@ export const useGoogleMapsServices = () => {
       return;
     }
 
-    // Load the Google Maps API if it's not already loaded
-    if (!document.getElementById('google-maps-script')) {
+    // Load the Google Maps API if it's not already loaded and not currently loading
+    if (!document.getElementById('google-maps-script') && !isLoading) {
+      setIsLoading(true);
       const script = document.createElement('script');
       script.id = 'google-maps-script';
       script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDof5HeiGV-WBmXrPJrEtcSr0ZPKiEhHqI&libraries=places';
@@ -47,6 +56,11 @@ export const useGoogleMapsServices = () => {
       
       script.onload = () => {
         initServices();
+      };
+      
+      script.onerror = () => {
+        console.error("Failed to load Google Maps API");
+        setIsLoading(false);
       };
       
       document.head.appendChild(script);
@@ -58,11 +72,12 @@ export const useGoogleMapsServices = () => {
         document.body.removeChild(dummyDivRef.current);
       }
     };
-  }, []);
+  }, [isLoading]);
 
   return {
     autocompleteService: autocompleteServiceRef.current,
     placesService: placesServiceRef.current,
-    isLoaded
+    isLoaded,
+    isLoading
   };
 };

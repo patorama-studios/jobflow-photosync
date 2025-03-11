@@ -33,25 +33,31 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         types: ['address']
       };
       
-      autocompleteService.getPlacePredictions(
-        options,
-        (predictions: google.maps.places.AutocompletePrediction[] | null, status: string) => {
-          setIsSearching(false);
-          
-          if (status !== 'OK' || !predictions || predictions.length === 0) {
-            setAddressSuggestions([]);
-            return;
+      try {
+        autocompleteService.getPlacePredictions(
+          options,
+          (predictions: google.maps.places.AutocompletePrediction[] | null, status: string) => {
+            setIsSearching(false);
+            
+            if (status !== 'OK' || !predictions || predictions.length === 0) {
+              setAddressSuggestions([]);
+              return;
+            }
+            
+            const results = predictions.map((prediction) => ({
+              place_id: prediction.place_id,
+              formatted_address: prediction.description,
+              name: prediction.structured_formatting?.main_text || prediction.description
+            }));
+            
+            setAddressSuggestions(results);
           }
-          
-          const results = predictions.map((prediction) => ({
-            place_id: prediction.place_id,
-            formatted_address: prediction.description,
-            name: prediction.structured_formatting?.main_text || prediction.description
-          }));
-          
-          setAddressSuggestions(results);
-        }
-      );
+        );
+      } catch (error) {
+        console.error("Error fetching address suggestions:", error);
+        setIsSearching(false);
+        setAddressSuggestions([]);
+      }
     }, 300);
     
     return () => clearTimeout(timer);
@@ -77,26 +83,32 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       return;
     }
     
-    placesService.getDetails(
-      {
-        placeId: prediction.place_id,
-        fields: ['address_components', 'formatted_address']
-      },
-      (place: google.maps.places.PlaceResult | null, status: string) => {
-        if (status !== 'OK') {
-          form.setValue('address', prediction.formatted_address || '');
+    try {
+      placesService.getDetails(
+        {
+          placeId: prediction.place_id,
+          fields: ['address_components', 'formatted_address']
+        },
+        (place: google.maps.places.PlaceResult | null, status: string) => {
+          if (status !== 'OK') {
+            form.setValue('address', prediction.formatted_address || '');
+            setAddressSuggestions([]);
+            return;
+          }
+          
+          const addressComponents = handlePlaceDetails(place, prediction, form);
+          if (addressComponents) {
+            setShowManualFields(true);
+          }
+          
           setAddressSuggestions([]);
-          return;
         }
-        
-        const addressComponents = handlePlaceDetails(place, prediction, form);
-        if (addressComponents) {
-          setShowManualFields(true);
-        }
-        
-        setAddressSuggestions([]);
-      }
-    );
+      );
+    } catch (error) {
+      console.error("Error getting place details:", error);
+      form.setValue('address', prediction.formatted_address || '');
+      setAddressSuggestions([]);
+    }
   };
   
   const toggleManualFields = () => {

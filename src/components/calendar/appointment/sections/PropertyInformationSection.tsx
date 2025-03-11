@@ -96,7 +96,8 @@ const PropertyContent: React.FC<PropertyContentProps> = ({
       <div className="relative mb-4">
         <AddressSearchField 
           form={form} 
-          onAddressSearch={handleAddressSearch} 
+          onAddressSearch={handleAddressSearch}
+          isSearching={isSearching}
         />
         
         <AddressSuggestionsList 
