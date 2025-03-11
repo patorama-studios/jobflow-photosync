@@ -1,140 +1,92 @@
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Input } from "./input";
+import React, { InputHTMLAttributes, forwardRef, useState, useEffect } from 'react';
+import { Input } from './input';
+import { useGoogleAutocomplete } from '@/hooks/use-google-autocomplete';
+import { cn } from '@/lib/utils';
 
-export interface GoogleAddressAutocompleteProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  value?: string;
+interface GoogleAddressAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  onAddressSelect?: (place: google.maps.places.PlaceResult) => void;
   onChange?: (value: string) => void;
-  onSelect?: (address: {
-    formattedAddress: string;
-    streetAddress?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-    lat?: number;
-    lng?: number;
-  }) => void;
+  country?: string;
+  className?: string;
 }
 
-export const GoogleAddressAutocomplete = React.forwardRef<
-  HTMLInputElement,
-  GoogleAddressAutocompleteProps
->(({ className, onChange, onSelect, ...props }, ref) => {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const autocompleteRef = React.useRef<google.maps.places.Autocomplete | null>(null);
+export const GoogleAddressAutocomplete = forwardRef<HTMLInputElement, GoogleAddressAutocompleteProps>(
+  ({ onAddressSelect, onChange, country = 'au', className, ...props }, ref) => {
+    const [inputValue, setInputValue] = useState<string>('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
-  React.useEffect(() => {
-    if (!inputRef.current || !window.google || !window.google.maps || !window.google.maps.places) {
-      return;
-    }
-
-    // Initialize Google Places Autocomplete
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: "au" }, // Restrict to Australia
-      fields: ["address_components", "formatted_address", "geometry"],
+    const { predictions, searchPlaces, getPlaceDetails } = useGoogleAutocomplete({
+      country,
+      types: 'address'
     });
 
-    // Add listener for place selection
-    autocompleteRef.current.addListener("place_changed", () => {
-      if (!autocompleteRef.current) return;
-
-      const place = autocompleteRef.current.getPlace();
-      
-      if (!place || !place.formatted_address) {
-        return;
+    useEffect(() => {
+      if (inputValue.length > 2) {
+        searchPlaces(inputValue);
       }
+    }, [inputValue, searchPlaces]);
 
-      let streetAddress = "";
-      let city = "";
-      let state = "";
-      let postalCode = "";
-      let country = "";
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setInputValue(value);
+      setShowSuggestions(true);
+      if (onChange) onChange(value);
+    };
 
-      // Extract address components
-      if (place.address_components) {
-        for (const component of place.address_components) {
-          const componentType = component.types[0];
-
-          switch (componentType) {
-            case "street_number": {
-              streetAddress = `${component.long_name} ${streetAddress}`;
-              break;
-            }
-            case "route": {
-              streetAddress += component.long_name;
-              break;
-            }
-            case "locality": {
-              city = component.long_name;
-              break;
-            }
-            case "administrative_area_level_1": {
-              state = component.short_name;
-              break;
-            }
-            case "postal_code": {
-              postalCode = component.long_name;
-              break;
-            }
-            case "country": {
-              country = component.long_name;
-              break;
-            }
+    const handleSelectPlace = async (placeId: string, description: string) => {
+      try {
+        setInputValue(description);
+        setShowSuggestions(false);
+        if (onChange) onChange(description);
+        
+        if (onAddressSelect) {
+          const placeDetails = await getPlaceDetails(placeId);
+          if (placeDetails) {
+            onAddressSelect(placeDetails);
           }
         }
-      }
-
-      // Create address object
-      const addressData = {
-        formattedAddress: place.formatted_address,
-        streetAddress,
-        city,
-        state,
-        postalCode,
-        country,
-        lat: place.geometry?.location?.lat(),
-        lng: place.geometry?.location?.lng(),
-      };
-
-      // Call onSelect with the address data
-      if (onSelect) {
-        onSelect(addressData);
-      }
-    });
-
-    return () => {
-      // Clean up
-      if (autocompleteRef.current && window.google) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      } catch (error) {
+        console.error('Error getting place details:', error);
       }
     };
-  }, [onSelect]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onChange) {
-      onChange(e.target.value);
-    }
-  };
+    return (
+      <div className="relative">
+        <Input
+          type="text"
+          ref={ref}
+          value={inputValue}
+          onChange={handleInputChange}
+          onFocus={() => inputValue.length > 2 && setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          className={cn("w-full", className)}
+          {...props}
+        />
+        
+        {showSuggestions && predictions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
+            {predictions.map((prediction) => (
+              <div
+                key={prediction.place_id}
+                className="px-4 py-2 hover:bg-muted cursor-pointer"
+                onMouseDown={() => handleSelectPlace(prediction.place_id, prediction.description)}
+              >
+                {prediction.structured_formatting ? (
+                  <>
+                    <div className="font-medium">{prediction.structured_formatting.main_text}</div>
+                    <div className="text-sm text-muted-foreground">{prediction.structured_formatting.secondary_text}</div>
+                  </>
+                ) : (
+                  <div>{prediction.description}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
-  return (
-    <Input
-      type="text"
-      className={cn(className)}
-      ref={(node) => {
-        inputRef.current = node;
-        if (typeof ref === "function") {
-          ref(node);
-        } else if (ref) {
-          ref.current = node;
-        }
-      }}
-      onChange={handleChange}
-      {...props}
-    />
-  );
-});
-
-GoogleAddressAutocomplete.displayName = "GoogleAddressAutocomplete";
+GoogleAddressAutocomplete.displayName = 'GoogleAddressAutocomplete';

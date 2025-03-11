@@ -43,7 +43,7 @@ export const ClientInformationSection: React.FC<ClientInformationSectionProps> =
       />
       
       <AddClientDialog 
-        isOpen={isAddClientDialogOpen}
+        open={isAddClientDialogOpen}
         onClose={() => setIsAddClientDialogOpen(false)}
         onClientCreated={handleClientCreated}
       />

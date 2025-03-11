@@ -72,7 +72,7 @@ export function CreateAppointmentDialog({
     onAppointmentAdded,
     defaultSections: {
       scheduling: true, // Open by default
-      address: false,
+      address: true, // Also open by default now
       customer: false,
       photographer: false,
       product: false,
@@ -96,7 +96,14 @@ export function CreateAppointmentDialog({
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-4">
-              {/* Scheduling Section */}
+              {/* Address/Property Information Section - now first */}
+              <PropertyInformationSection
+                form={form}
+                isOpen={addressOpen}
+                onToggle={() => setAddressOpen(!addressOpen)}
+              />
+              
+              {/* Scheduling Section - now second */}
               <SchedulingSection 
                 selectedDateTime={selectedDateTime}
                 selectedTime={selectedTime}
@@ -107,13 +114,6 @@ export function CreateAppointmentDialog({
                 isOpen={schedulingOpen}
                 onToggle={() => setSchedulingOpen(!schedulingOpen)}
                 isMobile={isMobile}
-              />
-              
-              {/* Address/Property Information Section */}
-              <PropertyInformationSection
-                form={form}
-                isOpen={addressOpen}
-                onToggle={() => setAddressOpen(!addressOpen)}
               />
               
               {/* Customer/Client Information Section */}

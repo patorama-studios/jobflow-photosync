@@ -1,115 +1,140 @@
 
+// Type definitions for Google Maps JavaScript API 3.46
+// Project: https://developers.google.com/maps/
+// TypeScript Version: 3.0
+
 declare namespace google.maps {
-  namespace places {
-    class AutocompleteService {
-      getPlacePredictions(
-        request: {
-          input: string;
-          componentRestrictions?: { country: string | string[] };
-          types?: string[];
-          bounds?: LatLngBounds | LatLngBoundsLiteral;
-        },
-        callback: (
-          predictions: AutocompletePrediction[] | null,
-          status: PlacesServiceStatus
-        ) => void
-      ): void;
+    // Missing type definitions
+    class LatLngBounds {
+        constructor(sw?: LatLng | null, ne?: LatLng | null);
+        contains(latLng: LatLng): boolean;
+        equals(other: LatLngBounds | null | undefined): boolean;
+        extend(point: LatLng | LatLngLiteral): LatLngBounds;
+        getCenter(): LatLng;
+        getNorthEast(): LatLng;
+        getSouthWest(): LatLng;
+        intersects(other: LatLngBounds | null | undefined): boolean;
+        isEmpty(): boolean;
+        toJSON(): LatLngBoundsLiteral;
+        toSpan(): LatLng;
+        toString(): string;
+        toUrlValue(precision?: number): string;
+        union(other: LatLngBounds | null | undefined): LatLngBounds;
     }
 
-    class PlacesService {
-      constructor(attrContainer: HTMLDivElement | HTMLMapElement);
-      
-      getDetails(
-        request: {
-          placeId: string;
-          fields?: string[];
-        },
-        callback: (result: PlaceResult | null, status: PlacesServiceStatus) => void
-      ): void;
+    interface LatLngBoundsLiteral {
+        east: number;
+        north: number;
+        south: number;
+        west: number;
     }
 
-    class Autocomplete {
-      constructor(
-        inputField: HTMLInputElement,
-        options?: {
-          types?: string[];
-          componentRestrictions?: { country: string | string[] };
-          fields?: string[];
-          bounds?: LatLngBounds | LatLngBoundsLiteral;
+    namespace places {
+        interface AutocompletePrediction {
+            description: string;
+            matched_substrings: Array<{ length: number; offset: number }>;
+            place_id: string;
+            reference: string;
+            structured_formatting: {
+                main_text: string;
+                main_text_matched_substrings: Array<{ length: number; offset: number }>;
+                secondary_text: string;
+            };
+            terms: Array<{ offset: number; value: string }>;
+            types: string[];
         }
-      );
-      
-      addListener(eventName: string, handler: Function): MapsEventListener;
-      getPlace(): PlaceResult;
+
+        interface AutocompleteRequest {
+            bounds?: LatLngBounds | LatLngBoundsLiteral;
+            componentRestrictions?: ComponentRestrictions;
+            input: string;
+            location?: LatLng;
+            offset?: number;
+            origin?: LatLng | LatLngLiteral;
+            radius?: number;
+            sessionToken?: AutocompleteSessionToken;
+            types?: string[] | string;
+        }
+
+        interface ComponentRestrictions {
+            country: string | string[];
+        }
+
+        interface PlaceResult {
+            address_components?: AddressComponent[];
+            adr_address?: string;
+            business_status?: string;
+            formatted_address?: string;
+            formatted_phone_number?: string;
+            geometry?: PlaceGeometry;
+            html_attributions?: string[];
+            icon?: string;
+            icon_background_color?: string;
+            icon_mask_base_uri?: string;
+            international_phone_number?: string;
+            name?: string;
+            opening_hours?: OpeningHours;
+            permanently_closed?: boolean;
+            photos?: PlacePhoto[];
+            place_id?: string;
+            plus_code?: PlusCode;
+            price_level?: number;
+            rating?: number;
+            reviews?: PlaceReview[];
+            types?: string[];
+            url?: string;
+            user_ratings_total?: number;
+            utc_offset?: number;
+            vicinity?: string;
+            website?: string;
+        }
+
+        interface AddressComponent {
+            long_name: string;
+            short_name: string;
+            types: string[];
+        }
+
+        interface PlaceGeometry {
+            location?: LatLng;
+            viewport?: LatLngBounds;
+        }
     }
 
-    interface PlaceResult {
-      address_components?: AddressComponent[];
-      formatted_address?: string;
-      geometry?: {
-        location?: LatLng;
-        viewport?: LatLngBounds;
-      };
-      place_id?: string;
-      types?: string[];
-      name?: string;
-      website?: string;
-      photos?: PlacePhoto[];
-    }
-
-    interface AddressComponent {
-      short_name: string;
-      long_name: string;
-      types: string[];
-    }
-
-    interface AutocompletePrediction {
-      description: string;
-      place_id: string;
-      structured_formatting?: {
-        main_text: string;
-        secondary_text: string;
-        main_text_matched_substrings?: {
-          offset: number;
-          length: number;
+    // Geocoder types
+    interface GeocoderResult {
+        address_components: {
+            long_name: string;
+            short_name: string;
+            types: string[];
         }[];
-      };
-      matched_substrings?: {
-        offset: number;
-        length: number;
-      }[];
-      terms?: {
-        offset: number;
-        value: string;
-      }[];
-      types?: string[];
+        formatted_address: string;
+        geometry: {
+            bounds?: LatLngBounds;
+            location: LatLng;
+            location_type?: string;
+            viewport: LatLngBounds;
+        };
+        place_id: string;
+        plus_code?: {
+            compound_code: string;
+            global_code: string;
+        };
+        types: string[];
     }
 
-    interface PlacePhoto {
-      getUrl(options: { maxWidth: number; maxHeight: number }): string;
-      height: number;
-      width: number;
-      html_attributions: string[];
+    interface GeocoderResponse {
+        results: GeocoderResult[];
+        status: GeocoderStatus;
     }
 
-    enum PlacesServiceStatus {
-      OK = "OK",
-      ZERO_RESULTS = "ZERO_RESULTS",
-      OVER_QUERY_LIMIT = "OVER_QUERY_LIMIT",
-      REQUEST_DENIED = "REQUEST_DENIED",
-      INVALID_REQUEST = "INVALID_REQUEST",
-      UNKNOWN_ERROR = "UNKNOWN_ERROR",
-      NOT_FOUND = "NOT_FOUND"
+    enum GeocoderStatus {
+        ERROR = "ERROR",
+        INVALID_REQUEST = "INVALID_REQUEST",
+        OK = "OK",
+        OVER_QUERY_LIMIT = "OVER_QUERY_LIMIT",
+        REQUEST_DENIED = "REQUEST_DENIED",
+        UNKNOWN_ERROR = "UNKNOWN_ERROR",
+        ZERO_RESULTS = "ZERO_RESULTS"
     }
-  }
-
-  interface MapsEventListener {
-    remove(): void;
-  }
-
-  namespace event {
-    function clearInstanceListeners(instance: Object): void;
-    function addListener(instance: Object, eventName: string, handler: Function): MapsEventListener;
-    function removeListener(listener: MapsEventListener): void;
-  }
 }
