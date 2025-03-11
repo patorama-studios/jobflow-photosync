@@ -17,7 +17,7 @@ import { Client } from "@/hooks/use-clients";
 import { ClientTableRow } from "./ClientTableRow";
 import { ClientTableSkeleton } from "./ClientTableSkeleton";
 
-interface ClientTableContentProps {
+export interface ClientTableContentProps {
   clients: Client[];
   isLoading: boolean;
   totalClients: number;

@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useCreateAppointmentForm, CustomItem, SelectedProduct } from '@/hooks/use-create-appointment-form';
+import { useCreateAppointmentForm } from '@/hooks/use-create-appointment-form';
 
 // Import our section components
 import { SchedulingSection } from './appointment/sections/SchedulingSection';

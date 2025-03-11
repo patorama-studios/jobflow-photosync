@@ -25,7 +25,7 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
       <Label>Appointment Duration</Label>
       <RadioGroup
         value={selectedDuration.toString()}
-        onValueChange={(value) => onDurationChange(parseInt(value))}
+        onValueChange={(value) => onDurationChange(parseInt(value, 10))}
         className="flex flex-wrap gap-2 mt-1"
       >
         {durations.map((duration) => (
@@ -45,4 +45,4 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
       </RadioGroup>
     </div>
   );
-}
+};

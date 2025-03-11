@@ -80,8 +80,16 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
       if (newCompany && teamMembers.length > 0) {
         try {
           // Create team if we have team members
-          // First execute the SQL migration to ensure tables exist
-          await supabase.rpc('run_migration', { migration_name: '20240519_company_teams' }).catch(err => {
+          // First ensure the migration has been run
+          await fetch('/api/run-migration', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: '20240519_company_teams' }),
+          })
+          .then(response => response.json())
+          .catch(err => {
             console.log('Migration may already be applied', err);
           });
           

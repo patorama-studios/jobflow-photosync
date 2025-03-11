@@ -2,9 +2,21 @@
 import { useState, useCallback } from 'react';
 import { useAppointmentFormState } from './appointment/use-appointment-form-state';
 import { useAppointmentSections } from './appointment/use-appointment-sections';
-import { useSchedulingDetails, CustomItem, SelectedProduct } from './appointment/use-scheduling-details';
+import { useSchedulingDetails } from './appointment/use-scheduling-details';
 import { useAppointmentSubmission } from './appointment/use-appointment-submission';
 import { Order } from '@/types/order-types';
+
+export interface CustomItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface SelectedProduct {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface UseCreateAppointmentFormProps {
   selectedDate: Date;
@@ -103,5 +115,3 @@ export const useCreateAppointmentForm = ({
     onSubmit: form.handleSubmit(submission.onSubmit)
   };
 };
-
-export type { CustomItem, SelectedProduct };

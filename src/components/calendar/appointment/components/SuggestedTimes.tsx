@@ -27,17 +27,21 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
     return result;
   }, []);
 
+  const handleTimeClick = (time: string) => {
+    onTimeSelect(time);
+  };
+
   return (
     <div className="mt-2">
       <h4 className="text-sm font-medium mb-2">Suggested Times</h4>
-      <ScrollArea className="h-12 w-full whitespace-nowrap">
-        <div className="flex space-x-2 pb-1">
+      <ScrollArea className="h-36 w-full whitespace-nowrap">
+        <div className="flex flex-wrap gap-2 pb-1">
           {times.map((time) => (
             <Button
               key={time}
               variant="outline"
               size="sm"
-              onClick={() => onTimeSelect(time)}
+              onClick={() => handleTimeClick(time)}
               className="flex-shrink-0"
             >
               {time}

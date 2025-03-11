@@ -18,6 +18,16 @@ export interface SelectedProduct {
   price: number;
 }
 
+interface DefaultSections {
+  scheduling?: boolean;
+  address?: boolean;
+  customer?: boolean;
+  photographer?: boolean;
+  product?: boolean;
+  customItems?: boolean;
+  notes?: boolean;
+}
+
 const appointmentFormSchema = z.object({
   client: z.string().min(1, "Client name is required"),
   clientEmail: z.string().email().optional(),
@@ -43,7 +53,7 @@ export const useCreateAppointmentForm = ({
   existingOrderData,
   onClose,
   onAppointmentAdded,
-  defaultSections = {}
+  defaultSections = {} as DefaultSections
 }) => {
   // Form state
   const form = useForm({
@@ -78,14 +88,25 @@ export const useCreateAppointmentForm = ({
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
   
+  // Default values for section open states
+  const defaultOpen = {
+    scheduling: true,
+    address: false,
+    customer: false,
+    photographer: false,
+    product: false,
+    customItems: false,
+    notes: false
+  };
+  
   // Section open/closed state
-  const [schedulingOpen, setSchedulingOpen] = useState(defaultSections.scheduling ?? true);
-  const [addressOpen, setAddressOpen] = useState(defaultSections.address ?? false);
-  const [customerOpen, setCustomerOpen] = useState(defaultSections.customer ?? false);
-  const [photographerOpen, setPhotographerOpen] = useState(defaultSections.photographer ?? false);
-  const [productOpen, setProductOpen] = useState(defaultSections.product ?? false);
-  const [customItemsOpen, setCustomItemsOpen] = useState(defaultSections.customItems ?? false);
-  const [notesOpen, setNotesOpen] = useState(defaultSections.notes ?? false);
+  const [schedulingOpen, setSchedulingOpen] = useState(defaultSections.scheduling ?? defaultOpen.scheduling);
+  const [addressOpen, setAddressOpen] = useState(defaultSections.address ?? defaultOpen.address);
+  const [customerOpen, setCustomerOpen] = useState(defaultSections.customer ?? defaultOpen.customer);
+  const [photographerOpen, setPhotographerOpen] = useState(defaultSections.photographer ?? defaultOpen.photographer);
+  const [productOpen, setProductOpen] = useState(defaultSections.product ?? defaultOpen.product);
+  const [customItemsOpen, setCustomItemsOpen] = useState(defaultSections.customItems ?? defaultOpen.customItems);
+  const [notesOpen, setNotesOpen] = useState(defaultSections.notes ?? defaultOpen.notes);
   
   // Use the appointment submission hook
   const { isSubmitting, onSubmit: submitAppointment } = useAppointmentSubmission({

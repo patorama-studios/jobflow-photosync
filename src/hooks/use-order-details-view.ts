@@ -41,9 +41,12 @@ export function useOrderDetailsView(orderId: string) {
   // Create a wrapper for the deleteOrder function that returns a Promise
   const deleteOrderWithPromise = async (): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
-      deleteOrder()
-        .then(() => resolve())
-        .catch((error) => reject(error));
+      try {
+        deleteOrder();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 

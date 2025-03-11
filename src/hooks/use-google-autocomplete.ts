@@ -1,123 +1,97 @@
 
-import { useRef, useState, useCallback, useEffect } from 'react';
-import { getDefaultRegion } from '@/lib/google-maps';
-import { convertPlaceToAddress, ParsedAddress } from '@/lib/address-utils';
-import { toast } from 'sonner';
+import { useRef, useEffect, useState } from 'react';
 
 interface GoogleAutocompleteOptions {
-  onAddressSelect: (address: ParsedAddress) => void;
-  defaultValue?: string;
-  region?: string;
+  componentRestrictions?: {
+    country: string | string[];
+  };
+  types?: string[];
+  bounds?: any;
 }
 
-export function useGoogleAutocomplete({
-  onAddressSelect,
-  defaultValue = '',
-  region
-}: GoogleAutocompleteOptions) {
-  const inputRef = useRef<HTMLInputElement>(null);
+interface AddressComponents {
+  street_number?: string;
+  route?: string;
+  locality?: string;
+  administrative_area_level_1?: string;
+  country?: string;
+  postal_code?: string;
+}
+
+interface Address {
+  fullAddress: string;
+  streetNumber: string;
+  streetName: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+}
+
+export function useGoogleAutocomplete(options: GoogleAutocompleteOptions = {}) {
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const [inputValue, setInputValue] = useState(defaultValue);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const handlePlaceChanged = useCallback(() => {
-    if (!autocompleteRef.current) return;
-    
-    const place = autocompleteRef.current.getPlace();
-    console.log("Selected place:", place);
-    
-    if (!place.address_components || !place.geometry?.location) {
-      console.error("Incomplete place data received:", place);
-      toast.error("Incomplete address selected. Please try a different address.");
+  const [address, setAddress] = useState<Address | null>(null);
+
+  const initAutocomplete = (input: HTMLInputElement) => {
+    if (!input || !window.google || !window.google.maps || !window.google.maps.places) {
+      console.error("Google Maps API not loaded");
       return;
     }
-    
-    const addressData = convertPlaceToAddress(place);
-    
-    if (addressData) {
-      setInputValue(addressData.formattedAddress);
-      onAddressSelect(addressData);
-    } else {
-      console.error("Failed to parse address data from place:", place);
-      toast.error("Could not process the selected address. Please try again or enter manually.");
-    }
-  }, [onAddressSelect]);
-  
-  const initializeAutocomplete = useCallback(() => {
-    // Skip if component is already initialized or input ref isn't available
-    if (!inputRef.current || isInitialized) {
-      return;
-    }
-    
-    // Check if Google Maps API is loaded
-    if (!window.google?.maps?.places) {
-      console.error("Google Maps Places API not loaded");
-      setError("Google Maps not loaded");
-      return;
-    }
-    
+
+    // Set Australia as the default country restriction if none provided
+    const defaultOptions: GoogleAutocompleteOptions = {
+      componentRestrictions: { country: 'au' },
+      ...options
+    };
+
     try {
-      // Get the default region (Australia) or use provided region
-      const preferredRegion = region || getDefaultRegion();
+      autocompleteRef.current = new google.maps.places.Autocomplete(input, defaultOptions);
       
-      // Initialize Google Autocomplete with region preference
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-        types: ['address'],
-        fields: ['address_components', 'formatted_address', 'geometry'],
-        componentRestrictions: { country: preferredRegion }
-      });
-      
-      setIsInitialized(true);
-      setError(null);
-      console.log("Google Maps Places Autocomplete initialized successfully");
-      
-      // Add listener for place selection
-      const listener = autocompleteRef.current.addListener('place_changed', handlePlaceChanged);
-      
-      return () => {
-        if (window.google && window.google.maps && listener) {
-          window.google.maps.event.clearInstanceListeners(autocompleteRef.current!);
+      autocompleteRef.current.addListener('place_changed', () => {
+        if (!autocompleteRef.current) return;
+        
+        const place = autocompleteRef.current.getPlace();
+        
+        if (!place.address_components) {
+          console.error("No address components found");
+          return;
         }
-      };
-    } catch (err) {
-      console.error('Error initializing Google Places Autocomplete:', err);
-      setError("Failed to initialize address search");
-      return undefined;
+
+        const components: AddressComponents = {};
+        
+        place.address_components.forEach(component => {
+          if (component.types.includes('street_number')) {
+            components.street_number = component.long_name;
+          } else if (component.types.includes('route')) {
+            components.route = component.long_name;
+          } else if (component.types.includes('locality')) {
+            components.locality = component.long_name;
+          } else if (component.types.includes('administrative_area_level_1')) {
+            components.administrative_area_level_1 = component.short_name;
+          } else if (component.types.includes('country')) {
+            components.country = component.long_name;
+          } else if (component.types.includes('postal_code')) {
+            components.postal_code = component.long_name;
+          }
+        });
+
+        setAddress({
+          fullAddress: place.formatted_address || '',
+          streetNumber: components.street_number || '',
+          streetName: components.route || '',
+          city: components.locality || '',
+          state: components.administrative_area_level_1 || '',
+          country: components.country || '',
+          postalCode: components.postal_code || ''
+        });
+      });
+    } catch (error) {
+      console.error("Error initializing Google Maps Autocomplete:", error);
     }
-  }, [isInitialized, region, handlePlaceChanged]);
-  
-  // Initialize autocomplete when Google Maps API is loaded
-  useEffect(() => {
-    const cleanup = initializeAutocomplete();
-    return cleanup;
-  }, [initializeAutocomplete, window.google?.maps?.places]);
-  
-  // Update input value when defaultValue changes
-  useEffect(() => {
-    if (defaultValue !== inputValue) {
-      setInputValue(defaultValue);
-    }
-  }, [defaultValue]);
-  
-  // Handle manual input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
   };
-  
-  // Allow focusing the input to show suggestions and re-initialize if needed
-  const handleInputFocus = () => {
-    if (!isInitialized && window.google?.maps?.places) {
-      initializeAutocomplete();
-    }
-  };
-  
+
   return {
-    inputRef,
-    inputValue,
-    error,
-    handleInputChange,
-    handleInputFocus,
-    isInitialized
+    initAutocomplete,
+    address
   };
 }
