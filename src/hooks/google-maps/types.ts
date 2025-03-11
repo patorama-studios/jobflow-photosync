@@ -124,9 +124,9 @@ export namespace google.maps {
     export interface AutocompletePrediction {
       description: string;
       place_id: string;
-      structured_formatting?: {
+      structured_formatting: {
         main_text: string;
-        secondary_text?: string;
+        secondary_text: string;
       };
       terms: {
         offset: number;
@@ -165,7 +165,7 @@ export namespace google.maps {
           sessionToken?: any;
         },
         callback: (
-          predictions: google.maps.places.AutocompletePrediction[] | null,
+          predictions: AutocompletePrediction[] | null,
           status: string
         ) => void
       ): void;
@@ -179,7 +179,7 @@ export namespace google.maps {
           sessionToken?: any;
         },
         callback: (
-          place: google.maps.places.PlaceResult | null,
+          place: PlaceResult | null,
           status: string
         ) => void
       ): void;

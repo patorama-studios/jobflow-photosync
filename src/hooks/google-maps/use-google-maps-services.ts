@@ -70,6 +70,7 @@ export const useGoogleMapsServices = () => {
     return () => {
       if (dummyDivRef.current) {
         try {
+          // Check if element exists in document before removing
           if (document.body.contains(dummyDivRef.current)) {
             document.body.removeChild(dummyDivRef.current);
           }
