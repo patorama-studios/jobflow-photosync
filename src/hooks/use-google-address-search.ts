@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { PlaceResult } from './google-maps/types';
 import { useGoogleMapsServices } from './google-maps/use-google-maps-services';
@@ -13,8 +13,18 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [addressSuggestions, setAddressSuggestions] = useState<PlaceResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { autocompleteService, placesService, isLoaded } = useGoogleMapsServices();
+
+  // Clear suggestions when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Effect to handle search with debounce
   useEffect(() => {
@@ -24,9 +34,15 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       return;
     }
     
-    const timer = setTimeout(() => {
-      setIsSearching(true);
-      
+    // Clear any existing timeout
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    setIsSearching(true);
+    
+    // Set new timeout
+    debounceTimerRef.current = setTimeout(() => {
       const options = {
         input: searchQuery,
         componentRestrictions: { country: 'au' },
@@ -44,7 +60,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
               return;
             }
             
-            const results = predictions.map((prediction) => ({
+            const results: PlaceResult[] = predictions.map((prediction) => ({
               place_id: prediction.place_id,
               formatted_address: prediction.description,
               name: prediction.structured_formatting?.main_text || prediction.description
@@ -60,10 +76,9 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       }
     }, 300);
     
-    return () => clearTimeout(timer);
   }, [searchQuery, autocompleteService, isLoaded]);
 
-  const handleAddressSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddressSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     form.setValue('address', query);
     setSearchQuery(query);
@@ -74,9 +89,9 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     } else {
       setIsSearching(true);
     }
-  };
+  }, [form]);
   
-  const handleSelectAddress = (prediction: PlaceResult) => {
+  const handleSelectAddress = useCallback((prediction: PlaceResult) => {
     if (!placesService || !prediction.place_id) {
       form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
@@ -109,11 +124,11 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
     }
-  };
+  }, [form, placesService]);
   
-  const toggleManualFields = () => {
+  const toggleManualFields = useCallback(() => {
     setShowManualFields(!showManualFields);
-  };
+  }, [showManualFields]);
 
   return {
     showManualFields,

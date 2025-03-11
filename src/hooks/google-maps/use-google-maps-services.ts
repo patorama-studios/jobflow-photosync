@@ -66,10 +66,15 @@ export const useGoogleMapsServices = () => {
       document.head.appendChild(script);
     }
 
-    // Cleanup function
+    // Cleanup function - FIX for Node removal error
     return () => {
-      if (dummyDivRef.current) {
-        document.body.removeChild(dummyDivRef.current);
+      if (dummyDivRef.current && document.body.contains(dummyDivRef.current)) {
+        try {
+          document.body.removeChild(dummyDivRef.current);
+          dummyDivRef.current = null;
+        } catch (error) {
+          console.error("Error removing dummy div:", error);
+        }
       }
     };
   }, [isLoading]);

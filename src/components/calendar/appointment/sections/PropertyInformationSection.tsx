@@ -8,6 +8,7 @@ import { useGoogleAddressSearch } from '@/hooks/use-google-address-search';
 import { FormSection } from '../components/FormSection';
 import { UseFormReturn } from 'react-hook-form';
 import { ToggleSection } from '../components/ToggleSection';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface PropertyInformationSectionProps {
   form: UseFormReturn<any>;
@@ -37,6 +38,25 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
         isOpen={isOpen}
         onToggle={onToggle}
       >
+        <ErrorBoundary>
+          <PropertyContent 
+            form={form}
+            showManualFields={showManualFields}
+            addressSuggestions={addressSuggestions}
+            isSearching={isSearching}
+            handleAddressSearch={handleAddressSearch}
+            handleSelectAddress={handleSelectAddress}
+            toggleManualFields={toggleManualFields}
+          />
+        </ErrorBoundary>
+      </ToggleSection>
+    );
+  }
+
+  // If we're being used standalone
+  return (
+    <FormSection>
+      <ErrorBoundary>
         <PropertyContent 
           form={form}
           showManualFields={showManualFields}
@@ -46,22 +66,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
           handleSelectAddress={handleSelectAddress}
           toggleManualFields={toggleManualFields}
         />
-      </ToggleSection>
-    );
-  }
-
-  // If we're being used standalone
-  return (
-    <FormSection>
-      <PropertyContent 
-        form={form}
-        showManualFields={showManualFields}
-        addressSuggestions={addressSuggestions}
-        isSearching={isSearching}
-        handleAddressSearch={handleAddressSearch}
-        handleSelectAddress={handleSelectAddress}
-        toggleManualFields={toggleManualFields}
-      />
+      </ErrorBoundary>
     </FormSection>
   );
 };

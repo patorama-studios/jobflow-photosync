@@ -4,12 +4,27 @@ export interface PlaceResult {
   formatted_address?: string;
   name?: string;
   address_components?: AddressComponent[];
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
 }
 
 export interface AddressComponent {
   long_name: string;
   short_name: string;
   types: string[];
+}
+
+export interface AddressDetails {
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  formatted_address?: string;
 }
 
 // Add missing type definitions for window.google
