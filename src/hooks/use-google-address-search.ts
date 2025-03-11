@@ -2,14 +2,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
+// Define types for Google Maps services
+interface PlaceResult {
+  place_id?: string;
+  formatted_address?: string;
+  name?: string;
+}
+
 export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [showManualFields, setShowManualFields] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.PlaceResult[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<PlaceResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
-  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteServiceRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
   const dummyDivRef = useRef<HTMLDivElement | null>(null);
   
   // Initialize Google Maps Services
@@ -47,27 +54,27 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     
     autocompleteServiceRef.current.getPlacePredictions(
       options,
-      (predictions, status) => {
+      (predictions: any, status: any) => {
         setIsSearching(false);
         
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions) {
           setAddressSuggestions([]);
           return;
         }
         
         // Convert predictions to PlaceResult format
-        const results = predictions.map(prediction => ({
+        const results = predictions.map((prediction: any) => ({
           place_id: prediction.place_id,
           formatted_address: prediction.description,
           name: prediction.structured_formatting?.main_text || prediction.description
-        })) as google.maps.places.PlaceResult[];
+        })) as PlaceResult[];
         
         setAddressSuggestions(results);
       }
     );
   };
   
-  const handleSelectAddress = (prediction: google.maps.places.PlaceResult) => {
+  const handleSelectAddress = (prediction: PlaceResult) => {
     if (!placesServiceRef.current || !prediction.place_id) {
       form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
@@ -80,8 +87,8 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         placeId: prediction.place_id,
         fields: ['address_components', 'formatted_address']
       },
-      (place, status) => {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+      (place: any, status: any) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) {
           form.setValue('address', prediction.formatted_address || '');
           setAddressSuggestions([]);
           return;

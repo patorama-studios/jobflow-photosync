@@ -1,10 +1,17 @@
 
 import React from 'react';
 
+// Define a simplified PlaceResult type that matches what we're using
+interface PlaceResult {
+  place_id?: string;
+  formatted_address?: string;
+  name?: string;
+}
+
 interface AddressSuggestionsListProps {
-  suggestions: google.maps.places.PlaceResult[];
+  suggestions: PlaceResult[];
   isSearching: boolean;
-  onSelectAddress: (prediction: google.maps.places.PlaceResult) => void;
+  onSelectAddress: (prediction: PlaceResult) => void;
 }
 
 export const AddressSuggestionsList: React.FC<AddressSuggestionsListProps> = ({
