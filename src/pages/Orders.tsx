@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, FileDown, RefreshCw } from 'lucide-react';
 import { useOrders } from '@/hooks/use-orders';
 import { useToast } from '@/components/ui/use-toast';
-import { CreateOrderDialog } from '@/components/orders/CreateOrderDialog';
+import { CreateAppointmentDialog } from '@/components/calendar/CreateAppointmentDialog';
 
 export default function Orders() {
   const navigate = useNavigate();
@@ -92,12 +92,13 @@ export default function Orders() {
       </PageTransition>
       
       {isCreateOrderOpen && (
-        <CreateOrderDialog 
+        <CreateAppointmentDialog 
           isOpen={isCreateOrderOpen} 
           onClose={() => setIsCreateOrderOpen(false)}
-          onOrderCreated={() => {
+          selectedDate={new Date()} 
+          onAppointmentAdded={async () => {
             refetch();
-            setIsCreateOrderOpen(false);
+            return true;
           }}
         />
       )}

@@ -60,6 +60,17 @@ export interface Order {
   mediaLinks?: any[];
   mediaUploaded?: boolean;
   
+  // New fields from the updated schema
+  appointment_start?: string;
+  appointment_end?: string;
+  hours_on_site?: number;
+  timezone?: string;
+  total_payout_amount?: number;
+  total_order_price?: number;
+  total_amount_paid?: number;
+  company_id?: string;
+  invoice_number?: string;
+  
   // Add both formats for consistent access
   scheduled_date?: string;
   scheduled_time?: string;

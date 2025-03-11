@@ -13,11 +13,14 @@ export const saveOrderChanges = async (order: Order): Promise<{ success: boolean
     // Prepare the order data for Supabase
     const orderData = {
       ...order,
-      order_id: String(order.id), // Include both id formats
+      order_id: String(order.id), // Include both id formats for backward compatibility
       id: String(order.id),
       scheduled_date: order.scheduledDate,
       scheduled_time: order.scheduledTime,
-      appointment_start: new Date(order.scheduledDate).toISOString()
+      appointment_start: new Date(order.scheduledDate).toISOString(),
+      // Calculate appointment_end as 2 hours after appointment_start
+      appointment_end: new Date(new Date(order.scheduledDate).getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      total_order_price: order.price
     };
     
     // Try with new column name first
@@ -43,14 +46,19 @@ export const saveOrderChanges = async (order: Order): Promise<{ success: boolean
     
     console.log('Order updated successfully');
     return { success: true, error: null };
-  } catch (err: any) {
-    console.error('Error in saveOrderChanges:', err);
-    return { success: false, error: err.message || 'An unexpected error occurred' };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+    console.error('Error in saveOrderChanges:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 };
 
 export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: boolean; data: Order | null; error: string | null }> => {
   try {
+    // Generate appointment start and end times
+    const appointmentStart = new Date(order.scheduledDate || new Date()).toISOString();
+    const appointmentEnd = new Date(new Date(order.scheduledDate || new Date()).getTime() + 2 * 60 * 60 * 1000).toISOString();
+    
     // Convert order data to the format expected by Supabase
     const orderData = {
       address: order.address || order.propertyAddress || '',
@@ -70,12 +78,16 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       property_type: order.propertyType || order.property_type || '',
       scheduled_date: order.scheduledDate || order.scheduled_date || '',
       scheduled_time: order.scheduledTime || order.scheduled_time || '',
-      appointment_start: new Date(order.scheduledDate || order.scheduled_date || new Date()).toISOString(),
+      appointment_start: appointmentStart,
+      appointment_end: appointmentEnd,
       square_feet: order.squareFeet || order.square_feet || 0,
       state: order.state || '',
       status: order.status || 'pending',
       stripe_payment_id: order.stripePaymentId || order.stripe_payment_id || '',
-      zip: order.zip || ''
+      zip: order.zip || '',
+      hours_on_site: 2, // Default to 2 hours on site
+      timezone: 'UTC', // Default timezone
+      total_payout_amount: (order.photographerPayoutRate || order.photographer_payout_rate || 0)
     };
     
     const { data, error } = await supabase
@@ -96,9 +108,10 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
 
     toast.success("Order created successfully");
     return { success: true, data: createdOrder, error: null };
-  } catch (err: any) {
-    console.error("Error creating order:", err);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+    console.error("Error creating order:", errorMessage);
     toast.error("An unexpected error occurred while creating the order");
-    return { success: false, data: null, error: err.message || "An unexpected error occurred" };
+    return { success: false, data: null, error: errorMessage };
   }
 };

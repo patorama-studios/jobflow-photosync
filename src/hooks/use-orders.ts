@@ -23,22 +23,34 @@ export function useOrders() {
       let { data, error } = await supabase
         .from('orders')
         .select('*')
-        .order('scheduled_date', { ascending: false });
+        .order('appointment_start', { ascending: false });
       
       if (error) {
-        console.error('Error fetching orders with scheduled_date ordering:', error);
+        console.error('Error fetching orders with appointment_start ordering:', error);
         
-        // Try alternative approach if error
+        // Try alternative approach with scheduled_date
         const result = await supabase
           .from('orders')
-          .select('*');
+          .select('*')
+          .order('scheduled_date', { ascending: false });
         
         if (result.error) {
-          console.error('Error fetching orders:', result.error);
-          throw new Error(result.error.message);
+          console.error('Error fetching orders with scheduled_date:', result.error);
+          
+          // Final fallback - just get all orders without ordering
+          const fallbackResult = await supabase
+            .from('orders')
+            .select('*');
+          
+          if (fallbackResult.error) {
+            console.error('Error fetching orders:', fallbackResult.error);
+            throw new Error(fallbackResult.error.message);
+          }
+          
+          data = fallbackResult.data;
+        } else {
+          data = result.data;
         }
-        
-        data = result.data;
       }
       
       console.log('Orders fetched:', data?.length || 0);

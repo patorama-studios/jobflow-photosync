@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -234,6 +233,19 @@ export function useCreateAppointmentForm({
       // Generate an order number
       const orderNumber = `ORD-${Math.floor(Math.random() * 10000)}`;
       
+      // Calculate appointment start and end times
+      const appointmentStart = selectedDateTime ? 
+        new Date(selectedDateTime.setHours(
+          parseInt(selectedTime.split(':')[0]), 
+          parseInt(selectedTime.split(':')[1].split(' ')[0]), 
+          0
+        )).toISOString() : 
+        new Date().toISOString();
+        
+      // Calculate end time based on duration
+      const durationMinutes = parseInt(selectedDuration.split(' ')[0]);
+      const appointmentEnd = new Date(new Date(appointmentStart).getTime() + durationMinutes * 60 * 1000).toISOString();
+      
       // Prepare the order data - include all required fields
       const orderData = {
         order_number: orderNumber,
@@ -247,14 +259,20 @@ export function useCreateAppointmentForm({
         zip: data.zip,
         scheduled_date: format(selectedDateTime || new Date(), 'yyyy-MM-dd'),
         scheduled_time: selectedTime,
+        appointment_start: appointmentStart,
+        appointment_end: appointmentEnd,
+        hours_on_site: Math.ceil(durationMinutes / 60),
         property_type: data.property_type,
         square_feet: data.square_feet,
         package: data.package || (selectedProducts.length > 0 ? selectedProducts[0].name : 'Standard'),
         price: data.price,
+        total_order_price: data.price,
         photographer: data.photographer,
         photographer_id: data.photographer_id,
         internal_notes: data.internal_notes,
         status: 'scheduled',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        total_payout_amount: data.photographer_payout_rate || 0,
         notification_method: selectedNotification
       };
       
@@ -270,7 +288,7 @@ export function useCreateAppointmentForm({
       
       // If we have products, add them to order_products
       if (selectedProducts.length > 0 && newOrder && newOrder.length > 0) {
-        const orderId = newOrder[0].id;
+        const orderId = newOrder[0].order_id || newOrder[0].id;
         
         const productRecords = selectedProducts.map(product => ({
           order_id: orderId,
@@ -293,7 +311,7 @@ export function useCreateAppointmentForm({
       
       // If we have custom items, add them as order_products too
       if (customItems.length > 0 && newOrder && newOrder.length > 0) {
-        const orderId = newOrder[0].id;
+        const orderId = newOrder[0].order_id || newOrder[0].id;
         
         const customItemRecords = customItems.map(item => ({
           order_id: orderId,

@@ -2,7 +2,7 @@
 import { Order, OrderStatus } from '../types/order-types';
 
 // Helper function to convert string status to OrderStatus type
-const validateStatus = (status: string | null | undefined): OrderStatus => {
+export const validateStatus = (status: string | null | undefined): OrderStatus => {
   if (!status) return "pending";
   
   const validStatuses: OrderStatus[] = [
@@ -52,6 +52,16 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     stripePaymentId: order.stripe_payment_id || '',
     stripe_payment_id: order.stripe_payment_id || '',
     notes: order.notes || '',
-    drivingTimeMin: order.driving_time_min || (15 + Math.floor(Math.random() * 30))
+    drivingTimeMin: order.driving_time_min || (15 + Math.floor(Math.random() * 30)),
+    // New fields from the updated schema
+    appointment_start: order.appointment_start,
+    appointment_end: order.appointment_end,
+    hours_on_site: order.hours_on_site || 2,
+    timezone: order.timezone || 'UTC',
+    total_payout_amount: order.total_payout_amount || 0,
+    total_order_price: order.total_order_price || order.price || 0,
+    total_amount_paid: order.total_amount_paid || 0,
+    company_id: order.company_id,
+    invoice_number: order.invoice_number
   }));
 }
