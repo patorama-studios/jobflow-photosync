@@ -17,7 +17,6 @@ import {
   BookOpenCheck,
   Plug2,
   Users,
-  ListChecks,
   UserCircle,
 } from "lucide-react";
 
@@ -57,7 +56,6 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
       { id: "theme", label: "Theme", icon: <Moon className="mr-2 h-4 w-4" /> },
     ],
     integrations: [
-      { id: "production-status", label: "Production Status", icon: <ListChecks className="mr-2 h-4 w-4" /> },
       { id: "apps", label: "Apps & Integrations", icon: <Plug2 className="mr-2 h-4 w-4" /> },
       { id: "legal", label: "Legal", icon: <BookOpenCheck className="mr-2 h-4 w-4" /> },
     ],

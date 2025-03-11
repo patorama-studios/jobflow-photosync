@@ -6,10 +6,10 @@ import {
   Users, 
   Settings,
   ShoppingCart,
-  Kanban,
   GraduationCap,
   Bell,
-  Package
+  Package,
+  UserCircle
 } from "lucide-react";
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
@@ -29,8 +29,7 @@ const sidebarLinks = [
   { name: "Calendar", icon: Calendar, path: "/calendar" },
   { name: "Orders", icon: ShoppingCart, path: "/orders" },
   { name: "Products", icon: Package, path: "/products" },
-  { name: "Customers", icon: Users, path: "/customers" },
-  { name: "Production Board", icon: Kanban, path: "/production" },
+  { name: "Customers", icon: UserCircle, path: "/customers" },
   { name: "Learning Hub", icon: GraduationCap, path: "/learning-hub" },
   { name: "Notifications", icon: Bell, path: "/notifications" },
   { name: "Settings", icon: Settings, path: "/settings" }

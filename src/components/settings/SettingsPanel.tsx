@@ -14,7 +14,6 @@ import { ThemeSettings } from "./sections/ThemeSettings";
 import { LegalSettings } from "./sections/LegalSettings";
 import { AppsSettings } from "./sections/AppsSettings";
 import { TeamSettings } from "./sections/TeamSettings";
-import { ProductionStatusSettings } from "./sections/production-status/ProductionStatusSettings";
 import { EsoftIntegrationSettings } from "./sections/EsoftIntegrationSettings";
 import { UserProfileSettings } from "./sections/UserProfileSettings";
 import { Card } from "@/components/ui/card";
@@ -39,7 +38,6 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
       {activeCategory === "header" && <HeaderSettings />}
       {activeCategory === "theme" && <ThemeSettings />}
       {activeCategory === "legal" && <LegalSettings />}
-      {activeCategory === "production-status" && <ProductionStatusSettings />}
       {activeCategory === "apps" && (
         <>
           <AppsSettings />
