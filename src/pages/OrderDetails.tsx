@@ -87,7 +87,7 @@ export default function OrderDetails() {
                     <OrderDetailsTab
                       order={order}
                       isEditing={isEditing}
-                      onSave={handleSaveClick}
+                      onSave={(formData) => handleSaveClick(formData)}
                     />
                   </TabsContent>
 

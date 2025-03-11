@@ -37,21 +37,24 @@ export function useOrderActions({
     }
   };
   
-  const handleSaveClick = async (formData: any) => {
+  const handleSaveClick = async (formData?: any) => {
     try {
       setIsSaving(true);
       
-      const result = await saveOrderChanges({
-        ...formData,
-        id: orderId
-      });
-      
-      if (result.success) {
-        toast.success("Order updated successfully");
-        setIsEditing(false);
-      } else {
-        toast.error(`Failed to update order: ${result.error}`);
+      if (formData) {
+        const result = await saveOrderChanges({
+          ...formData,
+          id: orderId
+        });
+        
+        if (result.success) {
+          toast.success("Order updated successfully");
+        } else {
+          toast.error(`Failed to update order: ${result.error}`);
+        }
       }
+      
+      setIsEditing(false);
     } catch (error) {
       console.error("Error saving order:", error);
       toast.error("An unexpected error occurred while saving");

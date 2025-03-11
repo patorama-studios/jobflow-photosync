@@ -14,3 +14,4 @@ export const companyFormSchema = z.object({
 });
 
 export type CompanyFormSchema = z.infer<typeof companyFormSchema>;
+export type CompanyFormData = z.infer<typeof companyFormSchema>;

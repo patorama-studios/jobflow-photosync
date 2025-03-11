@@ -24,7 +24,7 @@ export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({
     try {
       await addClient({
         ...client,
-        companyId: companyId || null
+        company_id: companyId || null
       });
       
       await refetch();

@@ -73,10 +73,9 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
         // Convert predictions to PlaceResult format
         const results = predictions.map(prediction => ({
           place_id: prediction.place_id,
-          description: prediction.description,
           formatted_address: prediction.description,
           name: prediction.structured_formatting?.main_text || prediction.description
-        }));
+        })) as google.maps.places.PlaceResult[];
         
         setAddressSuggestions(results);
       }
@@ -85,7 +84,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   
   const handleSelectAddress = (prediction: google.maps.places.PlaceResult) => {
     if (!placesServiceRef.current || !prediction.place_id) {
-      form.setValue('address', prediction.description || '');
+      form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
       return;
     }
@@ -98,14 +97,14 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
       },
       (place, status) => {
         if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
-          form.setValue('address', prediction.description || '');
+          form.setValue('address', prediction.formatted_address || '');
           setAddressSuggestions([]);
           return;
         }
         
         // Set the full address
-        form.setValue('address', place.formatted_address || prediction.description || '');
-        form.setValue('propertyAddress', place.formatted_address || prediction.description || '');
+        form.setValue('address', place.formatted_address || prediction.formatted_address || '');
+        form.setValue('propertyAddress', place.formatted_address || prediction.formatted_address || '');
         
         // Extract and set address components
         if (place.address_components) {
@@ -202,8 +201,8 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
                       className="px-4 py-2 hover:bg-muted cursor-pointer"
                       onClick={() => handleSelectAddress(prediction)}
                     >
-                      <div className="font-medium">{prediction.description}</div>
-                      {prediction.name && prediction.description && prediction.name !== prediction.description && (
+                      <div className="font-medium">{prediction.formatted_address}</div>
+                      {prediction.name && prediction.formatted_address && prediction.name !== prediction.formatted_address && (
                         <div className="text-xs text-muted-foreground">
                           {prediction.name}
                         </div>

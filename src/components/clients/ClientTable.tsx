@@ -83,7 +83,7 @@ export const ClientTable: React.FC<ClientTableProps> = ({
               <TableCell className="font-medium">{client.name}</TableCell>
               <TableCell>{client.email}</TableCell>
               <TableCell>{client.phone}</TableCell>
-              <TableCell>{client.companyName}</TableCell>
+              <TableCell>{client.company_name}</TableCell>
             </TableRow>
           ))}
         </TableBody>
