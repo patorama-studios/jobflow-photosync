@@ -7,6 +7,13 @@ export interface PlaceResult {
   place_id?: string;
   formatted_address?: string;
   name?: string;
+  address_components?: AddressComponent[];
+}
+
+export interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
 }
 
 export function useGoogleAddressSearch(form: UseFormReturn<any>) {
@@ -15,14 +22,16 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
-  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteServiceRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
   const dummyDivRef = useRef<HTMLDivElement | null>(null);
   
   // Initialize Google Maps Services
   useEffect(() => {
     if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.places) {
-      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      if (window.google.maps.places.AutocompleteService) {
+        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      }
       
       // Create a dummy div for PlacesService if it doesn't exist
       if (!dummyDivRef.current) {
@@ -30,7 +39,9 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         dummyDivRef.current = div;
       }
       
-      placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
+      if (window.google.maps.places.PlacesService) {
+        placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
+      }
     }
   }, []);
 
@@ -54,16 +65,16 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     
     autocompleteServiceRef.current.getPlacePredictions(
       options,
-      (predictions: google.maps.places.AutocompletePrediction[] | null, status: google.maps.places.PlacesServiceStatus) => {
+      (predictions: any[] | null, status: string) => {
         setIsSearching(false);
         
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+        if (status !== 'OK' || !predictions) {
           setAddressSuggestions([]);
           return;
         }
         
         // Convert predictions to PlaceResult format
-        const results = predictions.map((prediction: google.maps.places.AutocompletePrediction) => ({
+        const results = predictions.map((prediction: any) => ({
           place_id: prediction.place_id,
           formatted_address: prediction.description,
           name: prediction.structured_formatting?.main_text || prediction.description
@@ -87,8 +98,8 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         placeId: prediction.place_id,
         fields: ['address_components', 'formatted_address']
       },
-      (place: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+      (place: PlaceResult | null, status: string) => {
+        if (status !== 'OK' || !place) {
           form.setValue('address', prediction.formatted_address || '');
           setAddressSuggestions([]);
           return;

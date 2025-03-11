@@ -1,25 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { Label } from '@/components/ui/label';
 import { TimeSelector } from '../TimeSelector';
-import { format, addHours } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { CalendarIcon, MapPin, Clock } from 'lucide-react';
 import { SchedulingAssistant } from './SchedulingAssistant';
-import { checkAddressExistingOrders } from '@/lib/order-duplicate-checker';
-import { toast } from 'sonner';
 
 interface SchedulingSectionProps {
   date: Date;
   time: string;
   address: string;
-  photographer: string | undefined;
+  photographer?: string;
   onDateChange: (date: Date) => void;
   onTimeChange: (time: string) => void;
   lat?: number;
@@ -36,139 +32,141 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
   lat,
   lng
 }) => {
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [suggestedTimes, setSuggestedTimes] = useState<string[]>([]);
-  const [existingOrder, setExistingOrder] = useState<{ id: string, date: string } | null>(null);
+  const [showSuggestedTimes, setShowSuggestedTimes] = useState(false);
   
-  // Check for existing orders when address changes
+  // Generate suggested times based on a standard set of times
   useEffect(() => {
-    if (address) {
-      const checkExisting = async () => {
-        const existing = await checkAddressExistingOrders(address);
-        if (existing) {
-          setExistingOrder(existing);
-          toast.warning(
-            <div>
-              <p>This address already has an order scheduled!</p>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="mt-2"
-                asChild
-              >
-                <a href={`/orders/${existing.id}`} target="_blank" rel="noopener noreferrer">
-                  View Existing Order
-                </a>
-              </Button>
-            </div>,
-            {
-              duration: 8000,
-              id: `duplicate-address-${existing.id}`
-            }
-          );
-        } else {
-          setExistingOrder(null);
-        }
-      };
+    const generateTimes = () => {
+      const times = [];
       
-      checkExisting();
-    }
-  }, [address]);
-  
-  // Generate default suggested times
-  useEffect(() => {
-    const defaultSuggested = [
-      format(addHours(new Date(date), 9), 'h:mm a'),  // 9 AM
-      format(addHours(new Date(date), 13), 'h:mm a'), // 1 PM
-      format(addHours(new Date(date), 16), 'h:mm a')  // 4 PM
-    ];
+      // Morning times
+      for (let hour = 8; hour <= 11; hour++) {
+        times.push(`${hour}:00 AM`);
+        times.push(`${hour}:30 AM`);
+      }
+      
+      // Noon
+      times.push('12:00 PM');
+      times.push('12:30 PM');
+      
+      // Afternoon times
+      for (let hour = 1; hour <= 5; hour++) {
+        times.push(`${hour}:00 PM`);
+        times.push(`${hour}:30 PM`);
+      }
+      
+      return times;
+    };
     
-    setSuggestedTimes(defaultSuggested);
-  }, [date]);
-  
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      onDateChange(selectedDate);
-      setIsCalendarOpen(false);
-    }
+    setSuggestedTimes(generateTimes());
+  }, []);
+
+  const handleTimeSelect = (selectedTime: string) => {
+    onTimeChange(selectedTime);
+    setShowSuggestedTimes(false);
   };
-  
-  const handleSuggestedTimeUpdate = (times: string[]) => {
-    if (times && times.length > 0) {
-      setSuggestedTimes(times);
-    }
+
+  // Modified for building a structured appointment time
+  const getReadableDateTime = () => {
+    if (!date) return '';
+    
+    const formattedDate = format(date, 'EEEE, MMMM do, yyyy');
+    return `${formattedDate} at ${time}`;
   };
-  
+
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Date & Time</label>
-        
-        {existingOrder && (
-          <div className="text-sm p-2 border border-yellow-200 bg-yellow-50 rounded-md text-yellow-800">
-            ⚠️ Warning: This address already has an order scheduled for {existingOrder.date}
-            <div className="mt-1">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="w-full"
-                asChild
+    <div className="space-y-4 py-2 border-t border-gray-100">
+      <div className="flex items-start gap-2">
+        <div className="mt-1">
+          <Clock className="h-4 w-4 text-gray-400" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">Appointment Time</p>
+          <p className="text-sm text-gray-500">{getReadableDateTime()}</p>
+          
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(d) => d && onDateChange(d)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="relative">
+              <div 
+                className="flex items-center border rounded-md overflow-hidden"
+                onClick={() => setShowSuggestedTimes(!showSuggestedTimes)}
               >
-                <a href={`/orders/${existingOrder.id}`} target="_blank" rel="noopener noreferrer">
-                  View Existing Order
-                </a>
-              </Button>
+                <Input
+                  type="text"
+                  placeholder="Select time"
+                  value={time}
+                  onChange={(e) => onTimeChange(e.target.value)}
+                  className="border-0 focus-visible:ring-0"
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-full rounded-none border-l"
+                >
+                  <Clock className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Time selector now properly receives selectedTime prop */}
+              {showSuggestedTimes && (
+                <TimeSelector
+                  value={time}
+                  onChange={handleTimeSelect}
+                  suggestedTimes={suggestedTimes}
+                />
+              )}
             </div>
           </div>
-        )}
-        
-        <div className={`${!isCalendarOpen ? 'grid grid-cols-2 gap-2' : ''}`}>
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={handleDateSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
           
-          {!isCalendarOpen && (
-            <TimeSelector 
-              selectedTime={time}
-              onTimeChange={onTimeChange}
-              suggestedTimes={suggestedTimes}
-            />
+          {address && (
+            <div className="mt-3">
+              <div className="flex items-center gap-1 text-sm text-gray-500">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="truncate">{address}</span>
+              </div>
+            </div>
+          )}
+          
+          {address && lat && lng && (
+            <div className="mt-3">
+              <SchedulingAssistant
+                address={address}
+                date={date}
+                photographer={photographer}
+                lat={lat}
+                lng={lng}
+                onSuggestedTimeSelect={handleTimeSelect}
+              />
+            </div>
           )}
         </div>
       </div>
-      
-      {address && lat && lng && (
-        <SchedulingAssistant
-          address={address}
-          photographer={photographer}
-          onSelectSlot={(newDate, newTime) => {
-            onDateChange(newDate);
-            onTimeChange(newTime);
-          }}
-          onSuggestedTimesUpdate={handleSuggestedTimeUpdate}
-          lat={lat}
-          lng={lng}
-        />
-      )}
     </div>
   );
 };

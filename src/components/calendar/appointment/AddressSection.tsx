@@ -8,29 +8,21 @@ import { ManualAddressForm } from './address/ManualAddressForm';
 import { AddressDisplay } from './address/AddressDisplay';
 import { SchedulingSection } from './scheduling/SchedulingSection';
 
-interface AddressDetails {
+export interface AddressDetails {
   formattedAddress: string;
-  streetAddress: string;
   city: string;
   state: string;
   postalCode: string;
   lat: number;
   lng: number;
+  streetAddress?: string;
+  country?: string;
 }
 
 interface AddressSectionProps {
   addressDetails: AddressDetails;
   selectedPhotographer?: string;
-  onAddressSelect: (address: {
-    formattedAddress: string;
-    streetAddress: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    lat: number;
-    lng: number;
-  }) => void;
+  onAddressSelect: (addressDetails: AddressDetails) => void;
   onScheduleSelect?: (date: Date, time: string) => void;
   selectedDate?: Date;
   selectedTime?: string;

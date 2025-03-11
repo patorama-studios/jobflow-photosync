@@ -1,45 +1,36 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface TimeSelectorProps {
   value: string;
   onChange: (time: string) => void;
-  availableTimes?: string[];
-  className?: string;
+  suggestedTimes: string[];
 }
 
 export const TimeSelector: React.FC<TimeSelectorProps> = ({
   value,
   onChange,
-  availableTimes = [],
-  className
+  suggestedTimes
 }) => {
-  // Default times if none provided
-  const times = availableTimes.length > 0 ? availableTimes : [
-    "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
-    "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-    "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-    "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
-    "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
-    "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM"
-  ];
-
   return (
-    <div className={className}>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select time" />
-        </SelectTrigger>
-        <SelectContent>
-          {times.map((time) => (
-            <SelectItem key={time} value={time}>
+    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10">
+      <ScrollArea className="h-60">
+        <div className="p-2 space-y-1">
+          {suggestedTimes.map((time) => (
+            <Button
+              key={time}
+              type="button"
+              variant={value === time ? 'default' : 'ghost'}
+              className="w-full justify-start text-left"
+              onClick={() => onChange(time)}
+            >
               {time}
-            </SelectItem>
+            </Button>
           ))}
-        </SelectContent>
-      </Select>
+        </div>
+      </ScrollArea>
     </div>
   );
 };
