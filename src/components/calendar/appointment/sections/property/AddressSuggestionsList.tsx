@@ -13,8 +13,6 @@ export const AddressSuggestionsList: React.FC<AddressSuggestionsListProps> = ({
   isSearching,
   onSelectAddress
 }) => {
-  console.log("Rendering suggestions list", { suggestions, isSearching });
-  
   if (suggestions.length === 0 && !isSearching) return null;
 
   return (

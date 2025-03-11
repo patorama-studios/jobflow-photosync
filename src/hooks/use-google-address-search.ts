@@ -22,13 +22,13 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
-  const autocompleteServiceRef = useRef<any>(null);
-  const placesServiceRef = useRef<any>(null);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const dummyDivRef = useRef<HTMLDivElement | null>(null);
   
   // Initialize Google Maps Services
   useEffect(() => {
-    // Check if Google Maps script is loaded
+    // Check if Google Maps script is already loaded
     if (window.google && window.google.maps && window.google.maps.places) {
       console.log("Google Maps API is loaded");
       
@@ -109,7 +109,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     
     autocompleteServiceRef.current.getPlacePredictions(
       options,
-      (predictions: any[] | null, status: string) => {
+      (predictions: google.maps.places.AutocompletePrediction[] | null, status: google.maps.places.PlacesServiceStatus) => {
         setIsSearching(false);
         console.log("Places API response status:", status);
         
@@ -122,7 +122,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         console.log("Got predictions:", predictions);
         
         // Convert predictions to PlaceResult format
-        const results = predictions.map((prediction: any) => ({
+        const results = predictions.map((prediction) => ({
           place_id: prediction.place_id,
           formatted_address: prediction.description,
           name: prediction.structured_formatting?.main_text || prediction.description
@@ -148,7 +148,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         placeId: prediction.place_id,
         fields: ['address_components', 'formatted_address']
       },
-      (place: PlaceResult | null, status: string) => {
+      (place: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
         console.log("Place details status:", status);
         
         if (status !== 'OK' || !place) {
@@ -211,4 +211,19 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     handleSelectAddress,
     toggleManualFields
   };
+}
+
+// Add missing type definitions
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        places: {
+          AutocompleteService: new () => google.maps.places.AutocompleteService;
+          PlacesService: new (attrContainer: HTMLElement) => google.maps.places.PlacesService;
+          PlacesServiceStatus: google.maps.places.PlacesServiceStatus;
+        };
+      };
+    };
+  }
 }
