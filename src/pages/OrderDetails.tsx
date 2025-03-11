@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -66,14 +67,7 @@ export default function OrderDetails() {
                   isEditing={isEditing}
                   onEdit={handleEditClick}
                   onCancel={handleCancelClick}
-                  onSave={() => {
-                    // We'll pass form data from the child component when save is clicked
-                    // This is just a placeholder for the function
-                    const saveHandler = (formData: any) => {
-                      handleSaveClick(formData);
-                    };
-                    return saveHandler;
-                  }}
+                  onSave={handleSaveClick}
                   onDelete={handleDeleteClick}
                   onBack={handleBackClick}
                 />
@@ -110,6 +104,7 @@ export default function OrderDetails() {
             isOpen={isDeleteDialogOpen}
             onClose={() => setIsDeleteDialogOpen(false)}
             onConfirm={handleConfirmDelete}
+            orderNumber={order?.orderNumber || order?.order_number || `#${order?.id}`}
           />
         </div>
       </PageTransition>

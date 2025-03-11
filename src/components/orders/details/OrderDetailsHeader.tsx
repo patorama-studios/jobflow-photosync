@@ -3,36 +3,40 @@ import React from 'react';
 import { Order } from '@/types/order-types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash, FileDown, RefreshCw } from 'lucide-react';
+import { Edit, Trash, FileDown, RefreshCw, ArrowLeft, Save, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface OrderDetailsHeaderProps {
   order: Order;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  // Add additional props that components are trying to use
-  orderId?: string;
   isEditing?: boolean;
+  orderId?: string;
+  onEdit?: () => void;
+  onCancel?: () => void;
+  onDelete?: () => void;
+  onSave?: () => Promise<void>;
   handleEditClick?: () => void;
   handleDeleteClick?: () => void;
   handleCancelClick?: () => void;
   handleSaveClick?: () => Promise<void>;
-  onRefresh?: () => void; // Add onRefresh prop
+  onRefresh?: () => void;
+  onBack?: () => void;
 }
 
 export function OrderDetailsHeader({ 
   order, 
-  onEdit, 
-  onDelete,
-  // Support both old and new prop patterns
-  orderId,
   isEditing,
+  orderId,
+  onEdit, 
+  onCancel,
+  onDelete,
+  onSave,
   handleEditClick,
   handleDeleteClick,
   handleCancelClick,
   handleSaveClick,
-  onRefresh
+  onRefresh,
+  onBack
 }: OrderDetailsHeaderProps) {
   // Get status badge color
   const getStatusColor = (status: string) => {
@@ -60,13 +64,22 @@ export function OrderDetailsHeader({
   // Use provided handlers or fall back to the simpler ones
   const handleEdit = handleEditClick || onEdit;
   const handleDelete = handleDeleteClick || onDelete;
+  const handleCancel = handleCancelClick || onCancel;
+  const handleSave = handleSaveClick || onSave;
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-3xl font-bold">
-          {order.orderNumber || order.order_number || `Order #${order.id}`}
-        </h1>
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <Button variant="ghost" size="icon" onClick={onBack} className="mr-1">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <h1 className="text-3xl font-bold">
+            {order.orderNumber || order.order_number || `Order #${order.id}`}
+          </h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2 mt-1">
           <p className="text-muted-foreground">
             {formattedDate} {order.scheduledTime || order.scheduled_time}
@@ -96,15 +109,17 @@ export function OrderDetailsHeader({
             <Button 
               variant="outline" 
               className="flex items-center gap-1"
-              onClick={handleCancelClick}
+              onClick={handleCancel}
             >
+              <X className="h-4 w-4" />
               Cancel
             </Button>
             <Button 
               variant="default" 
               className="flex items-center gap-1"
-              onClick={handleSaveClick}
+              onClick={handleSave}
             >
+              <Save className="h-4 w-4" />
               Save Changes
             </Button>
           </>

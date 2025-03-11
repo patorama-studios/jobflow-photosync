@@ -21,7 +21,11 @@ export const AddCompanyDialog: React.FC<AddCompanyDialogProps> = ({
           <DialogTitle>Add New Company</DialogTitle>
         </DialogHeader>
         
-        <CompanyForm onClose={onClose} onCompanyCreated={onCompanyCreated} />
+        <CompanyForm
+          onSubmit={(data) => onCompanyCreated(data)}
+          onClose={onClose}
+          onCompanyCreated={onCompanyCreated}
+        />
       </DialogContent>
     </Dialog>
   );

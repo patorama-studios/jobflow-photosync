@@ -55,16 +55,16 @@ export function CustomersView() {
       <PageTransition>
         <div className="container p-6 mx-auto space-y-6">
           <CustomerHeader 
-            title="Customers"
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onCreateNewClick={() => {
+            activeTab={activeTab}
+            onAddClick={() => {
               if (activeTab === 'companies') {
                 handleAddCompanyClick();
               } else if (activeTab === 'clients') {
                 handleAddClientClick();
               }
             }}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
           />
           
           <Tabs 

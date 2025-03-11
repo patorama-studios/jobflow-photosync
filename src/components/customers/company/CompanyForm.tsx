@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CompanyFormSchema, companyFormSchema } from './CompanyFormSchema';
+import { companyFormSchema, CompanyFormSchema } from './CompanyFormSchema';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ interface CompanyFormProps {
   defaultValues?: Partial<CompanyFormSchema>;
   isSubmitting?: boolean;
   companyId?: string;
+  onClose?: () => void;
+  onCompanyCreated?: (company: any) => void;
 }
 
 export const CompanyForm: React.FC<CompanyFormProps> = ({
@@ -27,6 +29,8 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   defaultValues,
   isSubmitting = false,
   companyId,
+  onClose,
+  onCompanyCreated
 }) => {
   const [activeTab, setActiveTab] = useState('company');
   const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; email?: string }>>([]);
@@ -51,7 +55,12 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   });
 
   const handleSubmit = (data: CompanyFormSchema) => {
-    onSubmit(data);
+    if (onCompanyCreated) {
+      onCompanyCreated(data);
+      if (onClose) onClose();
+    } else {
+      onSubmit(data);
+    }
   };
 
   const handleAddTeam = async () => {

@@ -1,92 +1,121 @@
 
-import React, { InputHTMLAttributes, forwardRef, useState, useEffect } from 'react';
-import { Input } from './input';
-import { useGoogleAutocomplete } from '@/hooks/use-google-autocomplete';
+import React, { useRef, useEffect, useState, InputHTMLAttributes } from 'react';
+import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-interface GoogleAddressAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  onAddressSelect?: (place: google.maps.places.PlaceResult) => void;
-  onChange?: (value: string) => void;
-  country?: string;
-  className?: string;
+export interface GoogleAddressAutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  label?: string;
+  onChange: (value: string) => void;
+  onAddressSelect?: (address: {
+    formattedAddress: string;
+    streetAddress: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    lat: number;
+    lng: number;
+  }) => void;
 }
 
-export const GoogleAddressAutocomplete = forwardRef<HTMLInputElement, GoogleAddressAutocompleteProps>(
-  ({ onAddressSelect, onChange, country = 'au', className, ...props }, ref) => {
-    const [inputValue, setInputValue] = useState<string>('');
-    const [showSuggestions, setShowSuggestions] = useState(false);
+export function GoogleAddressAutocomplete({
+  label,
+  className,
+  onChange,
+  onAddressSelect,
+  id = 'google-address-autocomplete',
+  ...props
+}: GoogleAddressAutocompleteProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { isLoaded, error, initAutocomplete } = useGoogleMaps();
+  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
 
-    const { predictions, searchPlaces, getPlaceDetails } = useGoogleAutocomplete({
-      country,
-      types: 'address'
-    });
-
-    useEffect(() => {
-      if (inputValue.length > 2) {
-        searchPlaces(inputValue);
-      }
-    }, [inputValue, searchPlaces]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setInputValue(value);
-      setShowSuggestions(true);
-      if (onChange) onChange(value);
-    };
-
-    const handleSelectPlace = async (placeId: string, description: string) => {
+  useEffect(() => {
+    if (isLoaded && inputRef.current && !autocomplete) {
       try {
-        setInputValue(description);
-        setShowSuggestions(false);
-        if (onChange) onChange(description);
-        
-        if (onAddressSelect) {
-          const placeDetails = await getPlaceDetails(placeId);
-          if (placeDetails) {
-            onAddressSelect(placeDetails);
+        const autoCompleteInstance = initAutocomplete(inputRef.current);
+        setAutocomplete(autoCompleteInstance);
+
+        // Add place_changed event listener
+        autoCompleteInstance.addListener('place_changed', () => {
+          const place = autoCompleteInstance.getPlace();
+          const address = {
+            formattedAddress: place.formatted_address || '',
+            streetAddress: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            country: '',
+            lat: place.geometry?.location?.lat() || 0,
+            lng: place.geometry?.location?.lng() || 0,
+          };
+
+          // Extract address components
+          if (place.address_components) {
+            for (const component of place.address_components) {
+              const componentType = component.types[0];
+
+              switch (componentType) {
+                case 'street_number':
+                  address.streetAddress = component.long_name;
+                  break;
+                case 'route':
+                  address.streetAddress += ' ' + component.long_name;
+                  break;
+                case 'locality':
+                  address.city = component.long_name;
+                  break;
+                case 'administrative_area_level_1':
+                  address.state = component.short_name;
+                  break;
+                case 'postal_code':
+                  address.postalCode = component.long_name;
+                  break;
+                case 'country':
+                  address.country = component.long_name;
+                  break;
+              }
+            }
           }
-        }
-      } catch (error) {
-        console.error('Error getting place details:', error);
+
+          // Update the input field value
+          if (inputRef.current) {
+            inputRef.current.value = place.formatted_address || '';
+            onChange(place.formatted_address || '');
+          }
+
+          // Call the onAddressSelect callback if provided
+          if (onAddressSelect) {
+            onAddressSelect(address);
+          }
+        });
+      } catch (e) {
+        console.error('Error initializing Google Places Autocomplete:', e);
       }
-    };
+    }
+  }, [isLoaded, initAutocomplete, onChange, onAddressSelect, autocomplete]);
 
-    return (
-      <div className="relative">
-        <Input
-          type="text"
-          ref={ref}
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={() => inputValue.length > 2 && setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          className={cn("w-full", className)}
-          {...props}
-        />
-        
-        {showSuggestions && predictions.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
-            {predictions.map((prediction) => (
-              <div
-                key={prediction.place_id}
-                className="px-4 py-2 hover:bg-muted cursor-pointer"
-                onMouseDown={() => handleSelectPlace(prediction.place_id, prediction.description)}
-              >
-                {prediction.structured_formatting ? (
-                  <>
-                    <div className="font-medium">{prediction.structured_formatting.main_text}</div>
-                    <div className="text-sm text-muted-foreground">{prediction.structured_formatting.secondary_text}</div>
-                  </>
-                ) : (
-                  <div>{prediction.description}</div>
-                )}
-              </div>
-            ))}
-          </div>
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  };
+
+  return (
+    <div className="space-y-2">
+      {label && <Label htmlFor={id}>{label}</Label>}
+      <input
+        id={id}
+        type="text"
+        ref={inputRef}
+        onChange={handleInputChange}
+        className={cn(
+          'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          className
         )}
-      </div>
-    );
-  }
-);
-
-GoogleAddressAutocomplete.displayName = 'GoogleAddressAutocomplete';
+        {...props}
+      />
+      {error && <p className="text-destructive text-sm">{error}</p>}
+      {!isLoaded && <p className="text-muted-foreground text-sm">Loading Google Maps...</p>}
+    </div>
+  );
+}

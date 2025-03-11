@@ -6,9 +6,11 @@ import { format } from 'date-fns';
 
 interface OrderDetailsTabProps {
   order: Order;
+  isEditing?: boolean;
+  onSave?: (formData: any) => Promise<void>;
 }
 
-export function OrderDetailsTab({ order }: OrderDetailsTabProps) {
+export function OrderDetailsTab({ order, isEditing, onSave }: OrderDetailsTabProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>

@@ -1,97 +1,147 @@
 
-import { AddressDetails } from '@/types/google-maps-types';
+/**
+ * Utility functions for working with addresses
+ */
 
-export function extractAddressComponents(place: google.maps.places.PlaceResult): AddressDetails {
-  const addressDetails: AddressDetails = {
-    formattedAddress: place.formatted_address || '',
-    placeId: place.place_id,
-  };
+interface AddressFormatOptions {
+  includeCountry?: boolean;
+  separator?: string;
+}
 
-  if (place.geometry && place.geometry.location) {
-    addressDetails.lat = place.geometry.location.lat();
-    addressDetails.lng = place.geometry.location.lng();
+interface ParsedAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+}
+
+/**
+ * Format an address from its components
+ */
+export function formatAddress(
+  components: ParsedAddress,
+  options: AddressFormatOptions = {}
+): string {
+  const { includeCountry = true, separator = ', ' } = options;
+  
+  const parts = [
+    components.street,
+    components.city,
+    components.state && components.zip
+      ? `${components.state} ${components.zip}`
+      : components.state || components.zip,
+  ];
+  
+  if (includeCountry && components.country) {
+    parts.push(components.country);
   }
+  
+  return parts.filter(Boolean).join(separator);
+}
 
-  if (!place.address_components) {
-    return addressDetails;
-  }
-
-  for (const component of place.address_components) {
-    if (component.types.includes('street_number')) {
-      addressDetails.streetNumber = component.long_name;
-    } else if (component.types.includes('route')) {
-      addressDetails.streetName = component.long_name;
-    } else if (component.types.includes('locality')) {
-      addressDetails.city = component.long_name;
-    } else if (component.types.includes('administrative_area_level_1')) {
-      addressDetails.state = component.short_name;
-    } else if (component.types.includes('postal_code')) {
-      addressDetails.postalCode = component.long_name;
-    } else if (component.types.includes('country')) {
-      addressDetails.country = component.long_name;
+/**
+ * Parse a simple address string into components
+ * This is a very simplified parser and won't work for all address formats
+ */
+export function parseSimpleAddress(addressString: string): ParsedAddress {
+  // This is a very naive implementation that assumes a comma-separated format
+  const parts = addressString.split(',').map(part => part.trim());
+  
+  if (parts.length === 0) return {};
+  
+  const result: ParsedAddress = {};
+  
+  // Assume the first part is the street
+  if (parts.length > 0) result.street = parts[0];
+  
+  // Assume the second part is the city
+  if (parts.length > 1) result.city = parts[1];
+  
+  // Try to parse state and zip from the third part
+  if (parts.length > 2) {
+    const stateZip = parts[2].split(' ').filter(Boolean);
+    
+    if (stateZip.length >= 2) {
+      // Assume last element is zip and everything before is state
+      result.zip = stateZip.pop() || '';
+      result.state = stateZip.join(' ');
+    } else if (stateZip.length === 1) {
+      // Just one element, assume it's the state
+      result.state = stateZip[0];
     }
   }
-
-  return addressDetails;
+  
+  // Assume the fourth part is the country
+  if (parts.length > 3) result.country = parts[3];
+  
+  return result;
 }
 
-export function getAddressCoordinates(address: string): Promise<{ lat: number, lng: number } | null> {
-  return new Promise((resolve, reject) => {
-    const geocoder = new google.maps.Geocoder();
+/**
+ * Get an address from coordinates using Google Maps Geocoding API
+ */
+export async function getAddressFromCoordinates(
+  lat: number,
+  lng: number,
+  apiKey: string
+): Promise<ParsedAddress> {
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+    );
     
-    geocoder.geocode({ address }, (results, status) => {
-      if (status === google.maps.GeocoderStatus.OK && results && results.length > 0) {
-        const location = results[0].geometry.location;
-        resolve({
-          lat: location.lat(),
-          lng: location.lng()
-        });
-      } else {
-        console.error('Geocode was not successful:', status);
-        resolve(null);
-      }
-    });
-  });
-}
-
-export function formatAddress(addressDetails: AddressDetails): string {
-  const parts: string[] = [];
-  
-  if (addressDetails.streetNumber && addressDetails.streetName) {
-    parts.push(`${addressDetails.streetNumber} ${addressDetails.streetName}`);
-  } else if (addressDetails.streetName) {
-    parts.push(addressDetails.streetName);
-  }
-  
-  if (addressDetails.city) {
-    parts.push(addressDetails.city);
-  }
-  
-  if (addressDetails.state) {
-    parts.push(addressDetails.state);
-  }
-  
-  if (addressDetails.postalCode) {
-    parts.push(addressDetails.postalCode);
-  }
-  
-  if (addressDetails.country) {
-    parts.push(addressDetails.country);
-  }
-  
-  return parts.join(', ');
-}
-
-export function geocodeAddress(address: string): Promise<google.maps.GeocoderResult[]> {
-  return new Promise((resolve, reject) => {
-    const geocoder = new google.maps.Geocoder();
+    if (!response.ok) {
+      throw new Error('Geocoding API returned an error');
+    }
     
-    geocoder.geocode({ address }, (results, status) => {
-      if (status === google.maps.GeocoderStatus.OK) {
-        resolve(results);
-      } else {
-        reject(new Error(`Geocoding failed: ${status}`));
+    const data: google.maps.Geocoding.GeocoderResponse = await response.json();
+    
+    if (data.status !== google.maps.Geocoding.GeocoderStatus.OK || !data.results.length) {
+      throw new Error(`Geocoding failed with status: ${data.status}`);
+    }
+    
+    const result = data.results[0];
+    const components: ParsedAddress = {};
+    
+    // Extract address components
+    for (const component of result.address_components) {
+      const types = component.types;
+      
+      if (types.includes('street_number') || types.includes('route')) {
+        components.street = components.street 
+          ? `${components.street} ${component.long_name}`
+          : component.long_name;
+      } else if (types.includes('locality')) {
+        components.city = component.long_name;
+      } else if (types.includes('administrative_area_level_1')) {
+        components.state = component.short_name;
+      } else if (types.includes('postal_code')) {
+        components.zip = component.long_name;
+      } else if (types.includes('country')) {
+        components.country = component.long_name;
       }
-    });
-  });
+    }
+    
+    // If we didn't extract a street, use the formatted address
+    if (!components.street && result.formatted_address) {
+      components.street = result.formatted_address.split(',')[0];
+    }
+    
+    return components;
+  } catch (error) {
+    console.error('Error getting address from coordinates:', error);
+    return {};
+  }
+}
+
+/**
+ * Validate if the provided string looks like a valid address
+ */
+export function isValidAddress(address: string): boolean {
+  if (!address || address.trim().length < 5) return false;
+  
+  // Simple validation: check if the address has at least one comma
+  // and has a reasonable length
+  return address.includes(',') && address.length > 10;
 }

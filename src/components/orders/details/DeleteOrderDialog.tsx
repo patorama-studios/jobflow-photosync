@@ -14,11 +14,10 @@ import { Loader2 } from 'lucide-react';
 interface DeleteOrderDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  orderNumber: string;
+  onConfirm: () => void | Promise<void>;
+  orderNumber?: string;
   isDeleting?: boolean;
   onOpenChange?: (open: boolean) => void;
-  // Add support for the onConfirmDelete prop that other components are using
   onConfirmDelete?: () => Promise<void>;
 }
 
@@ -26,7 +25,7 @@ export function DeleteOrderDialog({
   isOpen, 
   onClose, 
   onConfirm, 
-  orderNumber,
+  orderNumber = "Unknown",
   isDeleting = false,
   onOpenChange,
   onConfirmDelete

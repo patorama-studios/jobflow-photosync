@@ -3,12 +3,15 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
+import { RefetchOptions, QueryObserverResult } from "@tanstack/react-query";
+import { Order } from '@/types/order-types';
 
 interface OrderDetailsErrorProps {
   error: string | null;
+  onRetry?: (options?: RefetchOptions) => Promise<QueryObserverResult<Order, Error>>;
 }
 
-export const OrderDetailsError: React.FC<OrderDetailsErrorProps> = ({ error }) => {
+export const OrderDetailsError: React.FC<OrderDetailsErrorProps> = ({ error, onRetry }) => {
   const navigate = useNavigate();
   
   return (
@@ -20,7 +23,7 @@ export const OrderDetailsError: React.FC<OrderDetailsErrorProps> = ({ error }) =
           {error || "An unexpected error occurred while trying to load the order details."}
         </p>
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
-          <Button onClick={() => window.location.reload()}>
+          <Button onClick={() => onRetry ? onRetry() : window.location.reload()}>
             Try Again
           </Button>
           <Button variant="outline" onClick={() => navigate('/orders')}>

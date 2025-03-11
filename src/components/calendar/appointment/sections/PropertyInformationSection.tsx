@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -12,22 +13,13 @@ interface PropertyInformationSectionProps {
   onToggle: () => void;
 }
 
-interface GooglePrediction {
-  description: string;
-  place_id: string;
-  structured_formatting?: {
-    main_text: string;
-    secondary_text: string;
-  };
-}
-
 export const PropertyInformationSection: React.FC<PropertyInformationSectionProps> = ({
   form,
   isOpen,
   onToggle
 }) => {
   const [showManualFields, setShowManualFields] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.PlaceResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
   // Define refs for Google Maps services
@@ -78,14 +70,22 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
           return;
         }
         
-        setAddressSuggestions(predictions);
+        // Convert predictions to PlaceResult format
+        const results = predictions.map(prediction => ({
+          place_id: prediction.place_id,
+          description: prediction.description,
+          formatted_address: prediction.description,
+          name: prediction.structured_formatting?.main_text || prediction.description
+        }));
+        
+        setAddressSuggestions(results);
       }
     );
   };
   
-  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
-    if (!placesServiceRef.current) {
-      form.setValue('address', prediction.description);
+  const handleSelectAddress = (prediction: google.maps.places.PlaceResult) => {
+    if (!placesServiceRef.current || !prediction.place_id) {
+      form.setValue('address', prediction.description || '');
       setAddressSuggestions([]);
       return;
     }
@@ -98,14 +98,14 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
       },
       (place, status) => {
         if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
-          form.setValue('address', prediction.description);
+          form.setValue('address', prediction.description || '');
           setAddressSuggestions([]);
           return;
         }
         
         // Set the full address
-        form.setValue('address', place.formatted_address || prediction.description);
-        form.setValue('propertyAddress', place.formatted_address || prediction.description);
+        form.setValue('address', place.formatted_address || prediction.description || '');
+        form.setValue('propertyAddress', place.formatted_address || prediction.description || '');
         
         // Extract and set address components
         if (place.address_components) {
@@ -203,9 +203,9 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
                       onClick={() => handleSelectAddress(prediction)}
                     >
                       <div className="font-medium">{prediction.description}</div>
-                      {prediction.structured_formatting && (
+                      {prediction.name && prediction.description && prediction.name !== prediction.description && (
                         <div className="text-xs text-muted-foreground">
-                          {prediction.structured_formatting.secondary_text}
+                          {prediction.name}
                         </div>
                       )}
                     </li>
