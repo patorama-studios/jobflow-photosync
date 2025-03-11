@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useCreateAppointmentForm } from '@/hooks/use-create-appointment-form';
+import { useCreateAppointmentForm, CustomItem, SelectedProduct } from '@/hooks/use-create-appointment-form';
 
 // Import our section components
 import { SchedulingSection } from './appointment/sections/SchedulingSection';
@@ -96,7 +96,7 @@ export function CreateAppointmentDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-4">
               {/* Scheduling Section */}
               <SchedulingSection 

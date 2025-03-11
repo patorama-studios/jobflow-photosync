@@ -13,6 +13,7 @@ import { companyFormSchema, CompanyFormData } from './CompanyFormSchema';
 import { useCompanies } from '@/hooks/use-companies';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from '@/integrations/supabase/client';
 
 interface TeamMember {
   id: string;

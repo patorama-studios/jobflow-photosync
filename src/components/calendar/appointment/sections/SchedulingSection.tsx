@@ -9,11 +9,11 @@ import { SuggestedTimes } from '../components/SuggestedTimes';
 interface SchedulingSectionProps {
   selectedDateTime: Date | undefined;
   selectedTime: string;
-  selectedDuration: string;
+  selectedDuration: number;
   selectedNotification: string;
   onDateChange: (date: Date | undefined) => void;
   onTimeChange: (time: string) => void;
-  onDurationChange: (duration: string) => void;
+  onDurationChange: (duration: number) => void;
   onNotificationMethodChange: (method: string) => void;
   isOpen: boolean;
   onToggle: () => void;
