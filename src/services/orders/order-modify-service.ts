@@ -13,24 +13,35 @@ export const saveOrderChanges = async (order: Order): Promise<{ success: boolean
     // Prepare the order data for Supabase
     const orderData = {
       ...order,
-      id: String(order.id), // Convert id to string for Supabase
+      order_id: String(order.id), // Include both id formats
+      id: String(order.id),
       scheduled_date: order.scheduledDate,
-      scheduled_time: order.scheduledTime
+      scheduled_time: order.scheduledTime,
+      appointment_start: new Date(order.scheduledDate).toISOString()
     };
     
-    const { data, error } = await supabase
+    // Try with new column name first
+    const { error } = await supabase
       .from('orders')
       .update(orderData)
-      .eq('id', String(order.id))
-      .select()
-      .single();
+      .eq('order_id', String(order.id));
     
     if (error) {
-      console.error('Error saving order changes:', error);
-      return { success: false, error: error.message };
+      console.error('Error saving order changes with order_id:', error);
+      
+      // Try with old column name if the new one doesn't work
+      const fallbackResult = await supabase
+        .from('orders')
+        .update(orderData)
+        .eq('id', String(order.id));
+      
+      if (fallbackResult.error) {
+        console.error('Error saving order changes with id:', fallbackResult.error);
+        return { success: false, error: fallbackResult.error.message };
+      }
     }
     
-    console.log('Order updated successfully:', data);
+    console.log('Order updated successfully');
     return { success: true, error: null };
   } catch (err: any) {
     console.error('Error in saveOrderChanges:', err);
@@ -55,9 +66,11 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       photographer: order.photographer || '',
       photographer_payout_rate: order.photographerPayoutRate || order.photographer_payout_rate || 0,
       price: order.price || order.amount || 0,
+      total_order_price: order.price || order.amount || 0,
       property_type: order.propertyType || order.property_type || '',
       scheduled_date: order.scheduledDate || order.scheduled_date || '',
       scheduled_time: order.scheduledTime || order.scheduled_time || '',
+      appointment_start: new Date(order.scheduledDate || order.scheduled_date || new Date()).toISOString(),
       square_feet: order.squareFeet || order.square_feet || 0,
       state: order.state || '',
       status: order.status || 'pending',

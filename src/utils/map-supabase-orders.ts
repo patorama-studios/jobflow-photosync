@@ -17,11 +17,11 @@ const validateStatus = (status: string | null | undefined): OrderStatus => {
 
 export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
   return supabaseOrders.map((order): Order => ({
-    id: order.id,
-    orderNumber: order.order_number || `Order-${order.id}`, // Ensure this is never undefined
+    id: order.order_id || order.id,
+    orderNumber: order.order_number || `Order-${order.order_id || order.id}`, 
     order_number: order.order_number,
-    client: order.client || 'Unknown Client', // Ensure this is never undefined
-    customerName: order.client, // Add for compatibility
+    client: order.client || 'Unknown Client',
+    customerName: order.client,
     clientEmail: order.client_email,
     client_email: order.client_email,
     clientPhone: order.client_phone || '',
@@ -29,18 +29,18 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     photographer: order.photographer || '',
     photographerPayoutRate: order.photographer_payout_rate,
     photographer_payout_rate: order.photographer_payout_rate,
-    price: order.price || 0, // Ensure this is never undefined
-    propertyType: order.property_type || 'Residential', // Ensure this is never undefined
+    price: order.price || order.total_order_price || 0,
+    propertyType: order.property_type || 'Residential',
     property_type: order.property_type,
-    scheduledDate: order.scheduled_date || new Date().toISOString(), // Ensure this is never undefined
-    scheduled_date: order.scheduled_date,
-    scheduledTime: order.scheduled_time || '12:00 PM', // Ensure this is never undefined
+    scheduledDate: order.scheduled_date || order.appointment_start || new Date().toISOString(),
+    scheduled_date: order.scheduled_date || order.appointment_start,
+    scheduledTime: order.scheduled_time || '12:00 PM',
     scheduled_time: order.scheduled_time,
-    squareFeet: order.square_feet || 0, // Ensure this is never undefined
+    squareFeet: order.square_feet || 0,
     square_feet: order.square_feet,
     status: validateStatus(order.status),
-    address: order.address || 'No address provided', // Ensure this is never undefined
-    propertyAddress: order.address, // Add for compatibility
+    address: order.address || 'No address provided',
+    propertyAddress: order.address,
     city: order.city || '',
     state: order.state || '',
     zip: order.zip || '',
@@ -52,6 +52,6 @@ export function mapSupabaseOrdersToOrderType(supabaseOrders: any[]): Order[] {
     stripePaymentId: order.stripe_payment_id || '',
     stripe_payment_id: order.stripe_payment_id || '',
     notes: order.notes || '',
-    drivingTimeMin: order.driving_time_min || (15 + Math.floor(Math.random() * 30)) // Random driving time if not provided
+    drivingTimeMin: order.driving_time_min || (15 + Math.floor(Math.random() * 30))
   }));
 }

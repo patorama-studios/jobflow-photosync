@@ -40,24 +40,35 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('id', orderIdString)
+      .eq('order_id', orderIdString)
       .single();
     
     if (error) {
       console.error('Error fetching order details:', error);
       
-      // Fallback to sample orders for development
-      const sampleOrder = sampleOrders.find(o => o.id.toString() === orderIdString);
-      if (sampleOrder) {
-        // Ensure sample order has the correct status type
-        const validOrder = {
-          ...sampleOrder,
-          status: validateStatus(sampleOrder.status)
-        };
-        return { order: validOrder, error: null };
+      // Try the old column name if the new one doesn't work
+      const fallbackResult = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderIdString)
+        .single();
+        
+      if (fallbackResult.error) {
+        // Fallback to sample orders for development
+        const sampleOrder = sampleOrders.find(o => o.id.toString() === orderIdString);
+        if (sampleOrder) {
+          // Ensure sample order has the correct status type
+          const validOrder = {
+            ...sampleOrder,
+            status: validateStatus(sampleOrder.status)
+          };
+          return { order: validOrder, error: null };
+        }
+        
+        return { order: null, error: error.message };
       }
       
-      return { order: null, error: error.message };
+      data = fallbackResult.data;
     }
     
     // Use the mapper function to handle a single order

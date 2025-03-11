@@ -18,14 +18,27 @@ export function useOrders() {
     queryKey: ['orders'],
     queryFn: async (): Promise<Order[]> => {
       console.log('Fetching orders...');
-      const { data, error } = await supabase
+      
+      // Try fetching with new column name structure
+      let { data, error } = await supabase
         .from('orders')
         .select('*')
         .order('scheduled_date', { ascending: false });
       
       if (error) {
-        console.error('Error fetching orders:', error);
-        throw new Error(error.message);
+        console.error('Error fetching orders with scheduled_date ordering:', error);
+        
+        // Try alternative approach if error
+        const result = await supabase
+          .from('orders')
+          .select('*');
+        
+        if (result.error) {
+          console.error('Error fetching orders:', result.error);
+          throw new Error(result.error.message);
+        }
+        
+        data = result.data;
       }
       
       console.log('Orders fetched:', data?.length || 0);
