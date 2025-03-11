@@ -37,14 +37,15 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
     
     const orderIdString = String(orderId); // Convert to string to ensure compatibility
     
-    const { data, error } = await supabase
+    // First, try with the new order_id column
+    let { data, error } = await supabase
       .from('orders')
       .select('*')
       .eq('order_id', orderIdString)
       .single();
     
     if (error) {
-      console.error('Error fetching order details:', error);
+      console.error('Error fetching order details with order_id:', error);
       
       // Try the old column name if the new one doesn't work
       const fallbackResult = await supabase

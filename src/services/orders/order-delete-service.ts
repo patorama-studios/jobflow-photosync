@@ -26,9 +26,10 @@ export const deleteOrder = async (orderId: string): Promise<{ success: boolean, 
     }
     
     return { success: true, error: null };
-  } catch (err: any) {
-    console.error('Error in deleteOrder:', err);
-    return { success: false, error: err.message || 'An unexpected error occurred' };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+    console.error('Error in deleteOrder:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 };
 
@@ -55,8 +56,9 @@ export const deleteAllOrders = async (): Promise<{ success: boolean, error: stri
     }
     
     return { success: true, error: null };
-  } catch (err: any) {
-    console.error('Error in deleteAllOrders:', err);
-    return { success: false, error: err.message || 'An unexpected error occurred' };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+    console.error('Error in deleteAllOrders:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 };
