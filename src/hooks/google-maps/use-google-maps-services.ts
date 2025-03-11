@@ -66,11 +66,13 @@ export const useGoogleMapsServices = () => {
       document.head.appendChild(script);
     }
 
-    // Cleanup function - FIX for Node removal error
+    // Cleanup function with improved error handling for Node removal
     return () => {
-      if (dummyDivRef.current && document.body.contains(dummyDivRef.current)) {
+      if (dummyDivRef.current) {
         try {
-          document.body.removeChild(dummyDivRef.current);
+          if (document.body.contains(dummyDivRef.current)) {
+            document.body.removeChild(dummyDivRef.current);
+          }
           dummyDivRef.current = null;
         } catch (error) {
           console.error("Error removing dummy div:", error);
