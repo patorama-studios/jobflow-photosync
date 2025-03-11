@@ -21,6 +21,7 @@ export function useOrderViewState() {
     activeTab,
     setActiveTab,
     isEditing,
+    setIsEditing,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     

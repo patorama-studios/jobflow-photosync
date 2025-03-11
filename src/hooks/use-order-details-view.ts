@@ -12,7 +12,8 @@ export function useOrderDetailsView(orderId: string) {
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     handleEditClick,
-    handleCancelClick
+    handleCancelClick,
+    setIsEditing
   } = useOrderViewState();
   
   // Get order data and operations from the existing hook
