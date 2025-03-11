@@ -38,6 +38,12 @@ export function useOrderDetailsView(orderId: string) {
     setIsDeleteDialogOpen
   });
 
+  // Create a wrapper for the deleteOrder function that returns a Promise
+  const deleteOrderWithPromise = async () => {
+    await deleteOrder();
+    return;
+  };
+
   // Return all the state and handlers from all hooks
   return {
     // Order data
@@ -59,6 +65,7 @@ export function useOrderDetailsView(orderId: string) {
     handleEditClick,
     handleCancelClick,
     handleSaveClick,
-    handleBackClick
+    handleBackClick,
+    deleteOrder: deleteOrderWithPromise
   };
 }

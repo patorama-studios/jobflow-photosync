@@ -19,19 +19,19 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   onToggle
 }) => {
   const [showManualFields, setShowManualFields] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteService = useRef<any>(null);
+  const placesService = useRef<any>(null);
   
   // Initialize Google Maps Services
   useEffect(() => {
     if (typeof window !== 'undefined' && window.google && window.google.maps) {
-      autocompleteService.current = new google.maps.places.AutocompleteService();
+      autocompleteService.current = new window.google.maps.places.AutocompleteService();
       
       // Create a dummy div for PlacesService (it needs a DOM element)
       const dummyDiv = document.createElement('div');
-      placesService.current = new google.maps.places.PlacesService(dummyDiv);
+      placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
     }
   }, []);
 
@@ -52,10 +52,10 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
       input: query,
       componentRestrictions: { country: 'au' }, // Restrict to Australia
       types: ['address']
-    }, (predictions, status) => {
+    }, (predictions: any, status: any) => {
       setIsSearching(false);
       
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions) {
         setAddressSuggestions([]);
         return;
       }
@@ -64,7 +64,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     });
   };
   
-  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
+  const handleSelectAddress = (prediction: any) => {
     if (!placesService.current) {
       form.setValue('address', prediction.description);
       setAddressSuggestions([]);
@@ -75,8 +75,8 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     placesService.current.getDetails({
       placeId: prediction.place_id,
       fields: ['address_components', 'formatted_address']
-    }, (place, status) => {
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+    }, (place: any, status: any) => {
+      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) {
         form.setValue('address', prediction.description);
         setAddressSuggestions([]);
         return;
@@ -84,6 +84,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
       
       // Set the full address
       form.setValue('address', place.formatted_address || prediction.description);
+      form.setValue('propertyAddress', place.formatted_address || prediction.description);
       
       // Extract and set address components
       if (place.address_components) {
@@ -257,11 +258,17 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
           <FormField
             control={form.control}
             name="square_feet"
-            render={({ field }) => (
+            render={({ field: { value, onChange, ...field } }) => (
               <FormItem>
                 <FormLabel>Square Feet</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="2000" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="2000" 
+                    value={value || ''} 
+                    onChange={(e) => onChange(Number(e.target.value))}
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -271,11 +278,17 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
           <FormField
             control={form.control}
             name="price"
-            render={({ field }) => (
+            render={({ field: { value, onChange, ...field } }) => (
               <FormItem>
                 <FormLabel>Price</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="199" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="199" 
+                    value={value || ''} 
+                    onChange={(e) => onChange(Number(e.target.value))}
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

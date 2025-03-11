@@ -5,6 +5,7 @@ import { FormItem, FormLabel } from '@/components/ui/form';
 import { SearchIcon, UserIcon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Photographer {
   id: string;
@@ -38,15 +39,15 @@ export const PhotographerSearch: React.FC<PhotographerSearchProps> = ({
         // Fetch photographers from profiles table with role=photographer
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, full_name, username, avatar_url')
           .eq('role', 'photographer');
         
         if (error) throw error;
         
         const mappedPhotographers = data.map((profile): Photographer => ({
           id: profile.id,
-          name: profile.full_name || profile.username || `Photographer`,
-          email: profile.email,
+          name: profile.full_name || profile.username || 'Photographer',
+          email: profile.email || '',
           color: getColorForName(profile.full_name || profile.username || ''),
           payoutRate: 100 // Default payout rate
         }));
@@ -55,14 +56,15 @@ export const PhotographerSearch: React.FC<PhotographerSearchProps> = ({
       } catch (err) {
         console.error('Error fetching photographers:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch photographers'));
+        toast.error("Failed to load photographers. Using demo data instead.");
         
         // Set default photographers in case of error
         setPhotographers([
-          { id: '1', name: 'Maria Garcia', color: '#4f46e5' },
-          { id: '2', name: 'Alex Johnson', color: '#10b981' },
-          { id: '3', name: 'Wei Chen', color: '#f59e0b' },
-          { id: '4', name: 'Aisha Patel', color: '#ef4444' },
-          { id: '5', name: 'Carlos Rodriguez', color: '#8b5cf6' }
+          { id: '1', name: 'Maria Garcia', color: '#4f46e5', payoutRate: 120 },
+          { id: '2', name: 'Alex Johnson', color: '#10b981', payoutRate: 110 },
+          { id: '3', name: 'Wei Chen', color: '#f59e0b', payoutRate: 115 },
+          { id: '4', name: 'Aisha Patel', color: '#ef4444', payoutRate: 105 },
+          { id: '5', name: 'Carlos Rodriguez', color: '#8b5cf6', payoutRate: 100 }
         ]);
       } finally {
         setIsLoading(false);

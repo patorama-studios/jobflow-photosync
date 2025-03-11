@@ -18,7 +18,7 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
     for (let hour = 8; hour <= 18; hour++) {
       const isPM = hour >= 12;
       const displayHour = hour > 12 ? hour - 12 : hour;
-      const hourString = displayHour.toString();
+      const hourString = displayHour.toString().padStart(2, '0');
       result.push(`${hourString}:00 ${isPM ? 'PM' : 'AM'}`);
       if (hour < 18) {
         result.push(`${hourString}:30 ${isPM ? 'PM' : 'AM'}`);
@@ -26,6 +26,10 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
     }
     return result;
   }, []);
+
+  const handleTimeClick = (time: string) => {
+    onTimeSelect(time);
+  };
 
   return (
     <div className="mt-2">
@@ -37,7 +41,7 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
               key={time}
               variant="outline"
               size="sm"
-              onClick={() => onTimeSelect(time)}
+              onClick={() => handleTimeClick(time)}
               className="flex-shrink-0"
             >
               {time}

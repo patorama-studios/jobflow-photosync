@@ -5,10 +5,11 @@ import { ProductSearch } from '../components/ProductSearch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { SelectedProduct } from '@/hooks/use-create-appointment-form';
+import { SelectedProduct } from '@/hooks/create-appointment-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface ProductSelectionSectionProps {
   isOpen: boolean;
@@ -31,11 +32,15 @@ export const ProductSelectionSection: React.FC<ProductSelectionSectionProps> = (
     // Check if product already exists in selected products to avoid duplicates
     if (!selectedProducts.some(p => p.id === product.id)) {
       onProductsChange([...selectedProducts, product]);
+      toast.success(`Added ${product.name} to order`);
+    } else {
+      toast.info(`${product.name} is already added to this order`);
     }
   };
 
   const handleRemoveProduct = (productId: string) => {
     onProductsChange(selectedProducts.filter(p => p.id !== productId));
+    toast.info(`Removed product from order`);
   };
   
   const handleAddCustomProduct = () => {
@@ -44,16 +49,25 @@ export const ProductSelectionSection: React.FC<ProductSelectionSectionProps> = (
   
   const handleCustomProductSubmit = () => {
     if (customProductName && customProductPrice) {
+      const price = parseFloat(customProductPrice);
+      if (isNaN(price) || price < 0) {
+        toast.error("Please enter a valid price");
+        return;
+      }
+      
       const newProduct: SelectedProduct = {
         id: `custom-${Date.now()}`,
         name: customProductName,
-        price: parseFloat(customProductPrice)
+        price: price
       };
       
       onProductsChange([...selectedProducts, newProduct]);
+      toast.success(`Added custom product: ${customProductName}`);
       setCustomProductName('');
       setCustomProductPrice('');
       setIsAddCustomProductOpen(false);
+    } else {
+      toast.error("Please enter both name and price");
     }
   };
 
@@ -80,7 +94,7 @@ export const ProductSelectionSection: React.FC<ProductSelectionSectionProps> = (
                     <Button 
                       size="icon" 
                       variant="ghost" 
-                      className="h-4 w-4 p-0" 
+                      className="h-4 w-4 p-0 ml-1" 
                       onClick={() => handleRemoveProduct(product.id)}
                     >
                       <X className="h-3 w-3" />
