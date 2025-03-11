@@ -28,35 +28,51 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
   const [timeInputOpen, setTimeInputOpen] = useState(false);
   const [timeInputValue, setTimeInputValue] = useState(selectedTime);
 
-  // Generate time options in 45-minute increments
+  // Generate formatted time options
   const generateTimeOptions = () => {
     const options = [];
     for (let hour = 8; hour <= 17; hour++) {
-      const hourStr = hour > 12 ? (hour - 12) : hour;
-      const amPm = hour >= 12 ? 'PM' : 'AM';
+      const isPM = hour >= 12;
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      const hourStr = displayHour.toString();
+      const amPm = isPM ? 'PM' : 'AM';
       
       // Add hour on the hour
       options.push(`${hourStr}:00 ${amPm}`);
       
-      // Add 45 minutes past the hour (except for the last hour)
-      if (hour < 17) {
-        options.push(`${hourStr}:45 ${amPm}`);
-      }
+      // Add 30 minutes past the hour
+      options.push(`${hourStr}:30 ${amPm}`);
     }
     return options;
   };
 
   const timeOptions = generateTimeOptions();
 
-  const handleTimeChange = (time: string) => {
+  const handleTimeOptionSelect = (time: string) => {
     onTimeChange(time);
     setTimeInputValue(time);
     setTimeInputOpen(false);
   };
 
+  const handleManualTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTimeInputValue(e.target.value);
+    // Only update the actual time when focus is lost or enter is pressed
+  };
+
+  const handleTimeInputBlur = () => {
+    onTimeChange(timeInputValue);
+  };
+
+  const handleTimeInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onTimeChange(timeInputValue);
+      setTimeInputOpen(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <Label htmlFor="date">Appointment Date</Label>
+      <Label htmlFor="date">Appointment Date & Time</Label>
       <div className={isMobile ? "space-y-3" : "grid grid-cols-1 md:grid-cols-2 gap-3"}>
         <Popover>
           <PopoverTrigger asChild>
@@ -89,7 +105,9 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                 <Input
                   placeholder="Select time"
                   value={timeInputValue}
-                  onChange={(e) => setTimeInputValue(e.target.value)}
+                  onChange={handleManualTimeChange}
+                  onBlur={handleTimeInputBlur}
+                  onKeyDown={handleTimeInputKeyDown}
                   onClick={() => setTimeInputOpen(true)}
                   className="w-full pr-10"
                 />
@@ -106,7 +124,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
                       <CommandItem 
                         key={time} 
                         value={time}
-                        onSelect={() => handleTimeChange(time)}
+                        onSelect={() => handleTimeOptionSelect(time)}
                       >
                         {time}
                       </CommandItem>

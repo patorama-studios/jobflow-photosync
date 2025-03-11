@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ToggleSection } from '../components/ToggleSection';
@@ -19,49 +19,102 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   onToggle
 }) => {
   const [showManualFields, setShowManualFields] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesService = useRef<google.maps.places.PlacesService | null>(null);
   
+  // Initialize Google Maps Services
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.google && window.google.maps) {
+      autocompleteService.current = new google.maps.places.AutocompleteService();
+      
+      // Create a dummy div for PlacesService (it needs a DOM element)
+      const dummyDiv = document.createElement('div');
+      placesService.current = new google.maps.places.PlacesService(dummyDiv);
+    }
+  }, []);
+
+  // Handle address search with Google Places API
   const handleAddressSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     form.setValue('address', query);
     
-    if (query.length < 3) {
+    if (query.length < 3 || !autocompleteService.current) {
       setAddressSuggestions([]);
       return;
     }
     
     setIsSearching(true);
     
-    // This would normally use the Google Places API
-    // For now, let's simulate some suggestions
-    setTimeout(() => {
-      if (query.length >= 3) {
-        setAddressSuggestions([
-          `${query}, 123 Main St`,
-          `${query}, 456 Oak Ave`,
-          `${query}, 789 Pine Blvd`
-        ]);
-      } else {
-        setAddressSuggestions([]);
-      }
+    // Use Google Places Autocomplete with location bias for Australia
+    autocompleteService.current.getPlacePredictions({
+      input: query,
+      componentRestrictions: { country: 'au' }, // Restrict to Australia
+      types: ['address']
+    }, (predictions, status) => {
       setIsSearching(false);
-    }, 300);
+      
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+        setAddressSuggestions([]);
+        return;
+      }
+      
+      setAddressSuggestions(predictions);
+    });
   };
   
-  const handleSelectAddress = (address: string) => {
-    form.setValue('address', address);
-    
-    // Normally, we would parse the address and set city, state, zip
-    // For now, let's just simulate this
-    const parts = address.split(', ');
-    if (parts.length > 1) {
-      form.setValue('city', 'Sample City');
-      form.setValue('state', 'CA');
-      form.setValue('zip', '90210');
+  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
+    if (!placesService.current) {
+      form.setValue('address', prediction.description);
+      setAddressSuggestions([]);
+      return;
     }
     
-    setAddressSuggestions([]);
+    // Get place details to extract components like city, state, zip
+    placesService.current.getDetails({
+      placeId: prediction.place_id,
+      fields: ['address_components', 'formatted_address']
+    }, (place, status) => {
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+        form.setValue('address', prediction.description);
+        setAddressSuggestions([]);
+        return;
+      }
+      
+      // Set the full address
+      form.setValue('address', place.formatted_address || prediction.description);
+      
+      // Extract and set address components
+      if (place.address_components) {
+        let city = '';
+        let state = '';
+        let zip = '';
+        
+        for (const component of place.address_components) {
+          const types = component.types;
+          
+          if (types.includes('locality')) {
+            city = component.long_name;
+          } else if (types.includes('administrative_area_level_1')) {
+            state = component.short_name; // e.g., VIC, NSW
+          } else if (types.includes('postal_code')) {
+            zip = component.long_name;
+          }
+        }
+        
+        form.setValue('city', city);
+        form.setValue('state', state);
+        form.setValue('zip', zip);
+        
+        // Show manual fields if we have extracted address components
+        if (city || state || zip) {
+          setShowManualFields(true);
+        }
+      }
+      
+      setAddressSuggestions([]);
+    });
   };
   
   const toggleManualFields = () => {
@@ -89,7 +142,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
                     </div>
                     <FormControl>
                       <Input 
-                        placeholder="Search for an address..." 
+                        placeholder="Search for an Australian address..." 
                         className="pl-10"
                         {...field}
                         onChange={(e) => {
@@ -120,13 +173,16 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
                 <div className="p-2 text-center text-sm">Searching...</div>
               ) : (
                 <ul>
-                  {addressSuggestions.map((address, index) => (
+                  {addressSuggestions.map((prediction) => (
                     <li
-                      key={index}
+                      key={prediction.place_id}
                       className="px-4 py-2 hover:bg-muted cursor-pointer"
-                      onClick={() => handleSelectAddress(address)}
+                      onClick={() => handleSelectAddress(prediction)}
                     >
-                      <div className="font-medium">{address}</div>
+                      <div className="font-medium">{prediction.description}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {prediction.structured_formatting?.secondary_text}
+                      </div>
                     </li>
                   ))}
                 </ul>

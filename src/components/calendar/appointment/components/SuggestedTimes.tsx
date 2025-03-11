@@ -16,10 +16,12 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
   const times = useMemo(() => {
     const result = [];
     for (let hour = 8; hour <= 18; hour++) {
-      const hourString = hour.toString().padStart(2, '0');
-      result.push(`${hourString}:00`);
+      const isPM = hour >= 12;
+      const displayHour = hour > 12 ? hour - 12 : hour;
+      const hourString = displayHour.toString();
+      result.push(`${hourString}:00 ${isPM ? 'PM' : 'AM'}`);
       if (hour < 18) {
-        result.push(`${hourString}:30`);
+        result.push(`${hourString}:30 ${isPM ? 'PM' : 'AM'}`);
       }
     }
     return result;

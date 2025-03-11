@@ -1,38 +1,62 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { saveOrderChanges } from '@/services/orders/order-modify-service';
 
-export function useOrderActions({ deleteOrder, setIsEditing }: {
-  deleteOrder: () => void,
-  setIsEditing: (value: boolean) => void
-}) {
+interface UseOrderActionsProps {
+  orderId: string;
+  deleteOrder: () => Promise<void>;
+  setIsEditing: (isEditing: boolean) => void;
+  setIsDeleteDialogOpen: (isOpen: boolean) => void;
+}
+
+export function useOrderActions({
+  orderId,
+  deleteOrder,
+  setIsEditing,
+  setIsDeleteDialogOpen
+}: UseOrderActionsProps) {
   const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleDeleteClick = () => {
-    // This just triggers the confirmation dialog
-    return true;
+    setIsDeleteDialogOpen(true);
   };
   
   const handleConfirmDelete = async () => {
     try {
-      deleteOrder();
+      await deleteOrder();
       toast.success("Order deleted successfully");
       navigate('/orders');
     } catch (error) {
+      console.error("Error deleting order:", error);
       toast.error("Failed to delete order");
-      console.error(error);
+    } finally {
+      setIsDeleteDialogOpen(false);
     }
   };
   
-  const handleSaveClick = async () => {
-    // This would be implemented for saving edits
+  const handleSaveClick = async (formData: any) => {
     try {
-      // Save logic would go here
-      toast.success("Order updated successfully");
-      setIsEditing(false);
+      setIsSaving(true);
+      
+      const result = await saveOrderChanges({
+        ...formData,
+        id: orderId
+      });
+      
+      if (result.success) {
+        toast.success("Order updated successfully");
+        setIsEditing(false);
+      } else {
+        toast.error(`Failed to update order: ${result.error}`);
+      }
     } catch (error) {
-      toast.error("Failed to update order");
-      console.error(error);
+      console.error("Error saving order:", error);
+      toast.error("An unexpected error occurred while saving");
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -41,6 +65,7 @@ export function useOrderActions({ deleteOrder, setIsEditing }: {
   };
 
   return {
+    isSaving,
     handleDeleteClick,
     handleConfirmDelete,
     handleSaveClick,

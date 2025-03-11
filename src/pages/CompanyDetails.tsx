@@ -7,10 +7,20 @@ import { CompanyDetailsView } from "@/components/customers/CompanyDetailsView";
 export default function CompanyDetails() {
   const { companyId } = useParams<{ companyId: string }>();
   
+  if (!companyId) {
+    return (
+      <MainLayout>
+        <div className="container py-6">
+          <h1>Company ID is required</h1>
+        </div>
+      </MainLayout>
+    );
+  }
+  
   return (
     <MainLayout>
       <div className="container py-6">
-        <CompanyDetailsView />
+        <CompanyDetailsView companyId={companyId} />
       </div>
     </MainLayout>
   );

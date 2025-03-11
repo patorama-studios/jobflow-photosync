@@ -3,8 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { SearchIcon, UserIcon } from 'lucide-react';
-import { usePhotographers, Photographer } from '@/hooks/use-photographers';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Photographer {
+  id: string;
+  name: string;
+  email?: string;
+  color?: string;
+  payoutRate?: number;
+}
 
 interface PhotographerSearchProps {
   onPhotographerSelect: (photographer: Photographer) => void;
@@ -15,10 +23,54 @@ export const PhotographerSearch: React.FC<PhotographerSearchProps> = ({
   onPhotographerSelect,
   selectedPhotographer
 }) => {
-  const { photographers, isLoading, error } = usePhotographers();
+  const [photographers, setPhotographers] = useState<Photographer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPhotographers, setFilteredPhotographers] = useState<Photographer[]>([]);
   const [showResults, setShowResults] = useState(false);
+  
+  useEffect(() => {
+    const fetchPhotographers = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch photographers from profiles table with role=photographer
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'photographer');
+        
+        if (error) throw error;
+        
+        const mappedPhotographers = data.map((profile): Photographer => ({
+          id: profile.id,
+          name: profile.full_name || profile.username || `Photographer`,
+          email: profile.email,
+          color: getColorForName(profile.full_name || profile.username || ''),
+          payoutRate: 100 // Default payout rate
+        }));
+        
+        setPhotographers(mappedPhotographers);
+      } catch (err) {
+        console.error('Error fetching photographers:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch photographers'));
+        
+        // Set default photographers in case of error
+        setPhotographers([
+          { id: '1', name: 'Maria Garcia', color: '#4f46e5' },
+          { id: '2', name: 'Alex Johnson', color: '#10b981' },
+          { id: '3', name: 'Wei Chen', color: '#f59e0b' },
+          { id: '4', name: 'Aisha Patel', color: '#ef4444' },
+          { id: '5', name: 'Carlos Rodriguez', color: '#8b5cf6' }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPhotographers();
+  }, []);
 
   useEffect(() => {
     if (photographers && searchQuery) {
@@ -55,6 +107,28 @@ export const PhotographerSearch: React.FC<PhotographerSearchProps> = ({
       .join('')
       .toUpperCase()
       .substring(0, 2);
+  };
+  
+  // Generate a consistent color based on name
+  const getColorForName = (name: string): string => {
+    const colors = [
+      '#4f46e5', // Indigo
+      '#10b981', // Emerald
+      '#f59e0b', // Amber
+      '#ef4444', // Red
+      '#8b5cf6', // Violet
+      '#06b6d4', // Cyan
+      '#ec4899', // Pink
+      '#84cc16', // Lime
+    ];
+    
+    // Simple hash function for name
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
   };
 
   return (

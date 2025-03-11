@@ -32,8 +32,10 @@ export function useOrderDetailsView(orderId: string) {
     handleSaveClick,
     handleBackClick
   } = useOrderActions({
+    orderId,
     deleteOrder,
-    setIsEditing
+    setIsEditing,
+    setIsDeleteDialogOpen
   });
 
   // Return all the state and handlers from all hooks

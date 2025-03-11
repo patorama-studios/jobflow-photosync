@@ -3,7 +3,6 @@ import React from 'react';
 import { ToggleSection } from '../components/ToggleSection';
 import { UseFormReturn } from 'react-hook-form';
 import { PhotographerSearch } from '../components/PhotographerSearch';
-import { Photographer } from '@/hooks/use-photographers';
 
 interface PhotographerAssignmentSectionProps {
   form: UseFormReturn<any>;
@@ -16,9 +15,10 @@ export const PhotographerAssignmentSection: React.FC<PhotographerAssignmentSecti
   isOpen,
   onToggle
 }) => {
-  const handlePhotographerSelect = (photographer: Photographer) => {
+  const handlePhotographerSelect = (photographer: any) => {
     form.setValue('photographer', photographer.name);
     form.setValue('photographer_id', photographer.id);
+    form.setValue('photographerPayoutRate', photographer.payoutRate || 100);
   };
 
   return (
