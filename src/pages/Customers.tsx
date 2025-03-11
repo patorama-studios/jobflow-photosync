@@ -11,7 +11,7 @@ function CustomersPage() {
   useEffect(() => {
     updateSettings({
       title: "Customers",
-      description: "Manage your customers and their information"
+      description: "Manage your clients and companies"
     });
   }, [updateSettings]);
 
@@ -22,7 +22,7 @@ function CustomersPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold">Customers</h1>
             <p className="text-muted-foreground">
-              Manage your customers and their information
+              Manage your clients and companies
             </p>
           </div>
           
