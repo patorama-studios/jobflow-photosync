@@ -1,76 +1,97 @@
-export interface AddressComponents {
-  street_number: string;
-  route: string;
-  locality: string;
-  administrative_area_level_1: string;
-  postal_code: string;
-  country: string;
-  formatted_address: string;
-}
 
-export async function getAddressComponents(address: string): Promise<AddressComponents | null> {
-  try {
-    // Mocked address components for testing purposes
-    const addressComponents: AddressComponents = {
-      street_number: '123',
-      route: 'Fake Street',
-      locality: 'Sydney',
-      administrative_area_level_1: 'NSW',
-      postal_code: '2000',
-      country: 'AU',
-      formatted_address: '123 Fake Street, Sydney NSW 2000, Australia'
-    };
-    return addressComponents;
-  } catch (error) {
-    console.error('Error getting address components:', error);
-    return null;
-  }
-}
+import { AddressDetails } from '@/types/google-maps-types';
 
-// Function to extract address components using Google Maps API
-export async function getAddressComponentsFromGoogle(address: string): Promise<AddressComponents | null> {
-  if (!window.google || !window.google.maps) {
-    console.error('Google Maps API not loaded');
-    return null;
+export function extractAddressComponents(place: google.maps.places.PlaceResult): AddressDetails {
+  const addressDetails: AddressDetails = {
+    formattedAddress: place.formatted_address || '',
+    placeId: place.place_id,
+  };
+
+  if (place.geometry && place.geometry.location) {
+    addressDetails.lat = place.geometry.location.lat();
+    addressDetails.lng = place.geometry.location.lng();
   }
 
-  try {
-    const geocoder = new window.google.maps.Geocoder();
-    const result = await new Promise<google.maps.GeocoderResult[] | null>((resolve, reject) => {
-      geocoder.geocode({ address }, (results, status) => {
-        if (status === google.maps.GeocoderStatus.OK && results && results.length > 0) {
-          resolve(results);
-        } else {
-          console.error('Geocoding failed due to:', status);
-          resolve(null);
-        }
-      });
-    });
+  if (!place.address_components) {
+    return addressDetails;
+  }
 
-    if (!result) return null;
+  for (const component of place.address_components) {
+    if (component.types.includes('street_number')) {
+      addressDetails.streetNumber = component.long_name;
+    } else if (component.types.includes('route')) {
+      addressDetails.streetName = component.long_name;
+    } else if (component.types.includes('locality')) {
+      addressDetails.city = component.long_name;
+    } else if (component.types.includes('administrative_area_level_1')) {
+      addressDetails.state = component.short_name;
+    } else if (component.types.includes('postal_code')) {
+      addressDetails.postalCode = component.long_name;
+    } else if (component.types.includes('country')) {
+      addressDetails.country = component.long_name;
+    }
+  }
 
-    const addressResult = result[0];
-    const components = addressResult.address_components;
-    const addressComponents: AddressComponents = {
-      street_number: '',
-      route: '',
-      locality: '',
-      administrative_area_level_1: '',
-      postal_code: '',
-      country: '',
-      formatted_address: addressResult.formatted_address
-    };
+  return addressDetails;
+}
 
-    components.forEach(component => {
-      const type = component.types[0];
-      if (type in addressComponents) {
-        addressComponents[type as keyof AddressComponents] = component.long_name;
+export function getAddressCoordinates(address: string): Promise<{ lat: number, lng: number } | null> {
+  return new Promise((resolve, reject) => {
+    const geocoder = new google.maps.Geocoder();
+    
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === google.maps.GeocoderStatus.OK && results && results.length > 0) {
+        const location = results[0].geometry.location;
+        resolve({
+          lat: location.lat(),
+          lng: location.lng()
+        });
+      } else {
+        console.error('Geocode was not successful:', status);
+        resolve(null);
       }
     });
+  });
+}
 
-    return addressComponents;
-  } catch (error) {
-    console.error('Error geocoding address:', error);
-    return null;
+export function formatAddress(addressDetails: AddressDetails): string {
+  const parts: string[] = [];
+  
+  if (addressDetails.streetNumber && addressDetails.streetName) {
+    parts.push(`${addressDetails.streetNumber} ${addressDetails.streetName}`);
+  } else if (addressDetails.streetName) {
+    parts.push(addressDetails.streetName);
   }
+  
+  if (addressDetails.city) {
+    parts.push(addressDetails.city);
+  }
+  
+  if (addressDetails.state) {
+    parts.push(addressDetails.state);
+  }
+  
+  if (addressDetails.postalCode) {
+    parts.push(addressDetails.postalCode);
+  }
+  
+  if (addressDetails.country) {
+    parts.push(addressDetails.country);
+  }
+  
+  return parts.join(', ');
+}
+
+export function geocodeAddress(address: string): Promise<google.maps.GeocoderResult[]> {
+  return new Promise((resolve, reject) => {
+    const geocoder = new google.maps.Geocoder();
+    
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === google.maps.GeocoderStatus.OK) {
+        resolve(results);
+      } else {
+        reject(new Error(`Geocoding failed: ${status}`));
+      }
+    });
+  });
 }

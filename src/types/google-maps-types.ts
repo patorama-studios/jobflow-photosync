@@ -1,21 +1,23 @@
 
-export interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  formatted: string;
+export interface AddressDetails {
+  formattedAddress: string;
+  streetNumber?: string;
+  streetName?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
   lat?: number;
   lng?: number;
+  placeId?: string;
 }
 
-export interface AddressComponent {
-  long_name: string;
-  short_name: string;
-  types: string[];
+export interface GoogleGeocodeResponse {
+  results: GeocoderResult[];
+  status: string;
 }
 
-export interface GooglePlaceResult {
+export interface GeocoderResult {
   address_components: AddressComponent[];
   formatted_address: string;
   geometry: {
@@ -25,13 +27,11 @@ export interface GooglePlaceResult {
     };
   };
   place_id: string;
+  types: string[];
 }
 
-export interface GoogleAddressOptions {
-  placeholder?: string;
-  label?: string;
-  required?: boolean;
-  onAddressSelect?: (address: Address) => void;
-  defaultAddress?: Partial<Address>;
-  className?: string;
+export interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
 }

@@ -2,175 +2,181 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form } from '@/components/ui/form';
+import { CompanyFormSchema, companyFormSchema } from './CompanyFormSchema';
 import { Button } from '@/components/ui/button';
-import { DialogFooter } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { CompanyInfoFields } from './CompanyInfoFields';
 import { ContactInfoFields } from './ContactInfoFields';
 import { AddressFields } from './AddressFields';
 import { CompanyTeams } from './CompanyTeams';
-import { companyFormSchema, CompanyFormData } from './CompanyFormSchema';
-import { useCompanies } from '@/hooks/use-companies';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
-
-interface TeamMember {
-  id: string;
-  name: string;
-  email?: string;
-}
+import { toast } from 'sonner';
 
 interface CompanyFormProps {
-  onClose: () => void;
-  onCompanyCreated: (company: any) => void;
+  onSubmit: (data: CompanyFormSchema) => void;
+  defaultValues?: Partial<CompanyFormSchema>;
+  isSubmitting?: boolean;
+  companyId?: string;
 }
 
-export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
-  const { addCompany } = useCompanies();
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [teamName, setTeamName] = useState('');
-  
-  const form = useForm<CompanyFormData>({
+export const CompanyForm: React.FC<CompanyFormProps> = ({
+  onSubmit,
+  defaultValues,
+  isSubmitting = false,
+  companyId,
+}) => {
+  const [activeTab, setActiveTab] = useState('company');
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; email?: string }>>([]);
+  const [teamName, setTeamName] = useState('Default Team');
+  const [hasCreatedTeam, setHasCreatedTeam] = useState(false);
+  const [teamId, setTeamId] = useState<string | null>(null);
+
+  const form = useForm<CompanyFormSchema>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: {
       name: '',
-      email: '',
-      phone: '',
       industry: 'real estate',
       website: '',
+      email: '',
+      phone: '',
       address: '',
       city: '',
       state: '',
-      zip: ''
-    }
+      zip: '',
+      ...defaultValues,
+    },
   });
 
-  const handleAddTeamMember = (member: TeamMember) => {
-    // Check if member already exists
-    if (!teamMembers.some(m => m.id === member.id)) {
-      setTeamMembers([...teamMembers, member]);
+  const handleSubmit = (data: CompanyFormSchema) => {
+    onSubmit(data);
+  };
+
+  const handleAddTeam = async () => {
+    if (!companyId) {
+      toast.error('Cannot create team: Company ID is missing');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('create_company_team', {
+        company_id_param: companyId,
+        team_name_param: teamName
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setTeamId(data);
+      setHasCreatedTeam(true);
+      toast.success('Team created successfully');
+
+      // Add any team members
+      for (const member of teamMembers) {
+        await addTeamMember(data, member);
+      }
+    } catch (error: any) {
+      console.error('Error creating team:', error);
+      toast.error(`Failed to create team: ${error.message}`);
     }
   };
 
-  const handleRemoveTeamMember = (memberId: string) => {
-    setTeamMembers(teamMembers.filter(member => member.id !== memberId));
-  };
-
-  const onSubmit = async (data: CompanyFormData) => {
+  const addTeamMember = async (teamId: string, member: { id: string; name: string; email?: string }) => {
     try {
-      // Use the hook function to add a new company
-      const newCompany = await addCompany({
-        name: data.name,
-        email: data.email || '',
-        phone: data.phone,
-        industry: data.industry,
-        website: data.website,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        zip: data.zip,
-        status: 'active',
-        total_jobs: 0,
-        open_jobs: 0,
-        total_revenue: 0,
-        outstanding_amount: 0
+      const { error } = await supabase.rpc('add_team_member', {
+        team_id_param: teamId,
+        user_id_param: member.id,
+        name_param: member.name,
+        email_param: member.email || ''
       });
-      
-      if (newCompany && teamMembers.length > 0) {
-        try {
-          // Create team if we have team members
-          // First ensure the migration has been run
-          await fetch('/api/run-migration', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ name: 'company_teams' }),
-          })
-          .then(response => response.json())
-          .catch(err => {
-            console.log('Migration may already be applied', err);
-          });
-          
-          // Use SQL directly via Raw SQL query rather than table access
-          const { data: teamData, error: teamError } = await supabase
-            .rpc('create_company_team', {
-              company_id_param: newCompany.id,
-              team_name_param: teamName || `${data.name} Team`
-            });
 
-          if (teamError) {
-            console.error('Error creating company team:', teamError);
-            toast.error(`Failed to create team: ${teamError.message}`);
-          } else if (teamData) {
-            const teamId = teamData;
-            
-            // Now add team members using RPC instead of direct table access
-            for (const member of teamMembers) {
-              const { error: memberError } = await supabase
-                .rpc('add_team_member', {
-                  team_id_param: teamId,
-                  user_id_param: member.id,
-                  name_param: member.name,
-                  email_param: member.email || null
-                });
-                  
-              if (memberError) {
-                console.error('Error adding team member:', memberError);
-                toast.error(`Failed to add team member ${member.name}: ${memberError.message}`);
-              }
-            }
-          }
-        } catch (teamErr: any) {
-          console.error('Error handling team creation:', teamErr);
-          toast.error(`Team creation error: ${teamErr.message}`);
-        }
+      if (error) {
+        throw error;
       }
       
-      toast.success('Company created successfully');
-      onCompanyCreated(newCompany);
-      onClose();
-      form.reset();
+      toast.success(`Added ${member.name} to the team`);
     } catch (error: any) {
-      console.error('Error creating company:', error);
-      toast.error(`Failed to create company: ${error.message}`);
+      console.error('Error adding team member:', error);
+      toast.error(`Failed to add team member: ${error.message}`);
     }
+  };
+
+  const handleAddMember = (member: { id: string; name: string; email?: string }) => {
+    if (teamMembers.some(m => m.id === member.id)) {
+      toast.error('This member is already added to the team');
+      return;
+    }
+
+    setTeamMembers([...teamMembers, member]);
+
+    if (hasCreatedTeam && teamId) {
+      addTeamMember(teamId, member);
+    }
+  };
+
+  const handleRemoveMember = (memberId: string) => {
+    setTeamMembers(teamMembers.filter(member => member.id !== memberId));
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <Tabs defaultValue="company">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="company">Company Info</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="company" className="space-y-4">
-            <CompanyInfoFields form={form} />
-            <ContactInfoFields form={form} />
-            <AddressFields form={form} />
-          </TabsContent>
-          
-          <TabsContent value="team">
-            <CompanyTeams 
-              teamMembers={teamMembers}
-              onAddMember={handleAddTeamMember}
-              onRemoveMember={handleRemoveTeamMember}
-              teamName={teamName}
-              onTeamNameChange={setTeamName}
-            />
-          </TabsContent>
-        </Tabs>
-        
-        <DialogFooter className="mt-6">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <CompanyInfoFields form={form} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <ContactInfoFields form={form} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <AddressFields form={form} />
+              </CardContent>
+            </Card>
+
+            {companyId && (
+              <Card>
+                <CardContent className="pt-6">
+                  <CompanyTeams
+                    teamMembers={teamMembers}
+                    onAddMember={handleAddMember}
+                    onRemoveMember={handleRemoveMember}
+                    onTeamNameChange={setTeamName}
+                    teamName={teamName}
+                  />
+                  {!hasCreatedTeam && (
+                    <Button 
+                      type="button" 
+                      onClick={handleAddTeam}
+                      className="mt-4"
+                    >
+                      Create Team
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Company'}
           </Button>
-          <Button type="submit">Create Company</Button>
-        </DialogFooter>
+        </div>
       </form>
     </Form>
   );
-}
+};

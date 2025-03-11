@@ -1,15 +1,16 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-interface DurationSelectorProps {
+export interface DurationSelectorProps {
   value: number;
-  onChange: (value: number) => void;
+  onChange: (duration: number) => void;
   className?: string;
 }
 
-export const DurationSelector: React.FC<DurationSelectorProps> = ({ 
-  value, 
+export const DurationSelector: React.FC<DurationSelectorProps> = ({
+  value,
   onChange,
   className
 }) => {
@@ -18,22 +19,24 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
   };
 
   return (
-    <Select
-      value={String(value)}
-      onValueChange={handleChange}
-      className={className}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder="Select duration" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="30">30 minutes</SelectItem>
-        <SelectItem value="60">1 hour</SelectItem>
-        <SelectItem value="90">1.5 hours</SelectItem>
-        <SelectItem value="120">2 hours</SelectItem>
-        <SelectItem value="180">3 hours</SelectItem>
-        <SelectItem value="240">4 hours</SelectItem>
-      </SelectContent>
-    </Select>
+    <div className={className || ""}>
+      <Label htmlFor="duration">Duration (hours)</Label>
+      <Select value={String(value)} onValueChange={handleChange}>
+        <SelectTrigger id="duration">
+          <SelectValue placeholder="Select duration" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">1 hour</SelectItem>
+          <SelectItem value="1.5">1.5 hours</SelectItem>
+          <SelectItem value="2">2 hours</SelectItem>
+          <SelectItem value="2.5">2.5 hours</SelectItem>
+          <SelectItem value="3">3 hours</SelectItem>
+          <SelectItem value="3.5">3.5 hours</SelectItem>
+          <SelectItem value="4">4 hours</SelectItem>
+          <SelectItem value="4.5">4.5 hours</SelectItem>
+          <SelectItem value="5">5 hours</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
   );
 };

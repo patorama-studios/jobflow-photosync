@@ -1,73 +1,85 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ClientTable } from '../ClientTable';
 import { useClients } from '@/hooks/use-clients';
-import { ClientTableHeader } from '../table/ClientTableHeader';
-import { Plus } from 'lucide-react';
+import { ClientTable } from '../ClientTable';
 import { AddClientDialog } from '@/components/calendar/appointment/components/AddClientDialog';
+import { ClientTableHeader } from '../table/ClientTableHeader';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface ClientsTabContentProps {
   companyId?: string;
-  companyName?: string;
 }
 
-export function ClientsTabContent({ companyId, companyName }: ClientsTabContentProps) {
-  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
-  const { clients, isLoading, error, refetch } = useClients(companyId);
+export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({ companyId }) => {
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
   
-  const handleAddClientClick = () => {
-    setIsAddClientDialogOpen(true);
+  const { 
+    clients, 
+    isLoading, 
+    error, 
+    refreshClients,
+    addClient 
+  } = useClients(companyId);
+  
+  useEffect(() => {
+    refreshClients();
+  }, [refreshClients]);
+  
+  const handleAddClient = () => {
+    setIsAddClientOpen(true);
   };
   
   const handleClientAdded = async () => {
-    // Refresh clients list after adding a new client
-    await refetch();
+    await refreshClients();
     return true;
   };
-
+  
+  const handleClientClick = (clientId: string) => {
+    navigate(`/customers/client/${clientId}`);
+  };
+  
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
+  
+  const handleExport = () => {
+    toast.info("Export functionality not implemented yet");
+  };
+  
+  if (error) {
+    return <div>Error loading clients: {error.message}</div>;
+  }
+  
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-bold">
-            {companyName ? `${companyName} Clients` : 'All Clients'}
-          </h2>
-          <p className="text-muted-foreground">
-            {clients.length} {clients.length === 1 ? 'client' : 'clients'}
-          </p>
-        </div>
-        
-        <Button 
-          onClick={handleAddClientClick}
-          className="flex items-center gap-1"
-        >
-          <Plus className="h-4 w-4" />
-          Add Client
-        </Button>
-      </div>
+      <ClientTableHeader 
+        searchQuery={searchQuery}
+        setSearchQuery={handleSearchChange}
+        onAddClient={handleAddClient}
+        onExport={handleExport}
+      />
       
-      <div className="border rounded-md">
-        <ClientTableHeader />
-        <ClientTable 
-          clients={clients} 
-          isLoading={isLoading} 
-          error={error}
-          companyId={companyId}
-        />
-      </div>
+      <ClientTable 
+        clients={clients} 
+        isLoading={isLoading} 
+        error={error as Error}
+        onClientClick={handleClientClick} 
+      />
       
-      {isAddClientDialogOpen && (
-        <AddClientDialog
-          open={isAddClientDialogOpen}
-          onClose={() => setIsAddClientDialogOpen(false)}
-          onClientCreated={async (client) => {
-            await handleClientAdded();
-            return client;
+      {isAddClientOpen && (
+        <AddClientDialog 
+          open={isAddClientOpen} 
+          onClose={() => setIsAddClientOpen(false)} 
+          onClientCreated={() => {
+            handleClientAdded();
+            setIsAddClientOpen(false);
           }}
-          companyId={companyId}
         />
       )}
     </div>
   );
-}
+};

@@ -1,101 +1,50 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { OrderDetailsHeader } from '@/components/orders/details/OrderDetailsHeader';
+import { OrderDetailsContent } from '@/components/orders/details/OrderDetailsContent';
+import { OrderDetailsLoading } from '@/components/orders/details/OrderDetailsLoading';
+import { OrderDetailsError } from '@/components/orders/details/OrderDetailsError';
+import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
+import { OrderNotFound } from '@/components/orders/details/OrderNotFound';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrderDetailsTab } from '@/components/orders/details/OrderDetailsTab';
 import { OrderActivityTab } from '@/components/orders/details/OrderActivityTab';
-import { DeleteOrderDialog } from '@/components/orders/details/DeleteOrderDialog';
 import { useOrderDetailsView } from '@/hooks/use-order-details-view';
 
 export default function OrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
-  
-  const { 
-    order, 
-    isLoading, 
-    error, 
+  const {
+    order,
+    isLoading,
+    error,
     refetch,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
     activeTab,
     setActiveTab,
     isEditing,
-    handleDeleteClick,
-    handleConfirmDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
     handleEditClick,
     handleCancelClick,
+    handleDeleteClick,
+    handleConfirmDelete,
     handleSaveClick,
-    handleBackClick
+    handleBackClick,
   } = useOrderDetailsView(orderId || '');
 
-  // Function to handle confirmation of deletion
-  const handleConfirmDeleteWrapper = async () => {
-    try {
-      await handleConfirmDelete();
-    } catch (error) {
-      console.error("Error deleting order:", error);
+  useEffect(() => {
+    if (orderId) {
+      refetch();
     }
-  };
+  }, [orderId, refetch]);
 
-  if (isLoading) {
+  // Handle order not found
+  if (!isLoading && !error && !order) {
     return (
       <MainLayout>
         <PageTransition>
-          <div className="container p-6 mx-auto space-y-6">
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-40" />
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-7 w-32" />
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-40 w-full" />
-              </CardContent>
-            </Card>
-          </div>
-        </PageTransition>
-      </MainLayout>
-    );
-  }
-
-  if (error || !order) {
-    return (
-      <MainLayout>
-        <PageTransition>
-          <div className="container p-6 mx-auto">
-            <Button 
-              variant="ghost" 
-              onClick={handleBackClick} 
-              className="mb-6 flex items-center gap-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Orders
-            </Button>
-            
-            <div className="flex flex-col items-center justify-center p-10 text-center">
-              <AlertCircle className="h-10 w-10 text-destructive mb-4" />
-              <h2 className="text-xl font-semibold">Error Loading Order</h2>
-              <p className="text-muted-foreground mt-2">{error || "Order not found"}</p>
-              <div className="flex gap-2 mt-6">
-                <Button variant="outline" onClick={() => refetch()}>
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  Try Again
-                </Button>
-                <Button onClick={handleBackClick}>
-                  Return to Orders
-                </Button>
-              </div>
-            </div>
-          </div>
+          <OrderNotFound orderId={orderId || ''} />
         </PageTransition>
       </MainLayout>
     );
@@ -104,47 +53,63 @@ export default function OrderDetails() {
   return (
     <MainLayout>
       <PageTransition>
-        <div className="container p-6 mx-auto space-y-6">
-          <Button 
-            variant="ghost" 
-            onClick={handleBackClick} 
-            className="mb-2 flex items-center gap-1"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Orders
-          </Button>
-          
-          <OrderDetailsHeader
-            order={order}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteClick}
-            isEditing={isEditing}
-            handleCancelClick={handleCancelClick}
-            handleSaveClick={() => handleSaveClick(order)}
-            onRefresh={() => refetch()}
-          />
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 md:max-w-md">
-              <TabsTrigger value="details">Order Details</TabsTrigger>
-              <TabsTrigger value="activity">Activity Log</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="mt-6">
-              <OrderDetailsTab order={order} />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="mt-6">
-              <OrderActivityTab orderId={orderId || ''} />
-            </TabsContent>
-          </Tabs>
-          
+        <div className="container mx-auto p-6 space-y-6">
+          {isLoading ? (
+            <OrderDetailsLoading />
+          ) : error ? (
+            <OrderDetailsError error={error} onRetry={refetch} />
+          ) : (
+            order && (
+              <>
+                <OrderDetailsHeader
+                  order={order}
+                  isEditing={isEditing}
+                  onEdit={handleEditClick}
+                  onCancel={handleCancelClick}
+                  onSave={() => {
+                    // We'll pass form data from the child component when save is clicked
+                    // This is just a placeholder for the function
+                    const saveHandler = (formData: any) => {
+                      handleSaveClick(formData);
+                    };
+                    return saveHandler;
+                  }}
+                  onDelete={handleDeleteClick}
+                  onBack={handleBackClick}
+                />
+
+                <Tabs
+                  defaultValue="details"
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="space-y-4"
+                >
+                  <TabsList>
+                    <TabsTrigger value="details">Order Details</TabsTrigger>
+                    <TabsTrigger value="activity">Activity</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="details" className="space-y-4">
+                    <OrderDetailsTab
+                      order={order}
+                      isEditing={isEditing}
+                      onSave={handleSaveClick}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="activity" className="space-y-4">
+                    <OrderActivityTab orderId={order.id.toString()} />
+                  </TabsContent>
+                </Tabs>
+              </>
+            )
+          )}
+
+          {/* Delete Confirmation Dialog */}
           <DeleteOrderDialog
             isOpen={isDeleteDialogOpen}
             onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={handleConfirmDeleteWrapper}
-            orderNumber={order.orderNumber || order.order_number || String(order.id)}
-            onOpenChange={setIsDeleteDialogOpen}
+            onConfirm={handleConfirmDelete}
           />
         </div>
       </PageTransition>
