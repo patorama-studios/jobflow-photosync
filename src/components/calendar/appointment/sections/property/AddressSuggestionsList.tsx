@@ -13,13 +13,15 @@ export const AddressSuggestionsList: React.FC<AddressSuggestionsListProps> = ({
   isSearching,
   onSelectAddress
 }) => {
-  if (suggestions.length === 0) return null;
+  console.log("Rendering suggestions list", { suggestions, isSearching });
+  
+  if (suggestions.length === 0 && !isSearching) return null;
 
   return (
     <div className="absolute z-10 w-full mt-1 border rounded-md bg-background shadow-lg">
       {isSearching ? (
         <div className="p-2 text-center text-sm">Searching...</div>
-      ) : (
+      ) : suggestions.length > 0 ? (
         <ul>
           {suggestions.map((prediction) => (
             <li
@@ -36,6 +38,8 @@ export const AddressSuggestionsList: React.FC<AddressSuggestionsListProps> = ({
             </li>
           ))}
         </ul>
+      ) : (
+        <div className="p-2 text-center text-sm">No results found</div>
       )}
     </div>
   );
