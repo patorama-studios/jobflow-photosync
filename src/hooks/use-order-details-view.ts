@@ -1,15 +1,21 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useOrderDetails } from './use-order-details';
-import { toast } from 'sonner';
+import { useOrderViewState } from './use-order-view-state';
+import { useOrderActions } from './use-order-actions';
 
 export function useOrderDetailsView(orderId: string) {
-  const navigate = useNavigate();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("details");
-  const [isEditing, setIsEditing] = useState(false);
+  // Get UI state from the view state hook
+  const {
+    activeTab,
+    setActiveTab,
+    isEditing,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    handleEditClick,
+    handleCancelClick
+  } = useOrderViewState();
   
+  // Get order data and operations from the existing hook
   const { 
     order, 
     isLoading, 
@@ -18,55 +24,33 @@ export function useOrderDetailsView(orderId: string) {
     deleteOrder 
   } = useOrderDetails(orderId);
   
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
-  };
-  
-  const handleConfirmDelete = async () => {
-    try {
-      deleteOrder();
-      toast.success("Order deleted successfully");
-      navigate('/orders');
-    } catch (error) {
-      toast.error("Failed to delete order");
-      console.error(error);
-    }
-  };
-  
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
-  
-  const handleCancelClick = () => {
-    setIsEditing(false);
-  };
-  
-  const handleSaveClick = async () => {
-    // This would be implemented for saving edits
-    try {
-      // Save logic would go here
-      toast.success("Order updated successfully");
-      setIsEditing(false);
-    } catch (error) {
-      toast.error("Failed to update order");
-      console.error(error);
-    }
-  };
-  
-  const handleBackClick = () => {
-    navigate('/orders');
-  };
+  // Get action handlers from the actions hook
+  const {
+    handleDeleteClick,
+    handleConfirmDelete,
+    handleSaveClick,
+    handleBackClick
+  } = useOrderActions({
+    deleteOrder,
+    setIsEditing
+  });
 
+  // Return all the state and handlers from all hooks
   return {
+    // Order data
     order,
     isLoading,
     error,
     refetch,
+    
+    // UI state
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     activeTab,
     setActiveTab,
     isEditing,
+    
+    // Action handlers
     handleDeleteClick,
     handleConfirmDelete,
     handleEditClick,
