@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PlaceResult } from '@/hooks/use-google-address-search';
+import { PlaceResult } from '@/hooks/google-maps/types';
 
 interface AddressSuggestionsListProps {
   suggestions: PlaceResult[];

@@ -5,6 +5,9 @@ import { PlaceResult } from './google-maps/types';
 import { useGoogleMapsServices } from './google-maps/use-google-maps-services';
 import { handlePlaceDetails } from './google-maps/address-service';
 
+/**
+ * Hook for Google address search functionality with form integration
+ */
 export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [showManualFields, setShowManualFields] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<PlaceResult[]>([]);
