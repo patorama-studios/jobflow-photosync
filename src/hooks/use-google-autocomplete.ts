@@ -1,78 +1,46 @@
-import { useEffect, useState, useRef } from 'react';
 
-interface UseGoogleAutocompleteProps {
-  apiKey?: string;
-  options?: {
-    types?: string[];
-    componentRestrictions?: { country: string | string[] };
-  };
-}
+import { useState, useEffect, useCallback } from 'react';
 
-interface GoogleAutocompleteResult {
+interface UseGoogleAutocompleteResult {
+  initAutocomplete: (element: HTMLInputElement) => any;
   isLoaded: boolean;
-  error: string;
-  initAutocomplete: (inputElement: HTMLInputElement) => google.maps.places.Autocomplete;
+  error: string | null;
 }
 
-export const useGoogleAutocomplete = ({
-  apiKey,
-  options = {},
-}: UseGoogleAutocompleteProps = {}): GoogleAutocompleteResult => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [error, setError] = useState('');
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+export function useGoogleAutocomplete(): UseGoogleAutocompleteResult {
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Check if Google Maps API is loaded
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Check if Google Maps API is already loaded
     if (window.google && window.google.maps && window.google.maps.places) {
       setIsLoaded(true);
-      return;
+    } else {
+      setError("Google Maps API is not loaded");
+    }
+  }, []);
+
+  // Initialize autocomplete on an input element
+  const initAutocomplete = useCallback((inputElement: HTMLInputElement) => {
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      setError("Google Maps API is not loaded");
+      return null;
     }
 
-    // Otherwise load the API
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-    script.async = true;
-    script.defer = true;
+    try {
+      const options = {
+        componentRestrictions: { country: 'au' }, // Restrict to Australia
+        fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+        types: ['address']
+      };
 
-    script.addEventListener('load', () => {
-      setIsLoaded(true);
-    });
-
-    script.addEventListener('error', () => {
-      setError('Failed to load Google Maps API');
-    });
-
-    document.head.appendChild(script);
-
-    return () => {
-      // Clean up script
-      document.head.removeChild(script);
-    };
-  }, [apiKey]);
-
-  const initAutocomplete = (inputElement: HTMLInputElement): google.maps.places.Autocomplete => {
-    if (!isLoaded || !window.google || !window.google.maps || !window.google.maps.places) {
-      throw new Error('Google Maps API not loaded');
+      // Create the autocomplete object
+      return new window.google.maps.places.Autocomplete(inputElement, options);
+    } catch (err) {
+      setError(`Error initializing autocomplete: ${err}`);
+      return null;
     }
+  }, []);
 
-    if (autocompleteRef.current) {
-      return autocompleteRef.current;
-    }
-
-    const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      ...options,
-    });
-
-    autocompleteRef.current = autocomplete;
-    return autocomplete;
-  };
-
-  return {
-    isLoaded,
-    error,
-    initAutocomplete,
-  };
-};
+  return { initAutocomplete, isLoaded, error };
+}

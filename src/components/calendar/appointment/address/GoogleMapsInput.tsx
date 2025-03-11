@@ -57,7 +57,7 @@ export const GoogleMapsInput: React.FC<GoogleMapsInputProps> = ({
 
   return (
     <div className={className}>
-      {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+      {error && <div className="text-red-500 text-sm mb-2">{String(error)}</div>}
       <Input
         ref={inputRef}
         type="text"

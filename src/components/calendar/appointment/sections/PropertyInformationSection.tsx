@@ -1,24 +1,18 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { ToggleSection } from '../components/ToggleSection';
-import { useGoogleAddressSearch } from '@/hooks/use-google-address-search';
 import { PropertySectionHeader } from './property/PropertySectionHeader';
 import { AddressSearchField } from './property/AddressSearchField';
 import { AddressSuggestionsList } from './property/AddressSuggestionsList';
 import { ManualAddressFields } from './property/ManualAddressFields';
+import { useGoogleAddressSearch } from '@/hooks/use-google-address-search';
+import { FormSection } from '../components/FormSection';
+import { UseFormReturn } from 'react-hook-form';
 
 interface PropertyInformationSectionProps {
   form: UseFormReturn<any>;
-  isOpen: boolean;
-  onToggle: () => void;
 }
 
-export const PropertyInformationSection: React.FC<PropertyInformationSectionProps> = ({
-  form,
-  isOpen,
-  onToggle
-}) => {
+export const PropertyInformationSection: React.FC<PropertyInformationSectionProps> = ({ form }) => {
   const {
     showManualFields,
     addressSuggestions,
@@ -29,34 +23,28 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   } = useGoogleAddressSearch(form);
 
   return (
-    <ToggleSection 
-      title="Property Information" 
-      isOpen={isOpen} 
-      onToggle={onToggle}
-    >
-      <div className="space-y-4">
-        <div className="relative">
-          <PropertySectionHeader 
-            showManualFields={showManualFields} 
-            toggleManualFields={toggleManualFields} 
-          />
-          
-          <AddressSearchField 
-            form={form} 
-            onAddressSearch={handleAddressSearch} 
-          />
-          
-          <AddressSuggestionsList 
-            suggestions={addressSuggestions}
-            isSearching={isSearching}
-            onSelectAddress={handleSelectAddress}
-          />
-        </div>
+    <FormSection>
+      <PropertySectionHeader 
+        showManualFields={showManualFields} 
+        toggleManualFields={toggleManualFields} 
+      />
+
+      <div className="relative mb-4">
+        <AddressSearchField 
+          form={form} 
+          onAddressSearch={handleAddressSearch} 
+        />
         
-        {showManualFields && (
-          <ManualAddressFields form={form} />
-        )}
+        <AddressSuggestionsList 
+          suggestions={addressSuggestions} 
+          isSearching={isSearching} 
+          onSelectAddress={handleSelectAddress} 
+        />
       </div>
-    </ToggleSection>
+
+      {showManualFields && (
+        <ManualAddressFields form={form} />
+      )}
+    </FormSection>
   );
 };

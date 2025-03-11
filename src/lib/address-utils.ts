@@ -1,93 +1,66 @@
 
-/**
- * Utility functions for address handling
- */
+import { AddressComponents, AddressDetails } from '@/types/google-maps-types';
 
-export interface AddressComponents {
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
+export function extractAddressComponents(place: google.maps.places.PlaceResult): AddressDetails {
+  // Create the initial address details object with default values
+  const addressDetails: AddressDetails = {
+    formattedAddress: place.formatted_address || '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: '',
+    lat: place.geometry?.location?.lat() || 0,
+    lng: place.geometry?.location?.lng() || 0
+  };
+  
+  // Extract components from place.address_components
+  if (place.address_components && place.address_components.length > 0) {
+    // First, build a map of component types to their values
+    const components: AddressComponents = {};
+    
+    for (const component of place.address_components) {
+      for (const type of component.types) {
+        components[type] = component.long_name;
+        
+        // For administrative areas, also store the short name (e.g., "CA" instead of "California")
+        if (type === 'administrative_area_level_1') {
+          components['administrative_area_level_1_short'] = component.short_name;
+        }
+      }
+    }
+    
+    // Now build the address parts from the components
+    const streetNumber = components.street_number || '';
+    const route = components.route || '';
+    
+    // Build street address
+    addressDetails.streetAddress = streetNumber ? `${streetNumber} ${route}`.trim() : route;
+    
+    // Set city (prefer locality, but use sublocality or neighborhood as fallbacks)
+    addressDetails.city = 
+      components.locality || 
+      components.sublocality || 
+      components.neighborhood || 
+      components.administrative_area_level_2 || '';
+    
+    // Set state (use short version if available, e.g., "CA" instead of "California")
+    addressDetails.state = components.administrative_area_level_1_short || components.administrative_area_level_1 || '';
+    
+    // Set postal code and country
+    addressDetails.postalCode = components.postal_code || '';
+    addressDetails.country = components.country || '';
+  }
+  
+  return addressDetails;
 }
 
-/**
- * Extracts address components from Google Place API result
- */
-export const extractAddressComponents = (
-  addressComponents: google.maps.GeocoderAddressComponent[] | undefined
-): AddressComponents => {
-  if (!addressComponents) {
-    return {
-      street: '',
-      city: '',
-      state: '',
-      zip: '',
-      country: '',
-    };
-  }
-
-  let street = '';
-  let city = '';
-  let state = '';
-  let zip = '';
-  let country = '';
-
-  // Street number and street name
-  const streetNumber = addressComponents.find(component => 
-    component.types.includes('street_number')
-  )?.long_name || '';
-  
-  const route = addressComponents.find(component => 
-    component.types.includes('route')
-  )?.long_name || '';
-  
-  if (streetNumber && route) {
-    street = `${streetNumber} ${route}`;
-  } else if (route) {
-    street = route;
-  }
-
-  // City (locality)
-  city = addressComponents.find(component => 
-    component.types.includes('locality')
-  )?.long_name || '';
-
-  // State (administrative_area_level_1)
-  state = addressComponents.find(component => 
-    component.types.includes('administrative_area_level_1')
-  )?.short_name || '';
-
-  // Zip code (postal_code)
-  zip = addressComponents.find(component => 
-    component.types.includes('postal_code')
-  )?.long_name || '';
-
-  // Country
-  country = addressComponents.find(component => 
-    component.types.includes('country')
-  )?.long_name || '';
-
-  return {
-    street,
-    city,
-    state,
-    zip,
-    country
-  };
-};
-
-/**
- * Formats an address as a single line
- */
-export const formatAddressOneLine = (components: AddressComponents): string => {
-  const parts = [
-    components.street,
-    components.city,
-    components.state,
-    components.zip,
-    components.country
-  ].filter(Boolean);
-  
-  return parts.join(', ');
-};
+// Helper function to check if an address is valid
+export function isValidAddress(address: AddressDetails): boolean {
+  return !!(
+    address.streetAddress && 
+    address.city && 
+    address.state && 
+    address.postalCode
+  );
+}

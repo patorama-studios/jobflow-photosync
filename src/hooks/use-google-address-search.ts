@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 // Define types for Google Maps services
-interface PlaceResult {
+export interface PlaceResult {
   place_id?: string;
   formatted_address?: string;
   name?: string;

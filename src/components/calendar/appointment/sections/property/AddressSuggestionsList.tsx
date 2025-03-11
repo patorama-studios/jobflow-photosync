@@ -1,12 +1,6 @@
 
 import React from 'react';
-
-// Define a simplified PlaceResult type that matches what we're using
-interface PlaceResult {
-  place_id?: string;
-  formatted_address?: string;
-  name?: string;
-}
+import { PlaceResult } from '@/hooks/use-google-address-search';
 
 interface AddressSuggestionsListProps {
   suggestions: PlaceResult[];
