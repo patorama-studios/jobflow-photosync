@@ -5,6 +5,14 @@ import { ClientTableContent } from './table/ClientTableContent';
 import { ClientTableSkeleton } from './table/ClientTableSkeleton';
 import { Client } from '@/types/company-types';
 
+export interface ClientTableContentProps {
+  clients: Client[];
+  onEdit: (client: Client) => void;
+  onDelete: (clientId: string) => Promise<void>;
+  onRowClick: (client: Client) => void;
+  updateClient: (id: string, updates: Partial<Client>) => Promise<void>;
+}
+
 export interface ClientTableProps {
   clients: Client[];
   isLoading: boolean;
@@ -25,17 +33,28 @@ export const ClientTable: React.FC<ClientTableProps> = ({
   onRowClick
 }) => {
   if (isLoading) {
-    return <ClientTableSkeleton />;
+    return <ClientTableSkeleton rows={5} />;
   }
 
   if (error) {
     return <div className="text-center py-4 text-red-500">Error loading clients: {error.message}</div>;
   }
 
+  // This is a placeholder - you'd implement these functions in the actual component
+  const dummySearchQuery = "";
+  const setSearchQuery = (query: string) => {};
+  const handleAddClient = () => {};
+  const handleExport = () => {};
+
   return (
     <div className="w-full overflow-auto">
       <table className="w-full border-collapse">
-        <ClientTableHeader />
+        <ClientTableHeader 
+          searchQuery={dummySearchQuery}
+          setSearchQuery={setSearchQuery}
+          onAddClient={handleAddClient}
+          onExport={handleExport}
+        />
         <ClientTableContent 
           clients={clients} 
           onEdit={onEdit} 

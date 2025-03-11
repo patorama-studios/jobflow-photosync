@@ -6,7 +6,7 @@ import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 interface GoogleAddressAutocompleteProps {
   value: string;
   onChange: (address: string) => void;
-  onSelect?: (place: any) => void;
+  onSelect?: (place: google.maps.places.PlaceResult) => void;
   placeholder?: string;
   className?: string;
 }
@@ -25,7 +25,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
       try {
-        autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        autocompleteRef.current = new google.maps.places.Autocomplete(
           inputRef.current,
           { types: ['address'], componentRestrictions: { country: 'au' } }
         );

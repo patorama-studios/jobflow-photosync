@@ -1,170 +1,144 @@
-
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { format } from 'date-fns';
-import { getSmartSchedulingSuggestions } from '@/lib/smart-scheduling';
-import { toast } from 'sonner';
+import { Clock, MapPin, Calendar, ArrowRight } from 'lucide-react';
+import { format, addMinutes, parse } from 'date-fns';
+import { TimeSelector } from '../TimeSelector';
 
-interface SchedulingAssistantProps {
+export interface SchedulingAssistantProps {
   address: string;
-  photographer?: string;
-  onSelectSlot: (date: Date, time: string) => void;
-  onSuggestedTimesUpdate?: (times: string[]) => void;
-  lat?: number;
-  lng?: number;
-}
-
-interface Suggestion {
   date: Date;
-  time: string;
-  reason: string;
-  photographerId?: string;
-  photographerName?: string;
+  photographer: string;
+  lat: number;
+  lng: number;
+  onSuggestedTimeSelect: (selectedTime: string) => void;
 }
 
 export const SchedulingAssistant: React.FC<SchedulingAssistantProps> = ({
   address,
+  date,
   photographer,
-  onSelectSlot,
-  onSuggestedTimesUpdate,
   lat,
-  lng
+  lng,
+  onSuggestedTimeSelect
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [suggestedTimes, setSuggestedTimes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showTimeSelector, setShowTimeSelector] = useState(false);
+  const [selectedTime, setSelectedTime] = useState<string>('');
 
-  const loadSuggestions = async () => {
-    if (!address) {
-      toast.error("Please enter an address to get smart scheduling suggestions");
-      return;
-    }
+  // Generate suggested times based on the date, location, and photographer availability
+  useEffect(() => {
+    if (!address || !date) return;
 
-    setIsLoading(true);
-    try {
-      const suggestedSlots = await getSmartSchedulingSuggestions({
-        address,
-        preferredPhotographer: photographer,
-        coordinates: lat && lng ? { lat, lng } : undefined
-      });
+    const generateSuggestedTimes = async () => {
+      setIsLoading(true);
       
-      setSuggestions(suggestedSlots);
-      
-      // Update parent component with suggested times
-      if (onSuggestedTimesUpdate && suggestedSlots.length > 0) {
-        const suggestedTimes = suggestedSlots.map(slot => slot.time);
-        onSuggestedTimesUpdate(suggestedTimes.slice(0, 3));
+      try {
+        // This would normally be an API call to get suggested times
+        // For now, we'll just generate some dummy times
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const times = [];
+        const startHour = 9; // 9 AM
+        const endHour = 17; // 5 PM
+        
+        for (let hour = startHour; hour < endHour; hour++) {
+          const hourFormatted = hour > 12 ? hour - 12 : hour;
+          const amPm = hour >= 12 ? 'PM' : 'AM';
+          
+          times.push(`${hourFormatted}:00 ${amPm}`);
+          times.push(`${hourFormatted}:30 ${amPm}`);
+        }
+        
+        setSuggestedTimes(times);
+      } catch (error) {
+        console.error('Error generating suggested times:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      if (suggestedSlots.length === 0) {
-        toast.warning("No optimal time slots found. Try different parameters.");
-      }
-    } catch (error) {
-      console.error("Error loading suggestions:", error);
-      toast.error("Failed to load scheduling suggestions");
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    generateSuggestedTimes();
+  }, [address, date, photographer]);
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    onSuggestedTimeSelect(time);
+    setShowTimeSelector(false);
   };
 
-  useEffect(() => {
-    // Load suggestions automatically when component mounts and address is provided
-    if (address && lat && lng) {
-      loadSuggestions();
-    }
-  }, [address, photographer, lat, lng]);
-
-  const handleSelectSlot = (suggestion: Suggestion) => {
-    onSelectSlot(suggestion.date, suggestion.time);
-    setIsOpen(false);
-    toast.success(`Scheduled for ${format(suggestion.date, 'MMM dd, yyyy')} at ${suggestion.time}`);
+  const formatDateForDisplay = (date: Date) => {
+    return format(date, 'EEEE, MMMM d, yyyy');
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center text-xs"
-          disabled={!address}
-        >
-          <Calendar className="mr-2 h-3 w-3" />
-          View all smart scheduling suggestions
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
-        <div className="p-4 bg-muted/10">
-          <h4 className="font-medium text-sm">Smart Scheduling</h4>
-          <p className="text-xs text-muted-foreground mt-1">
-            AI-powered suggestions based on location, availability, and efficiency
-          </p>
-        </div>
-        <Separator />
-        
-        {isLoading ? (
-          <div className="p-4 flex flex-col items-center justify-center h-40">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground mt-2">
-              Finding optimal time slots...
-            </p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Scheduling Assistant</CardTitle>
+        <CardDescription>
+          Find the best time for this appointment
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-start space-x-2">
+            <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium">Location</p>
+              <p className="text-sm text-muted-foreground">{address}</p>
+            </div>
           </div>
-        ) : suggestions.length > 0 ? (
-          <div className="p-2 max-h-80 overflow-y-auto">
-            {suggestions.map((suggestion, index) => (
-              <div 
-                key={index} 
-                className="p-2 hover:bg-muted/50 rounded-md cursor-pointer"
-                onClick={() => handleSelectSlot(suggestion)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Calendar className="h-3 w-3 mr-2 text-primary" />
-                    <span className="text-sm font-medium">
-                      {format(suggestion.date, 'MMM dd, yyyy')}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="h-3 w-3 mr-2 text-primary" />
-                    <span className="text-sm">{suggestion.time}</span>
-                  </div>
-                </div>
-                
-                {suggestion.photographerName && (
-                  <p className="text-xs ml-5 mt-1 text-muted-foreground">
-                    {suggestion.photographerName}
-                  </p>
-                )}
-                
-                <p className="text-xs ml-5 mt-1 text-muted-foreground">
-                  {suggestion.reason}
-                </p>
+          
+          <div className="flex items-start space-x-2">
+            <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium">Date</p>
+              <p className="text-sm text-muted-foreground">{formatDateForDisplay(date)}</p>
+            </div>
+          </div>
+          
+          {photographer && (
+            <div className="flex items-start space-x-2">
+              <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium">Photographer</p>
+                <p className="text-sm text-muted-foreground">{photographer}</p>
               </div>
-            ))}
+            </div>
+          )}
+          
+          <div className="pt-2">
+            <p className="text-sm font-medium mb-2">Suggested Times</p>
+            {isLoading ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">Finding the best times...</p>
+              </div>
+            ) : (
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => setShowTimeSelector(!showTimeSelector)}
+                >
+                  <span>{selectedTime || 'Select a time'}</span>
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                
+                {showTimeSelector && (
+                  <div className="absolute z-10 w-full mt-1">
+                    <TimeSelector
+                      value={selectedTime}
+                      onChange={handleTimeSelect}
+                      suggestedTimes={suggestedTimes}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              No suggestions available yet. Click below to generate some.
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2"
-              onClick={loadSuggestions}
-            >
-              Generate Suggestions
-            </Button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

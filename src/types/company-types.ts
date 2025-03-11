@@ -1,4 +1,3 @@
-
 // Define company interface
 export interface Company {
   id: string;
@@ -39,4 +38,22 @@ export interface CompanyResponse {
   total_jobs: number | null;
   outstanding_amount: number | null;
   total_revenue: number | null;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  company_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  contact_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  notes?: string;
+  status?: string;
+  photo_url?: string;
 }

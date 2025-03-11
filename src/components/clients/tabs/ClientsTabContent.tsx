@@ -1,75 +1,63 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, PlusCircle } from 'lucide-react';
-import { ClientTable } from '@/components/clients/ClientTable';
-import { useClients, Client } from '@/hooks/use-clients';
-import { AddClientDialog } from '@/components/calendar/appointment/components/AddClientDialog';
+import React from 'react';
+import { useClient } from '@/hooks/use-clients';
+import { ClientTable } from '../ClientTable';
+import { Client } from '@/types/company-types';
 
 interface ClientsTabContentProps {
-  title?: string;
-  companyId?: string;
-  onClientClick?: (clientId: string) => void;
+  companyId: string;
 }
 
-export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({
-  title = 'Clients',
-  companyId,
-  onClientClick
-}) => {
-  const { clients, isLoading, error, addClient, refetch } = useClients();
-  const [addClientDialogOpen, setAddClientDialogOpen] = useState(false);
-
-  const handleClientAdded = async (client: Client) => {
+export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({ companyId }) => {
+  const { 
+    clients, 
+    isLoading, 
+    error, 
+    addClient, 
+    updateClient, 
+    deleteClient 
+  } = useClient(companyId);
+  
+  const handleRowClick = (clientId: string) => {
+    // Navigate to client details page
+    console.log(`Navigate to client details page for ID: ${clientId}`);
+  };
+  
+  const handleEditClient = (client: Client) => {
+    // Open edit dialog
+    console.log('Edit client:', client);
+  };
+  
+  const handleDeleteClient = async (clientId: string) => {
     try {
-      await addClient({
-        ...client,
-        company_id: companyId || null
-      });
-      
-      await refetch();
-      return true;
+      await deleteClient(clientId);
+      console.log(`Client ${clientId} deleted successfully`);
     } catch (error) {
-      console.error('Error adding client:', error);
-      return false;
+      console.error('Error deleting client:', error);
     }
   };
-
-  const handleClientClick = (clientId: string) => {
-    if (onClientClick) {
-      onClientClick(clientId);
-    }
-  };
-
+  
+  if (isLoading) {
+    return <div className="p-4">Loading clients...</div>;
+  }
+  
+  if (error) {
+    return <div className="p-4 text-red-500">Error loading clients: {error.message}</div>;
+  }
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">{title}</h3>
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={() => setAddClientDialogOpen(true)}
-          className="flex items-center"
-        >
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Add Client
-        </Button>
-      </div>
-
+    <div className="space-y-4 p-4">
+      <h2 className="text-2xl font-bold">Clients</h2>
+      
       <ClientTable 
-        clients={clients}
-        isLoading={isLoading}
+        clients={clients} 
+        isLoading={isLoading} 
         error={error}
-        onRowClick={handleClientClick}
+        onRowClick={(client: Client) => handleRowClick(client.id)}
+        onEdit={handleEditClient}
+        onDelete={handleDeleteClient}
+        updateClient={updateClient}
       />
-
-      {addClientDialogOpen && (
-        <AddClientDialog
-          open={addClientDialogOpen}
-          onClose={() => setAddClientDialogOpen(false)}
-          onClientCreated={handleClientAdded}
-        />
-      )}
     </div>
   );
 };

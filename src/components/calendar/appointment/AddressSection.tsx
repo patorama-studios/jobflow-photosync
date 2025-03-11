@@ -1,143 +1,215 @@
 
-import React, { useState, useEffect } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
-import { toast } from 'sonner';
+import React, { useState } from 'react';
+import { Address } from '@/types/order-types';
+import { AddressDetails } from '@/lib/address-utils';
+import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { GoogleMapsInput } from './address/GoogleMapsInput';
-import { ManualAddressForm } from './address/ManualAddressForm';
+import { AddressMap } from './address/AddressMap';
 import { AddressDisplay } from './address/AddressDisplay';
-import { SchedulingSection } from './scheduling/SchedulingSection';
-
-export interface AddressDetails {
-  formattedAddress: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  lat: number;
-  lng: number;
-  streetAddress?: string;
-  country?: string;
-}
+import { Button } from '@/components/ui/button';
+import { MapPin, Edit } from 'lucide-react';
+import { UseFormReturn } from 'react-hook-form';
 
 interface AddressSectionProps {
-  addressDetails: AddressDetails;
-  selectedPhotographer?: string;
-  onAddressSelect: (addressDetails: AddressDetails) => void;
-  onScheduleSelect?: (date: Date, time: string) => void;
-  selectedDate?: Date;
-  selectedTime?: string;
+  form: UseFormReturn<any>;
+  onChange?: (address: Address) => void;
 }
 
-export const AddressSection: React.FC<AddressSectionProps> = ({ 
-  addressDetails, 
-  selectedPhotographer,
-  onAddressSelect,
-  onScheduleSelect,
-  selectedDate,
-  selectedTime
-}) => {
-  const { error } = useGoogleMaps();
-  const isMobile = useIsMobile();
-  const [manualEntry, setManualEntry] = useState<boolean>(false);
-  const [date, setDate] = useState<Date>(selectedDate || new Date());
-  const [time, setTime] = useState<string>(selectedTime || "9:00 AM");
+// Update the GoogleMapsInputProps interface to match what the component expects
+interface GoogleMapsInputProps {
+  onAddressSelect: (addressDetails: AddressDetails) => void;
+}
+
+export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }) => {
+  const [addressDetails, setAddressDetails] = useState<AddressDetails | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
   
-  // Update manual entry when error changes
-  useEffect(() => {
-    if (error) {
-      setManualEntry(true);
-      toast.error("Google Maps could not be loaded. Please enter address manually.");
-    }
-  }, [error]);
-
-  const handleManualAddressInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleAddressSelect = (details: AddressDetails) => {
+    setAddressDetails(details);
+    setShowMap(true);
     
-    // Create a partial object with just the updated field
-    const updatedField = { [name]: value };
-    
-    // Pass the updated address to parent, maintaining other values
-    onAddressSelect({
-      formattedAddress: name === 'streetAddress' ? 
-        `${value}, ${addressDetails.city}, ${addressDetails.state} ${addressDetails.postalCode}` : 
-        addressDetails.formattedAddress,
-      streetAddress: name === 'streetAddress' ? value : addressDetails.streetAddress,
-      city: name === 'city' ? value : addressDetails.city,
-      state: name === 'state' ? value : addressDetails.state,
-      postalCode: name === 'postalCode' ? value : addressDetails.postalCode,
-      country: 'Australia', // Default to Australia
-      lat: addressDetails.lat || 0,
-      lng: addressDetails.lng || 0,
-      ...updatedField
-    });
-  };
-
-  const handleDateChange = (newDate: Date) => {
-    setDate(newDate);
-    if (onScheduleSelect) {
-      onScheduleSelect(newDate, time);
+    if (onChange) {
+      onChange({
+        street: details.streetAddress,
+        city: details.city,
+        state: details.state,
+        zip: details.postalCode,
+        lat: details.lat,
+        lng: details.lng,
+        formatted_address: details.formattedAddress
+      });
     }
+    
+    // Update the form
+    form.setValue('address', details.formattedAddress);
+    form.setValue('city', details.city);
+    form.setValue('state', details.state);
+    form.setValue('zip', details.postalCode);
   };
   
-  const handleTimeChange = (newTime: string) => {
-    setTime(newTime);
-    if (onScheduleSelect) {
-      onScheduleSelect(date, newTime);
+  const toggleManualMode = () => {
+    setManualMode(!manualMode);
+    setShowMap(false);
+  };
+  
+  const updateAddressFromManualForm = () => {
+    const streetAddress = form.getValues('address');
+    const city = form.getValues('city');
+    const state = form.getValues('state');
+    const zip = form.getValues('zip');
+    
+    if (streetAddress && city && state && zip) {
+      const fullAddress = `${streetAddress}, ${city}, ${state} ${zip}`;
+      
+      // Create a simplified address details object
+      const manualAddressDetails: AddressDetails = {
+        formattedAddress: fullAddress,
+        streetAddress: streetAddress || '',
+        city: city || '',
+        state: state || '',
+        postalCode: zip || '',
+        lat: 0, // Default value
+        lng: 0  // Default value
+      };
+      
+      setAddressDetails(manualAddressDetails);
+      
+      if (onChange) {
+        onChange({
+          street: streetAddress,
+          city,
+          state,
+          zip,
+          formatted_address: fullAddress,
+          lat: 0, // Default value
+          lng: 0  // Default value
+        });
+      }
     }
   };
-
+  
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-sm font-medium mb-2">Address</p>
-        
-        <GoogleMapsInput 
-          addressDetails={addressDetails} 
-          onAddressSelect={onAddressSelect} 
-        />
-        
-        {!error && (
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={() => setManualEntry(!manualEntry)}
-              className="text-xs text-primary hover:underline"
-            >
-              {manualEntry ? "Use address search" : "Enter address manually"}
-            </button>
-          </div>
-        )}
-        
-        {/* Manual address entry form */}
-        {(manualEntry || error) && (
-          <ManualAddressForm 
-            addressDetails={addressDetails}
-            onAddressChange={handleManualAddressInput}
-          />
-        )}
-        
-        {/* Display the address details with map */}
-        {addressDetails.formattedAddress && !manualEntry && (
-          <AddressDisplay 
-            addressDetails={addressDetails} 
-            isMobile={isMobile}
-          />
-        )}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-medium">Property Information</h3>
+        <Button variant="outline" size="sm" onClick={toggleManualMode}>
+          {manualMode ? 'Use Address Search' : 'Enter Manually'}
+        </Button>
       </div>
       
-      {/* Date and Time section */}
-      {onScheduleSelect && (
-        <SchedulingSection
-          date={date}
-          time={time}
-          address={addressDetails.formattedAddress}
-          photographer={selectedPhotographer}
-          onDateChange={handleDateChange}
-          onTimeChange={handleTimeChange}
-          lat={addressDetails.lat}
-          lng={addressDetails.lng}
-        />
+      {!manualMode ? (
+        // Google Maps search mode
+        <div className="space-y-4">
+          <GoogleMapsInput
+            onAddressSelect={handleAddressSelect}
+          />
+          
+          {showMap && addressDetails && (
+            <div className="mt-4 space-y-4">
+              <AddressDisplay address={addressDetails.formattedAddress} />
+              
+              <AddressMap
+                address={addressDetails.formattedAddress}
+                lat={addressDetails.lat}
+                lng={addressDetails.lng}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        // Manual entry mode
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Street Address</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Street address" 
+                    {...field} 
+                    onChange={(e) => {
+                      field.onChange(e);
+                    }}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="City"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="State"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="zip"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Zip</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Zip/Postal Code"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={updateAddressFromManualForm}
+            className="mt-2"
+          >
+            <MapPin className="mr-2 h-4 w-4" />
+            Update Address
+          </Button>
+        </div>
       )}
     </div>
   );
-}
+};
