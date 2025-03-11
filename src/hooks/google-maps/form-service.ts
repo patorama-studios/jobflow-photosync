@@ -1,12 +1,12 @@
 
-import { PlaceResult, AddressDetails } from './types';
+import { AddressDetails } from './types';
 
 /**
  * Updates form values with address details from Google Places API
  */
 export const updateFormWithPlaceDetails = (
   place: google.maps.places.PlaceResult | null,
-  prediction: PlaceResult,
+  prediction: any,
   form: any
 ): AddressDetails | null => {
   // Set address fields

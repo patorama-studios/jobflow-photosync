@@ -1,5 +1,5 @@
 
-import { PlaceResult, AddressDetails } from './types';
+import { AddressDetails } from './types';
 import { updateFormWithPlaceDetails } from './form-service';
 
 /**
@@ -7,7 +7,7 @@ import { updateFormWithPlaceDetails } from './form-service';
  */
 export const handlePlaceDetails = (
   place: google.maps.places.PlaceResult | null,
-  prediction: PlaceResult,
+  prediction: any,
   form: any
 ): AddressDetails | null => {
   if (!place) {

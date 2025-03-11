@@ -50,7 +50,7 @@ export const useGoogleMapsServices = () => {
       setIsLoading(true);
       const script = document.createElement('script');
       script.id = 'google-maps-script';
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDof5HeiGV-WBmXrPJrEtcSr0ZPKiEhHqI&libraries=places';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDof5HeiGV-WBmXrPJrEtcSr0ZPKiEhHqI&libraries=places`;
       script.async = true;
       script.defer = true;
       

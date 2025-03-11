@@ -111,11 +111,8 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
             return;
           }
           
-          const addressComponents = handlePlaceDetails(place, prediction, form);
-          if (addressComponents) {
-            setShowManualFields(true);
-          }
-          
+          handlePlaceDetails(place, prediction, form);
+          setShowManualFields(true);
           setAddressSuggestions([]);
         }
       );
