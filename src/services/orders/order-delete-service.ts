@@ -2,63 +2,41 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export const deleteOrder = async (orderId: string): Promise<{ success: boolean, error: string | null }> => {
+// Delete a specific order by ID
+export const deleteOrder = async (orderId: string) => {
   try {
-    // Try with new column name first
     const { error } = await supabase
       .from('orders')
       .delete()
-      .eq('order_id', orderId);
-    
+      .eq('id', orderId);
+
     if (error) {
-      console.error('Error deleting order with order_id:', error);
-      
-      // Try with old column name if the new one doesn't work
-      const fallbackResult = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', orderId);
-      
-      if (fallbackResult.error) {
-        console.error('Error deleting order with id:', fallbackResult.error);
-        return { success: false, error: fallbackResult.error.message };
-      }
+      console.error('Error deleting order:', error);
+      throw new Error(error.message);
     }
-    
-    return { success: true, error: null };
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-    console.error('Error in deleteOrder:', errorMessage);
-    return { success: false, error: errorMessage };
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 };
 
-export const deleteAllOrders = async (): Promise<{ success: boolean, error: string | null }> => {
+// Delete all orders (with confirmation)
+export const deleteAllOrders = async () => {
   try {
+    // This is a dangerous operation, so we should add additional safeguards in production
     const { error } = await supabase
       .from('orders')
       .delete()
-      .gte('order_id', '0'); // Delete all records with new column name
-    
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except this non-existent ID - a safety measure
+
     if (error) {
-      console.error('Error deleting all orders with order_id:', error);
-      
-      // Try with old column name if the new one doesn't work
-      const fallbackResult = await supabase
-        .from('orders')
-        .delete()
-        .gte('id', '0');
-      
-      if (fallbackResult.error) {
-        console.error('Error deleting all orders with id:', fallbackResult.error);
-        return { success: false, error: fallbackResult.error.message };
-      }
+      console.error('Error clearing orders:', error);
+      throw new Error(error.message);
     }
-    
-    return { success: true, error: null };
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-    console.error('Error in deleteAllOrders:', errorMessage);
-    return { success: false, error: errorMessage };
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 };

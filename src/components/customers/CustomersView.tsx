@@ -5,15 +5,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Search, Filter, Building, Users } from "lucide-react";
-import { mockCustomers } from "./mock-data";
 import { Client, useClients } from "@/hooks/use-clients";
+import { Company, useCompanies } from "@/hooks/use-companies";
 import { AddClientDialog } from "@/components/calendar/appointment/components/AddClientDialog";
+import { AddCompanyDialog } from "@/components/customers/AddCompanyDialog";
 
 export function CustomersView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("clients");
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
-  const { clients, isLoading, error, refetch } = useClients();
+  const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
+  
+  const { clients, isLoading: isClientsLoading, error: clientsError, refetch: refetchClients } = useClients();
+  const { companies, isLoading: isCompaniesLoading, error: companiesError, refetch: refetchCompanies } = useCompanies();
   
   // Filter customers based on search query
   const filteredClients = clients.filter(client => 
@@ -22,12 +26,27 @@ export function CustomersView() {
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddClient = () => {
-    setIsAddClientDialogOpen(true);
+  // Filter companies based on search query
+  const filteredCompanies = companies.filter(company => 
+    company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (company.industry && company.industry.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (company.email && company.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const handleAddClick = () => {
+    if (activeTab === "clients") {
+      setIsAddClientDialogOpen(true);
+    } else {
+      setIsAddCompanyDialogOpen(true);
+    }
   };
 
-  const handleClientCreated = (client: any) => {
-    refetch();
+  const handleClientCreated = (client: Client) => {
+    refetchClients();
+  };
+
+  const handleCompanyCreated = (company: Company) => {
+    refetchCompanies();
   };
 
   return (
@@ -35,9 +54,9 @@ export function CustomersView() {
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">Customers</h2>
-          <Button className="flex items-center" onClick={handleAddClient}>
+          <Button className="flex items-center" onClick={handleAddClick}>
             <UserPlus className="h-4 w-4 mr-2" />
-            Add Customer
+            {activeTab === "clients" ? "Add Customer" : "Add Company"}
           </Button>
         </div>
         
@@ -45,7 +64,7 @@ export function CustomersView() {
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input 
-              placeholder="Search customers..." 
+              placeholder="Search..." 
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -94,11 +113,11 @@ export function CustomersView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading ? (
+                  {isClientsLoading ? (
                     <tr>
                       <td colSpan={6} className="text-center py-8">Loading clients...</td>
                     </tr>
-                  ) : error ? (
+                  ) : clientsError ? (
                     <tr>
                       <td colSpan={6} className="text-center py-8 text-red-500">Error loading clients</td>
                     </tr>
@@ -161,11 +180,54 @@ export function CustomersView() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td colSpan={6} className="text-center py-8">
-                      <p className="text-muted-foreground">Company listing will be implemented in a future update.</p>
-                    </td>
-                  </tr>
+                  {isCompaniesLoading ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-8">Loading companies...</td>
+                    </tr>
+                  ) : companiesError ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-8 text-red-500">Error loading companies</td>
+                    </tr>
+                  ) : filteredCompanies.length > 0 ? (
+                    filteredCompanies.map((company) => (
+                      <tr 
+                        key={company.id} 
+                        className="border-b hover:bg-muted/50 cursor-pointer"
+                        onClick={() => window.location.href = `/companies/${company.id}`}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
+                              {company.logo_url && (
+                                <img 
+                                  src={company.logo_url} 
+                                  alt={company.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <span className="font-medium">{company.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <div>{company.email || '-'}</div>
+                            <div className="text-sm text-muted-foreground">{company.phone || '-'}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">{company.industry || 'Real Estate'}</td>
+                        <td className="px-4 py-3 text-right">{company.total_jobs || 0}</td>
+                        <td className="px-4 py-3 text-right">{company.open_jobs || 0}</td>
+                        <td className="px-4 py-3 text-right">${(company.total_revenue || 0).toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="text-center py-8">
+                        <p className="text-muted-foreground">No companies found. Try adjusting your search.</p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -195,6 +257,12 @@ export function CustomersView() {
         isOpen={isAddClientDialogOpen} 
         onClose={() => setIsAddClientDialogOpen(false)}
         onClientCreated={handleClientCreated}
+      />
+      
+      <AddCompanyDialog 
+        isOpen={isAddCompanyDialogOpen} 
+        onClose={() => setIsAddCompanyDialogOpen(false)}
+        onCompanyCreated={handleCompanyCreated}
       />
     </Card>
   );
