@@ -35,6 +35,15 @@ export default function OrderDetails() {
     handleBackClick
   } = useOrderDetailsView(orderId || '');
 
+  // Function to handle confirmation of deletion
+  const handleConfirmDeleteWrapper = async () => {
+    try {
+      await handleConfirmDelete();
+    } catch (error) {
+      console.error("Error deleting order:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -133,7 +142,7 @@ export default function OrderDetails() {
           <DeleteOrderDialog
             isOpen={isDeleteDialogOpen}
             onClose={() => setIsDeleteDialogOpen(false)}
-            onConfirm={handleConfirmDelete}
+            onConfirm={handleConfirmDeleteWrapper}
             orderNumber={order.orderNumber || order.order_number || String(order.id)}
             onOpenChange={setIsDeleteDialogOpen}
           />

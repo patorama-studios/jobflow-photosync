@@ -6,20 +6,22 @@ import { GoogleAddressAutocomplete } from '@/components/ui/google-address-autoco
 import { useGoogleMaps } from '@/contexts/GoogleMapsContext';
 import { toast } from 'sonner';
 
+interface AddressDetails {
+  formattedAddress: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
+}
+
 interface GoogleMapsInputProps {
   addressDetails: {
     formattedAddress: string;
   };
-  onAddressSelect: (address: {
-    formattedAddress: string;
-    streetAddress: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    lat: number;
-    lng: number;
-  }) => void;
+  onAddressSelect: (address: AddressDetails) => void;
 }
 
 export const GoogleMapsInput: React.FC<GoogleMapsInputProps> = ({ 
@@ -29,7 +31,7 @@ export const GoogleMapsInput: React.FC<GoogleMapsInputProps> = ({
   const { isLoaded, error, retryLoading } = useGoogleMaps();
   
   // Handle address selection from Google Maps
-  const handleAddressSelect = (address: any) => {
+  const handleAddressSelect = (address: AddressDetails) => {
     // Call the parent's onAddressSelect with the address
     onAddressSelect(address);
     
@@ -47,9 +49,16 @@ export const GoogleMapsInput: React.FC<GoogleMapsInputProps> = ({
       {isLoaded ? (
         <div className="mb-2">
           <GoogleAddressAutocomplete 
-            onAddressSelect={handleAddressSelect}
+            value={addressDetails.formattedAddress}
+            onChange={(value) => {
+              // This will be called when the input changes
+              console.log("Input changed:", value);
+            }}
+            onSelect={(address) => {
+              // This will be called when an address is selected
+              handleAddressSelect(address as AddressDetails);
+            }}
             placeholder="Search an address..." 
-            defaultValue={addressDetails.formattedAddress}
             className="w-full"
           />
         </div>

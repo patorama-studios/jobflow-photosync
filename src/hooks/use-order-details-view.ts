@@ -25,28 +25,6 @@ export function useOrderDetailsView(orderId: string) {
     deleteOrder 
   } = useOrderDetails(orderId);
   
-  // Get action handlers from the actions hook
-  const {
-    handleDeleteClick,
-    handleConfirmDelete,
-    handleSaveClick,
-    handleBackClick
-  } = useOrderActions({
-    orderId,
-    deleteOrder: () => {
-      return new Promise<void>((resolve, reject) => {
-        try {
-          deleteOrder();
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    },
-    setIsEditing,
-    setIsDeleteDialogOpen
-  });
-
   // Create a wrapper for the deleteOrder function that returns a Promise
   const deleteOrderWithPromise = async (): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
@@ -59,17 +37,18 @@ export function useOrderDetailsView(orderId: string) {
     });
   };
 
-  // Create a Promise-based confirm delete handler
-  const handleConfirmDeleteAsync = async (): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-      try {
-        handleConfirmDelete();
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
+  // Get action handlers from the actions hook
+  const {
+    handleDeleteClick,
+    handleConfirmDelete,
+    handleSaveClick,
+    handleBackClick
+  } = useOrderActions({
+    orderId,
+    deleteOrder: deleteOrderWithPromise,
+    setIsEditing,
+    setIsDeleteDialogOpen
+  });
 
   // Return all the state and handlers from all hooks
   return {
@@ -88,7 +67,7 @@ export function useOrderDetailsView(orderId: string) {
     
     // Action handlers
     handleDeleteClick,
-    handleConfirmDelete: handleConfirmDeleteAsync,
+    handleConfirmDelete,
     handleEditClick,
     handleCancelClick,
     handleSaveClick,

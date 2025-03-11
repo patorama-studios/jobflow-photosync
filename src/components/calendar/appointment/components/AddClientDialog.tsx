@@ -21,14 +21,14 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface AddClientDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onClientCreated: (client: any) => void;
   companyId?: string;
 }
 
 export const AddClientDialog: React.FC<AddClientDialogProps> = ({ 
-  isOpen, 
+  open, 
   onClose, 
   onClientCreated,
   companyId
@@ -70,7 +70,7 @@ export const AddClientDialog: React.FC<AddClientDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Client</DialogTitle>

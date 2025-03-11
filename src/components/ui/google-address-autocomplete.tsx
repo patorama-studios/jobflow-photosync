@@ -1,110 +1,140 @@
 
-import React, { useRef, useEffect } from 'react';
-import { Input } from './input';
-import { useGoogleAutocomplete, Address } from '@/hooks/use-google-autocomplete';
-import { Label } from './label';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from './form';
-import { UseFormReturn } from 'react-hook-form';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Input } from "./input";
 
-interface GoogleAddressAutocompleteProps {
-  label?: string;
-  placeholder?: string;
-  defaultValue?: string;
-  onChange?: (address: Address) => void;
-  className?: string;
-  form?: UseFormReturn<any>;
-  formField?: string;
-  required?: boolean;
+export interface GoogleAddressAutocompleteProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  value?: string;
+  onChange?: (value: string) => void;
+  onSelect?: (address: {
+    formattedAddress: string;
+    streetAddress?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    lat?: number;
+    lng?: number;
+  }) => void;
 }
 
-export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps> = ({
-  label,
-  placeholder = 'Enter address',
-  defaultValue = '',
-  onChange,
-  className = '',
-  form,
-  formField,
-  required = false
-}) => {
-  const {
-    address,
-    inputRef,
-    inputValue,
-    error,
-    initAutocomplete,
-    handleInputChange,
-    handleInputFocus,
-    updateAddress
-  } = useGoogleAutocomplete();
-  
-  const localInputRef = useRef<HTMLInputElement>(null);
-  
-  // Initialize autocomplete when component mounts
-  useEffect(() => {
-    if (localInputRef.current) {
-      initAutocomplete(localInputRef.current);
-    }
-  }, [initAutocomplete]);
-  
-  // Call onChange prop when address changes
-  useEffect(() => {
-    if (onChange && address.formattedAddress) {
-      onChange(address);
-    }
-  }, [address, onChange]);
+export const GoogleAddressAutocomplete = React.forwardRef<
+  HTMLInputElement,
+  GoogleAddressAutocompleteProps
+>(({ className, onChange, onSelect, ...props }, ref) => {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const autocompleteRef = React.useRef<google.maps.places.Autocomplete | null>(null);
 
-  // If we're using the form integration
-  if (form && formField) {
-    return (
-      <FormField
-        control={form.control}
-        name={formField}
-        render={({ field }) => (
-          <FormItem>
-            {label && <FormLabel>{label}{required && <span className="text-red-500 ml-1">*</span>}</FormLabel>}
-            <FormControl>
-              <Input
-                ref={(el) => {
-                  // Store in both refs
-                  localInputRef.current = el;
-                  // Only update form value when address is selected
-                  field.onChange(address.formattedAddress || field.value);
-                }}
-                placeholder={placeholder}
-                defaultValue={defaultValue}
-                value={inputValue || field.value}
-                onChange={(e) => {
-                  handleInputChange(e);
-                  // Don't update form yet - wait for selection
-                }}
-                onFocus={handleInputFocus}
-                className={className}
-                autoComplete="off"
-              />
-            </FormControl>
-            {error && <FormMessage>{error}</FormMessage>}
-          </FormItem>
-        )}
-      />
-    );
-  }
+  React.useEffect(() => {
+    if (!inputRef.current || !window.google || !window.google.maps || !window.google.maps.places) {
+      return;
+    }
 
-  // For standalone use without form integration
+    // Initialize Google Places Autocomplete
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+      componentRestrictions: { country: "au" }, // Restrict to Australia
+      fields: ["address_components", "formatted_address", "geometry"],
+    });
+
+    // Add listener for place selection
+    autocompleteRef.current.addListener("place_changed", () => {
+      if (!autocompleteRef.current) return;
+
+      const place = autocompleteRef.current.getPlace();
+      
+      if (!place || !place.formatted_address) {
+        return;
+      }
+
+      let streetAddress = "";
+      let city = "";
+      let state = "";
+      let postalCode = "";
+      let country = "";
+
+      // Extract address components
+      if (place.address_components) {
+        for (const component of place.address_components) {
+          const componentType = component.types[0];
+
+          switch (componentType) {
+            case "street_number": {
+              streetAddress = `${component.long_name} ${streetAddress}`;
+              break;
+            }
+            case "route": {
+              streetAddress += component.long_name;
+              break;
+            }
+            case "locality": {
+              city = component.long_name;
+              break;
+            }
+            case "administrative_area_level_1": {
+              state = component.short_name;
+              break;
+            }
+            case "postal_code": {
+              postalCode = component.long_name;
+              break;
+            }
+            case "country": {
+              country = component.long_name;
+              break;
+            }
+          }
+        }
+      }
+
+      // Create address object
+      const addressData = {
+        formattedAddress: place.formatted_address,
+        streetAddress,
+        city,
+        state,
+        postalCode,
+        country,
+        lat: place.geometry?.location?.lat(),
+        lng: place.geometry?.location?.lng(),
+      };
+
+      // Call onSelect with the address data
+      if (onSelect) {
+        onSelect(addressData);
+      }
+    });
+
+    return () => {
+      // Clean up
+      if (autocompleteRef.current && window.google) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+    };
+  }, [onSelect]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(e.target.value);
+    }
+  };
+
   return (
-    <div className="space-y-2">
-      {label && <Label>{label}{required && <span className="text-red-500 ml-1">*</span>}</Label>}
-      <Input
-        ref={localInputRef}
-        placeholder={placeholder}
-        defaultValue={defaultValue}
-        value={inputValue}
-        onChange={handleInputChange}
-        onFocus={handleInputFocus}
-        className={className}
-        autoComplete="off"
-      />
-      {error && <p className="text-sm text-red-500">{error}</p>}
-    </div>
+    <Input
+      type="text"
+      className={cn(className)}
+      ref={(node) => {
+        inputRef.current = node;
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      }}
+      onChange={handleChange}
+      {...props}
+    />
   );
-};
+});
+
+GoogleAddressAutocomplete.displayName = "GoogleAddressAutocomplete";
