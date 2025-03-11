@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ToggleSection } from '../components/ToggleSection';
 import { UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 interface PropertyInformationSectionProps {
   form: UseFormReturn<any>;
@@ -21,17 +21,19 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   const [showManualFields, setShowManualFields] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const autocompleteService = useRef<any>(null);
-  const placesService = useRef<any>(null);
+  
+  // Define refs for Google Maps services
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   
   // Initialize Google Maps Services
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.google && window.google.maps) {
-      autocompleteService.current = new window.google.maps.places.AutocompleteService();
+    if (typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.places) {
+      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
       
       // Create a dummy div for PlacesService (it needs a DOM element)
       const dummyDiv = document.createElement('div');
-      placesService.current = new window.google.maps.places.PlacesService(dummyDiv);
+      placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDiv);
     }
   }, []);
 
@@ -40,7 +42,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     const query = e.target.value;
     form.setValue('address', query);
     
-    if (query.length < 3 || !autocompleteService.current) {
+    if (query.length < 3 || !autocompleteServiceRef.current) {
       setAddressSuggestions([]);
       return;
     }
@@ -48,14 +50,14 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     setIsSearching(true);
     
     // Use Google Places Autocomplete with location bias for Australia
-    autocompleteService.current.getPlacePredictions({
+    autocompleteServiceRef.current.getPlacePredictions({
       input: query,
       componentRestrictions: { country: 'au' }, // Restrict to Australia
       types: ['address']
-    }, (predictions: any, status: any) => {
+    }, (predictions: google.maps.places.AutocompletePrediction[] | null, status: google.maps.places.PlacesServiceStatus) => {
       setIsSearching(false);
       
-      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions) {
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
         setAddressSuggestions([]);
         return;
       }
@@ -64,19 +66,19 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
     });
   };
   
-  const handleSelectAddress = (prediction: any) => {
-    if (!placesService.current) {
+  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
+    if (!placesServiceRef.current) {
       form.setValue('address', prediction.description);
       setAddressSuggestions([]);
       return;
     }
     
     // Get place details to extract components like city, state, zip
-    placesService.current.getDetails({
+    placesServiceRef.current.getDetails({
       placeId: prediction.place_id,
       fields: ['address_components', 'formatted_address']
-    }, (place: any, status: any) => {
-      if (status !== window.google.maps.places.PlacesServiceStatus.OK || !place) {
+    }, (place: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
         form.setValue('address', prediction.description);
         setAddressSuggestions([]);
         return;

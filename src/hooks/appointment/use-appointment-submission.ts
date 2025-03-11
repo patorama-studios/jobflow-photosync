@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { UseFormReturn } from 'react-hook-form';
 import { createOrder } from '@/services/orders/order-modify-service';
-import { SelectedProduct, CustomItem } from './use-scheduling-details';
+import { SelectedProduct, CustomItem } from '../create-appointment-form';
 
 interface UseAppointmentSubmissionProps {
   form: UseFormReturn<any>;

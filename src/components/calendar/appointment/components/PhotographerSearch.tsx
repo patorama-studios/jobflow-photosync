@@ -47,7 +47,7 @@ export const PhotographerSearch: React.FC<PhotographerSearchProps> = ({
         const mappedPhotographers = data.map((profile): Photographer => ({
           id: profile.id,
           name: profile.full_name || profile.username || 'Photographer',
-          email: profile.email || '',
+          // email is not available in the current query
           color: getColorForName(profile.full_name || profile.username || ''),
           payoutRate: 100 // Default payout rate
         }));

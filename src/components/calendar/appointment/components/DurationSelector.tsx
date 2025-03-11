@@ -45,4 +45,4 @@ export const DurationSelector: React.FC<DurationSelectorProps> = ({
       </RadioGroup>
     </div>
   );
-};
+}

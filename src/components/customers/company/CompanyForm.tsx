@@ -80,34 +80,42 @@ export function CompanyForm({ onClose, onCompanyCreated }: CompanyFormProps) {
       if (newCompany && teamMembers.length > 0) {
         try {
           // Create team if we have team members
+          // First execute the SQL migration to ensure tables exist
+          await supabase.rpc('run_migration', { migration_name: '20240519_company_teams' }).catch(err => {
+            console.log('Migration may already be applied', err);
+          });
+          
+          // Create company team
           const { data: teamData, error: teamError } = await supabase
             .from('company_teams')
-            .insert([{
+            .insert({
               company_id: newCompany.id,
               name: teamName || `${data.name} Team`,
               created_at: new Date().toISOString()
-            }])
-            .select();
+            })
+            .select('*')
+            .single();
           
           if (teamError) {
             console.error('Error creating team:', teamError);
             toast.error(`Failed to create team: ${teamError.message}`);
-          } else if (teamData && teamData[0]) {
+          } else if (teamData) {
             // Add team members
-            const teamId = teamData[0].id;
-            const teamMembersData = teamMembers.map(member => ({
-              team_id: teamId,
-              client_id: member.id,
-              created_at: new Date().toISOString()
-            }));
+            const teamId = teamData.id;
             
-            const { error: memberError } = await supabase
-              .from('company_team_members')
-              .insert(teamMembersData);
-              
-            if (memberError) {
-              console.error('Error adding team members:', memberError);
-              toast.error(`Failed to add team members: ${memberError.message}`);
+            for (const member of teamMembers) {
+              const { error: memberError } = await supabase
+                .from('company_team_members')
+                .insert({
+                  team_id: teamId,
+                  client_id: member.id,
+                  created_at: new Date().toISOString()
+                });
+                
+              if (memberError) {
+                console.error('Error adding team member:', memberError);
+                toast.error(`Failed to add team member ${member.name}: ${memberError.message}`);
+              }
             }
           }
         } catch (teamErr: any) {

@@ -12,36 +12,42 @@ export const saveOrderChanges = async (order: Order): Promise<{ success: boolean
   try {
     // Prepare the order data for Supabase
     const orderData = {
-      ...order,
-      order_id: String(order.id), // Include both id formats for backward compatibility
       id: String(order.id),
+      order_id: String(order.id), // Include both id formats for backward compatibility
       scheduled_date: order.scheduledDate,
       scheduled_time: order.scheduledTime,
       appointment_start: new Date(order.scheduledDate).toISOString(),
       // Calculate appointment_end as 2 hours after appointment_start
       appointment_end: new Date(new Date(order.scheduledDate).getTime() + 2 * 60 * 60 * 1000).toISOString(),
-      total_order_price: order.price
+      total_order_price: order.price,
+      address: order.address,
+      city: order.city,
+      state: order.state,
+      zip: order.zip,
+      client: order.client || order.customerName,
+      client_email: order.clientEmail || order.client_email,
+      client_phone: order.clientPhone || order.client_phone,
+      photographer: order.photographer,
+      photographer_payout_rate: order.photographerPayoutRate || order.photographer_payout_rate,
+      price: order.price,
+      property_type: order.propertyType || order.property_type,
+      square_feet: order.squareFeet || order.square_feet,
+      status: order.status,
+      internal_notes: order.internalNotes || order.internal_notes,
+      customer_notes: order.customerNotes || order.customer_notes,
+      package: order.package,
+      stripe_payment_id: order.stripePaymentId || order.stripe_payment_id
     };
     
-    // Try with new column name first
+    // Try with id column
     const { error } = await supabase
       .from('orders')
       .update(orderData)
-      .eq('order_id', String(order.id));
+      .eq('id', String(order.id));
     
     if (error) {
-      console.error('Error saving order changes with order_id:', error);
-      
-      // Try with old column name if the new one doesn't work
-      const fallbackResult = await supabase
-        .from('orders')
-        .update(orderData)
-        .eq('id', String(order.id));
-      
-      if (fallbackResult.error) {
-        console.error('Error saving order changes with id:', fallbackResult.error);
-        return { success: false, error: fallbackResult.error.message };
-      }
+      console.error('Error saving order changes:', error);
+      return { success: false, error: error.message };
     }
     
     console.log('Order updated successfully');
@@ -84,10 +90,7 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       state: order.state || '',
       status: order.status || 'pending',
       stripe_payment_id: order.stripePaymentId || order.stripe_payment_id || '',
-      zip: order.zip || '',
-      hours_on_site: 2, // Default to 2 hours on site
-      timezone: 'UTC', // Default timezone
-      total_payout_amount: (order.photographerPayoutRate || order.photographer_payout_rate || 0)
+      zip: order.zip || ''
     };
     
     const { data, error } = await supabase
