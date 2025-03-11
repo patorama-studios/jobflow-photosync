@@ -33,6 +33,7 @@ export const AddressSearchField: React.FC<AddressSearchFieldProps> = ({
                   field.onChange(e);
                   onAddressSearch(e);
                 }}
+                autoComplete="off" // Disable browser autocomplete to prevent conflicts
               />
             </FormControl>
           </div>

@@ -13,17 +13,17 @@ export const AddressSuggestionsList: React.FC<AddressSuggestionsListProps> = ({
   isSearching,
   onSelectAddress
 }) => {
-  if (suggestions.length === 0 && !isSearching) return null;
+  if (!isSearching && suggestions.length === 0) return null;
 
   return (
-    <div className="absolute z-10 w-full mt-1 border rounded-md bg-background shadow-lg">
+    <div className="absolute z-50 w-full mt-1 border rounded-md bg-background shadow-lg max-h-80 overflow-y-auto">
       {isSearching ? (
         <div className="p-2 text-center text-sm">Searching...</div>
       ) : suggestions.length > 0 ? (
-        <ul>
+        <ul className="py-1">
           {suggestions.map((prediction) => (
             <li
-              key={prediction.place_id}
+              key={prediction.place_id || Math.random().toString()}
               className="px-4 py-2 hover:bg-muted cursor-pointer"
               onClick={() => onSelectAddress(prediction)}
             >
