@@ -1,71 +1,110 @@
 
-import React, { memo } from 'react';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { useGoogleAutocomplete } from '@/hooks/use-google-autocomplete';
-import { ParsedAddress } from '@/lib/address-utils';
+import React, { useRef, useEffect } from 'react';
+import { Input } from './input';
+import { useGoogleAutocomplete, Address } from '@/hooks/use-google-autocomplete';
+import { Label } from './label';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from './form';
+import { UseFormReturn } from 'react-hook-form';
 
 interface GoogleAddressAutocompleteProps {
-  onAddressSelect: (address: ParsedAddress) => void;
+  label?: string;
   placeholder?: string;
   defaultValue?: string;
+  onChange?: (address: Address) => void;
   className?: string;
+  form?: UseFormReturn<any>;
+  formField?: string;
   required?: boolean;
-  region?: string;
-  disabled?: boolean;
-  id?: string;
 }
 
-// Memoize the component to prevent unnecessary re-renders
-export const GoogleAddressAutocomplete = memo(({
-  onAddressSelect,
-  placeholder = "Search an address...",
-  defaultValue = "",
-  className = "",
-  required = false,
-  region,
-  disabled = false,
-  id = "google-address-autocomplete"
-}: GoogleAddressAutocompleteProps) => {
+export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps> = ({
+  label,
+  placeholder = 'Enter address',
+  defaultValue = '',
+  onChange,
+  className = '',
+  form,
+  formField,
+  required = false
+}) => {
   const {
+    address,
     inputRef,
     inputValue,
     error,
+    initAutocomplete,
     handleInputChange,
-    handleInputFocus
-  } = useGoogleAutocomplete({
-    onAddressSelect,
-    defaultValue,
-    region
-  });
+    handleInputFocus,
+    updateAddress
+  } = useGoogleAutocomplete();
   
-  return (
-    <div className="relative w-full">
-      <Search 
-        className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" 
-        aria-hidden="true" 
+  const localInputRef = useRef<HTMLInputElement>(null);
+  
+  // Initialize autocomplete when component mounts
+  useEffect(() => {
+    if (localInputRef.current) {
+      initAutocomplete(localInputRef.current);
+    }
+  }, [initAutocomplete]);
+  
+  // Call onChange prop when address changes
+  useEffect(() => {
+    if (onChange && address.formattedAddress) {
+      onChange(address);
+    }
+  }, [address, onChange]);
+
+  // If we're using the form integration
+  if (form && formField) {
+    return (
+      <FormField
+        control={form.control}
+        name={formField}
+        render={({ field }) => (
+          <FormItem>
+            {label && <FormLabel>{label}{required && <span className="text-red-500 ml-1">*</span>}</FormLabel>}
+            <FormControl>
+              <Input
+                ref={(el) => {
+                  // Store in both refs
+                  localInputRef.current = el;
+                  // Only update form value when address is selected
+                  field.onChange(address.formattedAddress || field.value);
+                }}
+                placeholder={placeholder}
+                defaultValue={defaultValue}
+                value={inputValue || field.value}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  // Don't update form yet - wait for selection
+                }}
+                onFocus={handleInputFocus}
+                className={className}
+                autoComplete="off"
+              />
+            </FormControl>
+            {error && <FormMessage>{error}</FormMessage>}
+          </FormItem>
+        )}
       />
+    );
+  }
+
+  // For standalone use without form integration
+  return (
+    <div className="space-y-2">
+      {label && <Label>{label}{required && <span className="text-red-500 ml-1">*</span>}</Label>}
       <Input
-        id={id}
-        ref={inputRef}
+        ref={localInputRef}
+        placeholder={placeholder}
+        defaultValue={defaultValue}
         value={inputValue}
         onChange={handleInputChange}
         onFocus={handleInputFocus}
-        placeholder={error ? `${error} - ${placeholder}` : placeholder}
-        className={cn("pl-9", className)}
-        required={required}
-        disabled={disabled}
-        aria-label="Address search"
+        className={className}
         autoComplete="off"
       />
-      {error && (
-        <div className="text-sm text-destructive mt-1">
-          {error}. You may need to enter the address manually.
-        </div>
-      )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
-});
-
-GoogleAddressAutocomplete.displayName = 'GoogleAddressAutocomplete';
+};

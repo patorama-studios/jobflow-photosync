@@ -33,7 +33,16 @@ export function useOrderDetailsView(orderId: string) {
     handleBackClick
   } = useOrderActions({
     orderId,
-    deleteOrder,
+    deleteOrder: () => {
+      return new Promise<void>((resolve, reject) => {
+        try {
+          deleteOrder();
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+    },
     setIsEditing,
     setIsDeleteDialogOpen
   });

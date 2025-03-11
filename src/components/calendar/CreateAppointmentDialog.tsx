@@ -41,7 +41,6 @@ export function CreateAppointmentDialog({
     selectedDateTime,
     selectedTime,
     selectedDuration,
-    selectedNotification,
     customItems,
     selectedProducts,
     schedulingOpen,
@@ -61,7 +60,6 @@ export function CreateAppointmentDialog({
     handleDateChange,
     handleTimeChange,
     handleDurationChange,
-    handleNotificationMethodChange,
     handleAddCustomItem,
     handleRemoveCustomItem,
     handleProductsChange,
@@ -103,11 +101,9 @@ export function CreateAppointmentDialog({
                 selectedDateTime={selectedDateTime}
                 selectedTime={selectedTime}
                 selectedDuration={selectedDuration}
-                selectedNotification={selectedNotification}
                 onDateChange={handleDateChange}
                 onTimeChange={handleTimeChange}
                 onDurationChange={handleDurationChange}
-                onNotificationMethodChange={handleNotificationMethodChange}
                 isOpen={schedulingOpen}
                 onToggle={() => setSchedulingOpen(!schedulingOpen)}
                 isMobile={isMobile}

@@ -24,12 +24,14 @@ interface AddClientDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onClientCreated: (client: any) => void;
+  companyId?: string;
 }
 
 export const AddClientDialog: React.FC<AddClientDialogProps> = ({ 
   isOpen, 
   onClose, 
-  onClientCreated
+  onClientCreated,
+  companyId
 }) => {
   const { addClient } = useClients();
   const form = useForm<FormData>({
@@ -50,6 +52,7 @@ export const AddClientDialog: React.FC<AddClientDialogProps> = ({
         email: data.email || '',
         phone: data.phone,
         company: data.company,
+        company_id: companyId,
         status: 'active',
         total_jobs: 0,
         outstanding_jobs: 0,
@@ -67,7 +70,7 @@ export const AddClientDialog: React.FC<AddClientDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Client</DialogTitle>

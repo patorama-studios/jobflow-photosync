@@ -70,7 +70,7 @@ export const ClientsTabContent: React.FC<ClientsTabContentProps> = ({ companyId 
 
       {isAddClientDialogOpen && (
         <AddClientDialog
-          open={isAddClientDialogOpen}
+          isOpen={isAddClientDialogOpen}
           onClose={() => setIsAddClientDialogOpen(false)}
           companyId={companyId}
           onClientAdded={handleClientAdded}
