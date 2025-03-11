@@ -13,7 +13,7 @@ export const AddressSuggestionsList: React.FC<AddressSuggestionsListProps> = ({
   isSearching,
   onSelectAddress
 }) => {
-  if (!isSearching && suggestions.length === 0) return null;
+  if (suggestions.length === 0 && !isSearching) return null;
 
   return (
     <div className="absolute z-50 w-full mt-1 border rounded-md bg-background shadow-lg max-h-80 overflow-y-auto">

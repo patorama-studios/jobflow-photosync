@@ -16,40 +16,40 @@ export const useGoogleMapsServices = () => {
       dummyDivRef.current = div;
     }
 
+    const initServices = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        if (!autocompleteServiceRef.current) {
+          autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+        }
+        
+        if (!placesServiceRef.current && dummyDivRef.current) {
+          placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
+        }
+        
+        setIsLoaded(true);
+        return true;
+      }
+      return false;
+    };
+
     // Check if the Google Maps API is already loaded
-    if (window.google && window.google.maps && window.google.maps.places) {
-      if (!autocompleteServiceRef.current) {
-        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-      }
+    if (initServices()) {
+      return;
+    }
+
+    // Load the Google Maps API if it's not already loaded
+    if (!document.getElementById('google-maps-script')) {
+      const script = document.createElement('script');
+      script.id = 'google-maps-script';
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDof5HeiGV-WBmXrPJrEtcSr0ZPKiEhHqI&libraries=places';
+      script.async = true;
+      script.defer = true;
       
-      if (!placesServiceRef.current && dummyDivRef.current) {
-        placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
-      }
+      script.onload = () => {
+        initServices();
+      };
       
-      setIsLoaded(true);
-    } else {
-      // Load the Google Maps API if it's not already loaded
-      if (!document.getElementById('google-maps-script')) {
-        const script = document.createElement('script');
-        script.id = 'google-maps-script';
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDof5HeiGV-WBmXrPJrEtcSr0ZPKiEhHqI&libraries=places';
-        script.async = true;
-        script.defer = true;
-        
-        script.onload = () => {
-          if (window.google && window.google.maps && window.google.maps.places) {
-            autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-            
-            if (dummyDivRef.current) {
-              placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
-            }
-            
-            setIsLoaded(true);
-          }
-        };
-        
-        document.head.appendChild(script);
-      }
+      document.head.appendChild(script);
     }
 
     // Cleanup function

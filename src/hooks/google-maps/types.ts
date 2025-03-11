@@ -18,23 +18,20 @@ declare global {
     google: {
       maps: {
         places: {
-          AutocompleteService: new () => google.maps.places.AutocompleteService;
-          PlacesService: new (attrContainer: HTMLElement) => google.maps.places.PlacesService;
+          AutocompleteService: any;
+          PlacesService: any;
           PlacesServiceStatus: string;
-          Autocomplete: new (
-            input: HTMLInputElement,
-            options?: google.maps.places.AutocompleteOptions
-          ) => google.maps.places.Autocomplete;
+          Autocomplete: any;
         };
-        Map: new (
-          mapDiv: HTMLElement,
-          opts?: google.maps.MapOptions
-        ) => google.maps.Map;
-        Marker: new (opts?: google.maps.MarkerOptions) => google.maps.Marker;
+        Map: any;
+        Marker: any;
         Animation: {
           DROP: number;
           BOUNCE: number;
         };
+        LatLng: any;
+        LatLngBounds: any;
+        LatLngBoundsLiteral: any;
       };
     };
   }
@@ -84,7 +81,7 @@ declare namespace google.maps.places {
   }
   
   interface Autocomplete {
-    getPlace(): google.maps.places.PlaceResult;
+    getPlace(): PlaceResult;
     bindTo(bindKey: string, obj: Object, viewKey?: string, updateKey?: boolean): void;
     unbind(key: string): void;
     unbindAll(): void;

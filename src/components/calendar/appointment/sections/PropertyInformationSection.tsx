@@ -99,13 +99,11 @@ const PropertyContent: React.FC<PropertyContentProps> = ({
           onAddressSearch={handleAddressSearch} 
         />
         
-        <div className="relative">
-          <AddressSuggestionsList 
-            suggestions={addressSuggestions} 
-            isSearching={isSearching} 
-            onSelectAddress={handleSelectAddress} 
-          />
-        </div>
+        <AddressSuggestionsList 
+          suggestions={addressSuggestions} 
+          isSearching={isSearching} 
+          onSelectAddress={handleSelectAddress} 
+        />
       </div>
 
       {showManualFields && (
