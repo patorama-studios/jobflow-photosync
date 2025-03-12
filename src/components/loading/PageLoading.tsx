@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 
 type PageLoadingProps = {
   forceRefreshAfter?: number; // Seconds after which to force refresh
+  message?: string;
 };
 
-export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15 }) => {
+export const PageLoading: React.FC<PageLoadingProps> = ({ 
+  forceRefreshAfter = 10,
+  message
+}) => {
   const [loadingTime, setLoadingTime] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   // Track refresh attempts to prevent loops
@@ -55,11 +59,11 @@ export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15
   // Break refresh loop and redirect
   const handleBreakLoop = () => {
     sessionStorage.removeItem('refreshAttempts');
-    window.location.href = '/login';
+    window.location.href = '/dashboard';
   };
   
   // Different display states based on loading time and refresh attempts
-  let statusMessage = "Loading content...";
+  let statusMessage = message || "Loading content...";
   let detailMessage = "Please wait while we prepare your experience";
   
   if (isRefreshing) {
@@ -108,7 +112,7 @@ export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15
           className="mt-4"
           variant="destructive"
         >
-          Go to Login
+          Go to Dashboard
         </Button>
       )}
       
@@ -119,7 +123,7 @@ export const PageLoading: React.FC<PageLoadingProps> = ({ forceRefreshAfter = 15
             <li>Check your internet connection</li>
             <li>Try opening the app in a private/incognito window</li>
             <li>Clear your browser cache</li>
-            <li>If this persists, try logging in again from the <a href="/login" className="text-primary underline">login page</a></li>
+            <li>If this persists, try going directly to the <a href="/dashboard" className="text-primary underline">dashboard</a></li>
           </ul>
         </div>
       )}

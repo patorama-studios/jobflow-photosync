@@ -9,6 +9,7 @@ export const useGoogleMapsServices = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasErrored, setHasErrored] = useState(false);
   const [loadAttempts, setLoadAttempts] = useState(0);
+  const apiCheckIntervalRef = useRef<any>(null);
 
   useEffect(() => {
     // Create dummy div for PlacesService if it doesn't exist
@@ -37,6 +38,13 @@ export const useGoogleMapsServices = () => {
           setIsLoaded(true);
           setIsLoading(false);
           setHasErrored(false);
+          
+          // Clear any existing check interval
+          if (apiCheckIntervalRef.current) {
+            clearInterval(apiCheckIntervalRef.current);
+            apiCheckIntervalRef.current = null;
+          }
+          
           return true;
         } catch (error) {
           console.error("Error initializing Google Maps services:", error);
@@ -79,13 +87,49 @@ export const useGoogleMapsServices = () => {
           console.error("Google Maps loading timed out");
           setIsLoading(false);
           setHasErrored(true);
+          
+          // Remove the script tag to try again
+          const existingScript = document.getElementById('google-maps-script');
+          if (existingScript) {
+            existingScript.remove();
+          }
         }
-      }, 8000); // Reduced from 10 seconds to 8 seconds
+      }, 8000);
       
       script.onload = () => {
         clearTimeout(timeoutId);
         console.log('Google Maps API loaded successfully');
-        initServices();
+        
+        // Give a moment for the Places library to initialize
+        setTimeout(() => {
+          if (initServices()) {
+            console.log('Services initialized after script load');
+          } else {
+            console.warn('Places library not available immediately after load, setting up interval check');
+            
+            // Set up an interval to check when the Places service becomes available
+            if (!apiCheckIntervalRef.current) {
+              apiCheckIntervalRef.current = setInterval(() => {
+                if (window.google?.maps?.places) {
+                  console.log('Places library now available, initializing services');
+                  initServices();
+                  clearInterval(apiCheckIntervalRef.current);
+                  apiCheckIntervalRef.current = null;
+                }
+              }, 500);
+              
+              // Set a timeout to eventually clear the interval
+              setTimeout(() => {
+                if (apiCheckIntervalRef.current) {
+                  clearInterval(apiCheckIntervalRef.current);
+                  apiCheckIntervalRef.current = null;
+                  console.warn('Gave up waiting for Places library');
+                  setHasErrored(true);
+                }
+              }, 10000);
+            }
+          }
+        }, 100);
       };
       
       script.onerror = () => {
@@ -93,6 +137,9 @@ export const useGoogleMapsServices = () => {
         console.error("Failed to load Google Maps API");
         setIsLoading(false);
         setHasErrored(true);
+        
+        // Remove the script tag
+        script.remove();
       };
       
       document.head.appendChild(script);
@@ -100,6 +147,11 @@ export const useGoogleMapsServices = () => {
 
     // Cleanup function with improved error handling for Node removal
     return () => {
+      if (apiCheckIntervalRef.current) {
+        clearInterval(apiCheckIntervalRef.current);
+        apiCheckIntervalRef.current = null;
+      }
+      
       if (dummyDivRef.current) {
         try {
           // Check if element exists in document before removing

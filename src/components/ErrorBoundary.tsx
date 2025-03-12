@@ -1,4 +1,6 @@
+
 import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   children: ReactNode;
@@ -8,6 +10,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -23,10 +26,16 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error);
     console.error("Error info:", errorInfo);
+    this.setState({ errorInfo });
+    
+    // Report error to console with component stack
+    if (errorInfo.componentStack) {
+      console.error("Component stack:", errorInfo.componentStack);
+    }
   }
   
   public resetErrorBoundary = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
   public render() {
@@ -45,24 +54,40 @@ export class ErrorBoundary extends Component<Props, State> {
       
       // Default error UI
       return (
-        <div className="p-6 bg-red-50 rounded-lg border border-red-200">
+        <div className="p-6 bg-red-50 rounded-lg border border-red-200 shadow-sm">
           <h2 className="text-xl font-bold text-red-800 mb-2">Something went wrong</h2>
           <p className="text-sm text-red-700 mb-4">
             An error occurred while rendering this component.
           </p>
-          <div className="mb-4">
-            <button
+          <div className="mb-4 flex gap-2">
+            <Button
               onClick={this.resetErrorBoundary}
-              className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+              variant="destructive"
+              size="sm"
             >
               Try again
-            </button>
+            </Button>
+            <Button
+              onClick={() => window.location.href = "/dashboard"}
+              variant="outline"
+              size="sm"
+            >
+              Go to Dashboard
+            </Button>
           </div>
           <details className="text-sm text-red-700 bg-white p-2 rounded border border-red-100">
-            <summary>Error details</summary>
-            <pre className="mt-2 whitespace-pre-wrap overflow-auto max-h-48">
+            <summary className="cursor-pointer">Error details</summary>
+            <pre className="mt-2 whitespace-pre-wrap overflow-auto max-h-48 text-xs">
               {this.state.error?.toString()}
             </pre>
+            {this.state.errorInfo?.componentStack && (
+              <>
+                <p className="mt-2 font-semibold">Component Stack:</p>
+                <pre className="mt-1 whitespace-pre-wrap overflow-auto max-h-48 text-xs">
+                  {this.state.errorInfo.componentStack}
+                </pre>
+              </>
+            )}
           </details>
         </div>
       );

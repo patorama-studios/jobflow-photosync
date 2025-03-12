@@ -13,9 +13,19 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   const [addressSuggestions, setAddressSuggestions] = useState<PlaceResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasError, setHasError] = useState(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { autocompleteService, placesService, isLoaded } = useGoogleMapsServices();
+  const { autocompleteService, placesService, isLoaded, hasErrored } = useGoogleMapsServices();
+
+  // If Google Maps services failed to load, show manual fields
+  useEffect(() => {
+    if (hasErrored) {
+      setShowManualFields(true);
+      setHasError(true);
+      console.log('Google Maps services failed to load, showing manual fields');
+    }
+  }, [hasErrored]);
 
   // Clear suggestions when the component unmounts
   useEffect(() => {
@@ -76,8 +86,9 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         console.error("Error fetching address suggestions:", error);
         setIsSearching(false);
         setAddressSuggestions([]);
+        setHasError(true);
       }
-    }, 250); // Reduced from 300ms to 250ms for better responsiveness
+    }, 250);
     
   }, [searchQuery, autocompleteService, isLoaded]);
 
@@ -99,6 +110,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       console.log('No place service or place_id available, using prediction data only');
       form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
+      setShowManualFields(true);
       return;
     }
     
@@ -115,6 +127,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
             console.warn('Place details request failed with status:', status);
             form.setValue('address', prediction.formatted_address || '');
             setAddressSuggestions([]);
+            setShowManualFields(true);
             return;
           }
           
@@ -127,6 +140,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       console.error("Error getting place details:", error);
       form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
+      setShowManualFields(true);
     }
   }, [form, placesService]);
   
@@ -138,6 +152,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     showManualFields,
     addressSuggestions,
     isSearching,
+    hasError,
     handleAddressSearch,
     handleSelectAddress,
     toggleManualFields
