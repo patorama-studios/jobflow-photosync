@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { ClientTable } from './ClientTable';
 import { AddClientDialog } from './AddClientDialog';
-import { useClients } from '@/hooks/use-clients';
+import { useClients, Client } from '@/hooks/use-clients';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useNavigate } from 'react-router-dom';
@@ -49,12 +49,12 @@ export function ClientsView() {
     }
   };
 
-  const handleEditClient = (client: any) => {
+  const handleEditClient = (client: Client) => {
     // Open client details page
     navigate(`/clients/${client.id}`);
   };
 
-  const handleRowClick = (client: any) => {
+  const handleRowClick = (client: Client) => {
     navigate(`/clients/${client.id}`);
   };
 
@@ -98,11 +98,10 @@ export function ClientsView() {
         <ClientTable 
           clients={clients} 
           isLoading={isLoading} 
-          error={error} 
-          updateClient={updateClient}
           onEdit={handleEditClient}
           onDelete={handleDeleteClient}
           onRowClick={handleRowClick}
+          updateClient={updateClient}
         />
       </CardContent>
       <AddClientDialog 

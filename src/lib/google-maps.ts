@@ -1,177 +1,107 @@
 
-// This file provides Google Maps utilities and type definitions
-export interface GoogleMapsTypes {
-  Geocoder: new () => {
-    geocode: (
-      request: { address: string },
-      callback: (
-        results: { geometry: { location: { lat: () => number; lng: () => number } } }[],
-        status: string
-      ) => void
-    ) => void;
+// Import any required types
+import { PlaceResult } from '@/hooks/google-maps/types';
+
+// Define interfaces for Google Maps types
+interface GoogleMapsLatLng {
+  lat: () => number;
+  lng: () => number;
+}
+
+interface GoogleMapsPlaces {
+  AutocompleteService: new () => any;
+  PlacesService: new (attrContainer: Element | HTMLDivElement) => any;
+  PlacesServiceStatus: {
+    OK: string;
+    ZERO_RESULTS: string;
+    OVER_QUERY_LIMIT: string;
+    REQUEST_DENIED: string;
+    INVALID_REQUEST: string;
+    UNKNOWN_ERROR: string;
   };
-  places: {
-    Autocomplete: new (
-      input: HTMLInputElement,
-      options?: object
-    ) => Autocomplete;
-  };
-  event: {
-    clearInstanceListeners: (instance: any) => void;
-  };
-  Map: new (element: HTMLElement, options: any) => any;
-  Marker: new (options: any) => any;
+  Autocomplete: new (inputField: HTMLInputElement, opts?: any) => any;
+}
+
+interface GoogleMapsTypes {
+  places: GoogleMapsPlaces;
+  Map: any;
+  Marker: any;
   Animation: {
     DROP: number;
+    BOUNCE: number;
   };
+  LatLng: new (lat: number, lng: number) => GoogleMapsLatLng;
+  LatLngBounds: new (sw?: any, ne?: any) => any;
 }
 
-export interface Autocomplete {
-  addListener: (event: string, callback: () => void) => { remove: () => void };
-  getPlace: () => {
-    address_components?: {
-      long_name: string;
-      short_name: string;
-      types: string[];
-    }[];
-    formatted_address?: string;
-    geometry?: {
-      location: {
-        lat: () => number;
-        lng: () => number;
-      };
-    };
-  };
-}
-
-// Helper to get preferred region
-export function getDefaultRegion(): string {
-  return localStorage.getItem('google_maps_region') || 'au'; // Default to Australia
-}
-
-// Store the current region
-let currentRegion = getDefaultRegion();
-
-// Set the default region
-export function setDefaultRegion(region: string): void {
-  currentRegion = region;
-  localStorage.setItem('google_maps_region', region);
-}
-
-// Check if Google Maps script is already loaded
-export function isGoogleMapsLoaded(): boolean {
-  return !!window.google && !!window.google.maps && !!window.google.maps.places;
-}
-
-// Load the Google Maps script dynamically with better error handling
-export function loadGoogleMapsScript(options: { 
-  apiKey: string;
-  libraries?: string[];
-  region?: string;
-}): Promise<void> {
+// Export functions for fetching place predictions and details
+export async function getPlacePredictions(input: string): Promise<PlaceResult[]> {
   return new Promise((resolve, reject) => {
-    // If already loaded, resolve immediately
-    if (isGoogleMapsLoaded()) {
-      console.log("Google Maps already loaded, resolving promise");
-      resolve();
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      reject(new Error('Google Maps API not loaded'));
       return;
     }
-    
-    // Check if script is already being loaded
-    if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
-      console.log("Google Maps script is already being loaded, waiting...");
-      // Wait for it to load
-      const checkGoogleMaps = setInterval(() => {
-        if (isGoogleMapsLoaded()) {
-          clearInterval(checkGoogleMaps);
-          console.log("Google Maps finished loading while waiting");
-          resolve();
+
+    const service = new window.google.maps.places.AutocompleteService();
+    service.getPlacePredictions(
+      {
+        input,
+        componentRestrictions: { country: 'au' },
+      },
+      (predictions: any[], status: string) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
+          resolve([]);
+          return;
         }
-      }, 100);
-      
-      // Set a timeout to prevent infinite waiting
-      setTimeout(() => {
-        clearInterval(checkGoogleMaps);
-        console.error("Google Maps loading timed out after waiting");
-        reject(new Error('Google Maps loading timed out'));
-      }, 10000);
-      
-      return;
-    }
-    
-    try {
-      console.log("Starting to load Google Maps script...");
-      // Create script element
-      const script = document.createElement('script');
-      const callbackName = `googleMapsCallback_${Date.now()}`;
-      
-      // Set callback for when script loads
-      window[callbackName as keyof Window] = function() {
-        console.log("Google Maps callback triggered");
-        delete window[callbackName as keyof Window];
-        resolve();
-      } as unknown as never; // Fixed: Use unknown as an intermediate step to never
-      
-      // Construct the URL with parameters
-      const libraries = options.libraries ? options.libraries.join(',') : 'places';
-      const region = options.region || currentRegion;
-      
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${options.apiKey}&libraries=${libraries}&region=${region}&callback=${callbackName}`;
-      script.async = true;
-      script.defer = true;
-      
-      // Add error handling
-      script.onerror = (error) => {
-        console.error('Google Maps script loading error:', error);
-        reject(new Error('Failed to load Google Maps API'));
-      };
-      
-      // Add to document
-      document.head.appendChild(script);
-      console.log(`Google Maps script added to document (region: ${region}, libraries: ${libraries})`);
-    } catch (error) {
-      console.error('Error setting up Google Maps script:', error);
-      reject(error);
-    }
+
+        const results = predictions.map((prediction) => ({
+          place_id: prediction.place_id,
+          formatted_address: prediction.description,
+          name: prediction.structured_formatting?.main_text || prediction.description,
+        }));
+
+        resolve(results);
+      }
+    );
   });
 }
 
-// Retry loading Google Maps if it fails
-export function retryLoadGoogleMaps(options: { 
-  apiKey: string;
-  libraries?: string[];
-  region?: string;
-  maxAttempts?: number;
-}): Promise<void> {
-  const maxAttempts = options.maxAttempts || 3;
-  let attempts = 0;
-  
-  const attemptLoad = (): Promise<void> => {
-    attempts++;
-    console.log(`Attempt ${attempts} to load Google Maps...`);
-    
-    return loadGoogleMapsScript(options).catch(error => {
-      if (attempts < maxAttempts) {
-        console.log(`Retrying Google Maps load, attempt ${attempts + 1}/${maxAttempts}`);
-        return new Promise(resolve => {
-          setTimeout(() => resolve(attemptLoad()), 2000); // Wait 2 seconds before retrying
-        });
-      } else {
-        console.error(`Failed to load Google Maps after ${maxAttempts} attempts`);
-        throw error;
+export async function getPlaceDetails(placeId: string): Promise<PlaceResult | null> {
+  return new Promise((resolve, reject) => {
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      reject(new Error('Google Maps API not loaded'));
+      return;
+    }
+
+    // Create a dummy div for the PlacesService
+    const dummyDiv = document.createElement('div');
+    const service = new window.google.maps.places.PlacesService(dummyDiv);
+
+    service.getDetails(
+      {
+        placeId,
+        fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+      },
+      (place: any, status: string) => {
+        // Remove the dummy div
+        dummyDiv.remove();
+
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
+          resolve(null);
+          return;
+        }
+
+        resolve(place);
       }
-    });
-  };
-  
-  return attemptLoad();
+    );
+  });
 }
 
-// Add window augmentation to include google maps
+// Update window interface declaration to fix the conflict
 declare global {
   interface Window {
     google: {
       maps: GoogleMapsTypes;
-      [key: string]: any; // For the callback function
     };
   }
 }

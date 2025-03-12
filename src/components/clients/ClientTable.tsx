@@ -14,9 +14,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/company-utils';
 import { useNavigate } from 'react-router-dom';
 
-interface ClientTableProps {
+export interface ClientTableProps {
   clients: Client[];
   isLoading?: boolean;
+  onEdit?: (client: Client) => void;
+  onDelete?: (clientId: string) => Promise<void>;
+  onRowClick?: (client: Client) => void;
+  updateClient?: (id: string, updates: Partial<Client>) => Promise<void>;
 }
 
 const statusColors = {
@@ -24,12 +28,22 @@ const statusColors = {
   inactive: 'bg-gray-100 text-gray-800',
 };
 
-export const ClientTable: React.FC<ClientTableProps> = ({ clients, isLoading = false }) => {
+export const ClientTable: React.FC<ClientTableProps> = ({ 
+  clients, 
+  isLoading = false,
+  onEdit,
+  onDelete,
+  onRowClick,
+}) => {
   const navigate = useNavigate();
 
   // Function to handle row click
-  const handleRowClick = (id: string) => {
-    navigate(`/clients/${id}`);
+  const handleRowClick = (client: Client) => {
+    if (onRowClick) {
+      onRowClick(client);
+    } else {
+      navigate(`/clients/${client.id}`);
+    }
   };
 
   return (
@@ -49,7 +63,7 @@ export const ClientTable: React.FC<ClientTableProps> = ({ clients, isLoading = f
             <TableRow
               key={client.id}
               className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleRowClick(client.id)}
+              onClick={() => handleRowClick(client)}
             >
               <TableCell className="font-medium">
                 <div className="flex items-center space-x-3">
