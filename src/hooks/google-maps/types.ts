@@ -28,6 +28,8 @@ export interface AddressDetails {
 }
 
 // Add missing type definitions for window.google
+// Note: The global window.google declaration has been moved to this file
+// to avoid conflicts with other declarations
 declare global {
   interface Window {
     google: {

@@ -1,7 +1,12 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { loadGoogleMapsScript, setDefaultRegion, getDefaultRegion, retryLoadGoogleMaps } from '@/lib/google-maps';
-import { toast } from 'sonner';
+import { 
+  loadGoogleMapsScript, 
+  setDefaultRegion, 
+  getDefaultRegion, 
+  retryLoadGoogleMaps 
+} from '@/lib/google-maps';
+import { toast } from "sonner";
 
 interface GoogleMapsContextType {
   isLoaded: boolean;
