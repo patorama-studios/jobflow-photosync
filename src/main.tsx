@@ -70,7 +70,7 @@ applyThemeAndFont();
 // Preload React libraries
 preloadLibraries();
 
-// Set up a global error handler
+// Set up a global error handler with better recovery
 window.addEventListener('error', (event) => {
   console.error('Global error caught:', event.error);
   // Increment error count for monitoring
@@ -81,7 +81,7 @@ window.addEventListener('error', (event) => {
      (event.error.message.includes('react-is') || 
       event.error.message.includes('isFragment'))) {
     console.error('React dependency error detected:', event.error.message);
-    displayFallbackUI('React component error. This is likely due to a library version conflict. Refreshing may help.');
+    displayFallbackUI('React component error. This is likely due to a library version conflict. Try refreshing the page.');
     return;
   }
   
@@ -91,7 +91,16 @@ window.addEventListener('error', (event) => {
        event.error.message.includes('forwardRef') ||
        event.error.message.includes('Cannot read properties of undefined'))) {
     console.error('Detected critical library error. Attempting recovery...');
-    displayFallbackUI('Application error with UI library. This is likely due to a library conflict.');
+    displayFallbackUI('Application error with UI library. Try navigating directly to dashboard.');
+    return;
+  }
+  
+  // Google Maps specific errors
+  if (event.error && event.error.message && 
+     (event.error.message.includes('google') || 
+      event.error.message.includes('maps'))) {
+    console.error('Google Maps API error detected:', event.error.message);
+    // Don't show fallback for Maps errors - just log them
     return;
   }
   
@@ -104,7 +113,13 @@ window.addEventListener('error', (event) => {
 
 // Display fallback UI for critical errors
 function displayFallbackUI(message) {
+  // Don't create multiple fallback UIs
+  if (document.getElementById('fallback-ui')) {
+    return;
+  }
+  
   const fallbackElement = document.createElement('div');
+  fallbackElement.id = 'fallback-ui';
   fallbackElement.style.padding = '20px';
   fallbackElement.style.maxWidth = '600px';
   fallbackElement.style.margin = '40px auto';
@@ -114,35 +129,32 @@ function displayFallbackUI(message) {
   fallbackElement.innerHTML = `
     <h2 style="color: #e11d48; margin-bottom: 10px;">Application Error</h2>
     <p style="margin-bottom: 15px;">${message}</p>
-    <p style="margin-bottom: 15px;">Please try refreshing the page. If the problem persists, contact support.</p>
+    <p style="margin-bottom: 15px;">Try navigating directly to a page:</p>
     <div>
       <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;" 
-              onclick="window.location.reload()">
-        Refresh Page
+              onclick="window.location.href = '/dashboard'">
+        Dashboard
+      </button>
+      <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;" 
+              onclick="window.location.href = '/orders'">
+        Orders
       </button>
       <button style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" 
-              onclick="window.location.href = '/dashboard'">
-        Try Dashboard Directly
+              onclick="window.location.reload()">
+        Refresh Page
       </button>
     </div>
   `;
   
   if (document.getElementById('root')) {
-    document.getElementById('root').appendChild(fallbackElement);
+    const rootElement = document.getElementById('root');
+    // Clear root element first
+    rootElement.innerHTML = '';
+    rootElement.appendChild(fallbackElement);
   } else {
     document.body.appendChild(fallbackElement);
   }
 }
-
-// Install global error monitoring in non-blocking way
-setTimeout(() => {
-  try {
-    installGlobalErrorMonitoring();
-    console.log('Error monitoring initialized');
-  } catch (err) {
-    console.error('Failed to initialize error monitoring:', err);
-  }
-}, 0);
 
 // Simple function to create a minimal UI if App component fails to load
 function createMinimalUI() {
@@ -160,16 +172,18 @@ function createMinimalUI() {
         <a href="/orders" style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem; margin-right: 0.5rem;">
           Orders
         </a>
-        <a href="/debug" style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
-          Debug
+        <a href="/customers" style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
+          Customers
         </a>
       </div>
     </div>
   `;
 }
 
-// Improved mount function with debugging for deployment issues
+// Improved mount function with safety timeouts
 const mountApp = () => {
+  let hasMounted = false;
+  
   try {
     // Add console logs for debugging
     console.log('Starting app mount...', window.location.href);
@@ -190,9 +204,11 @@ const mountApp = () => {
     
     // Set a timeout to detect if App is taking too long to render
     const appLoadTimeout = setTimeout(() => {
-      console.error('App render timed out - creating minimal UI');
-      createMinimalUI();
-    }, 5000);
+      if (!hasMounted) {
+        console.error('App render timed out - creating minimal UI');
+        createMinimalUI();
+      }
+    }, 3000); // Reduced from 5000 to 3000ms for faster fallback
     
     // Wrap App in BrowserRouter before rendering
     root.render(
@@ -201,6 +217,7 @@ const mountApp = () => {
       </BrowserRouter>
     );
     
+    hasMounted = true;
     clearTimeout(appLoadTimeout);
     console.log('App render completed');
     
@@ -219,7 +236,9 @@ const mountApp = () => {
     console.error("Error mounting app:", error);
     
     // Display more visible error message
-    displayFallbackUI(error instanceof Error ? error.message : String(error));
+    if (!hasMounted) {
+      displayFallbackUI(error instanceof Error ? error.message : String(error));
+    }
   }
 };
 
@@ -227,7 +246,7 @@ const mountApp = () => {
 console.log('Initializing application...');
 mountApp();
 
-// Optimize service worker registration
+// Don't register service worker until app is loaded
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // Delay service worker registration to not block initial render
@@ -235,7 +254,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(error => {
         console.error('ServiceWorker registration failed:', error);
       });
-    }, 1000);
+    }, 2000); // Increased from 1000 to 2000ms to ensure app is loaded first
   });
 }
 

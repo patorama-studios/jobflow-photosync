@@ -22,7 +22,7 @@ export default function Home() {
       isDev: import.meta.env.DEV
     });
 
-    // If we've been loading for more than 3 seconds, try to force a resolution
+    // If we've been loading for more than 2 seconds, try to force a resolution
     const timeoutId = setTimeout(() => {
       if (isLoading) {
         console.log('Auth loading timeout reached, forcing update');
@@ -34,20 +34,14 @@ export default function Home() {
           setHasError(true);
         }
       }
-    }, 3000);
+    }, 2000); // Reduced from 3000 to 2000ms for faster fallback
 
     return () => clearTimeout(timeoutId);
   }, [isLoading, session, retryCount]);
 
-  // ALWAYS go to dashboard in development mode
-  if (import.meta.env.DEV) {
-    console.log('DEV MODE: Bypassing auth check and redirecting to dashboard');
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // If loading takes too long but we haven't exceeded retries
-  if (loadingTimeout && retryCount < 3) {
-    console.log('Auth loading taking too long, attempting to continue...');
+  // ALWAYS go to dashboard in development mode or if we have loading issues
+  if (import.meta.env.DEV || loadingTimeout) {
+    console.log('DEV MODE or loading timeout: Redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -58,10 +52,10 @@ export default function Home() {
         <h2 className="text-xl font-semibold text-red-500 mb-2">Authentication Error</h2>
         <p className="text-gray-600 mb-4">Unable to determine authentication status</p>
         <button 
-          onClick={() => window.location.reload()} 
+          onClick={() => window.location.href = "/dashboard"} 
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
         >
-          Refresh Page
+          Go to Dashboard
         </button>
       </div>
     );
@@ -69,7 +63,7 @@ export default function Home() {
 
   // If still loading auth state within reasonable time, show loading indicator
   if (isLoading && !loadingTimeout) {
-    return <PageLoading forceRefreshAfter={5} />;
+    return <PageLoading forceRefreshAfter={3} />; // Reduced from 5 to 3 seconds
   }
 
   // Fallback: redirect to dashboard in all cases to avoid blank screen
