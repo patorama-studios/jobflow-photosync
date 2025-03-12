@@ -33,8 +33,8 @@ declare global {
     google: {
       maps: {
         places: {
-          AutocompleteService: new () => google.maps.places.AutocompleteService;
-          PlacesService: new (attrContainer: Element | HTMLDivElement) => google.maps.places.PlacesService;
+          AutocompleteService: new () => any;
+          PlacesService: new (attrContainer: Element | HTMLDivElement) => any;
           PlacesServiceStatus: {
             OK: string;
             ZERO_RESULTS: string;
@@ -45,8 +45,8 @@ declare global {
           };
           Autocomplete: new (
             inputField: HTMLInputElement,
-            opts?: google.maps.places.AutocompleteOptions
-          ) => google.maps.places.Autocomplete;
+            opts?: any
+          ) => any;
         };
         Map: any;
         Marker: any;
@@ -54,11 +54,11 @@ declare global {
           DROP: number;
           BOUNCE: number;
         };
-        LatLng: new (lat: number, lng: number) => google.maps.LatLng;
+        LatLng: new (lat: number, lng: number) => any;
         LatLngBounds: new (
-          sw?: google.maps.LatLng | null, 
-          ne?: google.maps.LatLng | null
-        ) => google.maps.LatLngBounds;
+          sw?: any, 
+          ne?: any
+        ) => any;
       };
     };
   }

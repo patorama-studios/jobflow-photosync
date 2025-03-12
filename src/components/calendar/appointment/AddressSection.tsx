@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Address } from '@/types/order-types';
-import { AddressDetails } from '@/lib/address-utils';
+import { Address, extractAddressComponents, formatAddress } from '@/lib/address-utils';
+import { AddressDetails } from '@/hooks/google-maps/types';
 import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { GoogleMapsInput } from './address/GoogleMapsInput';
@@ -14,11 +14,6 @@ import { UseFormReturn } from 'react-hook-form';
 interface AddressSectionProps {
   form: UseFormReturn<any>;
   onChange?: (address: Address) => void;
-}
-
-// Update the GoogleMapsInputProps interface to match what the component expects
-interface GoogleMapsInputProps {
-  onAddressSelect: (addressDetails: AddressDetails) => void;
 }
 
 export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }) => {
@@ -35,18 +30,18 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
         street: details.streetAddress,
         city: details.city,
         state: details.state,
-        zip: details.postalCode,
-        lat: details.lat,
-        lng: details.lng,
-        formatted_address: details.formattedAddress
+        zip: details.zip,
+        lat: 0, // These would come from the Google Maps API
+        lng: 0, // These would come from the Google Maps API
+        formatted_address: details.formatted_address
       });
     }
     
     // Update the form
-    form.setValue('address', details.formattedAddress);
-    form.setValue('city', details.city);
-    form.setValue('state', details.state);
-    form.setValue('zip', details.postalCode);
+    form.setValue('address', details.formatted_address || '');
+    form.setValue('city', details.city || '');
+    form.setValue('state', details.state || '');
+    form.setValue('zip', details.zip || '');
   };
   
   const toggleManualMode = () => {
@@ -65,13 +60,11 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
       
       // Create a simplified address details object
       const manualAddressDetails: AddressDetails = {
-        formattedAddress: fullAddress,
         streetAddress: streetAddress || '',
         city: city || '',
         state: state || '',
-        postalCode: zip || '',
-        lat: 0, // Default value
-        lng: 0  // Default value
+        zip: zip || '',
+        formatted_address: fullAddress
       };
       
       setAddressDetails(manualAddressDetails);
@@ -108,13 +101,16 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
           
           {showMap && addressDetails && (
             <div className="mt-4 space-y-4">
-              <AddressDisplay address={addressDetails.formattedAddress} />
+              <AddressDisplay address={addressDetails.formatted_address || ''} />
               
-              <AddressMap
-                address={addressDetails.formattedAddress}
-                lat={addressDetails.lat}
-                lng={addressDetails.lng}
-              />
+              {/* Only render the map if we have coordinates */}
+              {addressDetails.formatted_address && (
+                <AddressMap
+                  address={addressDetails.formatted_address}
+                  lat={0} // These would come from Google Maps API
+                  lng={0} // These would come from Google Maps API
+                />
+              )}
             </div>
           )}
         </div>
@@ -131,9 +127,6 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
                   <Input 
                     placeholder="Street address" 
                     {...field} 
-                    onChange={(e) => {
-                      field.onChange(e);
-                    }}
                   />
                 </FormControl>
               </FormItem>
@@ -151,9 +144,6 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
                     <Input
                       placeholder="City"
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                      }}
                     />
                   </FormControl>
                 </FormItem>
@@ -170,9 +160,6 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
                     <Input
                       placeholder="State"
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                      }}
                     />
                   </FormControl>
                 </FormItem>
@@ -189,9 +176,6 @@ export const AddressSection: React.FC<AddressSectionProps> = ({ form, onChange }
                     <Input
                       placeholder="Zip/Postal Code"
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                      }}
                     />
                   </FormControl>
                 </FormItem>
