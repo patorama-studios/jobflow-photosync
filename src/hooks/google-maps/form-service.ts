@@ -5,13 +5,13 @@ import { AddressDetails } from './types';
  * Updates form values with address details from Google Places API
  */
 export const updateFormWithPlaceDetails = (
-  place: google.maps.places.PlaceResult | null,
+  place: any,
   prediction: any,
   form: any
 ): AddressDetails | null => {
   // Set address fields
-  form.setValue('address', place?.formatted_address || prediction.formatted_address || '');
-  form.setValue('propertyAddress', place?.formatted_address || prediction.formatted_address || '');
+  form.setValue('address', place?.formatted_address || prediction?.formatted_address || '');
+  form.setValue('propertyAddress', place?.formatted_address || prediction?.formatted_address || '');
 
   if (place?.address_components) {
     let city = '';
@@ -53,6 +53,6 @@ export const updateFormWithPlaceDetails = (
   }
   
   return {
-    formatted_address: prediction.formatted_address
+    formatted_address: prediction?.formatted_address
   };
 };

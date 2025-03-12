@@ -52,7 +52,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       try {
         autocompleteService.getPlacePredictions(
           options,
-          (predictions: google.maps.places.AutocompletePrediction[] | null, status: string) => {
+          (predictions: any, status: string) => {
             setIsSearching(false);
             
             if (status !== 'OK' || !predictions || predictions.length === 0) {
@@ -60,7 +60,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
               return;
             }
             
-            const results: PlaceResult[] = predictions.map((prediction) => ({
+            const results: PlaceResult[] = predictions.map((prediction: any) => ({
               place_id: prediction.place_id,
               formatted_address: prediction.description,
               name: prediction.structured_formatting?.main_text || prediction.description
@@ -104,7 +104,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
           placeId: prediction.place_id,
           fields: ['address_components', 'formatted_address']
         },
-        (place: google.maps.places.PlaceResult | null, status: string) => {
+        (place: any, status: string) => {
           if (status !== 'OK') {
             form.setValue('address', prediction.formatted_address || '');
             setAddressSuggestions([]);

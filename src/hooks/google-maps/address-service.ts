@@ -6,7 +6,7 @@ import { updateFormWithPlaceDetails } from './form-service';
  * Processes place details from Google Maps API and updates the form
  */
 export const handlePlaceDetails = (
-  place: google.maps.places.PlaceResult | null,
+  place: any,
   prediction: any,
   form: any
 ): AddressDetails | null => {

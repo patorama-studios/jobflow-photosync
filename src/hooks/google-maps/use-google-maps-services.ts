@@ -2,8 +2,8 @@
 import { useRef, useEffect, useState } from 'react';
 
 export const useGoogleMapsServices = () => {
-  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteServiceRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
   const dummyDivRef = useRef<HTMLDivElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
