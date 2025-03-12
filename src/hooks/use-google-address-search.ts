@@ -41,7 +41,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
     
     setIsSearching(true);
     
-    // Set new timeout
+    // Set new timeout with a shorter delay for better responsiveness
     debounceTimerRef.current = setTimeout(() => {
       const options = {
         input: searchQuery,
@@ -50,10 +50,12 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
       };
       
       try {
+        console.log('Getting place predictions for:', searchQuery);
         autocompleteService.getPlacePredictions(
           options,
           (predictions: any, status: string) => {
             setIsSearching(false);
+            console.log('Autocomplete response:', { status, count: predictions?.length || 0 });
             
             if (status !== 'OK' || !predictions || predictions.length === 0) {
               setAddressSuggestions([]);
@@ -66,6 +68,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
               name: prediction.structured_formatting?.main_text || prediction.description
             }));
             
+            console.log('Formatted predictions:', results);
             setAddressSuggestions(results);
           }
         );
@@ -74,7 +77,7 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
         setIsSearching(false);
         setAddressSuggestions([]);
       }
-    }, 300);
+    }, 250); // Reduced from 300ms to 250ms for better responsiveness
     
   }, [searchQuery, autocompleteService, isLoaded]);
 
@@ -93,19 +96,23 @@ export function useGoogleAddressSearch(form: UseFormReturn<any>) {
   
   const handleSelectAddress = useCallback((prediction: PlaceResult) => {
     if (!placesService || !prediction.place_id) {
+      console.log('No place service or place_id available, using prediction data only');
       form.setValue('address', prediction.formatted_address || '');
       setAddressSuggestions([]);
       return;
     }
     
     try {
+      console.log('Getting details for place_id:', prediction.place_id);
       placesService.getDetails(
         {
           placeId: prediction.place_id,
-          fields: ['address_components', 'formatted_address']
+          fields: ['address_components', 'formatted_address', 'geometry']
         },
         (place: any, status: string) => {
+          console.log('Place details response:', { status });
           if (status !== 'OK') {
+            console.warn('Place details request failed with status:', status);
             form.setValue('address', prediction.formatted_address || '');
             setAddressSuggestions([]);
             return;

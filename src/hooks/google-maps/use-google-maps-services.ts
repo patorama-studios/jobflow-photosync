@@ -22,12 +22,16 @@ export const useGoogleMapsServices = () => {
     const initServices = () => {
       if (window.google && window.google.maps && window.google.maps.places) {
         try {
+          console.log('Initializing Google Maps services');
+          
           if (!autocompleteServiceRef.current) {
             autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+            console.log('AutocompleteService initialized');
           }
           
           if (!placesServiceRef.current && dummyDivRef.current) {
             placesServiceRef.current = new window.google.maps.places.PlacesService(dummyDivRef.current);
+            console.log('PlacesService initialized');
           }
           
           setIsLoaded(true);
@@ -61,6 +65,7 @@ export const useGoogleMapsServices = () => {
     if (!document.getElementById('google-maps-script') && !isLoading) {
       setIsLoading(true);
       setLoadAttempts(prev => prev + 1);
+      console.log(`Loading Google Maps API (attempt ${loadAttempts + 1})`);
 
       const script = document.createElement('script');
       script.id = 'google-maps-script';
@@ -75,10 +80,11 @@ export const useGoogleMapsServices = () => {
           setIsLoading(false);
           setHasErrored(true);
         }
-      }, 10000); // 10 second timeout
+      }, 8000); // Reduced from 10 seconds to 8 seconds
       
       script.onload = () => {
         clearTimeout(timeoutId);
+        console.log('Google Maps API loaded successfully');
         initServices();
       };
       

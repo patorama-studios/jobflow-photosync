@@ -21,12 +21,16 @@ export const updateFormWithPlaceDetails = (
     form.setValue('address', formattedAddress);
     form.setValue('propertyAddress', formattedAddress);
 
+    // Extract address components if available
     if (place?.address_components) {
       let city = '';
       let state = '';
       let zip = '';
       let streetAddress = '';
+      let streetNumber = '';
+      let route = '';
       
+      // Process each address component
       for (const component of place.address_components) {
         const types = component.types;
         
@@ -37,17 +41,22 @@ export const updateFormWithPlaceDetails = (
         } else if (types.includes('postal_code')) {
           zip = component.long_name;
         } else if (types.includes('street_number')) {
-          streetAddress = component.long_name + ' ';
+          streetNumber = component.long_name;
         } else if (types.includes('route')) {
-          streetAddress += component.long_name;
+          route = component.long_name;
         }
       }
       
-      // Update form with address components
+      // Build the street address
+      streetAddress = streetNumber ? `${streetNumber} ${route}`.trim() : route;
+      
+      // Update form with extracted components
       if (city) form.setValue('city', city);
       if (state) form.setValue('state', state);
       if (zip) form.setValue('zip', zip);
       if (streetAddress) form.setValue('streetAddress', streetAddress);
+      
+      console.log('Updated form with place details:', { city, state, zip, streetAddress });
       
       return { 
         city, 
