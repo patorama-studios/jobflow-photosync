@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -7,6 +6,7 @@ import { queryClient } from '@/config/queryClient';
 import { useHeaderSettings, HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
 import { AIAssistantProvider } from '@/contexts/AIAssistantContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import PageLoading from '@/components/loading/PageLoading';
 
 // Eager loaded components
 import Home from './pages/Home';
@@ -61,7 +61,7 @@ function App() {
               <Routes>
                 <Route path="/" element={
                   <ErrorBoundary fallback={<Navigate to="/dashboard" replace />}>
-                    <Home />
+                    <Navigate to="/dashboard" replace />
                   </ErrorBoundary>
                 } />
                 <Route path="/dashboard" element={

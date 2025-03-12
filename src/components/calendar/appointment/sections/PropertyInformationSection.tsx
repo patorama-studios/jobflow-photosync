@@ -2,9 +2,7 @@
 import React from 'react';
 import { PropertySectionHeader } from './property/PropertySectionHeader';
 import { AddressSearchField } from './property/AddressSearchField';
-import { AddressSuggestionsList } from './property/AddressSuggestionsList';
 import { ManualAddressFields } from './property/ManualAddressFields';
-import { useGoogleAddressSearch } from '@/hooks/use-google-address-search';
 import { FormSection } from '../components/FormSection';
 import { UseFormReturn } from 'react-hook-form';
 import { ToggleSection } from '../components/ToggleSection';
@@ -21,15 +19,6 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   isOpen, 
   onToggle 
 }) => {
-  const {
-    showManualFields,
-    addressSuggestions,
-    isSearching,
-    handleAddressSearch,
-    handleSelectAddress,
-    toggleManualFields
-  } = useGoogleAddressSearch(form);
-
   // If we're being used with a toggle section wrapper
   if (isOpen !== undefined && onToggle) {
     return (
@@ -39,15 +28,7 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
         onToggle={onToggle}
       >
         <ErrorBoundary>
-          <PropertyContent 
-            form={form}
-            showManualFields={showManualFields}
-            addressSuggestions={addressSuggestions}
-            isSearching={isSearching}
-            handleAddressSearch={handleAddressSearch}
-            handleSelectAddress={handleSelectAddress}
-            toggleManualFields={toggleManualFields}
-          />
+          <PropertyContent form={form} />
         </ErrorBoundary>
       </ToggleSection>
     );
@@ -57,64 +38,30 @@ export const PropertyInformationSection: React.FC<PropertyInformationSectionProp
   return (
     <FormSection>
       <ErrorBoundary>
-        <PropertyContent 
-          form={form}
-          showManualFields={showManualFields}
-          addressSuggestions={addressSuggestions}
-          isSearching={isSearching}
-          handleAddressSearch={handleAddressSearch}
-          handleSelectAddress={handleSelectAddress}
-          toggleManualFields={toggleManualFields}
-        />
+        <PropertyContent form={form} />
       </ErrorBoundary>
     </FormSection>
   );
 };
 
-// Extract the actual content to a separate component to avoid duplication
+// Extract the actual content to a separate component
 interface PropertyContentProps {
   form: UseFormReturn<any>;
-  showManualFields: boolean;
-  addressSuggestions: any[];
-  isSearching: boolean;
-  handleAddressSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectAddress: (prediction: any) => void;
-  toggleManualFields: () => void;
 }
 
-const PropertyContent: React.FC<PropertyContentProps> = ({
-  form,
-  showManualFields,
-  addressSuggestions,
-  isSearching,
-  handleAddressSearch,
-  handleSelectAddress,
-  toggleManualFields
-}) => {
+const PropertyContent: React.FC<PropertyContentProps> = ({ form }) => {
   return (
     <>
       <PropertySectionHeader 
-        showManualFields={showManualFields} 
-        toggleManualFields={toggleManualFields} 
+        showManualFields={true} 
+        toggleManualFields={() => {}}
       />
 
-      <div className="relative mb-4">
-        <AddressSearchField 
-          form={form} 
-          onAddressSearch={handleAddressSearch}
-          isSearching={isSearching}
-        />
-        
-        <AddressSuggestionsList 
-          suggestions={addressSuggestions} 
-          isSearching={isSearching} 
-          onSelectAddress={handleSelectAddress} 
-        />
+      <div className="mb-4">
+        <AddressSearchField form={form} />
       </div>
 
-      {showManualFields && (
-        <ManualAddressFields form={form} />
-      )}
+      <ManualAddressFields form={form} />
     </>
   );
 };
