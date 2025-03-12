@@ -23,7 +23,7 @@ const Customers = lazy(() => import('./pages/Customers'));
 const CompanyDetails = lazy(() => import('./pages/CompanyDetails'));
 
 // Fallback loading component
-const PageLoading = () => (
+const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
     <Loader2 className="h-10 w-10 animate-spin text-primary" />
   </div>
@@ -57,7 +57,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <HeaderSettingsProvider>
           <AIAssistantProvider>
-            <Suspense fallback={<PageLoading />}>
+            <Suspense fallback={<LoadingFallback />}>
               <Routes>
                 <Route path="/" element={
                   <ErrorBoundary fallback={<Navigate to="/dashboard" replace />}>
