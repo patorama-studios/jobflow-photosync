@@ -1,23 +1,23 @@
 
 import React from "react";
-import { SettingsCategory } from "@/pages/Settings";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SettingsCategory } from "@/pages/Settings";
 import {
   User,
   Bell,
   Building,
-  PenTool,
+  FileEdit,
   Download,
   CreditCard,
   Package,
+  Presentation,
+  LayoutGrid,
   Palette,
-  LayoutDashboard,
-  Moon,
-  BookOpenCheck,
-  Plug2,
-  Users,
-  UserCircle,
+  FileText,
+  Puzzle,
+  Activity,
+  UserSquare,
+  ServerCog,
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -25,69 +25,144 @@ interface SettingsNavProps {
   onCategoryChange: (category: SettingsCategory) => void;
 }
 
-interface SettingsCategoryItem {
-  id: SettingsCategory;
-  label: string;
-  icon: React.ReactNode;
-  section?: string;
-}
-
 export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavProps) {
-  // Group settings categories by section
-  const categories: {
-    [key: string]: SettingsCategoryItem[];
-  } = {
-    account: [
-      { id: "user-profile", label: "My Profile", icon: <UserCircle className="mr-2 h-4 w-4" /> },
-      { id: "user", label: "Team Members", icon: <User className="mr-2 h-4 w-4" /> },
-      { id: "team", label: "Team", icon: <Users className="mr-2 h-4 w-4" /> },
-      { id: "notifications", label: "Notifications", icon: <Bell className="mr-2 h-4 w-4" /> },
-      { id: "organization", label: "Organization", icon: <Building className="mr-2 h-4 w-4" /> },
-    ],
-    preferences: [
-      { id: "editor", label: "Editor", icon: <PenTool className="mr-2 h-4 w-4" /> },
-      { id: "downloads", label: "Downloads", icon: <Download className="mr-2 h-4 w-4" /> },
-      { id: "payments", label: "Payments", icon: <CreditCard className="mr-2 h-4 w-4" /> },
-      { id: "products", label: "Products", icon: <Package className="mr-2 h-4 w-4" /> },
-    ],
-    appearance: [
-      { id: "presentation", label: "Presentation", icon: <Palette className="mr-2 h-4 w-4" /> },
-      { id: "header", label: "Header", icon: <LayoutDashboard className="mr-2 h-4 w-4" /> },
-      { id: "theme", label: "Theme", icon: <Moon className="mr-2 h-4 w-4" /> },
-    ],
-    integrations: [
-      { id: "apps", label: "Apps & Integrations", icon: <Plug2 className="mr-2 h-4 w-4" /> },
-      { id: "legal", label: "Legal", icon: <BookOpenCheck className="mr-2 h-4 w-4" /> },
-    ],
-  };
+  interface SettingsCategoryNavItem {
+    id: SettingsCategory;
+    label: string;
+    icon: React.ReactNode;
+  }
+
+  const accountCategories: SettingsCategoryNavItem[] = [
+    {
+      id: "user-profile",
+      label: "Profile",
+      icon: <UserSquare className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "user",
+      label: "Account Settings",
+      icon: <User className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: <Bell className="w-4 h-4 mr-2" />,
+    },
+  ];
+
+  const teamCategories: SettingsCategoryNavItem[] = [
+    {
+      id: "team",
+      label: "Team Members",
+      icon: <User className="w-4 h-4 mr-2" />,
+    },
+  ];
+
+  const workspaceCategories: SettingsCategoryNavItem[] = [
+    {
+      id: "organization",
+      label: "Organization",
+      icon: <Building className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "editor",
+      label: "Notification Editor",
+      icon: <FileEdit className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "downloads",
+      label: "Downloads",
+      icon: <Download className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "payments",
+      label: "Payment Settings",
+      icon: <CreditCard className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "header",
+      label: "Header Settings",
+      icon: <LayoutGrid className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "theme",
+      label: "Theme",
+      icon: <Palette className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "legal",
+      label: "Legal",
+      icon: <FileText className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "apps",
+      label: "Apps & Integrations",
+      icon: <Puzzle className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "production-status",
+      label: "Production Status",
+      icon: <Activity className="w-4 h-4 mr-2" />,
+    },
+    {
+      id: "esoft-integration",
+      label: "Esoft Integration",
+      icon: <ServerCog className="w-4 h-4 mr-2" />,
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      {Object.entries(categories).map(([section, items]) => (
-        <div key={section} className="space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
-            {section.charAt(0).toUpperCase() + section.slice(1)}
-          </h3>
-          <nav className="space-y-1.5">
-            {items.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeCategory === item.id ? "default" : "ghost"}
-                className={cn(
-                  "w-full justify-start",
-                  activeCategory === item.id
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => onCategoryChange(item.id)}
-              >
-                {item.icon}
-                {item.label}
-              </Button>
-            ))}
-          </nav>
-        </div>
-      ))}
+    <div className="flex flex-col space-y-6">
+      <div className="flex flex-col space-y-1">
+        <h3 className="text-sm font-medium text-muted-foreground mb-1">
+          Account
+        </h3>
+        {accountCategories.map((category) => (
+          <Button
+            key={category.id}
+            variant={activeCategory === category.id ? "default" : "ghost"}
+            className="justify-start"
+            onClick={() => onCategoryChange(category.id)}
+          >
+            {category.icon}
+            {category.label}
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex flex-col space-y-1">
+        <h3 className="text-sm font-medium text-muted-foreground mb-1">
+          Team
+        </h3>
+        {teamCategories.map((category) => (
+          <Button
+            key={category.id}
+            variant={activeCategory === category.id ? "default" : "ghost"}
+            className="justify-start"
+            onClick={() => onCategoryChange(category.id)}
+          >
+            {category.icon}
+            {category.label}
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex flex-col space-y-1">
+        <h3 className="text-sm font-medium text-muted-foreground mb-1">
+          Workspace
+        </h3>
+        {workspaceCategories.map((category) => (
+          <Button
+            key={category.id}
+            variant={activeCategory === category.id ? "default" : "ghost"}
+            className="justify-start"
+            onClick={() => onCategoryChange(category.id)}
+          >
+            {category.icon}
+            {category.label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 }

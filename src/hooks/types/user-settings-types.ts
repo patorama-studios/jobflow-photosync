@@ -1,5 +1,13 @@
 
-import { Json } from '@/integrations/supabase/types';
+// Type definitions for user settings
+
+export type JsonValue = 
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 
 export interface NotificationSetting {
   type: string;
@@ -10,21 +18,6 @@ export interface NotificationSetting {
   };
 }
 
-export interface OrganizationSettings {
-  companyName: string;
-  website: string;
-  supportEmail: string;
-  companyPhone: string;
-  address: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  companyTimezone?: string;
-  companyAddress?: string;
-  addressFormat?: string;
-}
-
 export interface UserProfile {
   id: string;
   firstName: string;
@@ -32,14 +25,32 @@ export interface UserProfile {
   email: string;
   phoneNumber: string;
   title: string;
-  avatar?: string;
-  phone?: string;
-  timezone?: string;
+  avatar: string;
 }
 
-// Type to help with type conversion from Supabase Json to our types
-export type JsonValue<T = any> = T extends object ? JsonObject<T> : Json;
+export interface ThemeSettings {
+  fontSize: number;
+  enableAnimations: boolean;
+  uiDensity: 'compact' | 'comfortable' | 'spacious';
+}
 
-type JsonObject<T> = {
-  [K in keyof T]: JsonValue<T[K]>;
-};
+export interface HeaderSettings {
+  color: string;
+  height: number;
+  logoUrl: string;
+  showCompanyName: boolean;
+}
+
+export interface DownloadSettings {
+  maxDimension: number;
+  imageQuality: number;
+  dpi: string;
+  fileNaming: string;
+}
+
+export interface LegalSettings {
+  termsOfService: string;
+  privacyPolicy: string;
+  cookiePolicy: string;
+  disclaimers: string;
+}

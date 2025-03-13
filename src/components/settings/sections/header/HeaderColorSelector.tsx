@@ -1,87 +1,69 @@
 
 import React from 'react';
-import { Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-
-interface HeaderSettings {
-  height: number;
-  color: string;
-  logoUrl: string;
-  showCompanyName: boolean;
-}
+import { Label } from '@/components/ui/label';
 
 interface HeaderColorSelectorProps {
-  settings: HeaderSettings;
-  updateSettings: (newSettings: Partial<HeaderSettings>) => void;
+  settings: {
+    color: string;
+    height?: number;
+    logoUrl?: string;
+    showCompanyName?: boolean;
+  };
+  updateSettings: (newSettings: Partial<{
+    color: string;
+    height?: number;
+    logoUrl?: string;
+    showCompanyName?: boolean;
+  }>) => void;
 }
 
 export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSelectorProps) {
-  // Predefined colors
-  const colors = [
-    { name: 'Default', value: 'hsl(var(--background))' },
-    { name: 'Black', value: '#000000' },
-    { name: 'Purple', value: '#9b87f5' },
-    { name: 'Blue', value: '#0ea5e9' },
-    { name: 'Green', value: '#10b981' },
-    { name: 'Orange', value: '#f97316' },
-    { name: 'Red', value: '#ef4444' },
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateSettings({ color: e.target.value });
+  };
+  
+  const predefinedColors = [
+    '#000000', // Black
+    '#FFFFFF', // White
+    '#1E40AF', // Blue-800
+    '#1F2937', // Gray-800
+    '#7C3AED', // Violet-600
+    '#059669', // Emerald-600
+    '#DC2626', // Red-600
+    '#D97706', // Amber-600
   ];
-
-  const handleColorChange = (color: string) => {
-    updateSettings({ color });
-  };
-
-  // Helper function to determine if text should be white based on background color
-  const shouldUseWhiteText = (color: string) => {
-    return color === '#000000' || color.toLowerCase() === 'black';
-  };
-
+  
   return (
-    <div className="space-y-4">
-      <div>
-        <h4 className="text-md font-medium mb-2">Header Color</h4>
-        <p className="text-sm text-muted-foreground">
-          Choose a color for the header or set a custom color
-        </p>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <Label htmlFor="headerColor">Header Color</Label>
+        <span className="text-sm font-medium">{settings.color}</span>
       </div>
       
-      <div className="grid grid-cols-3 gap-3">
-        {colors.map(color => (
-          <Button
-            key={color.value}
-            variant="outline"
-            className="h-10 relative"
-            style={{ 
-              backgroundColor: color.value,
-              color: shouldUseWhiteText(color.value) ? 'white' : 'black'
-            }}
-            onClick={() => handleColorChange(color.value)}
-          >
-            {settings.color === color.value && (
-              <Check className={`h-4 w-4 absolute ${shouldUseWhiteText(color.value) ? 'text-white' : 'text-black'}`} />
-            )}
-            <span className={`text-xs ${shouldUseWhiteText(color.value) ? 'text-white' : ''}`}>
-              {color.name}
-            </span>
-          </Button>
+      <div className="flex items-center space-x-2">
+        <input
+          id="headerColor"
+          type="color"
+          value={settings.color}
+          onChange={handleColorChange}
+          className="h-10 w-20"
+        />
+        <div className="grow">
+          <div className="h-10 rounded-md" style={{ backgroundColor: settings.color }}></div>
+        </div>
+      </div>
+      
+      <div className="flex flex-wrap gap-2 mt-2">
+        {predefinedColors.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className={`h-6 w-6 rounded-full border ${settings.color === color ? 'ring-2 ring-primary ring-offset-2' : 'border-gray-300'}`}
+            style={{ backgroundColor: color }}
+            onClick={() => updateSettings({ color })}
+            aria-label={`Set color to ${color}`}
+          />
         ))}
-      </div>
-      
-      <div className="flex items-center gap-2 mt-4">
-        <Input 
-          type="color" 
-          value={settings.color.startsWith('#') ? settings.color : '#ffffff'}
-          onChange={(e) => handleColorChange(e.target.value)}
-          className="w-12 h-12 p-1"
-        />
-        <Input
-          type="text"
-          value={settings.color || 'Default'}
-          onChange={(e) => handleColorChange(e.target.value)}
-          placeholder="Custom color code"
-          className="flex-1"
-        />
       </div>
     </div>
   );

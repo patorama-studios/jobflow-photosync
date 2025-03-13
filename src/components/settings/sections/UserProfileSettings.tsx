@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Define form schema for validation
 const profileFormSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address").optional(),
   phone: z.string().optional(),
   username: z.string().optional(),
 });
@@ -52,17 +52,40 @@ export function UserProfileSettings() {
 
   // Load user profile data
   useEffect(() => {
-    if (profile) {
-      form.reset({
-        full_name: profile.full_name || "",
-        email: user?.email || "",
-        phone: profile.phone || "",
-        username: profile.username || "",
-      });
-      
-      setAvatarUrl(profile.avatar_url || null);
-    }
-  }, [profile, user, form]);
+    const loadProfile = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+            
+          if (error) throw error;
+          
+          if (data) {
+            form.reset({
+              full_name: data.full_name || "",
+              email: user?.email || "",
+              phone: data.phone || "",
+              username: data.username || "",
+            });
+            
+            setAvatarUrl(data.avatar_url || null);
+          }
+        } catch (err) {
+          console.error("Error loading profile:", err);
+          toast({
+            title: "Failed to load profile",
+            description: "There was an error loading your profile information.",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    
+    loadProfile();
+  }, [user, form, toast]);
 
   // Handle form submission
   const onSubmit = async (data: ProfileFormValues) => {
@@ -124,9 +147,11 @@ export function UserProfileSettings() {
     setIsPasswordChanging(true);
     
     try {
-      // In a real app, you would use supabase.auth.updateUser() here
-      // For this demo, we'll simulate a successful password change
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
       
       toast({
         title: "Password updated",
@@ -137,11 +162,11 @@ export function UserProfileSettings() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error changing password:", error);
       toast({
         title: "Password change failed",
-        description: "There was an error changing your password. Please try again.",
+        description: error.message || "There was an error changing your password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -168,7 +193,7 @@ export function UserProfileSettings() {
     
     try {
       // In a real app, you would upload to Supabase Storage
-      // For this demo, we'll simulate an upload with a data URL
+      // For this demo, we'll use a data URL
       const reader = new FileReader();
       reader.onload = async (event) => {
         if (!event.target?.result) return;

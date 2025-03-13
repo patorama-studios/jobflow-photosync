@@ -36,10 +36,17 @@ export function useNotificationSettings() {
     try {
       setLoading(true);
       
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        setSettings(createDefaultSettings(notificationTypes));
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('app_settings')
         .select('*')
         .eq('key', 'notification_preferences')
+        .eq('user_id', userData.user.id)
         .maybeSingle();
       
       if (error) {
@@ -99,12 +106,19 @@ export function useNotificationSettings() {
     try {
       console.log('Saving notification settings to Supabase:', updatedSettings);
       
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast.error('You must be logged in to save settings');
+        return false;
+      }
+      
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'notification_preferences',
           value: updatedSettings as unknown as JsonValue,
-          is_global: true
+          user_id: userData.user.id,
+          updated_at: new Date().toISOString()
         });
       
       if (error) {
@@ -126,5 +140,6 @@ export function useNotificationSettings() {
     loading,
     updateChannelForType,
     notificationTypes,
+    saveNotificationSettings
   };
 }

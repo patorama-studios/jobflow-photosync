@@ -53,22 +53,27 @@ export function useTeamMembers() {
     
     try {
       // Create new team member
-      const userId = crypto.randomUUID();
-      
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .insert({
-          id: userId,
+          id: crypto.randomUUID(),
           full_name: newMember.full_name,
           email: newMember.email,
-          phone: newMember.phone,
-          role: newMember.role
-        });
+          phone: newMember.phone || null,
+          role: newMember.role,
+          username: newMember.email.split('@')[0]
+        })
+        .select();
       
       if (error) throw error;
       
-      // Refresh the list to get the new member
-      await fetchTeamMembers();
+      // Update local state with the new member
+      if (data && data[0]) {
+        setMembers(prev => [...prev, data[0] as TeamMember]);
+      } else {
+        // If no data returned, refresh the list
+        await fetchTeamMembers();
+      }
       
       toast.success("Team member added successfully");
       return true;
@@ -95,9 +100,10 @@ export function useTeamMembers() {
         .from('profiles')
         .update({
           full_name: updatedMember.full_name,
-          phone: updatedMember.phone,
+          phone: updatedMember.phone || null,
           role: updatedMember.role,
-          email: updatedMember.email
+          email: updatedMember.email,
+          username: updatedMember.email?.split('@')[0] || null
         })
         .eq('id', id);
       

@@ -1,152 +1,91 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-type AppSettingsValue = Record<string, any>;
+export function useAppSettings<T>(settingKey: string, defaultValue: T) {
+  const [value, setValue] = useState<T>(defaultValue);
+  const [loading, setLoading] = useState(true);
 
-export function useAppSettings(key: string, defaultValue: AppSettingsValue = {}) {
-  const [value, setValue] = useState<AppSettingsValue>(defaultValue);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
-  const [lastSavedValue, setLastSavedValue] = useState<string>('');
-
-  // Fetch settings from Supabase on component mount
   useEffect(() => {
-    let isMounted = true;
-    const fetchSettings = async () => {
+    const fetchSetting = async () => {
       try {
-        setIsLoading(true);
+        setLoading(true);
+        
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) {
+          setValue(defaultValue);
+          setLoading(false);
+          return;
+        }
         
         const { data, error } = await supabase
           .from('app_settings')
-          .select('value')
-          .eq('key', key)
+          .select('*')
+          .eq('key', settingKey)
+          .eq('user_id', userData.user.id)
           .maybeSingle();
-
-        if (error) throw error;
         
-        if (isMounted) {
-          if (data) {
-            // Ensure we're setting an object type for AppSettingsValue
-            const parsedValue = typeof data.value === 'object' ? data.value : JSON.parse(String(data.value));
-            setValue(parsedValue);
-            setLastSavedValue(JSON.stringify(parsedValue));
-          } else {
-            // If no settings found, use default and save it
-            await saveSettings(defaultValue, false);
-            setValue(defaultValue);
-            setLastSavedValue(JSON.stringify(defaultValue));
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching app settings:', err);
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          // Fallback to default values if fetch fails
+        if (error) {
+          console.error(`Error fetching ${settingKey} setting:`, error);
           setValue(defaultValue);
-          setLastSavedValue(JSON.stringify(defaultValue));
+          return;
         }
+        
+        if (data && data.value) {
+          setValue(data.value as unknown as T);
+        } else {
+          setValue(defaultValue);
+          // Save default value to database
+          await saveSetting(defaultValue);
+        }
+      } catch (error) {
+        console.error(`Error fetching ${settingKey} setting:`, error);
+        setValue(defaultValue);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setLoading(false);
       }
     };
-
-    fetchSettings();
     
-    // Cleanup function to prevent state updates after unmount
-    return () => {
-      isMounted = false;
-    };
-  }, [key, defaultValue]);
+    fetchSetting();
+  }, [settingKey, defaultValue]);
 
-  // Save settings to Supabase
-  const saveSettings = useCallback(async (newValue: AppSettingsValue, showToast = true) => {
+  const saveSetting = useCallback(async (newValue: T) => {
     try {
-      setIsLoading(true);
-      
-      // Convert to string for comparison and storage
-      const newValueString = JSON.stringify(newValue);
-      
-      // Avoid unnecessary saves if the value hasn't changed
-      if (newValueString === lastSavedValue) {
-        setIsLoading(false);
-        return true;
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast.error('You must be logged in to save settings');
+        return false;
       }
-
-      // Check if setting exists
-      const { data: existingData, error: checkError } = await supabase
+      
+      const { error } = await supabase
         .from('app_settings')
-        .select('id')
-        .eq('key', key)
-        .maybeSingle();
+        .upsert({
+          key: settingKey,
+          value: newValue,
+          user_id: userData.user.id,
+          updated_at: new Date().toISOString()
+        });
       
-      if (checkError) {
-        throw checkError;
+      if (error) {
+        console.error(`Error saving ${settingKey} setting:`, error);
+        toast.error('Failed to save settings');
+        return false;
       }
-
-      let result;
-
-      if (existingData) {
-        // Update existing setting
-        result = await supabase
-          .from('app_settings')
-          .update({ 
-            value: newValue,
-            updated_at: new Date().toISOString()
-          })
-          .eq('key', key);
-      } else {
-        // Insert new setting
-        result = await supabase
-          .from('app_settings')
-          .insert({ 
-            key,
-            value: newValue,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            is_global: false
-          });
-      }
-
-      if (result.error) throw result.error;
       
-      // Update state only after successful save
+      // Update local state
       setValue(newValue);
-      setLastSavedValue(newValueString);
-      
-      if (showToast) {
-        toast({
-          title: "Settings saved",
-          description: "Your preferences have been updated",
-        });
-      }
-      
       return true;
-    } catch (err) {
-      console.error('Error saving app settings:', err);
-      setError(err instanceof Error ? err : new Error(String(err)));
-      
-      if (showToast) {
-        toast({
-          title: "Error saving settings",
-          description: "There was a problem saving your preferences",
-          variant: "destructive",
-        });
-      }
-      
+    } catch (error) {
+      console.error(`Error saving ${settingKey} setting:`, error);
+      toast.error('An unexpected error occurred');
       return false;
-    } finally {
-      setIsLoading(false);
     }
-  }, [key, toast, lastSavedValue]);
+  }, [settingKey]);
 
   return {
     value,
-    setValue: saveSettings,
-    isLoading,
-    error
+    setValue: saveSetting,
+    loading
   };
 }

@@ -1,247 +1,205 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Toggle } from "@/components/ui/toggle";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  Bold, Italic, List, ListOrdered, AlignLeft, 
-  AlignCenter, AlignRight, Link, FileText, ExternalLink
-} from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
+
+interface LegalSettings {
+  termsOfService: string;
+  privacyPolicy: string;
+  cookiePolicy: string;
+  disclaimers: string;
+}
+
+const DEFAULT_LEGAL_SETTINGS: LegalSettings = {
+  termsOfService: 'Enter your terms of service here...',
+  privacyPolicy: 'Enter your privacy policy here...',
+  cookiePolicy: 'Enter your cookie policy here...',
+  disclaimers: 'Enter any disclaimers here...'
+};
 
 export function LegalSettings() {
   const { toast } = useToast();
-  
-  const handleSave = () => {
-    toast({
-      title: "Legal settings updated",
-      description: "Your legal documents have been saved.",
-    });
+  const [legalSettings, setLegalSettings] = useState<LegalSettings>(DEFAULT_LEGAL_SETTINGS);
+  const [activeTab, setActiveTab] = useState('termsOfService');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchLegalSettings = async () => {
+      try {
+        setLoading(true);
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (!userData.user) {
+          setLoading(false);
+          return;
+        }
+        
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'legal_settings')
+          .eq('user_id', userData.user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching legal settings:', error);
+          return;
+        }
+        
+        if (data && data.value) {
+          setLegalSettings(data.value as LegalSettings);
+        }
+      } catch (error) {
+        console.error('Failed to fetch legal settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchLegalSettings();
+  }, []);
+
+  const saveSettings = async () => {
+    try {
+      setSaving(true);
+      
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save settings",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'legal_settings',
+          value: legalSettings,
+          user_id: userData.user.id,
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        console.error('Error saving legal settings:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save legal settings",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      toast({
+        title: "Legal settings saved",
+        description: "Your legal document settings have been updated.",
+      });
+    } catch (error) {
+      console.error('Error saving legal settings:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
-  
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Legal Settings</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">Legal Documents</h2>
         <p className="text-muted-foreground">
-          Manage your legal documents and policies
+          Manage legal documents displayed on your platform
         </p>
       </div>
       
-      <Tabs defaultValue="terms">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="terms">Terms of Service</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
-          <TabsTrigger value="copyright">Copyright</TabsTrigger>
-          <TabsTrigger value="additional">Additional</TabsTrigger>
+      <Separator />
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-4 mb-4">
+          <TabsTrigger value="termsOfService">Terms of Service</TabsTrigger>
+          <TabsTrigger value="privacyPolicy">Privacy Policy</TabsTrigger>
+          <TabsTrigger value="cookiePolicy">Cookie Policy</TabsTrigger>
+          <TabsTrigger value="disclaimers">Disclaimers</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="terms" className="pt-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Terms of Service</h3>
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Import PDF
-                </Button>
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Link External
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="termsUrl">URL to Terms Document (optional)</Label>
-              <Input id="termsUrl" placeholder="https://example.com/terms" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Editor</Label>
-              <div className="border rounded-md p-1">
-                <div className="flex flex-wrap gap-1 border-b p-1">
-                  <Toggle aria-label="Toggle bold">
-                    <Bold className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle italic">
-                    <Italic className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle bullet list">
-                    <List className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle numbered list">
-                    <ListOrdered className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Left align">
-                    <AlignLeft className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Center align">
-                    <AlignCenter className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Right align">
-                    <AlignRight className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Insert link">
-                    <Link className="h-4 w-4" />
-                  </Toggle>
-                </div>
-                <Textarea 
-                  className="border-0 focus-visible:ring-0 min-h-[300px]" 
-                  placeholder="Write your terms of service here..."
-                  defaultValue={`1. ACCEPTANCE OF TERMS\n\nBy accessing and using our services, you accept and agree to be bound by the terms and provision of this agreement.`}
-                />
-              </div>
-            </div>
-          </div>
+        <TabsContent value="termsOfService" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your terms of service document that outlines the rules and guidelines for using your service.
+          </p>
+          <Textarea 
+            value={legalSettings.termsOfService}
+            onChange={e => setLegalSettings({...legalSettings, termsOfService: e.target.value})}
+            className="min-h-[400px] font-mono text-sm"
+          />
         </TabsContent>
         
-        <TabsContent value="privacy" className="pt-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Privacy Policy</h3>
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Import PDF
-                </Button>
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Link External
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="privacyUrl">URL to Privacy Document (optional)</Label>
-              <Input id="privacyUrl" placeholder="https://example.com/privacy" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Editor</Label>
-              <div className="border rounded-md p-1">
-                <div className="flex flex-wrap gap-1 border-b p-1">
-                  {/* Same editor tools */}
-                  <Toggle aria-label="Toggle bold">
-                    <Bold className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle italic">
-                    <Italic className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle bullet list">
-                    <List className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle numbered list">
-                    <ListOrdered className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Left align">
-                    <AlignLeft className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Center align">
-                    <AlignCenter className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Right align">
-                    <AlignRight className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Insert link">
-                    <Link className="h-4 w-4" />
-                  </Toggle>
-                </div>
-                <Textarea 
-                  className="border-0 focus-visible:ring-0 min-h-[300px]" 
-                  placeholder="Write your privacy policy here..."
-                  defaultValue={`PRIVACY POLICY\n\nThis Privacy Policy describes how we collect, use, and disclose your personal information when you use our services.`}
-                />
-              </div>
-            </div>
-          </div>
+        <TabsContent value="privacyPolicy" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your privacy policy that informs users about how you collect, use, and protect their data.
+          </p>
+          <Textarea 
+            value={legalSettings.privacyPolicy}
+            onChange={e => setLegalSettings({...legalSettings, privacyPolicy: e.target.value})}
+            className="min-h-[400px] font-mono text-sm"
+          />
         </TabsContent>
         
-        <TabsContent value="copyright" className="pt-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Copyright Policy</h3>
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Import PDF
-                </Button>
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Link External
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="copyrightUrl">URL to Copyright Document (optional)</Label>
-              <Input id="copyrightUrl" placeholder="https://example.com/copyright" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Editor</Label>
-              <div className="border rounded-md p-1">
-                <div className="flex flex-wrap gap-1 border-b p-1">
-                  {/* Same editor tools */}
-                  <Toggle aria-label="Toggle bold">
-                    <Bold className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle italic">
-                    <Italic className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle bullet list">
-                    <List className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle numbered list">
-                    <ListOrdered className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Left align">
-                    <AlignLeft className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Center align">
-                    <AlignCenter className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Right align">
-                    <AlignRight className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Insert link">
-                    <Link className="h-4 w-4" />
-                  </Toggle>
-                </div>
-                <Textarea 
-                  className="border-0 focus-visible:ring-0 min-h-[300px]" 
-                  placeholder="Write your copyright policy here..."
-                  defaultValue={`COPYRIGHT POLICY\n\nAll content included on this site, such as text, graphics, logos, images, is the property of our company or its content suppliers and protected by copyright laws.`}
-                />
-              </div>
-            </div>
-          </div>
+        <TabsContent value="cookiePolicy" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your cookie policy that explains how your platform uses cookies and similar technologies.
+          </p>
+          <Textarea 
+            value={legalSettings.cookiePolicy}
+            onChange={e => setLegalSettings({...legalSettings, cookiePolicy: e.target.value})}
+            className="min-h-[400px] font-mono text-sm"
+          />
         </TabsContent>
         
-        <TabsContent value="additional" className="pt-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Additional Policies</h3>
-              <Button variant="outline" size="sm">
-                Add New Policy
-              </Button>
-            </div>
-            
-            <div className="p-4 border rounded-md bg-muted/50 text-center">
-              <p className="text-muted-foreground">No additional policies have been created yet.</p>
-              <Button variant="outline" className="mt-2">
-                Create New Policy
-              </Button>
-            </div>
-          </div>
+        <TabsContent value="disclaimers" className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Additional disclaimers, legal notices, or statements for your platform.
+          </p>
+          <Textarea 
+            value={legalSettings.disclaimers}
+            onChange={e => setLegalSettings({...legalSettings, disclaimers: e.target.value})}
+            className="min-h-[400px] font-mono text-sm"
+          />
         </TabsContent>
       </Tabs>
       
       <div className="flex justify-end">
-        <Button onClick={handleSave}>Save Legal Settings</Button>
+        <Button 
+          onClick={saveSettings}
+          disabled={saving}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Legal Settings"
+          )}
+        </Button>
       </div>
     </div>
   );

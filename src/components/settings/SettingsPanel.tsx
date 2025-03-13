@@ -7,13 +7,12 @@ import { OrganizationSettings } from "./sections/OrganizationSettings";
 import { NotificationEditor } from "./sections/NotificationEditor";
 import { DownloadSettings } from "./sections/DownloadSettings";
 import { PaymentSettings } from "./sections/PaymentSettings";
-import { ProductSettings } from "./sections/ProductSettings";
 import { PresentationSettings } from "./sections/PresentationSettings";
 import { HeaderSettings } from "./sections/HeaderSettings";
 import { ThemeSettings } from "./sections/ThemeSettings";
 import { LegalSettings } from "./sections/LegalSettings";
 import { AppsSettings } from "./sections/AppsSettings";
-import { TeamSettings } from "./sections/TeamSettings";
+import { TeamMembers } from "./sections/TeamMembers";
 import { EsoftIntegrationSettings } from "./sections/EsoftIntegrationSettings";
 import { UserProfileSettings } from "./sections/UserProfileSettings";
 import { Card } from "@/components/ui/card";
@@ -27,13 +26,12 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
     <Card className="p-6">
       {activeCategory === "user-profile" && <UserProfileSettings />}
       {activeCategory === "user" && <UserSettings />}
-      {activeCategory === "team" && <TeamSettings />}
+      {activeCategory === "team" && <TeamMembers />}
       {activeCategory === "notifications" && <NotificationPreferences />}
       {activeCategory === "organization" && <OrganizationSettings />}
       {activeCategory === "editor" && <NotificationEditor />}
       {activeCategory === "downloads" && <DownloadSettings />}
       {activeCategory === "payments" && <PaymentSettings />}
-      {activeCategory === "products" && <ProductSettings />}
       {activeCategory === "presentation" && <PresentationSettings />}
       {activeCategory === "header" && <HeaderSettings />}
       {activeCategory === "theme" && <ThemeSettings />}
