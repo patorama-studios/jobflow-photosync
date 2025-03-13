@@ -1,17 +1,24 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { Loader2 } from "lucide-react";
 
 export function OrganizationSettings() {
-  const { settings, loading, saving, updateSettings, saveSettings } = useOrganizationSettings();
+  const { settings, loading, updateSettings } = useOrganizationSettings();
+  const [isSaving, setIsSaving] = useState(false);
   
-  const handleSave = () => {
-    saveSettings();
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateSettings(settings);
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   if (loading) {
@@ -49,8 +56,8 @@ export function OrganizationSettings() {
           <Label htmlFor="companyName">Company Name</Label>
           <Input 
             id="companyName" 
-            value={settings.companyName}
-            onChange={(e) => updateSettings({ companyName: e.target.value })}
+            value={settings.name || ''}
+            onChange={(e) => updateSettings({ name: e.target.value })}
           />
         </div>
         
@@ -59,7 +66,7 @@ export function OrganizationSettings() {
           <Input 
             id="website" 
             type="url" 
-            value={settings.website}
+            value={settings.website || ''}
             onChange={(e) => updateSettings({ website: e.target.value })}
           />
         </div>
@@ -69,8 +76,8 @@ export function OrganizationSettings() {
           <Input 
             id="supportEmail" 
             type="email" 
-            value={settings.supportEmail}
-            onChange={(e) => updateSettings({ supportEmail: e.target.value })}
+            value={settings.email || ''}
+            onChange={(e) => updateSettings({ email: e.target.value })}
           />
         </div>
         
@@ -79,16 +86,16 @@ export function OrganizationSettings() {
           <Input 
             id="companyPhone" 
             type="tel" 
-            value={settings.companyPhone}
-            onChange={(e) => updateSettings({ companyPhone: e.target.value })}
+            value={settings.phone || ''}
+            onChange={(e) => updateSettings({ phone: e.target.value })}
           />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="companyTimezone">Company Timezone</Label>
           <Select 
-            value={settings.companyTimezone}
-            onValueChange={(value) => updateSettings({ companyTimezone: value })}
+            value={settings.timezone as string || ''}
+            onValueChange={(value) => updateSettings({ timezone: value })}
           >
             <SelectTrigger id="companyTimezone">
               <SelectValue placeholder="Select timezone" />
@@ -111,15 +118,15 @@ export function OrganizationSettings() {
               <Label htmlFor="companyAddress">Company Address</Label>
               <Textarea 
                 id="companyAddress" 
-                value={settings.companyAddress}
-                onChange={(e) => updateSettings({ companyAddress: e.target.value })}
+                value={settings.address || ''}
+                onChange={(e) => updateSettings({ address: e.target.value })}
               />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="addressFormat">Address Format</Label>
               <Select 
-                value={settings.addressFormat}
+                value={settings.addressFormat as string || ''}
                 onValueChange={(value) => updateSettings({ addressFormat: value })}
               >
                 <SelectTrigger id="addressFormat">
@@ -142,8 +149,15 @@ export function OrganizationSettings() {
       </div>
       
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save Changes"}
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
         </Button>
       </div>
     </div>

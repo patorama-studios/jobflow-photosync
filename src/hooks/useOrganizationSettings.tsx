@@ -13,7 +13,10 @@ const defaultSettings: OrganizationSettings = {
   country: '',
   phone: '',
   email: '',
-  website: ''
+  website: '',
+  // Additional fields used in the UI
+  timezone: '',
+  addressFormat: ''
 };
 
 export function useOrganizationSettings() {

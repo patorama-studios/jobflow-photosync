@@ -69,5 +69,7 @@ export interface OrganizationSettings {
   phone: string;
   email: string;
   website: string;
+  timezone?: string;
+  addressFormat?: string;
   [key: string]: JsonValue;
 }

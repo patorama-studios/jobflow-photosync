@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HeaderColorSelector } from "./header/HeaderColorSelector";
@@ -22,6 +22,8 @@ export function HeaderSettings() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Add fileInputRef to fix the error
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load initial settings
   useEffect(() => {
@@ -99,6 +101,7 @@ export function HeaderSettings() {
           <Separator />
           
           <LogoUploadSection 
+            fileInputRef={fileInputRef}
             settings={settings}
             updateSettings={handleSettingChange}
           />
