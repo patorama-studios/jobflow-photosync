@@ -1,4 +1,3 @@
-
 // Type definitions for user settings
 
 export type JsonValue = 
@@ -26,6 +25,7 @@ export interface UserProfile {
   phoneNumber: string;
   title: string;
   avatar: string;
+  phone?: string; // Added phone property to make it compatible with profile object
 }
 
 export interface ThemeSettings {
