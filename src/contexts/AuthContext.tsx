@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(currentSession?.user || null);
         
         // Set up auth state change listener
-        authStateSubscription = supabase.auth.onAuthStateChange((_event, newSession) => {
-          console.log('Auth state changed:', { hasSession: !!newSession });
+        authStateSubscription = supabase.auth.onAuthStateChange((event, newSession) => {
+          console.log('Auth state changed:', { event, hasSession: !!newSession });
           setSession(newSession);
           setUser(newSession?.user || null);
           setIsLoading(false);
@@ -66,8 +66,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        console.log('Auth initialization complete, setting isLoading to false');
-        setIsLoading(false);
+        // Add a short timeout to avoid race conditions with initial rendering
+        setTimeout(() => {
+          console.log('Auth initialization complete, setting isLoading to false');
+          setIsLoading(false);
+        }, 500);
       }
     };
 
