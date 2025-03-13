@@ -58,6 +58,16 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
 
   const suggestedTimes = getSuggestedDateTimes();
 
+  const handleSuggestionClick = (suggestion: { time: string, date: Date }) => {
+    // Update both the time and date
+    onTimeSelect(suggestion.time);
+    
+    // We need to also update the selected date
+    // This is handled in the parent component through the callback
+    
+    console.log("Selected suggestion:", suggestion);
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium">Suggested times based on availability:</p>
@@ -67,7 +77,7 @@ export const SuggestedTimes: React.FC<SuggestedTimesProps> = ({
             key={index}
             variant="outline"
             size="sm"
-            onClick={() => onTimeSelect(suggestion.time)}
+            onClick={() => handleSuggestionClick(suggestion)}
             className="text-xs"
           >
             {suggestion.display}

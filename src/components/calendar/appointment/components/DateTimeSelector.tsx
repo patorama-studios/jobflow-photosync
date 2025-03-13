@@ -55,8 +55,9 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
   };
 
   const handleManualTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTimeInputValue(e.target.value);
-    // Only update the actual time when focus is lost or enter is pressed
+    const newValue = e.target.value;
+    setTimeInputValue(newValue);
+    onTimeChange(newValue); // Update the parent component with the time value
   };
 
   const handleTimeInputBlur = () => {
@@ -117,7 +118,7 @@ export const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             <PopoverContent className="w-[200px] p-0">
               <Command>
                 <CommandInput placeholder="Search time..." />
-                <CommandList>
+                <CommandList className="h-[200px] overflow-auto">
                   <CommandEmpty>No time found.</CommandEmpty>
                   <CommandGroup>
                     {timeOptions.map((time) => (

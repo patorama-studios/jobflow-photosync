@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useAppointmentSubmission } from './appointment/use-appointment-submission';
+import { useNavigate } from 'react-router-dom';
 
 export interface CustomItem {
   id: string;
@@ -55,6 +56,8 @@ export const useCreateAppointmentForm = ({
   onAppointmentAdded,
   defaultSections = {} as DefaultSections
 }) => {
+  const navigate = useNavigate();
+  
   // Form state
   const form = useForm({
     resolver: zodResolver(appointmentFormSchema),
@@ -123,11 +126,13 @@ export const useCreateAppointmentForm = ({
   // Handler functions
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
+      console.log("Date changed to:", date);
       setSelectedDateTime(date);
     }
   };
   
   const handleTimeChange = (time: string) => {
+    console.log("Time changed to:", time);
     setSelectedTime(time);
   };
   
@@ -154,6 +159,10 @@ export const useCreateAppointmentForm = ({
   // Form submission handler
   const onSubmit = form.handleSubmit(async (data) => {
     try {
+      console.log("Form submitted with data:", data);
+      console.log("Selected date time:", selectedDateTime);
+      console.log("Selected time:", selectedTime);
+      
       await submitAppointment(data);
     } catch (error) {
       console.error('Error submitting appointment:', error);

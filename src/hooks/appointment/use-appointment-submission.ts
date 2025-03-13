@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { UseFormReturn } from 'react-hook-form';
 import { createOrder } from '@/services/orders/order-modify-service';
 import { SelectedProduct, CustomItem } from '../create-appointment-form';
+import { useNavigate } from 'react-router-dom';
 
 interface UseAppointmentSubmissionProps {
   form: UseFormReturn<any>;
@@ -27,6 +28,7 @@ export const useAppointmentSubmission = ({
   onAppointmentAdded
 }: UseAppointmentSubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const onSubmit = async (data: any) => {
     try {
@@ -55,6 +57,8 @@ export const useAppointmentSubmission = ({
         squareFeet: data.square_feet
       };
       
+      console.log("Submitting order data:", orderData);
+      
       // Create the order
       const result = await createOrder(orderData);
       
@@ -67,6 +71,13 @@ export const useAppointmentSubmission = ({
         }
         
         onClose();
+        
+        // Navigate to the order details page
+        if (result.data && result.data.id) {
+          navigate(`/orders/${result.data.id}`);
+        } else {
+          console.error("Missing order ID in response:", result);
+        }
       } else {
         toast.error(`Failed to create order: ${result.error}`);
       }

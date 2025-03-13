@@ -28,6 +28,14 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
   onToggle,
   isMobile
 }) => {
+  // Function to handle selecting a suggested time with its date
+  const handleSuggestedTimeSelect = (time: string, date?: Date) => {
+    onTimeChange(time);
+    if (date) {
+      onDateChange(date);
+    }
+  };
+
   return (
     <ToggleSection 
       title="Scheduling" 
@@ -44,15 +52,13 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
       
       <SuggestedTimes 
         selectedDate={selectedDateTime}
-        onTimeSelect={onTimeChange}
+        onTimeSelect={(time) => onTimeChange(time)}
       />
       
       <DurationSelector
         selectedDuration={selectedDuration}
         onDurationChange={onDurationChange}
       />
-      
-      {/* Using email as standard notification method */}
     </ToggleSection>
   );
 };

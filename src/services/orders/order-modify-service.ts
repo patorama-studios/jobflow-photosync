@@ -93,11 +93,12 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       zip: order.zip || ''
     };
     
+    console.log("Creating order with data:", orderData);
+    
     const { data, error } = await supabase
       .from('orders')
       .insert([orderData])
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error("Error creating order:", error);
@@ -105,10 +106,17 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<{ success: 
       return { success: false, data: null, error: error.message };
     }
 
+    console.log("Order created successfully, raw response:", data);
+    
+    if (!data || data.length === 0) {
+      return { success: true, data: null, error: "No data returned from insert operation" };
+    }
+
     // Convert response to Order type using our mapper
-    const orders = mapSupabaseOrdersToOrderType([data]);
+    const orders = mapSupabaseOrdersToOrderType(data);
     const createdOrder = orders[0];
 
+    console.log("Mapped order:", createdOrder);
     toast.success("Order created successfully");
     return { success: true, data: createdOrder, error: null };
   } catch (err) {
