@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import MainLayout from '@/components/layout/MainLayout';
 import { Separator } from '@/components/ui/separator';
 import { SafeIcon } from '@/utils/icon-loader';
+// Import lodash properly
+import lodash from 'lodash';
 
 export default function Debug() {
   const [environment, setEnvironment] = useState('');
@@ -66,8 +68,8 @@ export default function Debug() {
       // Check React
       if (React) deps['React'] = React.version || 'Unknown';
       
-      // Check lodash
-      deps['lodash'] = window._ ? 'Available globally' : 'Not available';
+      // Check lodash - using proper import now
+      deps['lodash'] = lodash ? 'Available via import' : 'Not available';
       
       // Check Recharts
       deps['Recharts'] = window.Recharts ? 'Available globally' : 'Not loaded';
@@ -195,8 +197,8 @@ export default function Debug() {
                     // Check error counts
                     console.log('Console errors:', window.__CONSOLE_ERROR_COUNT__ || 0);
                     
-                    // Test global lodash access
-                    console.log('Global lodash:', window._);
+                    // Test lodash access - using proper import
+                    console.log('Lodash available:', !!lodash);
                     
                     // Create error for testing
                     try {

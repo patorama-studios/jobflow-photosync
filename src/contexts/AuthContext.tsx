@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('AuthContext initializing...');
     let authStateSubscription: { data: { subscription: { unsubscribe: () => void } } };
+    let initTimeoutId: number;
     
     const initializeAuth = async () => {
       try {
@@ -66,11 +67,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        // Add a short timeout to avoid race conditions with initial rendering
-        setTimeout(() => {
+        // Add a short timeout to avoid race conditions with initial rendering 
+        // This ensures we don't get stuck in loading state
+        initTimeoutId = window.setTimeout(() => {
           console.log('Auth initialization complete, setting isLoading to false');
           setIsLoading(false);
-        }, 500);
+        }, 1500);
       }
     };
 
@@ -81,6 +83,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('Cleaning up auth subscription');
       if (authStateSubscription) {
         authStateSubscription.data.subscription.unsubscribe();
+      }
+      if (initTimeoutId) {
+        window.clearTimeout(initTimeoutId);
       }
     };
   }, []);

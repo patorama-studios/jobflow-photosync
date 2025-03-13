@@ -33,7 +33,7 @@ const LoadingSpinner = memo(function LoadingSpinner({
   progress: number;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-white dark:bg-gray-950">
       <div className="w-full max-w-md space-y-4">
         <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
         <Progress value={progress} className="w-full" />
@@ -55,18 +55,23 @@ export const ProtectedRoute = memo(function ProtectedRoute({
   const { session, isLoading } = useAuth();
   const location = useLocation();
   const [longLoadingDetected, setLongLoadingDetected] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(10);
+  const [forceRender, setForceRender] = useState(false);
 
   // Loading progress simulation
   useEffect(() => {
     if (!isLoading) return;
     
+    // Start with initial progress
+    setLoadingProgress(10);
+    
+    // Simulate progress incrementally
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 90) return prev; // Cap at 90% until actual load
-        return prev + 10;
+        return prev + 5;
       });
-    }, 500);
+    }, 300);
 
     return () => clearInterval(interval);
   }, [isLoading]);
@@ -77,9 +82,20 @@ export const ProtectedRoute = memo(function ProtectedRoute({
     
     const timeoutId = setTimeout(() => {
       setLongLoadingDetected(true);
-    }, 5000); // Increased from 1500ms to 5000ms to avoid premature error messages
+    }, 5000); // Show error message after 5 seconds
 
-    return () => clearTimeout(timeoutId);
+    // Force render after a timeout as a fallback
+    const forceRenderTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('Force rendering due to loading timeout');
+        setForceRender(true);
+      }
+    }, 8000); // Force render after 8 seconds if still loading
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(forceRenderTimeout);
+    };
   }, [isLoading]);
 
   // Update progress to 100 when loading completes
@@ -89,16 +105,22 @@ export const ProtectedRoute = memo(function ProtectedRoute({
     }
   }, [isLoading, loadingProgress]);
 
-  // If loading, show the loading spinner
-  if (isLoading) {
+  // In development mode, bypass auth after timeout
+  if (import.meta.env.DEV && (forceRender || !isLoading)) {
+    console.log('DEV MODE: Bypassing auth check or loading finished');
+    return <>{children}</>;
+  }
+
+  // If loading and not force rendering, show the loading spinner
+  if (isLoading && !forceRender) {
     return <LoadingSpinner showError={longLoadingDetected} progress={loadingProgress} />;
   }
 
   // If not logged in, redirect to login page
-  if (!session) {
+  if (!session && !import.meta.env.DEV) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If logged in, render the children
+  // If logged in or in development mode, render the children
   return <>{children}</>;
 });

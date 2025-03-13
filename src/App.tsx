@@ -8,10 +8,12 @@ import { useHeaderSettings, HeaderSettingsProvider } from '@/hooks/useHeaderSett
 import { AIAssistantProvider } from '@/contexts/AIAssistantContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import PageLoading from '@/components/loading/PageLoading';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 // Eager loaded components
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
+import Debug from './pages/Debug';
 
 // Lazy loaded pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -24,9 +26,12 @@ const Customers = lazy(() => import('./pages/Customers'));
 const CompanyDetails = lazy(() => import('./pages/CompanyDetails'));
 
 // Fallback loading component
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen p-4">
-    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+const AppLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen p-4 bg-white dark:bg-gray-950">
+    <div className="text-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+      <p className="text-muted-foreground">Loading application...</p>
+    </div>
   </div>
 );
 
@@ -58,47 +63,68 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <HeaderSettingsProvider>
           <AIAssistantProvider>
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<AppLoadingFallback />}>
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={
                   <ErrorBoundary fallback={PageError}>
-                    <Dashboard />
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/calendar/*" element={
                   <ErrorBoundary fallback={PageError}>
-                    <Calendar />
+                    <ProtectedRoute>
+                      <Calendar />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/orders" element={
                   <ErrorBoundary fallback={PageError}>
-                    <Orders />
+                    <ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/orders/:orderId" element={
                   <ErrorBoundary fallback={PageError}>
-                    <OrderDetails />
+                    <ProtectedRoute>
+                      <OrderDetails />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/products" element={
                   <ErrorBoundary fallback={PageError}>
-                    <Products />
+                    <ProtectedRoute>
+                      <Products />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/customers" element={
                   <ErrorBoundary fallback={PageError}>
-                    <Customers />
+                    <ProtectedRoute>
+                      <Customers />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/companies/:companyId" element={
                   <ErrorBoundary fallback={PageError}>
-                    <CompanyDetails />
+                    <ProtectedRoute>
+                      <CompanyDetails />
+                    </ProtectedRoute>
                   </ErrorBoundary>
                 } />
                 <Route path="/settings/*" element={
                   <ErrorBoundary fallback={PageError}>
-                    <Settings />
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  </ErrorBoundary>
+                } />
+                <Route path="/debug" element={
+                  <ErrorBoundary fallback={PageError}>
+                    <Debug />
                   </ErrorBoundary>
                 } />
                 <Route path="/404" element={<NotFound />} />

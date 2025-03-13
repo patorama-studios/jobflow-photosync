@@ -34,61 +34,55 @@ const applyThemeAndFont = () => {
 // Execute theme application immediately
 applyThemeAndFont();
 
-// Display fallback UI for critical errors
-function displayFallbackUI(message: string) {
-  // Don't create multiple fallback UIs
-  if (document.getElementById('fallback-ui')) {
-    return;
-  }
+// Show initial loading state
+const showInitialLoading = () => {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) return;
   
-  const fallbackElement = document.createElement('div');
-  fallbackElement.id = 'fallback-ui';
-  fallbackElement.style.padding = '20px';
-  fallbackElement.style.maxWidth = '600px';
-  fallbackElement.style.margin = '40px auto';
-  fallbackElement.style.borderRadius = '8px';
-  fallbackElement.style.backgroundColor = '#f8f9fa';
-  fallbackElement.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-  fallbackElement.innerHTML = `
-    <h2 style="color: #e11d48; margin-bottom: 10px;">Application Error</h2>
-    <p style="margin-bottom: 15px;">${message}</p>
-    <p style="margin-bottom: 15px;">Try navigating directly to a page:</p>
-    <div>
-      <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;" 
-              onclick="window.location.href = '/dashboard'">
-        Dashboard
-      </button>
-      <button style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;" 
-              onclick="window.location.href = '/orders'">
-        Orders
-      </button>
-      <button style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" 
-              onclick="window.location.reload()">
-        Refresh Page
-      </button>
-    </div>
-  `;
-  
-  if (document.getElementById('root')) {
-    const rootElement = document.getElementById('root');
-    // Clear root element first
-    if (rootElement) {
-      rootElement.innerHTML = '';
-      rootElement.appendChild(fallbackElement);
-    }
-  } else {
-    document.body.appendChild(fallbackElement);
+  // Only add if not already there
+  if (!document.getElementById('initial-loading')) {
+    const loadingElement = document.createElement('div');
+    loadingElement.id = 'initial-loading';
+    loadingElement.style.display = 'flex';
+    loadingElement.style.flexDirection = 'column';
+    loadingElement.style.alignItems = 'center';
+    loadingElement.style.justifyContent = 'center';
+    loadingElement.style.height = '100vh';
+    loadingElement.style.width = '100%';
+    loadingElement.style.position = 'fixed';
+    loadingElement.style.top = '0';
+    loadingElement.style.left = '0';
+    loadingElement.style.backgroundColor = 'white';
+    
+    // Add spinner
+    loadingElement.innerHTML = `
+      <div style="width: 40px; height: 40px; border: 3px solid #eee; border-top-color: #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+      <p style="font-family: system-ui, sans-serif; color: #555;">Loading application...</p>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .dark #initial-loading {
+          background-color: #1a1a1a;
+        }
+        .dark #initial-loading p {
+          color: #ccc;
+        }
+      </style>
+    `;
+    
+    rootElement.appendChild(loadingElement);
   }
-}
+};
 
-// Improved mount function with safety timeouts
+// Show initial loading state before app initialization
+showInitialLoading();
+
+// Mount app with safety mechanisms
 const mountApp = () => {
-  let hasMounted = false;
-  
   try {
-    // Add console logs for debugging
-    console.log('Starting app mount...', window.location.href);
-    console.log('Environment:', import.meta.env.MODE);
+    console.log('Starting app mount...');
     
     // Get root element
     const rootElement = document.getElementById("root");
@@ -96,38 +90,58 @@ const mountApp = () => {
       throw new Error("Root element not found");
     }
     
-    console.log('Root element found, creating React root');
-    
     // Create and mount root
     const root = createRoot(rootElement);
     
-    console.log('Rendering app...');
-    
-    // Mount directly without waiting
+    // Mount the app
     root.render(
       <BrowserRouter>
         <App />
       </BrowserRouter>
     );
     
-    hasMounted = true;
-    console.log('App render completed');
+    // Remove initial loading indicator after app mount
+    const initialLoading = document.getElementById('initial-loading');
+    if (initialLoading) {
+      setTimeout(() => {
+        initialLoading.style.opacity = '0';
+        initialLoading.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+          initialLoading.remove();
+        }, 300);
+      }, 500);
+    }
     
-    // Show a simple initialization message in the console
-    console.log('%c✨ App Initialized ✨', 'color: #3b82f6; font-weight: bold; font-size: 14px;');
+    console.log('App render completed');
   } catch (error) {
     console.error("Error mounting app:", error);
     
-    // Display more visible error message
-    if (!hasMounted) {
-      displayFallbackUI(error instanceof Error ? error.message : String(error));
+    // Display fallback UI for critical errors
+    const fallbackElement = document.createElement('div');
+    fallbackElement.innerHTML = `
+      <div style="padding: 20px; max-width: 600px; margin: 40px auto; border-radius: 8px; background-color: #f8f9fa; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="color: #e11d48; margin-bottom: 10px;">Application Error</h2>
+        <p style="margin-bottom: 15px;">${error instanceof Error ? error.message : String(error)}</p>
+        <button onclick="window.location.reload()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+          Refresh Page
+        </button>
+      </div>
+    `;
+    
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.innerHTML = '';
+      rootElement.appendChild(fallbackElement);
+    } else {
+      document.body.appendChild(fallbackElement);
     }
   }
 };
 
-// Call mount immediately
-console.log('Initializing application...');
-mountApp();
+// Call mount after a brief delay to ensure DOM is ready
+setTimeout(() => {
+  mountApp();
+}, 100);
 
 // Don't register service worker until app is loaded
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
