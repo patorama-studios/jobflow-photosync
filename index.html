@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en" class="light">
   <head>
@@ -14,11 +15,41 @@
       body {
         background-color: #ffffff;
         color: #000000;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
       }
       /* Dark mode will override this via JS */
       .dark body {
         background-color: #1a1a1a;
         color: #ffffff;
+      }
+      /* Prevent page content from vanishing during load */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Simple loading indicator that shows before JS loads */
+      .initial-loader {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100%;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
     </style>
     <script>
@@ -48,7 +79,12 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial loading state before React loads -->
+      <div class="initial-loader">
+        <div class="spinner"></div>
+      </div>
+    </div>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="./src/main.tsx"></script>
     <noscript>

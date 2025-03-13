@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -59,11 +60,7 @@ function App() {
           <AIAssistantProvider>
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
-                <Route path="/" element={
-                  <ErrorBoundary fallback={<Navigate to="/dashboard" replace />}>
-                    <Navigate to="/dashboard" replace />
-                  </ErrorBoundary>
-                } />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={
                   <ErrorBoundary fallback={PageError}>
                     <Dashboard />
