@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Define form schema for validation
 const profileFormSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address").optional(),
+  email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
   username: z.string().optional(),
 });
@@ -94,6 +94,21 @@ export function UserProfileSettings() {
     setIsSaving(true);
     
     try {
+      // First, update email in auth if it has changed
+      if (data.email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: data.email
+        });
+        
+        if (emailError) throw emailError;
+        
+        toast({
+          title: "Email update initiated",
+          description: "Check your inbox to confirm your new email address.",
+        });
+      }
+      
+      // Then update profile data in profiles table
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -307,9 +322,7 @@ export function UserProfileSettings() {
                     <FormControl>
                       <Input 
                         placeholder="your.email@example.com" 
-                        {...field} 
-                        disabled 
-                        className="bg-muted"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />

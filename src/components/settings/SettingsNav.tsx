@@ -18,6 +18,7 @@ import {
   Activity,
   UserSquare,
   ServerCog,
+  Users,
 } from "lucide-react";
 
 interface SettingsNavProps {
@@ -40,21 +41,13 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
     },
     {
       id: "user",
-      label: "Account Settings",
-      icon: <User className="w-4 h-4 mr-2" />,
+      label: "Team Management",
+      icon: <Users className="w-4 h-4 mr-2" />,
     },
     {
       id: "notifications",
       label: "Notifications",
       icon: <Bell className="w-4 h-4 mr-2" />,
-    },
-  ];
-
-  const teamCategories: SettingsCategoryNavItem[] = [
-    {
-      id: "team",
-      label: "Team Members",
-      icon: <User className="w-4 h-4 mr-2" />,
     },
   ];
 
@@ -118,23 +111,6 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
           Account
         </h3>
         {accountCategories.map((category) => (
-          <Button
-            key={category.id}
-            variant={activeCategory === category.id ? "default" : "ghost"}
-            className="justify-start"
-            onClick={() => onCategoryChange(category.id)}
-          >
-            {category.icon}
-            {category.label}
-          </Button>
-        ))}
-      </div>
-
-      <div className="flex flex-col space-y-1">
-        <h3 className="text-sm font-medium text-muted-foreground mb-1">
-          Team
-        </h3>
-        {teamCategories.map((category) => (
           <Button
             key={category.id}
             variant={activeCategory === category.id ? "default" : "ghost"}

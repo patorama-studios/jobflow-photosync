@@ -1,41 +1,110 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Toggle } from "@/components/ui/toggle";
-import { Bold, Italic, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Image, Link } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
+import { useAppSettings } from "@/hooks/useAppSettings";
+
+interface NotificationTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  type: 'email' | 'sms' | 'push';
+  variables: string[];
+}
+
+const defaultTemplates: NotificationTemplate[] = [
+  {
+    id: 'order-created',
+    name: 'Order Created',
+    subject: 'Your order #{{order_id}} has been created',
+    body: 'Hello {{customer_name}},\n\nYour order #{{order_id}} has been created successfully. Our team will process it shortly.\n\nThank you for your business!\n\nRegards,\nThe Team',
+    type: 'email',
+    variables: ['customer_name', 'order_id', 'order_date', 'order_total']
+  },
+  {
+    id: 'appointment-reminder',
+    name: 'Appointment Reminder',
+    subject: 'Reminder: Your appointment on {{appointment_date}}',
+    body: 'Hello {{customer_name}},\n\nThis is a reminder about your upcoming appointment on {{appointment_date}} at {{appointment_time}}.\n\nLocation: {{appointment_location}}\n\nWe look forward to seeing you!\n\nRegards,\nThe Team',
+    type: 'email',
+    variables: ['customer_name', 'appointment_date', 'appointment_time', 'appointment_location', 'photographer_name']
+  },
+  {
+    id: 'order-completed-sms',
+    name: 'Order Completed (SMS)',
+    subject: '',
+    body: 'Your order #{{order_id}} is now complete. View your content here: {{content_link}}',
+    type: 'sms',
+    variables: ['order_id', 'content_link']
+  }
+];
 
 export function NotificationEditor() {
-  const { toast } = useToast();
-  
-  const handleSave = () => {
-    toast({
-      title: "Notification template saved",
-      description: "Your notification template has been updated successfully.",
-    });
+  const { value: templates, setValue: saveTemplates, loading } = useAppSettings<NotificationTemplate[]>(
+    'notification_templates', 
+    defaultTemplates
+  );
+  const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
+  const [currentTab, setCurrentTab] = useState<string>('email');
+  const [isSaving, setIsSaving] = useState(false);
+  const [editedTemplate, setEditedTemplate] = useState<NotificationTemplate | null>(null);
+
+  const handleSelectTemplate = (template: NotificationTemplate) => {
+    setSelectedTemplate(template);
+    setEditedTemplate({...template});
   };
-  
-  const notificationTypes = [
-    "Appointment Canceled",
-    "Appointment Postponed",
-    "Appointment Reminder",
-    "Appointment Rescheduled",
-    "Appointment Scheduled",
-    "Customer Team Invitation",
-    "Lead Submitted",
-    "Listing Delivered",
-    "Order Confirmation",
-    "Order Payment Overdue",
-    "Order Payment Required",
-    "User Activation",
-    "User Reset Password",
-    "User Verification",
-  ];
-  
+
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+    setSelectedTemplate(null);
+    setEditedTemplate(null);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!editedTemplate) return;
+    
+    setIsSaving(true);
+    try {
+      // Update the template in the templates array
+      const newTemplates = templates.map(t => 
+        t.id === editedTemplate.id ? editedTemplate : t
+      );
+      
+      // Save to Supabase
+      await saveTemplates(newTemplates);
+      
+      // Update the selected template
+      setSelectedTemplate(editedTemplate);
+      
+      toast.success("Template saved successfully");
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast.error("Failed to save template");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getTemplatesByType = (type: string) => {
+    return templates.filter(t => t.type === type);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -45,162 +114,126 @@ export function NotificationEditor() {
         </p>
       </div>
       
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="templateType">Notification Type</Label>
-          <Select defaultValue={notificationTypes[0]}>
-            <SelectTrigger id="templateType">
-              <SelectValue placeholder="Select notification type" />
-            </SelectTrigger>
-            <SelectContent>
-              {notificationTypes.map((type) => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <Tabs defaultValue="email" value={currentTab} onValueChange={handleTabChange}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="email">Email Templates</TabsTrigger>
+          <TabsTrigger value="sms">SMS Templates</TabsTrigger>
+          <TabsTrigger value="push">Push Notification Templates</TabsTrigger>
+        </TabsList>
         
-        <Tabs defaultValue="email">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="sms">SMS</TabsTrigger>
-            <TabsTrigger value="push">Push</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div className="md:col-span-1">
+            <Card>
+              <CardContent className="pt-6">
+                <Label className="mb-2 block">Available Templates</Label>
+                <div className="space-y-2">
+                  {getTemplatesByType(currentTab).map(template => (
+                    <Button 
+                      key={template.id}
+                      variant={selectedTemplate?.id === template.id ? "default" : "outline"}
+                      className="w-full justify-start h-auto py-2 px-4"
+                      onClick={() => handleSelectTemplate(template)}
+                    >
+                      <span className="truncate">{template.name}</span>
+                    </Button>
+                  ))}
+                  
+                  {getTemplatesByType(currentTab).length === 0 && (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No templates available for this type.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
           
-          <TabsContent value="email" className="pt-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="emailSubject">Email Subject</Label>
-                <div className="flex space-x-2">
-                  <Input id="emailSubject" defaultValue="Your appointment has been canceled" />
-                </div>
+          <div className="md:col-span-2">
+            {editedTemplate ? (
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="template-name">Template Name</Label>
+                    <Input 
+                      id="template-name"
+                      value={editedTemplate.name}
+                      onChange={(e) => setEditedTemplate({
+                        ...editedTemplate,
+                        name: e.target.value
+                      })}
+                    />
+                  </div>
+                  
+                  {currentTab === 'email' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="template-subject">Subject Line</Label>
+                      <Input 
+                        id="template-subject"
+                        value={editedTemplate.subject}
+                        onChange={(e) => setEditedTemplate({
+                          ...editedTemplate,
+                          subject: e.target.value
+                        })}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="template-body">Message Content</Label>
+                    <Textarea 
+                      id="template-body"
+                      rows={10}
+                      value={editedTemplate.body}
+                      onChange={(e) => setEditedTemplate({
+                        ...editedTemplate,
+                        body: e.target.value
+                      })}
+                      className="font-mono"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Available Variables</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {editedTemplate.variables.map(variable => (
+                        <div key={variable} className="bg-muted px-3 py-1 rounded text-sm">
+                          {`{{${variable}}}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <Button 
+                      onClick={handleSaveTemplate}
+                      disabled={isSaving}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Template
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full bg-muted/30 rounded-lg p-6">
+                <p className="text-muted-foreground">
+                  Select a template to edit
+                </p>
               </div>
-              
-              <div className="border rounded-md p-1">
-                <div className="flex flex-wrap gap-1 border-b p-1">
-                  <Toggle aria-label="Toggle bold">
-                    <Bold className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle italic">
-                    <Italic className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle bullet list">
-                    <List className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Toggle numbered list">
-                    <ListOrdered className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Left align">
-                    <AlignLeft className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Center align">
-                    <AlignCenter className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Right align">
-                    <AlignRight className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Insert image">
-                    <Image className="h-4 w-4" />
-                  </Toggle>
-                  <Toggle aria-label="Insert link">
-                    <Link className="h-4 w-4" />
-                  </Toggle>
-                </div>
-                <Textarea 
-                  className="border-0 focus-visible:ring-0 min-h-[300px]" 
-                  placeholder="Write your email content here..."
-                  defaultValue={`Dear {customer_name},\n\nWe're writing to inform you that your appointment scheduled for {appointment_date} at {appointment_time} has been canceled.\n\nIf you have any questions, please contact us at {company_phone}.\n\nBest regards,\n{company_name}`}
-                />
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium mb-2">Available shortcodes:</p>
-                <div className="text-sm text-muted-foreground flex flex-wrap gap-2">
-                  <code className="bg-muted px-1 rounded">{"{customer_name}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{appointment_date}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{appointment_time}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{company_name}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{company_phone}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{company_email}"}</code>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline">Test Email</Button>
-                <Button variant="outline">Preview</Button>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="sms" className="pt-4">
-            <div className="space-y-4">
-              <Textarea 
-                placeholder="Write your SMS content here..."
-                className="min-h-[150px]"
-                defaultValue={`{company_name}: Your appointment on {appointment_date} at {appointment_time} has been canceled. Questions? Call us at {company_phone}.`}
-              />
-              
-              <div>
-                <p className="text-sm font-medium mb-2">Available shortcodes:</p>
-                <div className="text-sm text-muted-foreground flex flex-wrap gap-2">
-                  <code className="bg-muted px-1 rounded">{"{customer_name}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{appointment_date}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{appointment_time}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{company_name}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{company_phone}"}</code>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline">Test SMS</Button>
-                <Button variant="outline">Preview</Button>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="push" className="pt-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="pushTitle">Notification Title</Label>
-                <Input id="pushTitle" defaultValue="Appointment Canceled" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="pushBody">Notification Body</Label>
-                <Textarea 
-                  id="pushBody"
-                  placeholder="Write your push notification content here..."
-                  className="min-h-[100px]"
-                  defaultValue={`Your appointment on {appointment_date} at {appointment_time} has been canceled.`}
-                />
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium mb-2">Available shortcodes:</p>
-                <div className="text-sm text-muted-foreground flex flex-wrap gap-2">
-                  <code className="bg-muted px-1 rounded">{"{appointment_date}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{appointment_time}"}</code>
-                  <code className="bg-muted px-1 rounded">{"{company_name}"}</code>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline">Test Push</Button>
-                <Button variant="outline">Preview</Button>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-      
-      <div className="flex justify-end">
-        <Button onClick={handleSave}>Save Template</Button>
-      </div>
+            )}
+          </div>
+        </div>
+      </Tabs>
     </div>
   );
-}
-
-// Helper component for Input
-function Input(props) {
-  return <input {...props} className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${props.className || ""}`} />;
 }

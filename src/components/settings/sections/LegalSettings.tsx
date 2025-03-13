@@ -1,59 +1,56 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { LegalSettings as LegalSettingsType } from "@/hooks/types/user-settings-types";
+import { toast } from "sonner";
 
-interface LegalSettings {
-  termsOfService: string;
-  privacyPolicy: string;
-  cookiePolicy: string;
-  disclaimers: string;
-}
-
-const DEFAULT_LEGAL_SETTINGS: LegalSettings = {
-  termsOfService: 'Enter your terms of service here...',
-  privacyPolicy: 'Enter your privacy policy here...',
-  cookiePolicy: 'Enter your cookie policy here...',
-  disclaimers: 'Enter any disclaimers here...'
+const defaultSettings: LegalSettingsType = {
+  termsOfService: "",
+  privacyPolicy: "",
+  cookiePolicy: "",
+  disclaimers: ""
 };
 
 export function LegalSettings() {
-  const { toast } = useToast();
-  const [legalSettings, setLegalSettings] = useState<LegalSettings>(DEFAULT_LEGAL_SETTINGS);
-  const [activeTab, setActiveTab] = useState('termsOfService');
+  const [settings, setSettings] = useState<LegalSettingsType>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchLegalSettings = async () => {
+    const fetchSettings = async () => {
       try {
         setLoading(true);
-        const { data: userData } = await supabase.auth.getUser();
         
+        const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) {
-          setLoading(false);
           return;
         }
         
         const { data, error } = await supabase
           .from('app_settings')
-          .select('value')
+          .select('*')
           .eq('key', 'legal_settings')
           .eq('user_id', userData.user.id)
           .maybeSingle();
-        
+          
         if (error) {
           console.error('Error fetching legal settings:', error);
           return;
         }
         
         if (data && data.value) {
-          setLegalSettings(data.value as LegalSettings);
+          const loadedSettings = data.value as Record<string, any>;
+          setSettings({
+            termsOfService: loadedSettings.termsOfService || "",
+            privacyPolicy: loadedSettings.privacyPolicy || "",
+            cookiePolicy: loadedSettings.cookiePolicy || "",
+            disclaimers: loadedSettings.disclaimers || ""
+          });
         }
       } catch (error) {
         console.error('Failed to fetch legal settings:', error);
@@ -62,20 +59,22 @@ export function LegalSettings() {
       }
     };
     
-    fetchLegalSettings();
+    fetchSettings();
   }, []);
 
+  const handleChange = (field: keyof LegalSettingsType, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const saveSettings = async () => {
+    setSaving(true);
     try {
-      setSaving(true);
-      
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to save settings",
-          variant: "destructive"
-        });
+        toast.error('You must be logged in to save settings');
         return;
       }
       
@@ -83,32 +82,24 @@ export function LegalSettings() {
         .from('app_settings')
         .upsert({
           key: 'legal_settings',
-          value: legalSettings,
+          value: {
+            termsOfService: settings.termsOfService,
+            privacyPolicy: settings.privacyPolicy,
+            cookiePolicy: settings.cookiePolicy,
+            disclaimers: settings.disclaimers
+          },
           user_id: userData.user.id,
           updated_at: new Date().toISOString()
         });
       
       if (error) {
-        console.error('Error saving legal settings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save legal settings",
-          variant: "destructive"
-        });
-        return;
+        throw error;
       }
       
-      toast({
-        title: "Legal settings saved",
-        description: "Your legal document settings have been updated.",
-      });
+      toast.success('Legal settings saved successfully');
     } catch (error) {
       console.error('Error saving legal settings:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive"
-      });
+      toast.error('Failed to save legal settings');
     } finally {
       setSaving(false);
     }
@@ -116,8 +107,8 @@ export function LegalSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -125,69 +116,62 @@ export function LegalSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Legal Documents</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">Legal Settings</h2>
         <p className="text-muted-foreground">
-          Manage legal documents displayed on your platform
+          Manage legal policies and disclaimers for your organization
         </p>
       </div>
       
-      <Separator />
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 mb-4">
-          <TabsTrigger value="termsOfService">Terms of Service</TabsTrigger>
-          <TabsTrigger value="privacyPolicy">Privacy Policy</TabsTrigger>
-          <TabsTrigger value="cookiePolicy">Cookie Policy</TabsTrigger>
-          <TabsTrigger value="disclaimers">Disclaimers</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="termsOfService" className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Your terms of service document that outlines the rules and guidelines for using your service.
-          </p>
-          <Textarea 
-            value={legalSettings.termsOfService}
-            onChange={e => setLegalSettings({...legalSettings, termsOfService: e.target.value})}
-            className="min-h-[400px] font-mono text-sm"
-          />
-        </TabsContent>
-        
-        <TabsContent value="privacyPolicy" className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Your privacy policy that informs users about how you collect, use, and protect their data.
-          </p>
-          <Textarea 
-            value={legalSettings.privacyPolicy}
-            onChange={e => setLegalSettings({...legalSettings, privacyPolicy: e.target.value})}
-            className="min-h-[400px] font-mono text-sm"
-          />
-        </TabsContent>
-        
-        <TabsContent value="cookiePolicy" className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Your cookie policy that explains how your platform uses cookies and similar technologies.
-          </p>
-          <Textarea 
-            value={legalSettings.cookiePolicy}
-            onChange={e => setLegalSettings({...legalSettings, cookiePolicy: e.target.value})}
-            className="min-h-[400px] font-mono text-sm"
-          />
-        </TabsContent>
-        
-        <TabsContent value="disclaimers" className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Additional disclaimers, legal notices, or statements for your platform.
-          </p>
-          <Textarea 
-            value={legalSettings.disclaimers}
-            onChange={e => setLegalSettings({...legalSettings, disclaimers: e.target.value})}
-            className="min-h-[400px] font-mono text-sm"
-          />
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardContent className="pt-6 space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="terms">Terms of Service</Label>
+            <Textarea
+              id="terms"
+              placeholder="Enter your Terms of Service text..."
+              rows={6}
+              value={settings.termsOfService}
+              onChange={(e) => handleChange('termsOfService', e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="privacy">Privacy Policy</Label>
+            <Textarea
+              id="privacy"
+              placeholder="Enter your Privacy Policy text..."
+              rows={6}
+              value={settings.privacyPolicy}
+              onChange={(e) => handleChange('privacyPolicy', e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="cookies">Cookie Policy</Label>
+            <Textarea
+              id="cookies"
+              placeholder="Enter your Cookie Policy text..."
+              rows={4}
+              value={settings.cookiePolicy}
+              onChange={(e) => handleChange('cookiePolicy', e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="disclaimers">Disclaimers</Label>
+            <Textarea
+              id="disclaimers"
+              placeholder="Enter your disclaimers text..."
+              rows={4}
+              value={settings.disclaimers}
+              onChange={(e) => handleChange('disclaimers', e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
       
       <div className="flex justify-end">
-        <Button 
+        <Button
           onClick={saveSettings}
           disabled={saving}
         >

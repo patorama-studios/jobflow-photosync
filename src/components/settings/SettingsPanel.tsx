@@ -25,8 +25,7 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
   return (
     <Card className="p-6">
       {activeCategory === "user-profile" && <UserProfileSettings />}
-      {activeCategory === "user" && <UserSettings />}
-      {activeCategory === "team" && <TeamMembers />}
+      {activeCategory === "user" && <TeamMembers />}
       {activeCategory === "notifications" && <NotificationPreferences />}
       {activeCategory === "organization" && <OrganizationSettings />}
       {activeCategory === "editor" && <NotificationEditor />}

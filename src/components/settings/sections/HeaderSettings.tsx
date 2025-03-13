@@ -1,120 +1,122 @@
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { LogoUploadSection } from './header/LogoUploadSection';
-import { CompanyNameToggle } from './header/CompanyNameToggle';
-import { HeaderHeightControl } from './header/HeaderHeightControl';
-import { HeaderColorSelector } from './header/HeaderColorSelector';
-import { ResetButton } from './header/ResetButton';
-import { useHeaderSettings } from '@/hooks/useHeaderSettings';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { HeaderColorSelector } from "./header/HeaderColorSelector";
+import { HeaderHeightControl } from "./header/HeaderHeightControl";
+import { LogoUploadSection } from "./header/LogoUploadSection";
+import { CompanyNameToggle } from "./header/CompanyNameToggle";
+import { ResetButton } from "./header/ResetButton";
+import { Separator } from "@/components/ui/separator";
+import { useHeaderSettings } from "@/hooks/useHeaderSettings";
+import { HeaderSettings as HeaderSettingsType } from "@/hooks/types/user-settings-types";
+import { Loader2 } from "lucide-react";
 
 export function HeaderSettings() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { settings: savedSettings, updateSettings } = useHeaderSettings();
-  const [localSettings, setLocalSettings] = useState({ ...savedSettings });
-  const [hasChanges, setHasChanges] = useState(false);
+  const { settings: defaultSettings, updateSettings } = useHeaderSettings();
+  const [settings, setSettings] = useState<HeaderSettingsType>({
+    color: "#000000",
+    height: 65,
+    logoUrl: "",
+    showCompanyName: false
+  });
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-  
-  // Update local settings when saved settings change
+  const [loading, setLoading] = useState(true);
+
+  // Load initial settings
   useEffect(() => {
-    setLocalSettings({ ...savedSettings });
-  }, [savedSettings]);
-  
-  const updateLocalSettings = (newSettingsPartial: Partial<typeof savedSettings>) => {
-    setLocalSettings(prev => {
-      const newSettings = { ...prev, ...newSettingsPartial };
-      setHasChanges(true);
-      return newSettings;
-    });
+    if (defaultSettings) {
+      setSettings(defaultSettings);
+      setLoading(false);
+    }
+  }, [defaultSettings]);
+
+  // Handle settings changes
+  const handleSettingChange = (setting: Partial<HeaderSettingsType>) => {
+    setSettings(prev => ({
+      ...prev,
+      ...setting
+    }));
   };
-  
+
+  // Handle save
   const handleSave = async () => {
-    if (hasChanges) {
-      setIsSaving(true);
-      try {
-        const saveSuccess = await updateSettings(localSettings);
-        
-        if (saveSuccess) {
-          setHasChanges(false);
-          toast({
-            title: "Settings saved",
-            description: "Header settings have been updated and will persist across sessions",
-          });
-        } else {
-          toast({
-            title: "Save failed",
-            description: "There was a problem saving your header settings",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error('Error saving header settings:', error);
-        toast({
-          title: "Save failed",
-          description: "An unexpected error occurred while saving settings",
-          variant: "destructive"
-        });
-      } finally {
-        setIsSaving(false);
+    setIsSaving(true);
+    try {
+      const success = await updateSettings(settings);
+      if (!success) {
+        throw new Error("Failed to save settings");
       }
+    } catch (error) {
+      console.error("Error saving header settings:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  // Handle reset to defaults
+  const handleReset = () => {
+    setSettings({
+      color: "#000000",
+      height: 65,
+      logoUrl: "",
+      showCompanyName: false
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <p>Loading header settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Header Appearance</h3>
-        <p className="text-sm text-muted-foreground">
-          Customize how the application header looks across the platform.
+        <h2 className="text-2xl font-semibold tracking-tight">Header Settings</h2>
+        <p className="text-muted-foreground">
+          Customize the appearance of the application header
         </p>
       </div>
-      
-      <Separator />
-      
-      {/* Logo Upload */}
-      <LogoUploadSection 
-        fileInputRef={fileInputRef} 
-        settings={localSettings}
-        updateSettings={updateLocalSettings}
-      />
 
-      {/* Company Name Display */}
-      <CompanyNameToggle 
-        settings={localSettings}
-        updateSettings={updateLocalSettings}
-      />
-
-      {/* Header Height */}
-      <HeaderHeightControl 
-        settings={localSettings}
-        updateSettings={updateLocalSettings}
-      />
-
-      {/* Header Color */}
-      <HeaderColorSelector 
-        settings={localSettings}
-        updateSettings={updateLocalSettings}
-      />
+      <Card>
+        <CardContent className="pt-6 space-y-6">
+          <HeaderColorSelector 
+            settings={settings}
+            updateSettings={handleSettingChange}
+          />
+          
+          <Separator />
+          
+          <HeaderHeightControl 
+            settings={settings}
+            updateSettings={handleSettingChange}
+          />
+          
+          <Separator />
+          
+          <LogoUploadSection 
+            settings={settings}
+            updateSettings={handleSettingChange}
+          />
+          
+          <Separator />
+          
+          <CompanyNameToggle 
+            settings={settings}
+            updateSettings={handleSettingChange}
+          />
+        </CardContent>
+      </Card>
       
-      {/* Save Button */}
-      <div className="flex justify-between items-center pt-4">
-        <ResetButton onReset={() => {
-          setLocalSettings({
-            color: '#000000',
-            height: 65,
-            logoUrl: '',
-            showCompanyName: false
-          });
-          setHasChanges(true);
-        }} />
-        
+      <div className="flex justify-between">
+        <ResetButton onReset={handleReset} />
         <Button 
           onClick={handleSave}
-          disabled={!hasChanges || isSaving}
+          disabled={isSaving}
         >
           {isSaving ? (
             <>
@@ -122,7 +124,7 @@ export function HeaderSettings() {
               Saving...
             </>
           ) : (
-            'Save Header Settings'
+            "Save Header Settings"
           )}
         </Button>
       </div>

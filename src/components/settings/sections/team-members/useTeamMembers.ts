@@ -8,10 +8,12 @@ export function useTeamMembers() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTeamMembers = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -30,6 +32,7 @@ export function useTeamMembers() {
       setMembers(enrichedData as TeamMember[]);
     } catch (error) {
       console.error("Error fetching team members:", error);
+      setError("Failed to load team members");
       toast.error("Failed to load team members");
     } finally {
       setIsLoading(false);
@@ -52,6 +55,8 @@ export function useTeamMembers() {
     setIsSubmitting(true);
     
     try {
+      console.log("Creating new team member:", newMember);
+      
       // Create new team member
       const { data, error } = await supabase
         .from('profiles')
@@ -66,6 +71,8 @@ export function useTeamMembers() {
         .select();
       
       if (error) throw error;
+      
+      console.log("Team member created:", data);
       
       // Update local state with the new member
       if (data && data[0]) {
@@ -95,6 +102,8 @@ export function useTeamMembers() {
     setIsSubmitting(true);
     
     try {
+      console.log("Updating team member:", id, updatedMember);
+      
       // Update existing member
       const { error } = await supabase
         .from('profiles')
@@ -109,6 +118,7 @@ export function useTeamMembers() {
       
       if (error) throw error;
       
+      // Update in local state
       setMembers(prevMembers => prevMembers.map(member => 
         member.id === id 
           ? { ...member, ...updatedMember as TeamMember } 
@@ -153,6 +163,7 @@ export function useTeamMembers() {
     members,
     isLoading,
     isSubmitting,
+    error,
     fetchTeamMembers,
     addTeamMember,
     updateTeamMember,

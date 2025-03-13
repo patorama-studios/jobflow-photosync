@@ -2,18 +2,14 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface HeaderSettings {
-  title?: string;
-  description?: string;
-  color: string;
-  height: number;
-  logoUrl: string;
-  showCompanyName: boolean;
-}
+import { HeaderSettings } from './types/user-settings-types';
 
 interface HeaderSettingsContextType {
   settings: HeaderSettings;
+  title?: string;
+  description?: string;
+  showBackButton?: boolean;
+  onBackButtonClick?: () => void;
   updateSettings: (newSettings: Partial<HeaderSettings>) => Promise<boolean>;
 }
 
@@ -34,6 +30,10 @@ const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
 
 export function HeaderSettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
+  const [title, setTitle] = useState<string | undefined>(undefined);
+  const [description, setDescription] = useState<string | undefined>(undefined);
+  const [showBackButton, setShowBackButton] = useState<boolean | undefined>(undefined);
+  const [onBackButtonClick, setOnBackButtonClick] = useState<(() => void) | undefined>(undefined);
 
   // Fetch settings on mount
   useEffect(() => {
@@ -107,15 +107,31 @@ export function HeaderSettingsProvider({ children }: { children: React.ReactNode
         return false;
       }
       
+      toast.success('Header settings saved successfully');
       return true;
     } catch (error) {
       console.error('Failed to update header settings:', error);
       return false;
     }
   }, [settings]);
+
+  // Method to update page title and description
+  const updatePageInfo = useCallback((pageTitle?: string, pageDescription?: string, backButton?: boolean, backAction?: () => void) => {
+    setTitle(pageTitle);
+    setDescription(pageDescription);
+    setShowBackButton(backButton);
+    setOnBackButtonClick(backAction);
+  }, []);
   
   return (
-    <HeaderSettingsContext.Provider value={{ settings, updateSettings }}>
+    <HeaderSettingsContext.Provider value={{ 
+      settings, 
+      title, 
+      description, 
+      showBackButton, 
+      onBackButtonClick, 
+      updateSettings 
+    }}>
       {children}
     </HeaderSettingsContext.Provider>
   );

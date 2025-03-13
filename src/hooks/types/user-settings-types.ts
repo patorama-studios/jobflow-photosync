@@ -39,6 +39,8 @@ export interface HeaderSettings {
   height: number;
   logoUrl: string;
   showCompanyName: boolean;
+  title?: string;
+  description?: string;
 }
 
 export interface DownloadSettings {
@@ -46,6 +48,7 @@ export interface DownloadSettings {
   imageQuality: number;
   dpi: string;
   fileNaming: string;
+  [key: string]: JsonValue;
 }
 
 export interface LegalSettings {
@@ -53,4 +56,18 @@ export interface LegalSettings {
   privacyPolicy: string;
   cookiePolicy: string;
   disclaimers: string;
+  [key: string]: JsonValue;
+}
+
+export interface OrganizationSettings {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  phone: string;
+  email: string;
+  website: string;
+  [key: string]: JsonValue;
 }

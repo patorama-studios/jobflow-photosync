@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { JsonValue } from './types/user-settings-types';
 
 export function useAppSettings<T>(settingKey: string, defaultValue: T) {
   const [value, setValue] = useState<T>(defaultValue);
@@ -62,7 +63,7 @@ export function useAppSettings<T>(settingKey: string, defaultValue: T) {
         .from('app_settings')
         .upsert({
           key: settingKey,
-          value: newValue,
+          value: newValue as unknown as JsonValue,
           user_id: userData.user.id,
           updated_at: new Date().toISOString()
         });
@@ -75,6 +76,7 @@ export function useAppSettings<T>(settingKey: string, defaultValue: T) {
       
       // Update local state
       setValue(newValue);
+      toast.success('Settings saved successfully');
       return true;
     } catch (error) {
       console.error(`Error saving ${settingKey} setting:`, error);
