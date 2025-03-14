@@ -20,6 +20,9 @@ type HeaderSettingsContextType = {
   settings: HeaderSettings;
   updateSettings: (newSettings: Partial<HeaderSettings>) => Promise<boolean>;
   loading: boolean;
+  title?: string;
+  showBackButton?: boolean;
+  onBackButtonClick?: () => void;
 };
 
 const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
@@ -32,6 +35,9 @@ const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
 export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const [settings, setSettings] = useState<HeaderSettings>(DEFAULT_HEADER_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState<string | undefined>(undefined);
+  const [showBackButton, setShowBackButton] = useState<boolean>(false);
+  const [onBackButtonClick, setOnBackButtonClick] = useState<(() => void) | undefined>(undefined);
 
   // Fetch header settings from database
   useEffect(() => {
@@ -50,9 +56,11 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
         }
 
         if (data?.value) {
+          // Properly cast the JSON value to the expected type
+          const settingsData = data.value as unknown as HeaderSettings;
           setSettings({
             ...DEFAULT_HEADER_SETTINGS,
-            ...data.value as HeaderSettings
+            ...settingsData
           });
         }
       } catch (error) {
@@ -144,7 +152,14 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   };
 
   return (
-    <HeaderSettingsContext.Provider value={{ settings, updateSettings, loading }}>
+    <HeaderSettingsContext.Provider value={{ 
+      settings, 
+      updateSettings, 
+      loading,
+      title,
+      showBackButton,
+      onBackButtonClick
+    }}>
       {children}
     </HeaderSettingsContext.Provider>
   );

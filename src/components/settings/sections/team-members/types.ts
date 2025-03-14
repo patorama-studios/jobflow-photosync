@@ -10,6 +10,14 @@ export interface TeamMember {
   updated_at?: string;
 }
 
+export const RoleOptions = [
+  { value: 'admin', label: 'Administrator' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'editor', label: 'Editor' },
+  { value: 'staff', label: 'Staff' },
+  { value: 'user', label: 'User' }
+];
+
 export function getInitials(name: string): string {
   if (!name) return '??';
   const parts = name.trim().split(' ');

@@ -84,7 +84,7 @@ export function useTeamMembers() {
           id: data[0].id,
           full_name: data[0].full_name,
           email: data[0].email || newMember.email,
-          phone: data[0].phone,
+          phone: data[0].phone || '',
           role: data[0].role,
           username: data[0].username,
           avatar_url: data[0].avatar_url,
@@ -125,8 +125,7 @@ export function useTeamMembers() {
           full_name: updatedMember.full_name,
           phone: updatedMember.phone || null,
           role: updatedMember.role,
-          email: updatedMember.email,
-          username: updatedMember.email?.split('@')[0] || null
+          username: updatedMember.username || updatedMember.email?.split('@')[0] || null
         })
         .eq('id', id);
       

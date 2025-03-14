@@ -7,5 +7,5 @@ export interface ProfileType {
   role: string;
   username?: string;
   avatar_url?: string;
-  updated_at: string;
+  updated_at?: string;
 }
