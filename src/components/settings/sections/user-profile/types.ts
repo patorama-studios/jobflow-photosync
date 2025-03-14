@@ -1,11 +1,11 @@
 
 export interface ProfileType {
-  avatar_url: string;
+  id: string;
   full_name: string;
   email: string;
-  phone: string;
-  id: string;
+  phone?: string;
   role: string;
+  username?: string;
+  avatar_url?: string;
   updated_at: string;
-  username: string;
 }

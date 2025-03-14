@@ -58,11 +58,14 @@ export function useTeamMembers() {
     try {
       console.log("Creating new team member:", newMember);
       
-      // Create new team member with proper UUID, not crypto.randomUUID()
+      // Generate a proper UUID
+      const memberId = crypto.randomUUID();
+      
+      // Create new team member
       const { data, error } = await supabase
         .from('profiles')
         .insert({
-          id: self.crypto.randomUUID(), // Fix for crypto.randomUUID()
+          id: memberId,
           full_name: newMember.full_name,
           email: newMember.email,
           phone: newMember.phone || null,
