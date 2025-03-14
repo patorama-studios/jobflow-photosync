@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserProfile } from './types/user-settings-types';
+import { supabaseService } from '@/services/api/supabase-service';
 
 const DEFAULT_USER_PROFILE: UserProfile = {
   id: '',
@@ -36,10 +36,8 @@ export function useUserProfile() {
         }
         
         if (data && data.value) {
-          // Properly cast the JSON value to the expected type
           setProfile(data.value as unknown as UserProfile);
         } else {
-          // No profile found, use defaults
           setProfile(DEFAULT_USER_PROFILE);
         }
       } catch (error) {
@@ -60,49 +58,25 @@ export function useUserProfile() {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      // Check if a profile entry exists first
-      const { data: existingData, error: checkError } = await supabase
-        .from('app_settings')
-        .select('id')
-        .eq('key', 'user_profile')
-        .maybeSingle();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (checkError) {
-        console.error('Error checking for existing profile:', checkError);
-        toast.error('Failed to save user profile');
+      if (!user) {
+        toast.error('You must be logged in to save your profile');
         return false;
       }
-
-      let result;
       
-      // Convert the profile object to a plain object to ensure it's stored correctly
-      // and ensure it's JSON-safe
-      const jsonSafeProfile = JSON.parse(JSON.stringify(profile));
+      const profileData = {
+        id: user.id,
+        full_name: `${profile.firstName} ${profile.lastName}`.trim(),
+        avatar_url: profile.avatar,
+        phone: profile.phoneNumber,
+        username: profile.email?.split('@')[0] || '',
+      };
       
-      if (existingData) {
-        // Update existing profile
-        result = await supabase
-          .from('app_settings')
-          .update({
-            value: jsonSafeProfile,
-            updated_at: new Date().toISOString()
-          })
-          .eq('key', 'user_profile');
-      } else {
-        // Create new profile
-        result = await supabase
-          .from('app_settings')
-          .insert({
-            key: 'user_profile',
-            value: jsonSafeProfile,
-            user_id: (await supabase.auth.getUser()).data.user?.id
-          });
-      }
+      const success = await supabaseService.updateProfile(user.id, profileData);
       
-      if (result.error) {
-        console.error('Error saving user profile:', result.error);
-        toast.error('Failed to save user profile');
-        return false;
+      if (!success) {
+        throw new Error('Failed to update user profile');
       }
       
       toast.success('User profile saved successfully');

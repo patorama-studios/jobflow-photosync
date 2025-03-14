@@ -43,21 +43,17 @@ export function UserProfileSettings() {
         }
         
         // Fetch extended profile info
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+        const profileData = await supabaseService.getProfile(user.id);
         
-        if (error) {
-          throw error;
+        if (!profileData) {
+          throw new Error('Profile not found');
         }
         
         // Merge auth data with profile data
         setProfile({
-          ...data,
+          ...profileData,
           email: authUser.user?.email || '',
-          phone: data.phone || '',
+          phone: profileData.phone || '',
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -75,20 +71,16 @@ export function UserProfileSettings() {
     try {
       console.log('Saving profile:', profile);
       
-      // Update profile in the database
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profile.full_name,
-          username: profile.username,
-          phone: profile.phone,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.id);
+      // Update profile in the database using the service
+      const success = await supabaseService.updateProfile(profile.id, {
+        full_name: profile.full_name,
+        username: profile.username,
+        phone: profile.phone,
+        avatar_url: profile.avatar_url
+      });
       
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-        throw profileError;
+      if (!success) {
+        throw new Error('Failed to update profile');
       }
       
       // Check if email has changed
