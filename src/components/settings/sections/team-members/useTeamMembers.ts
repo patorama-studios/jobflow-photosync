@@ -83,7 +83,7 @@ export function useTeamMembers() {
         const newTeamMember: TeamMember = {
           id: data[0].id,
           full_name: data[0].full_name,
-          email: data[0].email || newMember.email,
+          email: newMember.email, // Use the input email as fallback
           phone: data[0].phone || '',
           role: data[0].role,
           username: data[0].username,
