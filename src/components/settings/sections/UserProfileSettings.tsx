@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ export function UserProfileSettings() {
           id: data.id,
           firstName: data.full_name?.split(' ')[0] || '',
           lastName: data.full_name?.split(' ').slice(1).join(' ') || '',
-          email: data.email || user.email || '',
+          email: user.email || '',  // Get email from the auth user object
           phoneNumber: data.phone || '',
           title: data.role || '',
           avatar: data.avatar_url || '',

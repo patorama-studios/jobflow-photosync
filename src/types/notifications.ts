@@ -1,11 +1,10 @@
 
 export interface Notification {
-  id: number;
-  text: string;
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
   read: boolean;
   time: string;
-  date: string;
-  category: 'order' | 'payment' | 'system' | 'delivery';
   link?: string;
-  details?: string;
 }
