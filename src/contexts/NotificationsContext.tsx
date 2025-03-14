@@ -6,43 +6,52 @@ import { useToast } from '@/hooks/use-toast';
 // Sample notification data
 const sampleNotifications: Notification[] = [
   { 
-    id: 1, 
+    id: '1', 
     text: 'New order received', 
     read: false, 
     time: '2 min ago', 
     date: '2023-05-30',
     category: 'order',
     link: '/orders/1234', 
-    details: 'A new order has been placed by John Smith for a property at 123 Main St.' 
+    details: 'A new order has been placed by John Smith for a property at 123 Main St.',
+    title: 'New Order',
+    message: 'Order #1234 has been received',
+    type: 'info'
   },
   { 
-    id: 2, 
+    id: '2', 
     text: 'Delivery completed for Order #1234', 
     read: false, 
     time: '1 hour ago', 
     date: '2023-05-30',
     category: 'delivery',
     link: '/orders/1234', 
-    details: 'Delivery for Order #1234 has been marked as complete.' 
+    details: 'Delivery for Order #1234 has been marked as complete.',
+    title: 'Delivery Complete',
+    message: 'Order #1234 delivery has been completed',
+    type: 'success' 
   },
   { 
-    id: 3, 
+    id: '3', 
     text: 'Payment received from Client ABC', 
     read: true, 
     time: 'Yesterday', 
     date: '2023-05-29',
     category: 'payment',
     link: '/customers', 
-    details: 'Payment of $150.00 has been received for Order #1234.' 
+    details: 'Payment of $150.00 has been received for Order #1234.',
+    title: 'Payment Received',
+    message: 'Payment of $150.00 received for Order #1234',
+    type: 'info'
   },
 ];
 
 interface NotificationsContextValue {
   notifications: Notification[];
   unreadCount: number;
-  markAsRead: (id: number) => void;
+  markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  deleteNotification: (id: number) => void;
+  deleteNotification: (id: string) => void;
   clearAllNotifications: () => void;
 }
 
@@ -54,7 +63,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: number) => {
+  const markAsRead = (id: string) => {
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === id 
@@ -75,7 +84,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
-  const deleteNotification = (id: number) => {
+  const deleteNotification = (id: string) => {
     setNotifications(prev => 
       prev.filter(notification => notification.id !== id)
     );

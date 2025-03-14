@@ -7,8 +7,8 @@ import { Notification } from '@/types/notifications';
 
 interface NotificationItemProps {
   notification: Notification;
-  onMarkAsRead: (id: number) => void;
-  onDelete: (id: number) => void;
+  onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
   compact?: boolean;
 }
 

@@ -1,89 +1,106 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Notification } from '@/types/notifications';
-import { useToast } from '@/hooks/use-toast';
 
-// Sample notification data
-const sampleNotifications: Notification[] = [
+// Mock data for notifications
+const initialNotifications: Notification[] = [
   { 
-    id: 1, 
+    id: '1', 
+    title: 'New Order Received', 
+    message: 'A new order has been placed',
+    type: 'info',
     text: 'New order received', 
     read: false, 
-    time: '2 min ago', 
+    time: '2 min ago',
     date: '2023-05-30',
     category: 'order',
-    link: '/orders/1234', 
-    details: 'A new order has been placed by John Smith for a property at 123 Main St.' 
+    link: '/orders/1234',
+    details: 'A new order has been placed by John Doe for $150.00'
   },
   { 
-    id: 2, 
-    text: 'Delivery completed for Order #1234', 
+    id: '2', 
+    title: 'Payment Processed', 
+    message: 'Your payment has been processed successfully',
+    type: 'success',
+    text: 'Payment processed', 
     read: false, 
-    time: '1 hour ago', 
+    time: '1 hour ago',
     date: '2023-05-30',
-    category: 'delivery',
-    link: '/orders/1234', 
-    details: 'Delivery for Order #1234 has been marked as complete.' 
-  },
-  { 
-    id: 3, 
-    text: 'Payment received from Client ABC', 
-    read: true, 
-    time: 'Yesterday', 
-    date: '2023-05-29',
     category: 'payment',
-    link: '/customers', 
-    details: 'Payment of $150.00 has been received for Order #1234.' 
+    link: '/payments/5678',
+    details: 'Payment of $250.00 has been processed for order #5678'
   },
   { 
-    id: 4, 
-    text: 'System maintenance scheduled', 
+    id: '3', 
+    title: 'Delivery Scheduled', 
+    message: 'Your order has been scheduled for delivery',
+    type: 'info',
+    text: 'Delivery scheduled', 
     read: true, 
-    time: '2 days ago', 
+    time: 'Yesterday',
+    date: '2023-05-29',
+    category: 'delivery',
+    link: '/orders/9012',
+    details: 'Your order #9012 has been scheduled for delivery on June 5th'
+  },
+  { 
+    id: '4', 
+    title: 'Order Canceled', 
+    message: 'An order has been canceled',
+    type: 'error',
+    text: 'Order canceled', 
+    read: true, 
+    time: '2 days ago',
     date: '2023-05-28',
-    category: 'system',
-    details: 'System maintenance is scheduled for June 5, 2023 from 2am to 4am EST.' 
+    category: 'order',
+    link: '/orders/3456',
+    details: 'Order #3456 has been canceled. Reason: Customer request'
   },
   { 
-    id: 5, 
-    text: 'New feature available: Calendar sync', 
+    id: '5', 
+    title: 'New Comment', 
+    message: 'A new comment has been added to your order',
+    type: 'info',
+    text: 'New comment on order', 
     read: true, 
-    time: '3 days ago', 
-    date: '2023-05-27',
-    category: 'system',
-    link: '/settings', 
-    details: 'You can now sync your calendar with Google Calendar and Outlook.' 
-  },
-  { 
-    id: 6, 
-    text: 'Order #5678 requires attention', 
-    read: false, 
-    time: '3 days ago', 
+    time: '3 days ago',
     date: '2023-05-27',
     category: 'order',
-    link: '/orders/5678', 
-    details: 'Client has requested changes to their order.' 
+    link: '/orders/7890',
+    details: 'John Smith commented on order #7890: "Please deliver as soon as possible"'
   },
   { 
-    id: 7, 
-    text: 'Weekly sales report available', 
+    id: '6', 
+    title: 'System Maintenance', 
+    message: 'Scheduled system maintenance will occur tonight',
+    type: 'warning',
+    text: 'System maintenance', 
     read: true, 
-    time: '1 week ago', 
-    date: '2023-05-23',
+    time: '4 days ago',
+    date: '2023-05-26',
     category: 'system',
-    link: '/dashboard', 
-    details: 'Your weekly sales report is now available.' 
+    link: '/announcements',
+    details: 'Scheduled system maintenance will occur tonight from 11PM to 2AM EST'
   },
+  { 
+    id: '7', 
+    title: 'New Feature Available', 
+    message: 'A new feature has been added to the platform',
+    type: 'success',
+    text: 'New feature available', 
+    read: true, 
+    time: '5 days ago',
+    date: '2023-05-25',
+    category: 'system',
+    link: '/features',
+    details: 'Check out our new analytics dashboard for improved insights!'
+  }
 ];
 
-export function useNotifications() {
-  const [notifications, setNotifications] = useState<Notification[]>(sampleNotifications);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAsRead = (id: number) => {
+export const useNotifications = () => {
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  
+  const markAsRead = useCallback((id: string) => {
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === id 
@@ -91,46 +108,32 @@ export function useNotifications() {
           : notification
       )
     );
-  };
-
-  const markAllAsRead = () => {
+  }, []);
+  
+  const markAllAsRead = useCallback(() => {
     setNotifications(prev => 
       prev.map(notification => ({ ...notification, read: true }))
     );
-    
-    toast({
-      title: "All notifications marked as read",
-      variant: "default",
-    });
-  };
-
-  const deleteNotification = (id: number) => {
+  }, []);
+  
+  const deleteNotification = useCallback((id: string) => {
     setNotifications(prev => 
       prev.filter(notification => notification.id !== id)
     );
-    
-    toast({
-      title: "Notification deleted",
-      variant: "default",
-    });
-  };
-
-  const clearAllNotifications = () => {
+  }, []);
+  
+  const clearAllNotifications = useCallback(() => {
     setNotifications([]);
-    
-    toast({
-      title: "All notifications cleared",
-      variant: "default",
-    });
-  };
-
+  }, []);
+  
   return {
     notifications,
-    unreadCount,
-    isLoading,
+    unreadCount: notifications.filter(n => !n.read).length,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     clearAllNotifications
   };
-}
+};
+
+export default useNotifications;
