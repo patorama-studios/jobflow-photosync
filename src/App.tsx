@@ -14,6 +14,9 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Debug from './pages/Debug';
+import Login from './pages/Login';
+import Verify from './pages/Verify';
+import Auth from './pages/Auth';
 
 // Lazy loaded pages for better performance
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -36,7 +39,7 @@ const AppLoadingFallback = () => (
 );
 
 // Fallback error component
-const PageError = ({ error, resetErrorBoundary }) => (
+const PageError = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => (
   <div className="flex flex-col items-center justify-center min-h-screen p-4">
     <h2 className="text-xl font-semibold text-red-500 mb-2">Page Load Error</h2>
     <p className="text-gray-600 mb-4">Something went wrong loading this page</p>
@@ -66,6 +69,10 @@ function App() {
             <Suspense fallback={<AppLoadingFallback />}>
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/login" element={<Auth />} />
+                <Route path="/register" element={<Auth />} state={{ tab: 'register' }} />
+                <Route path="/verify" element={<Verify />} />
                 <Route path="/dashboard" element={
                   <ErrorBoundary fallback={PageError}>
                     <ProtectedRoute>

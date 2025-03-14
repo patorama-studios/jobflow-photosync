@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -29,6 +28,8 @@ export const supabaseService = {
     try {
       if (!userId) throw new Error('User ID is required');
       
+      console.log('Fetching profile for user ID:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -40,6 +41,7 @@ export const supabaseService = {
         return null;
       }
       
+      console.log('Profile data:', data);
       return data;
     } catch (error: any) {
       console.error('Error in getProfile:', error.message);
@@ -55,9 +57,12 @@ export const supabaseService = {
     username?: string; 
     phone?: string;
     avatar_url?: string;
+    role?: string;
   }) => {
     try {
       if (!userId) throw new Error('User ID is required');
+      
+      console.log('Updating profile for user ID:', userId, 'with data:', updates);
       
       // Check if profile exists
       const { data: existingProfile } = await supabase
@@ -70,6 +75,7 @@ export const supabaseService = {
       
       if (existingProfile) {
         // Update existing profile
+        console.log('Updating existing profile');
         result = await supabase
           .from('profiles')
           .update({
@@ -79,6 +85,7 @@ export const supabaseService = {
           .eq('id', userId);
       } else {
         // Create new profile
+        console.log('Creating new profile');
         result = await supabase
           .from('profiles')
           .insert({
@@ -172,6 +179,63 @@ export const supabaseService = {
     } catch (error: any) {
       console.error(`Error in saveAppSettings(${key}):`, error.message);
       return false;
+    }
+  },
+  
+  /**
+   * Register a new user
+   */
+  registerUser: async (email: string, password: string, userData: {
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+  }) => {
+    try {
+      console.log('Registering new user:', email);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Error registering user:', error);
+        throw error;
+      }
+      
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error in registerUser:', error);
+      return { success: false, error: error.message };
+    }
+  },
+  
+  /**
+   * Login a user
+   */
+  loginUser: async (email: string, password: string) => {
+    try {
+      console.log('Logging in user:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error('Error logging in user:', error);
+        throw error;
+      }
+      
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error in loginUser:', error);
+      return { success: false, error: error.message };
     }
   }
 };

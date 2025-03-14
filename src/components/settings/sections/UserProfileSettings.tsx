@@ -10,11 +10,13 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export function UserProfileSettings() {
   const { profile, loading, saving, updateProfile, saveProfile, isAuthenticated } = useUserProfile();
   const [isEmailChanged, setIsEmailChanged] = useState(false);
   const [originalEmail, setOriginalEmail] = useState("");
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Store the original email when profile loads
@@ -91,8 +93,7 @@ export function UserProfileSettings() {
           </p>
           <Button 
             onClick={() => {
-              // Redirect to login or open login modal
-              toast.info("Please log in to access your profile settings");
+              navigate('/login');
             }}
           >
             Log In
@@ -112,7 +113,7 @@ export function UserProfileSettings() {
       </div>
       
       <AvatarSection 
-        profile={profile} 
+        profile={profile}
         setProfile={updateProfile}
         loading={loading}
       />
@@ -120,8 +121,8 @@ export function UserProfileSettings() {
       <Separator />
       
       <ProfileForm 
-        profile={profile} 
-        setProfile={updateProfile} 
+        profile={profile}
+        setProfile={updateProfile}
       />
       
       <ProfileActions 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,6 +13,8 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   phoneNumber: '',
   title: '',
   avatar: '',
+  full_name: '',
+  role: ''
 };
 
 export function useUserProfile() {
@@ -38,6 +41,7 @@ export function useUserProfile() {
     checkAuth();
     
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, !!session);
       setIsAuthenticated(!!session);
       if (session?.user) {
         setUserId(session.user.id);
@@ -60,11 +64,14 @@ export function useUserProfile() {
       
       setLoading(true);
       try {
+        console.log('Fetching profile for user:', userId);
         const profileData = await supabaseService.getProfile(userId);
         
         if (profileData) {
+          console.log('Profile data received:', profileData);
           const { data: authData } = await supabase.auth.getUser();
           
+          // Map Supabase profile format to our app's format
           setProfile({
             id: profileData.id || userId,
             firstName: profileData.full_name?.split(' ')[0] || '',
@@ -73,23 +80,15 @@ export function useUserProfile() {
             phoneNumber: profileData.phone || '',
             title: profileData.role || '',
             avatar: profileData.avatar_url || '',
+            full_name: profileData.full_name || '',
+            role: profileData.role || ''
           });
         } else {
-          const { data, error } = await supabase
-            .from('app_settings')
-            .select('*')
-            .eq('key', 'user_profile')
-            .eq('user_id', userId)
-            .maybeSingle();
-          
-          if (!error && data?.value) {
-            setProfile(data.value as unknown as UserProfile);
-          } else {
-            setProfile({
-              ...DEFAULT_USER_PROFILE,
-              id: userId
-            });
-          }
+          console.log('No profile found, creating default profile');
+          setProfile({
+            ...DEFAULT_USER_PROFILE,
+            id: userId
+          });
         }
       } catch (error) {
         console.error('Unexpected error loading user profile:', error);
@@ -103,6 +102,14 @@ export function useUserProfile() {
   
   const updateProfile = (updatedProfile: Partial<UserProfile>) => {
     setProfile(prev => ({ ...prev, ...updatedProfile }));
+    
+    // Update firstName/lastName if full_name is provided
+    if (updatedProfile.firstName || updatedProfile.lastName) {
+      const newFirstName = updatedProfile.firstName || profile.firstName;
+      const newLastName = updatedProfile.lastName || profile.lastName;
+      const newFullName = `${newFirstName} ${newLastName}`.trim();
+      setProfile(prev => ({ ...prev, full_name: newFullName }));
+    }
   };
   
   const saveProfile = async () => {
@@ -121,8 +128,10 @@ export function useUserProfile() {
         avatar_url: profile.avatar,
         phone: profile.phoneNumber,
         username: profile.email?.split('@')[0] || '',
+        role: profile.title || profile.role || 'user',
       };
       
+      console.log('Saving profile data:', profileData);
       const success = await supabaseService.updateProfile(profile.id, profileData);
       
       if (!success) {
