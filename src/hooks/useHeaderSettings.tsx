@@ -136,11 +136,22 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
     }
   };
 
-  // Debounce the update function to prevent too many DB writes
-  const debouncedUpdateSettings = useCallback(
-    debounce(updateSettingsInDb, 500),
-    [settings]
-  );
+  // Create a debounced version of updateSettingsInDb that returns a Promise<boolean>
+  const createDebouncedUpdate = () => {
+    let handler: ReturnType<typeof setTimeout>;
+    return (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
+      return new Promise((resolve) => {
+        clearTimeout(handler);
+        handler = setTimeout(async () => {
+          const result = await updateSettingsInDb(newSettings);
+          resolve(result);
+        }, 500);
+      });
+    };
+  };
+
+  // Create the debounced function
+  const debouncedUpdateSettings = useCallback(createDebouncedUpdate(), [settings]);
 
   // Provide a wrapper function that updates state immediately but debounces the DB write
   const updateSettings = async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
@@ -150,7 +161,7 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
       ...newSettings
     }));
     
-    // Debounce the actual DB update
+    // Use the debounced function that returns a Promise<boolean>
     return await debouncedUpdateSettings(newSettings);
   };
 
