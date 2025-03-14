@@ -137,7 +137,10 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   };
 
   // Debounce the update function to prevent too many DB writes
-  const debouncedUpdateSettings = debounce(updateSettingsInDb, 500);
+  const debouncedUpdateSettings = useCallback(
+    debounce(updateSettingsInDb, 500),
+    [settings]
+  );
 
   // Provide a wrapper function that updates state immediately but debounces the DB write
   const updateSettings = async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
@@ -148,7 +151,7 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
     }));
     
     // Debounce the actual DB update
-    return debouncedUpdateSettings(newSettings);
+    return await debouncedUpdateSettings(newSettings);
   };
 
   return (
