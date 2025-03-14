@@ -14,7 +14,7 @@ export function UserProfileSettings() {
     avatar_url: "",
     full_name: "",
     email: "",
-    phone: "",
+    phone: "", // Added phone property with empty string default
     id: "",
     role: "",
     updated_at: "",
