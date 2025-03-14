@@ -28,6 +28,7 @@ export interface NotificationSetting {
   name: string;
   description: string;
   enabled: boolean;
+  type: string; // Added missing field
   channels: {
     email: boolean;
     push: boolean;
@@ -43,6 +44,10 @@ export interface OrganizationSettings {
   email: string;
   website: string;
   taxId: string;
+  timezone?: string; // Added missing field
+  city?: string; // Added missing field
+  state?: string; // Added missing field
+  addressFormat?: string; // Added missing field
 }
 
 export interface DownloadSettings {
@@ -50,6 +55,11 @@ export interface DownloadSettings {
   downloadPath: string;
   qualityPreference: 'high' | 'medium' | 'low';
   organizationMethod: 'date' | 'client' | 'project';
+  maxDimension: number; // Added missing field
+  imageQuality: number; // Added missing field
+  dpi: string; // Added missing field
+  fileNaming: string; // Added missing field
+  customFormat?: string; // Added missing field
 }
 
 export interface LegalSettings {
@@ -57,6 +67,9 @@ export interface LegalSettings {
   privacyUrl: string;
   cookiePolicy: string;
   dataRetentionPeriod: number;
+  termsOfService: string; // Added missing field
+  privacyPolicy: string; // Added missing field
+  disclaimers: string; // Added missing field
 }
 
 // Define the ProfileType that matches what the component expects
