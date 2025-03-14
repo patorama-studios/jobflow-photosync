@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNotificationTemplates } from '@/contexts/NotificationTemplateContext';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const useNotificationTemplateEffects = () => {
   const { loading, loadRetry, setLoadRetry } = useNotificationTemplates();
@@ -31,13 +32,20 @@ export const useNotificationTemplateEffects = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setIsAuthenticated(!!session);
+        
+        // Show toast notification when auth state changes
+        if (!session && isAuthenticated === true) {
+          toast.info("You've been signed out", {
+            description: "Please log in again to access protected content",
+          });
+        }
       }
     );
     
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // Retry loading if needed - but don't retry indefinitely
   useEffect(() => {

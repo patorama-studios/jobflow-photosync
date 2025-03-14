@@ -30,7 +30,7 @@ export const SettingsPanel = memo(function SettingsPanel({ activeCategory }: Set
   const navigate = useNavigate();
   
   // Show a login prompt if not loading and no user
-  if (!isLoading && !user && !import.meta.env.DEV) {
+  if (!isLoading && !user) {
     return (
       <Card className="p-6">
         <div className="flex flex-col items-center justify-center py-12 space-y-4">

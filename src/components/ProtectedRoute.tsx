@@ -122,13 +122,13 @@ export const ProtectedRoute = memo(function ProtectedRoute({
 
   // Notify user when accessing protected route while not authenticated
   useEffect(() => {
-    if (authCheckComplete && !session && !import.meta.env.DEV && requireAuth) {
+    if (authCheckComplete && !session && requireAuth) {
       toast.error('Authentication required', {
         description: 'You need to log in to access this page',
         duration: 4000,
       });
     }
-  }, [authCheckComplete, session, location.pathname, requireAuth]);
+  }, [authCheckComplete, session, requireAuth]);
 
   // If loading and not force rendering, show the loading spinner
   if (isLoading && !forceRender) {
@@ -139,8 +139,8 @@ export const ProtectedRoute = memo(function ProtectedRoute({
     />;
   }
 
-  // ALWAYS bypass auth check in development mode or if requireAuth is false
-  if (import.meta.env.DEV || !requireAuth) {
+  // ONLY bypass auth check in development mode AND when requireAuth is false
+  if (import.meta.env.DEV && !requireAuth) {
     return <>{children}</>;
   }
 

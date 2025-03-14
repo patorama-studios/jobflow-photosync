@@ -124,7 +124,7 @@ function App() {
                 } />
                 <Route path="/settings/*" element={
                   <ErrorBoundary fallback={PageError}>
-                    <ProtectedRoute requireAuth={false}>
+                    <ProtectedRoute requireAuth={true}>
                       <Settings />
                     </ProtectedRoute>
                   </ErrorBoundary>

@@ -5,7 +5,6 @@ import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { PageTransition } from "@/components/layout/PageTransition";
 import MainLayout from "@/components/layout/MainLayout";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Define the different settings categories
 export type SettingsCategory = 

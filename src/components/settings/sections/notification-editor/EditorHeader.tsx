@@ -1,13 +1,15 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, LogIn } from 'lucide-react';
 import { useNotificationTemplates } from '@/contexts/NotificationTemplateContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const EditorHeader: React.FC<{ isAuthenticated?: boolean | null }> = ({ isAuthenticated }) => {
   const { refreshTemplates, loading } = useNotificationTemplates();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   return (
     <div className="flex justify-between items-center">
@@ -17,10 +19,20 @@ export const EditorHeader: React.FC<{ isAuthenticated?: boolean | null }> = ({ i
           Customize notification templates for emails, SMS, and push notifications
         </p>
         {isAuthenticated === false && !user && (
-          <p className="text-sm text-amber-500 mt-2 flex items-center">
-            <AlertCircle className="h-4 w-4 mr-1" />
-            Please log in to edit notifications
-          </p>
+          <div className="flex items-center mt-2 space-x-2">
+            <p className="text-sm text-amber-500 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              Please log in to edit notifications
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/login', { state: { from: '/settings/editor' } })}
+            >
+              <LogIn className="mr-1 h-3.5 w-3.5" />
+              Log In
+            </Button>
+          </div>
         )}
       </div>
       <Button 
