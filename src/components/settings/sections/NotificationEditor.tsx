@@ -1,13 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, RefreshCw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useAppSettings } from "@/hooks/useAppSettings";
 
@@ -56,6 +55,18 @@ export function NotificationEditor() {
   const [currentTab, setCurrentTab] = useState<string>('email');
   const [isSaving, setIsSaving] = useState(false);
   const [editedTemplate, setEditedTemplate] = useState<NotificationTemplate | null>(null);
+  const [loadRetry, setLoadRetry] = useState(0);
+
+  // Retry loading if needed
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading && loadRetry < 3) {
+        setLoadRetry(prev => prev + 1);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [loading, loadRetry]);
 
   const handleSelectTemplate = (template: NotificationTemplate) => {
     setSelectedTemplate(template);
@@ -79,12 +90,15 @@ export function NotificationEditor() {
       );
       
       // Save to Supabase
-      await saveTemplates(newTemplates);
+      const success = await saveTemplates(newTemplates);
       
-      // Update the selected template
-      setSelectedTemplate(editedTemplate);
-      
-      toast.success("Template saved successfully");
+      if (success) {
+        // Update the selected template
+        setSelectedTemplate(editedTemplate);
+        toast.success("Template saved successfully");
+      } else {
+        throw new Error("Failed to save template");
+      }
     } catch (error) {
       console.error("Error saving template:", error);
       toast.error("Failed to save template");
@@ -93,25 +107,43 @@ export function NotificationEditor() {
     }
   };
 
+  const handleRefresh = () => {
+    setLoadRetry(prev => prev + 1);
+    toast.info("Refreshing templates...");
+  };
+
   const getTemplatesByType = (type: string) => {
     return templates.filter(t => t.type === type);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
         <Loader2 className="h-8 w-8 animate-spin" />
+        <p>Loading notification templates...</p>
+        {loadRetry > 1 && (
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry Loading
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Notification Editor</h2>
-        <p className="text-muted-foreground">
-          Customize notification templates for emails, SMS, and push notifications
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Notification Editor</h2>
+          <p className="text-muted-foreground">
+            Customize notification templates for emails, SMS, and push notifications
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh
+        </Button>
       </div>
       
       <Tabs defaultValue="email" value={currentTab} onValueChange={handleTabChange}>

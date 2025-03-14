@@ -31,6 +31,7 @@ export function useNotificationSettings() {
   const [settings, setSettings] = useState<NotificationSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [notificationTypes] = useState<string[]>(DEFAULT_NOTIFICATION_TYPES);
+  const [fetchAttempts, setFetchAttempts] = useState(0);
 
   const fetchNotificationSettings = useCallback(async () => {
     try {
@@ -42,6 +43,8 @@ export function useNotificationSettings() {
         setLoading(false);
         return;
       }
+      
+      console.log("Fetching notification settings for user:", userData.user.id);
       
       const { data, error } = await supabase
         .from('app_settings')
@@ -84,6 +87,19 @@ export function useNotificationSettings() {
   useEffect(() => {
     fetchNotificationSettings();
   }, [fetchNotificationSettings]);
+  
+  // Retry loading if needed after a few seconds
+  useEffect(() => {
+    if (loading && fetchAttempts < 3) {
+      const timer = setTimeout(() => {
+        console.log("Retrying notification settings fetch, attempt:", fetchAttempts + 1);
+        setFetchAttempts(prev => prev + 1);
+        fetchNotificationSettings();
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, fetchAttempts, fetchNotificationSettings]);
   
   const updateChannelForType = useCallback(async (type: string, channel: 'email' | 'sms' | 'push', value: boolean) => {
     // Create a new array with the updated setting
@@ -137,12 +153,19 @@ export function useNotificationSettings() {
     }
   };
   
+  const retryLoading = () => {
+    setLoading(true);
+    setFetchAttempts(0);
+    fetchNotificationSettings();
+  };
+  
   return {
     settings,
     loading,
     updateChannelForType,
     notificationTypes,
     saveNotificationSettings,
-    fetchNotificationSettings
+    fetchNotificationSettings,
+    retryLoading
   };
 }

@@ -22,6 +22,10 @@ export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSel
     updateSettings({ color: e.target.value });
   };
   
+  const handleSelectColor = (color: string) => {
+    updateSettings({ color });
+  };
+  
   const predefinedColors = [
     '#000000', // Black
     '#FFFFFF', // White
@@ -60,7 +64,7 @@ export function HeaderColorSelector({ settings, updateSettings }: HeaderColorSel
             type="button"
             className={`h-6 w-6 rounded-full border ${settings.color === color ? 'ring-2 ring-primary ring-offset-2' : 'border-gray-300'}`}
             style={{ backgroundColor: color }}
-            onClick={() => updateSettings({ color })}
+            onClick={() => handleSelectColor(color)}
             aria-label={`Set color to ${color}`}
           />
         ))}

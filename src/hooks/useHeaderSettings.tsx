@@ -34,7 +34,8 @@ export function HeaderSettingsProvider({ children }: { children: React.ReactNode
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [showBackButton, setShowBackButton] = useState<boolean | undefined>(undefined);
   const [onBackButtonClick, setOnBackButtonClick] = useState<(() => void) | undefined>(undefined);
-
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   // Fetch settings on mount
   useEffect(() => {
     const fetchSettings = async () => {
@@ -43,8 +44,11 @@ export function HeaderSettingsProvider({ children }: { children: React.ReactNode
         
         // If user is not logged in, use default settings
         if (!userData.user) {
+          setIsLoaded(true);
           return;
         }
+        
+        console.log("Fetching header settings for user:", userData.user.id);
         
         const { data, error } = await supabase
           .from('app_settings')
@@ -59,55 +63,78 @@ export function HeaderSettingsProvider({ children }: { children: React.ReactNode
         }
         
         if (data && data.value) {
+          console.log("Loaded header settings:", data.value);
           setSettings({
             ...defaultSettings,
             ...data.value as object
           });
+        } else {
+          // Save default settings if none exist
+          console.log("No header settings found, using defaults");
+          await updateSettingsInDB(defaultSettings, userData.user.id);
         }
       } catch (error) {
         console.error('Failed to fetch header settings:', error);
+      } finally {
+        setIsLoaded(true);
       }
     };
     
     fetchSettings();
   }, []);
-  
-  const updateSettings = useCallback(async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
+
+  // Helper function to update settings in the database
+  const updateSettingsInDB = async (updatedSettings: HeaderSettings, userId: string) => {
     try {
-      // Update local state
-      setSettings(prev => ({
-        ...prev,
-        ...newSettings
-      }));
+      console.log("Saving header settings to DB:", updatedSettings);
       
-      // Save to database if we have a user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        return false;
-      }
-      
-      const updatedSettings = {
-        ...settings,
-        ...newSettings
-      };
-      
-      // Save to Supabase
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'header_settings',
           value: updatedSettings,
-          user_id: userData.user.id,
+          user_id: userId,
           updated_at: new Date().toISOString()
         });
         
       if (error) {
         console.error('Error saving header settings:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to update header settings in DB:', error);
+      return false;
+    }
+  };
+  
+  const updateSettings = useCallback(async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
+    try {
+      // Update local state
+      const updatedSettings = {
+        ...settings,
+        ...newSettings
+      };
+      
+      setSettings(updatedSettings);
+      
+      // Save to database if we have a user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        console.warn("Cannot save header settings: No user is logged in");
+        toast.error("You must be logged in to save settings");
+        return false;
+      }
+      
+      // Save to Supabase
+      const success = await updateSettingsInDB(updatedSettings, userData.user.id);
+      
+      if (!success) {
         toast.error('Failed to save header settings');
         return false;
       }
       
-      toast.success('Header settings saved successfully');
       return true;
     } catch (error) {
       console.error('Failed to update header settings:', error);

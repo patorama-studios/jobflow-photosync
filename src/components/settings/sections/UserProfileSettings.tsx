@@ -11,14 +11,14 @@ import { ProfileType } from "./user-profile/types";
 
 export function UserProfileSettings() {
   const [profile, setProfile] = useState<ProfileType>({
-    avatar_url: "",
+    id: "",
     full_name: "",
     email: "",
     phone: "",
-    id: "",
     role: "",
     updated_at: "",
-    username: ""
+    username: "",
+    avatar_url: ""
   });
   
   const [saving, setSaving] = useState(false);
@@ -72,6 +72,8 @@ export function UserProfileSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      console.log('Saving profile:', profile);
+      
       // Update profile in the database
       const { error } = await supabase
         .from('profiles')
@@ -83,7 +85,10 @@ export function UserProfileSettings() {
         })
         .eq('id', profile.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
       
       toast.success('Profile updated successfully');
     } catch (error) {

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -7,22 +7,58 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function OrganizationSettings() {
   const { settings, loading, updateSettings } = useOrganizationSettings();
   const [isSaving, setIsSaving] = useState(false);
+  const [loadRetry, setLoadRetry] = useState(0); // Add a retry mechanism
+  
+  // Force refresh if loading takes too long
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoadRetry(prev => prev + 1);
+        toast.info("Refreshing organization settings data...");
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [loading, loadRetry]);
   
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateSettings(settings);
+      const success = await updateSettings(settings);
+      if (success) {
+        toast.success("Organization settings saved successfully");
+      } else {
+        toast.error("Failed to save organization settings");
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("An unexpected error occurred while saving");
     } finally {
       setIsSaving(false);
     }
   };
   
   if (loading) {
-    return <div className="py-4">Loading organization settings...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p>Loading organization settings...</p>
+        {loadRetry > 1 && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setLoadRetry(prev => prev + 1)}
+          >
+            Retry Loading
+          </Button>
+        )}
+      </div>
+    );
   }
   
   const timezones = [

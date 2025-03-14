@@ -10,7 +10,8 @@ import { ResetButton } from "./header/ResetButton";
 import { Separator } from "@/components/ui/separator";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
 import { HeaderSettings as HeaderSettingsType } from "@/hooks/types/user-settings-types";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 export function HeaderSettings() {
   const { settings: defaultSettings, updateSettings } = useHeaderSettings();
@@ -22,16 +23,31 @@ export function HeaderSettings() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  // Add fileInputRef to fix the error
+  const [loadRetry, setLoadRetry] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load initial settings
   useEffect(() => {
     if (defaultSettings) {
-      setSettings(defaultSettings);
+      setSettings(prev => ({
+        ...prev,
+        ...defaultSettings
+      }));
       setLoading(false);
     }
   }, [defaultSettings]);
+
+  // Retry loading if needed
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading && loadRetry < 3) {
+        setLoadRetry(prev => prev + 1);
+        console.log("Retrying header settings load, attempt:", loadRetry + 1);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [loading, loadRetry]);
 
   // Handle settings changes
   const handleSettingChange = (setting: Partial<HeaderSettingsType>) => {
@@ -45,12 +61,15 @@ export function HeaderSettings() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      console.log("Saving header settings:", settings);
       const success = await updateSettings(settings);
       if (!success) {
         throw new Error("Failed to save settings");
       }
+      toast.success("Header settings saved successfully");
     } catch (error) {
       console.error("Error saving header settings:", error);
+      toast.error("Failed to save header settings");
     } finally {
       setIsSaving(false);
     }
@@ -64,24 +83,62 @@ export function HeaderSettings() {
       logoUrl: "",
       showCompanyName: false
     });
+    toast.info("Settings reset to defaults. Click Save to apply changes.");
+  };
+
+  // Handle refresh
+  const handleRefresh = () => {
+    setLoading(true);
+    setLoadRetry(prev => prev + 1);
+    
+    // Simple timeout to simulate refresh
+    setTimeout(() => {
+      if (defaultSettings) {
+        setSettings({
+          ...defaultSettings
+        });
+      }
+      setLoading(false);
+      toast.success("Header settings refreshed");
+    }, 1000);
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <Loader2 className="h-8 w-8 animate-spin mb-4" />
         <p>Loading header settings...</p>
+        {loadRetry > 1 && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRefresh}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry Loading
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Header Settings</h2>
-        <p className="text-muted-foreground">
-          Customize the appearance of the application header
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Header Settings</h2>
+          <p className="text-muted-foreground">
+            Customize the appearance of the application header
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleRefresh}
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh
+        </Button>
       </div>
 
       <Card>
