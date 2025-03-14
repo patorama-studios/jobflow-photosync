@@ -33,7 +33,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 export function Notifications() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, markAsRead, clearAll } = useNotifications();
+  const { notifications, markAsRead, clearAllNotifications: clearAll } = useNotifications();
   
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
   

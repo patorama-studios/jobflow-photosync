@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -93,7 +92,7 @@ export function DownloadSettings() {
         .from('app_settings')
         .upsert({
           key: 'download_settings',
-          value: settings,
+          value: settings as any,
           user_id: userData.user.id,
           updated_at: new Date().toISOString()
         });
@@ -243,4 +242,3 @@ export function DownloadSettings() {
     </div>
   );
 }
-

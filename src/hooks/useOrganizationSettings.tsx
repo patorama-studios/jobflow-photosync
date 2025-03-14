@@ -48,7 +48,7 @@ export const useOrganizationSettings = () => {
       }
       
       if (data && data.value) {
-        const orgSettings = data.value as OrganizationSettings;
+        const orgSettings = data.value as unknown as OrganizationSettings;
         setSettings(orgSettings);
       } else {
         console.log('No organization settings found, using defaults');
@@ -85,7 +85,7 @@ export const useOrganizationSettings = () => {
         .from('app_settings')
         .upsert({
           key: 'organization_settings',
-          value: newSettings,
+          value: newSettings as any,
           user_id: userData.user.id,
           updated_at: new Date().toISOString()
         });

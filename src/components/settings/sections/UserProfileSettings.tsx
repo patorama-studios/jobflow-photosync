@@ -41,13 +41,13 @@ export function UserProfileSettings() {
         // Transform to match our ProfileType format
         const profileData: ProfileType = {
           id: data.id,
-          firstName: data.first_name || '',
-          lastName: data.last_name || '',
+          firstName: data.full_name?.split(' ')[0] || '',
+          lastName: data.full_name?.split(' ').slice(1).join(' ') || '',
           email: data.email || user.email || '',
-          phoneNumber: data.phone_number || '',
-          title: data.title || '',
+          phoneNumber: data.phone || '',
+          title: data.role || '',
           avatar: data.avatar_url || '',
-          full_name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+          full_name: data.full_name || '',
           role: data.role || 'user'
         };
         
@@ -93,11 +93,9 @@ export function UserProfileSettings() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: profile.firstName,
-          last_name: profile.lastName,
           full_name: profile.full_name,
-          phone_number: profile.phoneNumber,
-          title: profile.title,
+          phone: profile.phoneNumber,
+          role: profile.title || profile.role,
           updated_at: new Date().toISOString()
         })
         .eq('id', profile.id);

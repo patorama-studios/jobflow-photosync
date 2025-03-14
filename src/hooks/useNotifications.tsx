@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface Notification {
   id: string;
@@ -72,6 +73,8 @@ export const useNotifications = () => {
     setNotifications(prev => 
       prev.map(notification => ({ ...notification, read: true }))
     );
+    
+    toast('All notifications marked as read');
   };
 
   // Delete a notification
@@ -79,11 +82,15 @@ export const useNotifications = () => {
     setNotifications(prev => 
       prev.filter(notification => notification.id !== id)
     );
+    
+    toast('Notification deleted');
   };
 
   // Clear all notifications
-  const clearAll = () => {
+  const clearAllNotifications = () => {
     setNotifications([]);
+    
+    toast('All notifications cleared');
   };
 
   return {
@@ -93,7 +100,7 @@ export const useNotifications = () => {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    clearAll
+    clearAllNotifications
   };
 };
 

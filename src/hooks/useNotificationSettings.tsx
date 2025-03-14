@@ -57,7 +57,7 @@ export const useNotificationSettings = () => {
       
       if (data && data.value) {
         // Cast the data to ensure it matches our NotificationSetting type
-        setSettings(data.value as NotificationSetting[]);
+        setSettings(data.value as unknown as NotificationSetting[]);
       } else {
         console.log('No notification settings found, using defaults');
         setSettings(defaultSettings);
