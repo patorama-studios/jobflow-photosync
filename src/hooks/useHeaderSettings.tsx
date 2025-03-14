@@ -3,7 +3,6 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HeaderSettings } from "./types/user-settings-types";
-import { debounce } from "@/utils/performance-optimizer";
 
 // Default header settings
 const DEFAULT_HEADER_SETTINGS: HeaderSettings = {
@@ -23,6 +22,9 @@ type HeaderSettingsContextType = {
   title?: string;
   showBackButton?: boolean;
   onBackButtonClick?: () => void;
+  setTitle?: (title: string | undefined) => void;
+  setShowBackButton?: (show: boolean) => void;
+  setOnBackButtonClick?: (callback: (() => void) | undefined) => void;
 };
 
 const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
@@ -38,6 +40,26 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   const [title, setTitle] = useState<string | undefined>(undefined);
   const [showBackButton, setShowBackButton] = useState<boolean>(false);
   const [onBackButtonClick, setOnBackButtonClick] = useState<(() => void) | undefined>(undefined);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getUser();
+      setIsAuthenticated(!!data.user);
+    };
+    
+    checkAuth();
+    
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // Fetch header settings from database
   useEffect(() => {
@@ -81,6 +103,12 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
         ...newSettings
       };
       setSettings(updatedSettings);
+
+      // Check if user is authenticated
+      if (!isAuthenticated) {
+        console.log('Settings updated in local state only (user not authenticated)');
+        return true; // Return true even when not authenticated so UI updates work
+      }
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -151,7 +179,7 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
   };
 
   // Create the debounced function
-  const debouncedUpdateSettings = useCallback(createDebouncedUpdate(), [settings]);
+  const debouncedUpdateSettings = useCallback(createDebouncedUpdate(), [settings, isAuthenticated]);
 
   // Provide a wrapper function that updates state immediately but debounces the DB write
   const updateSettings = async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
@@ -172,7 +200,10 @@ export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode
       loading,
       title,
       showBackButton,
-      onBackButtonClick
+      onBackButtonClick,
+      setTitle,
+      setShowBackButton,
+      setOnBackButtonClick
     }}>
       {children}
     </HeaderSettingsContext.Provider>

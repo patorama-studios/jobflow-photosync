@@ -10,19 +10,20 @@ import { ResetButton } from "./header/ResetButton";
 import { Separator } from "@/components/ui/separator";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
 import { HeaderSettings as HeaderSettingsType } from "@/hooks/types/user-settings-types";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function HeaderSettings() {
-  const { settings: defaultSettings, updateSettings } = useHeaderSettings();
+  const { settings: defaultSettings, updateSettings, loading } = useHeaderSettings();
   const [settings, setSettings] = useState<HeaderSettingsType>({
     color: "#000000",
     height: 65,
     logoUrl: "",
-    showCompanyName: false
+    showCompanyName: false,
+    title: "",
+    description: ""
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [loadRetry, setLoadRetry] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,21 +34,8 @@ export function HeaderSettings() {
         ...prev,
         ...defaultSettings
       }));
-      setLoading(false);
     }
   }, [defaultSettings]);
-
-  // Retry loading if needed
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading && loadRetry < 3) {
-        setLoadRetry(prev => prev + 1);
-        console.log("Retrying header settings load, attempt:", loadRetry + 1);
-      }
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, [loading, loadRetry]);
 
   // Handle settings changes
   const handleSettingChange = (setting: Partial<HeaderSettingsType>) => {
@@ -81,26 +69,17 @@ export function HeaderSettings() {
       color: "#000000",
       height: 65,
       logoUrl: "",
-      showCompanyName: false
+      showCompanyName: false,
+      title: "",
+      description: ""
     });
     toast.info("Settings reset to defaults. Click Save to apply changes.");
   };
 
   // Handle refresh
   const handleRefresh = () => {
-    setLoading(true);
     setLoadRetry(prev => prev + 1);
-    
-    // Simple timeout to simulate refresh
-    setTimeout(() => {
-      if (defaultSettings) {
-        setSettings({
-          ...defaultSettings
-        });
-      }
-      setLoading(false);
-      toast.success("Header settings refreshed");
-    }, 1000);
+    window.location.reload();
   };
 
   if (loading) {
