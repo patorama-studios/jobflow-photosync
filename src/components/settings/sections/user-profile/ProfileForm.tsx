@@ -38,8 +38,8 @@ export function ProfileForm({ profile, setProfile }: ProfileFormProps) {
           <Input
             id="email"
             type="email"
-            value={profile.email}
-            disabled
+            value={profile.email || ''}
+            readOnly
             className="bg-muted"
           />
           <p className="text-xs text-muted-foreground">

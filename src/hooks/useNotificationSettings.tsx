@@ -39,6 +39,7 @@ export function useNotificationSettings() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         setSettings(createDefaultSettings(notificationTypes));
+        setLoading(false);
         return;
       }
       
@@ -54,6 +55,7 @@ export function useNotificationSettings() {
         toast.error('Failed to load notification settings');
         // Initialize with default settings if there's an error
         setSettings(createDefaultSettings(notificationTypes));
+        setLoading(false);
         return;
       }
       
@@ -140,6 +142,7 @@ export function useNotificationSettings() {
     loading,
     updateChannelForType,
     notificationTypes,
-    saveNotificationSettings
+    saveNotificationSettings,
+    fetchNotificationSettings
   };
 }

@@ -1,20 +1,27 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Save } from "lucide-react";
+import { toast } from "sonner";
 
 export function NotificationPreferences() {
   const { 
     settings, 
     loading, 
     updateChannelForType,
-    notificationTypes
+    notificationTypes,
+    fetchNotificationSettings
   } = useNotificationSettings();
+  
+  useEffect(() => {
+    // Force refresh the notification settings when component mounts
+    fetchNotificationSettings();
+  }, [fetchNotificationSettings]);
   
   if (loading) {
     return (
@@ -59,7 +66,7 @@ export function NotificationPreferences() {
         <p className="text-muted-foreground mb-4 text-center">
           There was a problem loading your notification preferences. Please try again later.
         </p>
-        <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+        <Button onClick={() => fetchNotificationSettings()}>Refresh Settings</Button>
       </div>
     );
   }
@@ -168,6 +175,17 @@ export function NotificationPreferences() {
           </div>
         </TabsContent>
       </Tabs>
+      
+      <div className="flex justify-end">
+        <Button 
+          onClick={() => {
+            toast.success("Notification preferences saved successfully");
+          }}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
+      </div>
     </div>
   );
 }

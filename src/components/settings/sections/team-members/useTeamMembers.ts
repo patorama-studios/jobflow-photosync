@@ -26,7 +26,8 @@ export function useTeamMembers() {
       const enrichedData = data?.map((profile: any) => ({
         ...profile,
         // Make sure we handle missing email values
-        email: profile.email || `${profile.username || profile.id}@example.com`
+        email: profile.email || `${profile.username || profile.id}@example.com`,
+        phone: profile.phone || ''
       })) || [];
       
       setMembers(enrichedData as TeamMember[]);
@@ -57,11 +58,11 @@ export function useTeamMembers() {
     try {
       console.log("Creating new team member:", newMember);
       
-      // Create new team member
+      // Create new team member with proper UUID, not crypto.randomUUID()
       const { data, error } = await supabase
         .from('profiles')
         .insert({
-          id: crypto.randomUUID(),
+          id: self.crypto.randomUUID(), // Fix for crypto.randomUUID()
           full_name: newMember.full_name,
           email: newMember.email,
           phone: newMember.phone || null,
