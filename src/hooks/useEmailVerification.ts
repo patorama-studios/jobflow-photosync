@@ -55,11 +55,18 @@ export const useEmailVerification = () => {
 
   const verifyEmail = async (email: string, token: string, type: string) => {
     try {
+      if (!email) {
+        throw new Error("Email is required for verification");
+      }
+      
+      console.log(`Verifying email for: ${email}, type: ${type}`);
+      
       const response = await supabase.functions.invoke('verify-email', {
         body: { email, token, type },
       });
 
       if (response.error) {
+        console.error('Supabase function error:', response.error);
         throw new Error(response.error.message || 'Failed to verify email');
       }
 

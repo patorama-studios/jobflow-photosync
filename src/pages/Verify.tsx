@@ -44,7 +44,12 @@ const Verify = () => {
       }
     };
 
-    verify();
+    // Add a small delay to ensure the component has mounted properly
+    const timeoutId = setTimeout(() => {
+      verify();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [email, token, type, verifyEmail]);
 
   const goToLogin = () => {
