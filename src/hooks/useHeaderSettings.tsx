@@ -1,167 +1,154 @@
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { HeaderSettings } from './types/user-settings-types';
-
-interface HeaderSettingsContextType {
-  settings: HeaderSettings;
-  title?: string;
-  description?: string;
-  showBackButton?: boolean;
-  onBackButtonClick?: () => void;
-  updateSettings: (newSettings: Partial<HeaderSettings>) => Promise<boolean>;
-}
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { HeaderSettings } from "./types/user-settings-types";
+import { debounce } from "@/utils/performance-optimizer";
 
 // Default header settings
-const defaultSettings: HeaderSettings = {
-  title: '',
-  description: '',
-  color: '#000000',
-  height: 65,
-  logoUrl: '',
-  showCompanyName: false
+const DEFAULT_HEADER_SETTINGS: HeaderSettings = {
+  color: "#000000",
+  height: 64,
+  logoUrl: "",
+  showCompanyName: true,
+  title: "",
+  description: ""
+};
+
+// Create context
+type HeaderSettingsContextType = {
+  settings: HeaderSettings;
+  updateSettings: (newSettings: Partial<HeaderSettings>) => Promise<boolean>;
+  loading: boolean;
 };
 
 const HeaderSettingsContext = createContext<HeaderSettingsContextType>({
-  settings: defaultSettings,
-  updateSettings: async () => false
+  settings: DEFAULT_HEADER_SETTINGS,
+  updateSettings: async () => false,
+  loading: true,
 });
 
-export function HeaderSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<HeaderSettings>(defaultSettings);
-  const [title, setTitle] = useState<string | undefined>(undefined);
-  const [description, setDescription] = useState<string | undefined>(undefined);
-  const [showBackButton, setShowBackButton] = useState<boolean | undefined>(undefined);
-  const [onBackButtonClick, setOnBackButtonClick] = useState<(() => void) | undefined>(undefined);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
-  // Fetch settings on mount
+// Create provider component
+export const HeaderSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const [settings, setSettings] = useState<HeaderSettings>(DEFAULT_HEADER_SETTINGS);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch header settings from database
   useEffect(() => {
-    const fetchSettings = async () => {
+    async function fetchHeaderSettings() {
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        
-        // If user is not logged in, use default settings
-        if (!userData.user) {
-          setIsLoaded(true);
-          return;
-        }
-        
-        console.log("Fetching header settings for user:", userData.user.id);
-        
+        setLoading(true);
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
           .eq('key', 'header_settings')
-          .eq('user_id', userData.user.id)
           .maybeSingle();
-          
+
         if (error) {
           console.error('Error fetching header settings:', error);
           return;
         }
-        
-        if (data && data.value) {
-          console.log("Loaded header settings:", data.value);
+
+        if (data?.value) {
           setSettings({
-            ...defaultSettings,
-            ...data.value as object
+            ...DEFAULT_HEADER_SETTINGS,
+            ...data.value as HeaderSettings
           });
-        } else {
-          // Save default settings if none exist
-          console.log("No header settings found, using defaults");
-          await updateSettingsInDB(defaultSettings, userData.user.id);
         }
       } catch (error) {
-        console.error('Failed to fetch header settings:', error);
+        console.error('Unexpected error loading header settings:', error);
       } finally {
-        setIsLoaded(true);
+        setLoading(false);
       }
-    };
-    
-    fetchSettings();
+    }
+
+    fetchHeaderSettings();
   }, []);
 
-  // Helper function to update settings in the database
-  const updateSettingsInDB = async (updatedSettings: HeaderSettings, userId: string) => {
+  // Update header settings
+  const updateSettingsInDb = async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
     try {
-      console.log("Saving header settings to DB:", updatedSettings);
-      
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({
-          key: 'header_settings',
-          value: updatedSettings,
-          user_id: userId,
-          updated_at: new Date().toISOString()
-        });
-        
-      if (error) {
-        console.error('Error saving header settings:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Failed to update header settings in DB:', error);
-      return false;
-    }
-  };
-  
-  const updateSettings = useCallback(async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
-    try {
-      // Update local state
       const updatedSettings = {
         ...settings,
         ...newSettings
       };
-      
       setSettings(updatedSettings);
-      
-      // Save to database if we have a user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        console.warn("Cannot save header settings: No user is logged in");
-        toast.error("You must be logged in to save settings");
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn('Cannot save header settings: No user is logged in');
         return false;
       }
-      
-      // Save to Supabase
-      const success = await updateSettingsInDB(updatedSettings, userData.user.id);
-      
-      if (!success) {
+
+      // Check if we have an existing record
+      const { data: existingData } = await supabase
+        .from('app_settings')
+        .select('id')
+        .eq('key', 'header_settings')
+        .maybeSingle();
+
+      // Convert HeaderSettings to a plain JSON-serializable object
+      const settingsValue = JSON.parse(JSON.stringify(updatedSettings));
+
+      let result;
+      if (existingData) {
+        // Update existing record
+        result = await supabase
+          .from('app_settings')
+          .update({ 
+            value: settingsValue,
+            updated_at: new Date().toISOString()
+          })
+          .eq('key', 'header_settings');
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('app_settings')
+          .insert({
+            key: 'header_settings',
+            value: settingsValue,
+            user_id: user.id,
+            is_global: true
+          });
+      }
+
+      if (result.error) {
+        console.error('Error saving header settings:', result.error);
         toast.error('Failed to save header settings');
         return false;
       }
-      
+
+      toast.success('Header settings saved successfully');
       return true;
     } catch (error) {
-      console.error('Failed to update header settings:', error);
+      console.error('Error updating header settings:', error);
+      toast.error('Failed to save header settings');
       return false;
     }
-  }, [settings]);
+  };
 
-  // Method to update page title and description
-  const updatePageInfo = useCallback((pageTitle?: string, pageDescription?: string, backButton?: boolean, backAction?: () => void) => {
-    setTitle(pageTitle);
-    setDescription(pageDescription);
-    setShowBackButton(backButton);
-    setOnBackButtonClick(backAction);
-  }, []);
-  
+  // Debounce the update function to prevent too many DB writes
+  const debouncedUpdateSettings = debounce(updateSettingsInDb, 500);
+
+  // Provide a wrapper function that updates state immediately but debounces the DB write
+  const updateSettings = async (newSettings: Partial<HeaderSettings>): Promise<boolean> => {
+    // Update local state immediately for a responsive UI
+    setSettings(current => ({
+      ...current,
+      ...newSettings
+    }));
+    
+    // Debounce the actual DB update
+    return debouncedUpdateSettings(newSettings);
+  };
+
   return (
-    <HeaderSettingsContext.Provider value={{ 
-      settings, 
-      title, 
-      description, 
-      showBackButton, 
-      onBackButtonClick, 
-      updateSettings 
-    }}>
+    <HeaderSettingsContext.Provider value={{ settings, updateSettings, loading }}>
       {children}
     </HeaderSettingsContext.Provider>
   );
-}
+};
 
+// Custom hook to use the header settings context
 export const useHeaderSettings = () => useContext(HeaderSettingsContext);

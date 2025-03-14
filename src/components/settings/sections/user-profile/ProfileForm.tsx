@@ -39,11 +39,11 @@ export function ProfileForm({ profile, setProfile }: ProfileFormProps) {
             id="email"
             type="email"
             value={profile.email || ''}
-            readOnly
-            className="bg-muted"
+            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+            placeholder="your.email@example.com"
           />
           <p className="text-xs text-muted-foreground">
-            Email cannot be changed directly. Please contact support.
+            Changing your email will require verification of the new address.
           </p>
         </div>
         

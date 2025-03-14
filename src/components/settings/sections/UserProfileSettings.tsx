@@ -8,6 +8,7 @@ import { AvatarSection } from "./user-profile/AvatarSection";
 import { ProfileForm } from "./user-profile/ProfileForm";
 import { ProfileActions } from "./user-profile/ProfileActions";
 import { ProfileType } from "./user-profile/types";
+import { debounce } from "@/utils/performance-optimizer";
 
 export function UserProfileSettings() {
   const [profile, setProfile] = useState<ProfileType>({
@@ -75,7 +76,7 @@ export function UserProfileSettings() {
       console.log('Saving profile:', profile);
       
       // Update profile in the database
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: profile.full_name,
@@ -85,9 +86,26 @@ export function UserProfileSettings() {
         })
         .eq('id', profile.id);
       
-      if (error) {
-        console.error('Error updating profile:', error);
-        throw error;
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        throw profileError;
+      }
+      
+      // Check if email has changed
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.email !== profile.email) {
+        // Update email in auth
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: profile.email
+        });
+        
+        if (emailError) {
+          console.error('Error updating email:', emailError);
+          throw emailError;
+        }
+        
+        // Show additional toast about email verification
+        toast.info('A verification email has been sent to your new email address');
       }
       
       toast.success('Profile updated successfully');

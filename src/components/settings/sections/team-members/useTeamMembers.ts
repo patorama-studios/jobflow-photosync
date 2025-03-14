@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
 import { toast } from "sonner";
+import { debounce } from "@/utils/performance-optimizer";
 
 export function useTeamMembers() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -22,10 +23,9 @@ export function useTeamMembers() {
       
       if (error) throw error;
       
-      // Add default email if missing
+      // Add default email if missing and convert to TeamMember type
       const enrichedData = data?.map((profile: any) => ({
         ...profile,
-        // Make sure we handle missing email values
         email: profile.email || `${profile.username || profile.id}@example.com`,
         phone: profile.phone || ''
       })) || [];
@@ -58,7 +58,7 @@ export function useTeamMembers() {
     try {
       console.log("Creating new team member:", newMember);
       
-      // Generate a proper UUID
+      // Generate a proper UUID using crypto API
       const memberId = crypto.randomUUID();
       
       // Create new team member
@@ -80,7 +80,17 @@ export function useTeamMembers() {
       
       // Update local state with the new member
       if (data && data[0]) {
-        setMembers(prev => [...prev, data[0] as TeamMember]);
+        const newTeamMember: TeamMember = {
+          id: data[0].id,
+          full_name: data[0].full_name,
+          email: data[0].email || newMember.email,
+          phone: data[0].phone,
+          role: data[0].role,
+          username: data[0].username,
+          avatar_url: data[0].avatar_url,
+          updated_at: data[0].updated_at
+        };
+        setMembers(prev => [...prev, newTeamMember]);
       } else {
         // If no data returned, refresh the list
         await fetchTeamMembers();

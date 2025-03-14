@@ -7,45 +7,42 @@ export interface TeamMember {
   role: string;
   username?: string;
   avatar_url?: string;
+  updated_at?: string;
 }
 
-export const RoleOptions = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'staff', label: 'Staff' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'photographer', label: 'Photographer' },
-  { value: 'editor', label: 'Editor' }
-];
+export function getInitials(name: string): string {
+  if (!name) return '??';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
-// Utility functions for team members
-export const getInitials = (name: string): string => {
-  if (!name) return '';
-  return name
-    .split(' ')
-    .map(part => part.charAt(0))
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
-};
-
-export const getRoleLabel = (role: string): string => {
-  const roleOption = RoleOptions.find(option => option.value.toLowerCase() === role.toLowerCase());
-  return roleOption ? roleOption.label : role;
-};
-
-export const getRoleBadgeClass = (role: string): string => {
-  switch (role.toLowerCase()) {
+export function getRoleBadgeClass(role: string): string {
+  switch (role?.toLowerCase()) {
     case 'admin':
-      return 'bg-blue-100 text-blue-800';
-    case 'staff':
-      return 'bg-green-100 text-green-800';
-    case 'finance':
-      return 'bg-purple-100 text-purple-800';
-    case 'photographer':
-      return 'bg-amber-100 text-amber-800';
+      return 'bg-red-100 text-red-800 border-red-200';
+    case 'manager':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
     case 'editor':
-      return 'bg-cyan-100 text-cyan-800';
+      return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'staff':
+      return 'bg-green-100 text-green-800 border-green-200';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800 border-gray-200';
   }
-};
+}
+
+export function getRoleLabel(role: string): string {
+  switch (role?.toLowerCase()) {
+    case 'admin':
+      return 'Administrator';
+    case 'manager':
+      return 'Manager';
+    case 'editor':
+      return 'Editor';
+    case 'staff':
+      return 'Staff';
+    default:
+      return role || 'User';
+  }
+}
