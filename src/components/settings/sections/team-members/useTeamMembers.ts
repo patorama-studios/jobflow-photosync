@@ -70,7 +70,7 @@ export function useTeamMembers() {
           email: newMember.email,
           phone: newMember.phone || null,
           role: newMember.role,
-          username: newMember.email.split('@')[0]
+          username: newMember.username || newMember.email.split('@')[0]
         })
         .select();
       
@@ -83,7 +83,7 @@ export function useTeamMembers() {
         const newTeamMember: TeamMember = {
           id: data[0].id,
           full_name: data[0].full_name,
-          email: newMember.email, // Use the input email as fallback
+          email: newMember.email,
           phone: data[0].phone || '',
           role: data[0].role,
           username: data[0].username,

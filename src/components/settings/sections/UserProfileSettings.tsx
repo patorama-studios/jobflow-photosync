@@ -8,7 +8,7 @@ import { AvatarSection } from "./user-profile/AvatarSection";
 import { ProfileForm } from "./user-profile/ProfileForm";
 import { ProfileActions } from "./user-profile/ProfileActions";
 import { ProfileType } from "./user-profile/types";
-import { debounce } from "@/utils/performance-optimizer";
+import { supabaseService } from "@/services/api/supabase-service";
 
 export function UserProfileSettings() {
   const [profile, setProfile] = useState<ProfileType>({
