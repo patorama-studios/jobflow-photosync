@@ -71,7 +71,8 @@ function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/login" element={<Auth />} />
-                <Route path="/register" element={<Auth />} state={{ tab: 'register' }} />
+                {/* Fixed by using element with props instead of property on Route */}
+                <Route path="/register" element={<Auth defaultTab="register" />} />
                 <Route path="/verify" element={<Verify />} />
                 <Route path="/dashboard" element={
                   <ErrorBoundary fallback={PageError}>

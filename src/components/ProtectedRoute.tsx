@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
+import { toast } from 'sonner';
 
 // Memoized error component for better performance
 const LoadingError = memo(function LoadingError() {
@@ -105,19 +106,24 @@ export const ProtectedRoute = memo(function ProtectedRoute({
     }
   }, [isLoading, loadingProgress]);
 
-  // In development mode, bypass auth after timeout
-  if (import.meta.env.DEV && (forceRender || !isLoading)) {
-    console.log('DEV MODE: Bypassing auth check or loading finished');
-    return <>{children}</>;
-  }
+  // Notify user when accessing protected route while not authenticated
+  useEffect(() => {
+    if (!isLoading && !session && !import.meta.env.DEV) {
+      toast.error('Authentication required', {
+        description: 'You need to log in to access this page',
+        duration: 4000,
+      });
+    }
+  }, [isLoading, session, location.pathname]);
 
   // If loading and not force rendering, show the loading spinner
   if (isLoading && !forceRender) {
     return <LoadingSpinner showError={longLoadingDetected} progress={loadingProgress} />;
   }
 
-  // If not logged in, redirect to login page
+  // If not logged in, redirect to login page (except in DEV mode)
   if (!session && !import.meta.env.DEV) {
+    // Save the current path so we can redirect back after login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

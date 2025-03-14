@@ -14,11 +14,15 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageTransition } from '@/components/layout/PageTransition';
 
-const Auth = () => {
+interface AuthProps {
+  defaultTab?: string;
+}
+
+const Auth: React.FC<AuthProps> = ({ defaultTab = 'login' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('login');
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [loading, setLoading] = useState(false);
   
   // Login form state
@@ -38,8 +42,10 @@ const Auth = () => {
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
+    } else if (defaultTab) {
+      setActiveTab(defaultTab);
     }
-  }, [location.state]);
+  }, [location.state, defaultTab]);
   
   // Redirect if user is already logged in
   useEffect(() => {

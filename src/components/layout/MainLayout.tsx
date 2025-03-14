@@ -14,7 +14,7 @@ import {
 import { DesktopSidebar } from "./sidebar/DesktopSidebar";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Header } from './Header';
+import { Header } from './Header'; // Fixed import
 import { useSidebarState } from './sidebar/useSidebarState';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 

@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { UserProfile } from "@/hooks/types/user-settings-types";
 
 export function UserProfileSettings() {
   const { profile, loading, saving, updateProfile, saveProfile, isAuthenticated } = useUserProfile();
@@ -103,6 +104,15 @@ export function UserProfileSettings() {
     );
   }
   
+  // Create wrapper functions to adapt profile to the ProfileType expected by the components
+  const handleAvatarProfileUpdate = (updatedProfile: Partial<UserProfile>) => {
+    updateProfile(updatedProfile);
+  };
+  
+  const handleProfileFormUpdate = (updatedProfile: Partial<UserProfile>) => {
+    updateProfile(updatedProfile);
+  };
+  
   return (
     <div className="space-y-6">
       <div>
@@ -114,7 +124,7 @@ export function UserProfileSettings() {
       
       <AvatarSection 
         profile={profile}
-        setProfile={updateProfile}
+        setProfile={handleAvatarProfileUpdate}
         loading={loading}
       />
       
@@ -122,7 +132,7 @@ export function UserProfileSettings() {
       
       <ProfileForm 
         profile={profile}
-        setProfile={updateProfile}
+        setProfile={handleProfileFormUpdate}
       />
       
       <ProfileActions 
