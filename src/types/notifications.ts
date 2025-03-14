@@ -7,4 +7,8 @@ export interface Notification {
   read: boolean;
   time: string;
   link?: string;
+  text?: string;
+  details?: string;
+  date?: string;
+  category?: string;
 }
