@@ -5,8 +5,8 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useNotificationTemplates } from '@/contexts/NotificationTemplateContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const EditorHeader: React.FC<{ isAuthenticated?: boolean }> = ({ isAuthenticated }) => {
-  const { refreshTemplates } = useNotificationTemplates();
+export const EditorHeader: React.FC<{ isAuthenticated?: boolean | null }> = ({ isAuthenticated }) => {
+  const { refreshTemplates, loading } = useNotificationTemplates();
   const { user } = useAuth();
   
   return (
@@ -16,7 +16,7 @@ export const EditorHeader: React.FC<{ isAuthenticated?: boolean }> = ({ isAuthen
         <p className="text-muted-foreground">
           Customize notification templates for emails, SMS, and push notifications
         </p>
-        {!user && isAuthenticated === false && (
+        {isAuthenticated === false && !user && (
           <p className="text-sm text-amber-500 mt-2 flex items-center">
             <AlertCircle className="h-4 w-4 mr-1" />
             Please log in to edit notifications
@@ -27,10 +27,19 @@ export const EditorHeader: React.FC<{ isAuthenticated?: boolean }> = ({ isAuthen
         variant="outline" 
         size="sm" 
         onClick={refreshTemplates}
-        disabled={!user && isAuthenticated === false}
+        disabled={isAuthenticated === false || loading}
       >
-        <RefreshCw className="mr-2 h-4 w-4" />
-        Refresh
+        {loading ? (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            Loading...
+          </>
+        ) : (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </>
+        )}
       </Button>
     </div>
   );

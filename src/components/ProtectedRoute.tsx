@@ -28,10 +28,12 @@ const LoadingError = memo(function LoadingError() {
 // Memoized loading component for better performance
 const LoadingSpinner = memo(function LoadingSpinner({ 
   showError,
-  progress 
+  progress,
+  retryCount
 }: { 
   showError: boolean;
   progress: number;
+  retryCount: number;
 }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-white dark:bg-gray-950">
@@ -40,7 +42,9 @@ const LoadingSpinner = memo(function LoadingSpinner({
         <Progress value={progress} className="w-full" />
         <div className="text-center space-y-2">
           <span className="text-lg font-medium">Loading your dashboard...</span>
-          <p className="text-sm text-muted-foreground">This should only take a moment</p>
+          <p className="text-sm text-muted-foreground">
+            {retryCount > 0 ? `Retry attempt ${retryCount}...` : "This should only take a moment"}
+          </p>
         </div>
         {showError && <LoadingError />}
       </div>
@@ -60,10 +64,15 @@ export const ProtectedRoute = memo(function ProtectedRoute({
   const [longLoadingDetected, setLongLoadingDetected] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(10);
   const [forceRender, setForceRender] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   // Loading progress simulation
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading) {
+      setLoadingProgress(100);
+      return;
+    }
     
     // Start with initial progress
     setLoadingProgress(10);
@@ -79,12 +88,21 @@ export const ProtectedRoute = memo(function ProtectedRoute({
     return () => clearInterval(interval);
   }, [isLoading]);
 
-  // Loading detection with cleanup
+  // Loading detection with cleanup and retry
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading) {
+      setAuthCheckComplete(true);
+      return;
+    }
     
     const timeoutId = setTimeout(() => {
       setLongLoadingDetected(true);
+      
+      // Add retry on long loading
+      if (retryCount < 2) {
+        console.log(`Auth loading timeout, retrying... (Attempt ${retryCount + 1})`);
+        setRetryCount(prev => prev + 1);
+      }
     }, 5000); // Show error message after 5 seconds
 
     // Force render after a timeout as a fallback
@@ -92,6 +110,7 @@ export const ProtectedRoute = memo(function ProtectedRoute({
       if (isLoading) {
         console.log('Force rendering due to loading timeout');
         setForceRender(true);
+        setAuthCheckComplete(true); // Consider auth check complete even if it failed
       }
     }, 8000); // Force render after 8 seconds if still loading
 
@@ -99,28 +118,25 @@ export const ProtectedRoute = memo(function ProtectedRoute({
       clearTimeout(timeoutId);
       clearTimeout(forceRenderTimeout);
     };
-  }, [isLoading]);
-
-  // Update progress to 100 when loading completes
-  useEffect(() => {
-    if (!isLoading && loadingProgress < 100) {
-      setLoadingProgress(100);
-    }
-  }, [isLoading, loadingProgress]);
+  }, [isLoading, retryCount]);
 
   // Notify user when accessing protected route while not authenticated
   useEffect(() => {
-    if (!isLoading && !session && !import.meta.env.DEV && requireAuth) {
+    if (authCheckComplete && !session && !import.meta.env.DEV && requireAuth) {
       toast.error('Authentication required', {
         description: 'You need to log in to access this page',
         duration: 4000,
       });
     }
-  }, [isLoading, session, location.pathname, requireAuth]);
+  }, [authCheckComplete, session, location.pathname, requireAuth]);
 
   // If loading and not force rendering, show the loading spinner
   if (isLoading && !forceRender) {
-    return <LoadingSpinner showError={longLoadingDetected} progress={loadingProgress} />;
+    return <LoadingSpinner 
+      showError={longLoadingDetected} 
+      progress={loadingProgress}
+      retryCount={retryCount}
+    />;
   }
 
   // ALWAYS bypass auth check in development mode or if requireAuth is false

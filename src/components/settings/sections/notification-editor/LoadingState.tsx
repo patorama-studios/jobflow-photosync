@@ -6,9 +6,21 @@ import { RefreshCw } from 'lucide-react';
 import { useNotificationTemplates } from '@/contexts/NotificationTemplateContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const LoadingState: React.FC<{ isAuthenticated?: boolean }> = ({ isAuthenticated }) => {
+export const LoadingState: React.FC<{ isAuthenticated?: boolean | null }> = ({ isAuthenticated }) => {
   const { loadRetry, refreshTemplates } = useNotificationTemplates();
   const { user } = useAuth();
+  
+  // Handle different states clearly
+  
+  // Still determining auth status
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p>Checking authentication status...</p>
+      </div>
+    );
+  }
   
   // If not authenticated, show login message
   if (!user && isAuthenticated === false) {
@@ -17,10 +29,16 @@ export const LoadingState: React.FC<{ isAuthenticated?: boolean }> = ({ isAuthen
         <AlertCircle className="h-8 w-8 text-amber-500" />
         <p>Please log in to view notification templates</p>
         <p className="text-sm text-muted-foreground">Settings are only available for authenticated users</p>
+        {import.meta.env.DEV && (
+          <div className="mt-2 p-2 border rounded bg-muted/50">
+            <p className="text-xs text-muted-foreground">DEV MODE: Settings are still accessible in development environment</p>
+          </div>
+        )}
       </div>
     );
   }
   
+  // Normal loading state with retry button if needed
   return (
     <div className="flex flex-col justify-center items-center h-64 space-y-4">
       <Loader2 className="h-8 w-8 animate-spin" />
@@ -30,6 +48,11 @@ export const LoadingState: React.FC<{ isAuthenticated?: boolean }> = ({ isAuthen
           <RefreshCw className="mr-2 h-4 w-4" />
           Retry Loading
         </Button>
+      )}
+      {loadRetry >= 3 && (
+        <p className="text-sm text-muted-foreground">
+          Having trouble loading templates. Please try again later.
+        </p>
       )}
     </div>
   );
