@@ -27,6 +27,7 @@ const Verify = () => {
       }
 
       try {
+        console.log(`Verifying email: ${email}, token: ${token}, type: ${type}`);
         const { success, error } = await verifyEmail(email, token, type);
         
         if (success) {
@@ -37,6 +38,7 @@ const Verify = () => {
           setMessage(error || 'Failed to verify email. Please try again.');
         }
       } catch (err) {
+        console.error('Verification error:', err);
         setStatus('error');
         setMessage('An unexpected error occurred during verification.');
       }
@@ -46,10 +48,12 @@ const Verify = () => {
   }, [email, token, type, verifyEmail]);
 
   const goToLogin = () => {
-    navigate('/login');
+    // Ensure we navigate to the absolute path, not relative
+    navigate('/login', { replace: true });
   };
 
   const goToSignup = () => {
+    // Ensure we navigate to the absolute path, not relative
     navigate('/login', { state: { tab: 'signup' } });
   };
 

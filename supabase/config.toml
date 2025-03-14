@@ -29,7 +29,8 @@ enabled = true
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
+site_url = "https://daf619e5-50c8-4d6e-ba5f-6c23df73b6ca.lovableproject.com"
+additional_redirect_urls = ["https://daf619e5-50c8-4d6e-ba5f-6c23df73b6ca.lovableproject.com/verify", "https://daf619e5-50c8-4d6e-ba5f-6c23df73b6ca.lovableproject.com/login"]
 
 [realtime]
 enabled = true
@@ -38,5 +39,11 @@ enabled = true
 verify_jwt = false
 
 [functions.stripe-connect]
+verify_jwt = false
+
+[functions.verify-email]
+verify_jwt = false
+
+[functions.send-email]
 verify_jwt = false
 

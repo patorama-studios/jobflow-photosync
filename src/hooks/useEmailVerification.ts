@@ -7,7 +7,12 @@ export const useEmailVerification = () => {
 
   const sendVerificationEmail = async (email: string) => {
     try {
-      const verificationLink = `${window.location.origin}/verify?email=${encodeURIComponent(email)}&type=signup`;
+      // Use window.location.origin to ensure we use the current domain
+      // This fixes the localhost redirect issue
+      const currentOrigin = window.location.origin;
+      const verificationLink = `${currentOrigin}/verify?email=${encodeURIComponent(email)}&type=signup`;
+      
+      console.log('Creating verification link with origin:', currentOrigin);
       
       const emailHtml = `
         <h1>Verify Your Email Address</h1>

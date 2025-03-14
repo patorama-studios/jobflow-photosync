@@ -42,15 +42,33 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email is required");
     }
 
-    console.log(`Processing verification for email: ${email}`);
+    console.log(`Processing verification for email: ${email}, type: ${type}`);
 
     let response;
     
     if (type === "signup") {
-      // Confirm user's email directly using admin API
+      // Get the user by email
+      const { data: userData, error: userError } = await supabase.auth.admin.listUsers({
+        filters: {
+          email: email
+        }
+      });
+
+      if (userError) {
+        throw userError;
+      }
+      
+      if (!userData.users || userData.users.length === 0) {
+        throw new Error("User not found");
+      }
+      
+      const userId = userData.users[0].id;
+      console.log(`Found user with ID: ${userId}`);
+      
+      // Confirm user's email using admin API
       const { data, error } = await supabase.auth.admin.updateUserById(
-        "user_id_placeholder", // Will be ignored but is required
-        { email_confirm: true, email: email }
+        userId,
+        { email_confirm: true }
       );
 
       if (error) throw error;
