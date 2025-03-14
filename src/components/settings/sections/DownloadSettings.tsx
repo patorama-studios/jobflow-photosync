@@ -12,6 +12,10 @@ import { toast } from "sonner";
 import { DownloadSettings as DownloadSettingsType } from "@/hooks/types/user-settings-types";
 
 const defaultSettings: DownloadSettingsType = {
+  automaticDownloads: false,
+  downloadPath: "",
+  qualityPreference: "high",
+  organizationMethod: "date",
   maxDimension: 2000,
   imageQuality: 80,
   dpi: "300",
@@ -48,10 +52,15 @@ export function DownloadSettings() {
         if (data && data.value) {
           const loadedSettings = data.value as Record<string, any>;
           setSettings({
+            automaticDownloads: loadedSettings.automaticDownloads || false,
+            downloadPath: loadedSettings.downloadPath || "",
+            qualityPreference: loadedSettings.qualityPreference || "high",
+            organizationMethod: loadedSettings.organizationMethod || "date",
             maxDimension: loadedSettings.maxDimension || 2000,
             imageQuality: loadedSettings.imageQuality || 80,
             dpi: loadedSettings.dpi || "300",
-            fileNaming: loadedSettings.fileNaming || "original"
+            fileNaming: loadedSettings.fileNaming || "original",
+            customFormat: loadedSettings.customFormat
           });
         }
       } catch (error) {
@@ -84,12 +93,7 @@ export function DownloadSettings() {
         .from('app_settings')
         .upsert({
           key: 'download_settings',
-          value: {
-            maxDimension: settings.maxDimension,
-            imageQuality: settings.imageQuality,
-            dpi: settings.dpi,
-            fileNaming: settings.fileNaming
-          },
+          value: settings,
           user_id: userData.user.id,
           updated_at: new Date().toISOString()
         });
@@ -239,3 +243,4 @@ export function DownloadSettings() {
     </div>
   );
 }
+

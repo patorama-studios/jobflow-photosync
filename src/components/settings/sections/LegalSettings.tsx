@@ -10,9 +10,12 @@ import { LegalSettings as LegalSettingsType } from "@/hooks/types/user-settings-
 import { toast } from "sonner";
 
 const defaultSettings: LegalSettingsType = {
+  termsUrl: "",
+  privacyUrl: "",
+  cookiePolicy: "",
+  dataRetentionPeriod: 365,
   termsOfService: "",
   privacyPolicy: "",
-  cookiePolicy: "",
   disclaimers: ""
 };
 
@@ -46,9 +49,12 @@ export function LegalSettings() {
         if (data && data.value) {
           const loadedSettings = data.value as Record<string, any>;
           setSettings({
+            termsUrl: loadedSettings.termsUrl || "",
+            privacyUrl: loadedSettings.privacyUrl || "",
+            cookiePolicy: loadedSettings.cookiePolicy || "",
+            dataRetentionPeriod: loadedSettings.dataRetentionPeriod || 365,
             termsOfService: loadedSettings.termsOfService || "",
             privacyPolicy: loadedSettings.privacyPolicy || "",
-            cookiePolicy: loadedSettings.cookiePolicy || "",
             disclaimers: loadedSettings.disclaimers || ""
           });
         }
@@ -62,7 +68,7 @@ export function LegalSettings() {
     fetchSettings();
   }, []);
 
-  const handleChange = (field: keyof LegalSettingsType, value: string) => {
+  const handleChange = (field: keyof LegalSettingsType, value: string | number) => {
     setSettings(prev => ({
       ...prev,
       [field]: value
@@ -82,12 +88,7 @@ export function LegalSettings() {
         .from('app_settings')
         .upsert({
           key: 'legal_settings',
-          value: {
-            termsOfService: settings.termsOfService,
-            privacyPolicy: settings.privacyPolicy,
-            cookiePolicy: settings.cookiePolicy,
-            disclaimers: settings.disclaimers
-          },
+          value: settings,
           user_id: userData.user.id,
           updated_at: new Date().toISOString()
         });
@@ -188,3 +189,4 @@ export function LegalSettings() {
     </div>
   );
 }
+

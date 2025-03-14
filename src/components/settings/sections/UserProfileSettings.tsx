@@ -1,80 +1,118 @@
 
 import React, { useState, useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { Loader2, AlertCircle } from "lucide-react";
-import { AvatarSection } from "./user-profile/AvatarSection";
-import { ProfileForm } from "./user-profile/ProfileForm";
-import { ProfileActions } from "./user-profile/ProfileActions";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { UserProfile } from "@/hooks/types/user-settings-types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { ProfileType } from "@/hooks/types/user-settings-types";
 
 export function UserProfileSettings() {
-  const { profile, loading, saving, updateProfile, saveProfile, isAuthenticated } = useUserProfile();
-  const [isEmailChanged, setIsEmailChanged] = useState(false);
-  const [originalEmail, setOriginalEmail] = useState("");
-  const navigate = useNavigate();
-  
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch user profile
   useEffect(() => {
-    // Store the original email when profile loads
-    if (profile.email) {
-      setOriginalEmail(profile.email);
-    }
-  }, [profile.email]);
-  
-  // Check if email has changed
-  useEffect(() => {
-    if (originalEmail && profile.email !== originalEmail) {
-      setIsEmailChanged(true);
-    } else {
-      setIsEmailChanged(false);
-    }
-  }, [profile.email, originalEmail]);
-  
-  const handleSave = async () => {
-    if (!isAuthenticated) {
-      toast.error("You must be logged in to save your profile");
-      return;
-    }
-    
-    try {
-      // Save profile data to profiles table
-      const success = await saveProfile();
-      
-      if (!success) {
-        throw new Error('Failed to update profile');
-      }
-      
-      // Check if email has changed
-      if (isEmailChanged) {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        
         const { data: { user } } = await supabase.auth.getUser();
-        if (user && user.email !== profile.email) {
-          // Update email in auth
-          const { error: emailError } = await supabase.auth.updateUser({
-            email: profile.email
-          });
-          
-          if (emailError) {
-            console.error('Error updating email:', emailError);
-            throw emailError;
-          }
-          
-          // Show additional toast about email verification
-          toast.info('A verification email has been sent to your new email address');
+        
+        if (!user) {
+          console.error('No user found');
+          return;
         }
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+        
+        // Transform to match our ProfileType format
+        const profileData: ProfileType = {
+          id: data.id,
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          email: data.email || user.email || '',
+          phoneNumber: data.phone_number || '',
+          title: data.title || '',
+          avatar: data.avatar_url || '',
+          full_name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+          role: data.role || 'user'
+        };
+        
+        setProfile(profileData);
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      } finally {
+        setLoading(false);
       }
+    };
+    
+    fetchProfile();
+  }, []);
+
+  // Handle input changes
+  const handleChange = (field: keyof ProfileType, value: string) => {
+    if (!profile) return;
+    
+    if (field === 'firstName' || field === 'lastName') {
+      const newFirstName = field === 'firstName' ? value : profile.firstName;
+      const newLastName = field === 'lastName' ? value : profile.lastName;
+      const newFullName = `${newFirstName} ${newLastName}`.trim();
+      
+      setProfile({
+        ...profile,
+        [field]: value,
+        full_name: newFullName
+      });
+    } else {
+      setProfile({
+        ...profile,
+        [field]: value
+      });
+    }
+  };
+
+  // Save profile
+  const saveProfile = async () => {
+    if (!profile) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          full_name: profile.full_name,
+          phone_number: profile.phoneNumber,
+          title: profile.title,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile.id);
+      
+      if (error) throw error;
       
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
+    } finally {
+      setSaving(false);
     }
   };
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -83,82 +121,99 @@ export function UserProfileSettings() {
     );
   }
   
-  if (!isAuthenticated) {
+  if (!profile) {
     return (
-      <Card className="p-6">
-        <CardContent className="flex flex-col items-center justify-center h-64 space-y-4">
-          <AlertCircle className="h-12 w-12 text-amber-500" />
-          <h3 className="text-xl font-medium">Authentication Required</h3>
-          <p className="text-muted-foreground text-center">
-            You need to be logged in to view and edit your profile.
-          </p>
-          <Button 
-            onClick={() => {
-              navigate('/login');
-            }}
-          >
-            Log In
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="text-center p-4">
+        <p>No profile found. Please log in again.</p>
+      </div>
     );
   }
-  
-  // Create wrapper functions to adapt profile to the ProfileType expected by the components
-  const handleAvatarProfileUpdate = (updatedProfile: Partial<UserProfile>) => {
-    updateProfile(updatedProfile);
-  };
-  
-  const handleProfileFormUpdate = (updatedProfile: Partial<UserProfile>) => {
-    updateProfile(updatedProfile);
-  };
-  
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">User Profile</h2>
-        <p className="text-muted-foreground">
-          Manage your personal information and account settings
-        </p>
-      </div>
-      
-      <AvatarSection 
-        profile={profile}
-        setProfile={handleAvatarProfileUpdate}
-        loading={loading}
-      />
-      
-      <Separator />
-      
-      <ProfileForm 
-        profile={profile}
-        setProfile={handleProfileFormUpdate}
-      />
-      
-      <ProfileActions 
-        onSave={handleSave}
-        saving={saving}
-      />
-      
-      {isEmailChanged && (
-        <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-amber-400" />
+    <Card>
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input 
+                id="firstName" 
+                value={profile.firstName} 
+                onChange={(e) => handleChange('firstName', e.target.value)}
+              />
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-amber-800">Email Address Change</h3>
-              <div className="mt-2 text-sm text-amber-700">
-                <p>
-                  You've changed your email address. After saving, a verification email 
-                  will be sent to your new address. You'll need to verify the new email 
-                  before you can use it to log in.
-                </p>
-              </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input 
+                id="lastName" 
+                value={profile.lastName} 
+                onChange={(e) => handleChange('lastName', e.target.value)}
+              />
             </div>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input 
+              id="email" 
+              value={profile.email} 
+              disabled 
+              type="email"
+            />
+            <p className="text-xs text-muted-foreground">
+              Email cannot be changed. Contact support if you need to update your email.
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Input 
+              id="phoneNumber" 
+              value={profile.phoneNumber} 
+              onChange={(e) => handleChange('phoneNumber', e.target.value)}
+              type="tel"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="title">Job Title</Label>
+            <Input 
+              id="title" 
+              value={profile.title} 
+              onChange={(e) => handleChange('title', e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Input 
+              id="role" 
+              value={profile.role} 
+              disabled
+            />
+            <p className="text-xs text-muted-foreground">
+              Roles can only be changed by administrators.
+            </p>
+          </div>
+          
+          <div className="pt-4">
+            <Button 
+              onClick={saveProfile} 
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </div>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
