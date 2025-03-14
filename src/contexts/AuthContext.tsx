@@ -45,7 +45,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         console.log('Getting initial session...');
-        const { data } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setIsLoading(false);
+          return;
+        }
+        
         const currentSession = data.session;
         console.log('Session retrieved:', currentSession ? 'Yes' : 'No');
         
@@ -66,18 +73,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
       } catch (error) {
         console.error('Error initializing auth:', error);
+        setIsLoading(false);
       } finally {
         // Add a short timeout to avoid race conditions with initial rendering 
         // This ensures we don't get stuck in loading state
         initTimeoutId = window.setTimeout(() => {
           console.log('Auth initialization complete, setting isLoading to false');
           setIsLoading(false);
-        }, 1500);
+        }, 1000); // Reduced from 1500ms to 1000ms for faster loading
       }
     };
 
     // Initialize auth and clean up subscription when component unmounts
     initializeAuth();
+    
+    // Set a longer timeout as a fallback to ensure we don't get stuck
+    const fallbackTimer = setTimeout(() => {
+      if (isLoading) {
+        console.log('Fallback timer triggered - forcing auth loading to complete');
+        setIsLoading(false);
+      }
+    }, 5000);
     
     return () => {
       console.log('Cleaning up auth subscription');
@@ -87,6 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (initTimeoutId) {
         window.clearTimeout(initTimeoutId);
       }
+      clearTimeout(fallbackTimer);
     };
   }, []);
 
@@ -94,6 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await supabase.auth.signOut();
       console.log('User signed out successfully');
+      // No need to update state as onAuthStateChange will handle it
     } catch (error) {
       console.error('Error signing out:', error);
     }

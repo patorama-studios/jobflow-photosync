@@ -4,10 +4,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/config/queryClient';
-import { useHeaderSettings, HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
+import { HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
 import { AIAssistantProvider } from '@/contexts/AIAssistantContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import PageLoading from '@/components/loading/PageLoading';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 // Eager loaded components
@@ -125,7 +124,7 @@ function App() {
                 } />
                 <Route path="/settings/*" element={
                   <ErrorBoundary fallback={PageError}>
-                    <ProtectedRoute>
+                    <ProtectedRoute requireAuth={false}>
                       <Settings />
                     </ProtectedRoute>
                   </ErrorBoundary>

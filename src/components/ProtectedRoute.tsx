@@ -49,11 +49,13 @@ const LoadingSpinner = memo(function LoadingSpinner({
 });
 
 export const ProtectedRoute = memo(function ProtectedRoute({ 
-  children 
+  children,
+  requireAuth = true
 }: { 
-  children: React.ReactNode 
+  children: React.ReactNode,
+  requireAuth?: boolean
 }) {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, user } = useAuth();
   const location = useLocation();
   const [longLoadingDetected, setLongLoadingDetected] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(10);
@@ -108,25 +110,30 @@ export const ProtectedRoute = memo(function ProtectedRoute({
 
   // Notify user when accessing protected route while not authenticated
   useEffect(() => {
-    if (!isLoading && !session && !import.meta.env.DEV) {
+    if (!isLoading && !session && !import.meta.env.DEV && requireAuth) {
       toast.error('Authentication required', {
         description: 'You need to log in to access this page',
         duration: 4000,
       });
     }
-  }, [isLoading, session, location.pathname]);
+  }, [isLoading, session, location.pathname, requireAuth]);
 
   // If loading and not force rendering, show the loading spinner
   if (isLoading && !forceRender) {
     return <LoadingSpinner showError={longLoadingDetected} progress={loadingProgress} />;
   }
 
-  // If not logged in, redirect to login page (except in DEV mode)
-  if (!session && !import.meta.env.DEV) {
+  // ALWAYS bypass auth check in development mode or if requireAuth is false
+  if (import.meta.env.DEV || !requireAuth) {
+    return <>{children}</>;
+  }
+
+  // If not logged in and requiring auth, redirect to login page
+  if (!session && requireAuth) {
     // Save the current path so we can redirect back after login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If logged in or in development mode, render the children
+  // If logged in or not requiring auth, render the children
   return <>{children}</>;
 });
