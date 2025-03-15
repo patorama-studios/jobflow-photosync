@@ -11,5 +11,5 @@ interface ProtectedRouteProps {
  */
 export default function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
   // Use our enhanced AuthRedirect component
-  return <AuthRedirect>{children}</AuthRedirect>;
+  return <AuthRedirect requireAuth={requireAuth}>{children}</AuthRedirect>;
 }
