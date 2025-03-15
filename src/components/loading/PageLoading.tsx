@@ -43,7 +43,23 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
       // Small delay before refreshing to show the refreshing state
       const timeoutId = setTimeout(() => {
         setRefreshAttempts(prev => prev + 1);
-        window.location.reload();
+        // Try to recover more gracefully first by clearing session storage
+        // This can help with stuck auth states
+        if (refreshAttempts === 0) {
+          const authToken = localStorage.getItem('supabase.auth.token');
+          console.log('First refresh attempt, caching auth token');
+          localStorage.setItem('auth.token.backup', authToken || '');
+          localStorage.removeItem('supabase.auth.token');
+          window.location.href = '/dashboard'; // Direct navigation instead of reload
+        } else {
+          // On second attempt, try to restore from backup if possible
+          const backupToken = localStorage.getItem('auth.token.backup');
+          if (backupToken && backupToken !== 'undefined' && backupToken !== '') {
+            console.log('Restoring auth token from backup');
+            localStorage.setItem('supabase.auth.token', backupToken);
+          }
+          window.location.reload();
+        }
       }, 1500);
       
       return () => clearTimeout(timeoutId);
@@ -59,6 +75,7 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   // Break refresh loop and redirect
   const handleBreakLoop = () => {
     sessionStorage.removeItem('refreshAttempts');
+    localStorage.removeItem('supabase.auth.token');
     window.location.href = '/dashboard';
   };
   

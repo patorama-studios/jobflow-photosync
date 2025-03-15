@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -36,71 +36,82 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const profile = useProfile(user?.id);
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
+  
+  // Improved session initialization - more reliable
+  const initializeAuth = useCallback(async () => {
+    try {
+      console.log('Getting initial session...');
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        setIsLoading(false);
+        return;
+      }
+      
+      const currentSession = data.session;
+      
+      if (currentSession) {
+        console.log('User found in session:', currentSession.user?.id);
+      } else {
+        console.log('No active session found');
+      }
+      
+      setSession(currentSession);
+      setUser(currentSession?.user || null);
+      
+      // Complete initialization regardless of session state
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error initializing auth:', error);
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     console.log('AuthContext initializing...');
     let authStateSubscription: { data: { subscription: { unsubscribe: () => void } } };
     
-    const initializeAuth = async () => {
-      try {
-        console.log('Getting initial session...');
-        const { data, error } = await supabase.auth.getSession();
+    // Immediately begin session retrieval
+    initializeAuth();
+    
+    // Set up auth state change listener
+    const setupAuthListener = async () => {
+      authStateSubscription = supabase.auth.onAuthStateChange((event, newSession) => {
+        console.log('Auth state changed:', { event, hasSession: !!newSession });
         
-        if (error) {
-          console.error('Error getting session:', error);
-          setIsLoading(false);
-          return;
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('User signed in or token refreshed');
+          localStorage.setItem('supabase.auth.token', JSON.stringify(newSession));
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          localStorage.removeItem('supabase.auth.token');
         }
         
-        const currentSession = data.session;
-        console.log('Session retrieved:', currentSession ? 'Yes' : 'No');
-        
-        if (currentSession) {
-          console.log('User found in session:', currentSession.user?.id);
-        }
-        
-        setSession(currentSession);
-        setUser(currentSession?.user || null);
-        
-        // Set up auth state change listener
-        authStateSubscription = supabase.auth.onAuthStateChange((event, newSession) => {
-          console.log('Auth state changed:', { event, hasSession: !!newSession });
-          
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            console.log('User signed in or token refreshed');
-            localStorage.setItem('supabase.auth.token', JSON.stringify(newSession));
-          } else if (event === 'SIGNED_OUT') {
-            console.log('User signed out');
-            localStorage.removeItem('supabase.auth.token');
-          }
-          
-          setSession(newSession);
-          setUser(newSession?.user || null);
-          setIsLoading(false);
-        });
-        
-        // Force loading state to complete after a short delay
-        // This ensures the app doesn't get stuck loading if no auth events fire
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 500); 
-        
-      } catch (error) {
-        console.error('Error initializing auth:', error);
+        setSession(newSession);
+        setUser(newSession?.user || null);
         setIsLoading(false);
-      }
+      });
     };
 
-    // Initialize auth
-    initializeAuth();
+    setupAuthListener();
+    
+    // Failsafe: Force loading state to complete after a short delay
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.log('Auth loading timeout reached, forcing completion');
+        setIsLoading(false);
+      }
+    }, 2000);
     
     return () => {
       console.log('Cleaning up auth subscription');
+      clearTimeout(timer);
       if (authStateSubscription) {
         authStateSubscription.data.subscription.unsubscribe();
       }
     };
-  }, []);
+  }, [initializeAuth]);
 
   const signOut = async () => {
     try {

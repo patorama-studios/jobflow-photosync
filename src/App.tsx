@@ -8,6 +8,8 @@ import { HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
 import { AIAssistantProvider } from '@/contexts/AIAssistantContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { PageLoading } from '@/components/loading/PageLoading';
+import { initializePerformance } from '@/utils/performance';
 
 // Eager loaded components
 import Home from './pages/Home';
@@ -17,8 +19,13 @@ import Login from './pages/Login';
 import Verify from './pages/Verify';
 import Auth from './pages/Auth';
 
-// Lazy loaded pages for better performance
-const Dashboard = lazy(() => import('./pages/Dashboard'));
+// Lazy loaded pages with preloadable chunks
+const Dashboard = lazy(() => {
+  // Preload critical dashboard components
+  import('./components/dashboard/StatsCards');
+  return import('./pages/Dashboard');
+});
+
 const Settings = lazy(() => import('./pages/Settings'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Orders = lazy(() => import('./pages/Orders'));
@@ -27,21 +34,16 @@ const Products = lazy(() => import('./pages/Products'));
 const Customers = lazy(() => import('./pages/Customers'));
 const CompanyDetails = lazy(() => import('./pages/CompanyDetails'));
 
-// Fallback loading component
+// Optimized loading fallback with configurable timeout
 const AppLoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen p-4 bg-white dark:bg-gray-950">
-    <div className="text-center">
-      <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-      <p className="text-muted-foreground">Loading application...</p>
-    </div>
-  </div>
+  <PageLoading forceRefreshAfter={8} message="Loading application..." />
 );
 
-// Fallback error component
+// Optimized error component
 const PageError = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => (
   <div className="flex flex-col items-center justify-center min-h-screen p-4">
     <h2 className="text-xl font-semibold text-red-500 mb-2">Page Load Error</h2>
-    <p className="text-gray-600 mb-4">Something went wrong loading this page</p>
+    <p className="text-gray-600 mb-4">{error?.message || "Something went wrong loading this page"}</p>
     <div className="flex gap-2">
       <button 
         onClick={resetErrorBoundary} 
@@ -60,6 +62,12 @@ const PageError = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoun
 );
 
 function App() {
+  // Initialize performance monitoring
+  React.useEffect(() => {
+    const cleanup = initializePerformance();
+    return cleanup;
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
