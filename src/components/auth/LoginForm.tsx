@@ -82,7 +82,7 @@ export const LoginForm: React.FC = () => {
         // Add a slight delay to make sure state updates
         setTimeout(() => {
           navigate(from, { replace: true });
-        }, 300);
+        }, 500); // Increased delay to ensure state is fully updated
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -101,7 +101,9 @@ export const LoginForm: React.FC = () => {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+              <div className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground">
+                <Mail className="h-5 w-5" />
+              </div>
               <Input 
                 id="email" 
                 name="email"
@@ -115,7 +117,9 @@ export const LoginForm: React.FC = () => {
               />
               {errors.email && touched.email && (
                 <div className="flex items-center mt-1 text-destructive text-sm">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <div className="h-4 w-4 mr-1">
+                    <AlertCircle className="h-4 w-4" />
+                  </div>
                   {errors.email}
                 </div>
               )}
@@ -135,7 +139,9 @@ export const LoginForm: React.FC = () => {
               </Button>
             </div>
             <div className="relative">
-              <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+              <div className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground">
+                <Key className="h-5 w-5" />
+              </div>
               <Input 
                 id="password" 
                 name="password"
@@ -148,7 +154,9 @@ export const LoginForm: React.FC = () => {
               />
               {errors.password && touched.password && (
                 <div className="flex items-center mt-1 text-destructive text-sm">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <div className="h-4 w-4 mr-1">
+                    <AlertCircle className="h-4 w-4" />
+                  </div>
                   {errors.password}
                 </div>
               )}
@@ -157,7 +165,9 @@ export const LoginForm: React.FC = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="mr-2 h-4 w-4 animate-spin">
+                  <Loader2 className="h-4 w-4" />
+                </div>
                 Logging in...
               </>
             ) : (

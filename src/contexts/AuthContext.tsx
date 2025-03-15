@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const initialCheckDone = useRef(false);
   
   const profile = useProfile(user?.id);
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
@@ -43,6 +44,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkSession = useCallback(async () => {
     try {
       console.log('Checking current session...');
+      setIsLoading(true);
+      
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -65,9 +68,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Complete initialization
       setIsLoading(false);
+      initialCheckDone.current = true;
     } catch (error) {
       console.error('Error checking auth session:', error);
       setIsLoading(false);
+      initialCheckDone.current = true;
     }
   }, []);
 
@@ -102,11 +107,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Failsafe: Force loading state to complete after a short delay
     const timer = setTimeout(() => {
-      if (isLoading) {
+      if (isLoading && !initialCheckDone.current) {
         console.log('Auth loading timeout reached, forcing completion');
         setIsLoading(false);
+        initialCheckDone.current = true;
       }
-    }, 1000); // Reduced timeout to prevent long waits
+    }, 3000); // Reduced timeout to prevent long waits
     
     return () => {
       console.log('Cleaning up auth subscription');
@@ -115,7 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         authStateSubscription.data.subscription.unsubscribe();
       }
     };
-  }, [checkSession]);
+  }, [checkSession, isLoading]);
 
   const signOut = async () => {
     try {
