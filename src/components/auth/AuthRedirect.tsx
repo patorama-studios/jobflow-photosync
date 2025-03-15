@@ -2,6 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLoading } from "@/components/loading/PageLoading";
+import { useEffect } from "react";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -10,7 +11,7 @@ interface AuthRedirectProps {
 }
 
 export function AuthRedirect({ children, redirectTo = "/login", requireAuth = true }: AuthRedirectProps) {
-  const { session, user, isLoading } = useAuth();
+  const { session, user, isLoading, checkSession } = useAuth();
   const location = useLocation();
 
   // Add more detailed debug logging
@@ -23,10 +24,18 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     timestamp: new Date().toISOString()
   });
 
+  // Force refresh session on mount to ensure we have latest auth state
+  useEffect(() => {
+    if (isLoading) {
+      // Explicitly check session when component mounts
+      checkSession();
+    }
+  }, [checkSession]);
+
   // If still loading, show loading component with a shorter timeout
   if (isLoading) {
     // Use a much shorter timeout to prevent getting stuck
-    return <PageLoading message="Verifying authentication..." forceRefreshAfter={5} />;
+    return <PageLoading message="Verifying authentication..." forceRefreshAfter={3} />;
   }
 
   // If authentication is required and user is not authenticated, redirect to login

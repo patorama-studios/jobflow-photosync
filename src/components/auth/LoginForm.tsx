@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ForgotPasswordForm } from './ForgotPasswordForm';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginFormValues {
   email: string;
@@ -27,6 +28,7 @@ export const LoginForm: React.FC = () => {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const { checkSession } = useAuth();
   
   const from = location.state?.from?.pathname || "/dashboard";
   
@@ -73,8 +75,14 @@ export const LoginForm: React.FC = () => {
         description: 'Welcome back!'
       });
       
+      // Force check session after successful login
+      await checkSession();
+      
       if (data.user) {
-        navigate(from, { replace: true });
+        // Add a slight delay to make sure state updates
+        setTimeout(() => {
+          navigate(from, { replace: true });
+        }, 300);
       }
     } catch (error: any) {
       console.error('Login error:', error);

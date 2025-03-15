@@ -12,6 +12,7 @@ type AuthContextType = {
   profile: any | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  checkSession: () => Promise<void>;
   activateUser: (email: string) => Promise<{ success: boolean; error: string | null }>;
   sendVerificationEmail: (email: string) => Promise<{ success: boolean; error: string | null }>;
   verifyEmail: (email: string, token: string, type: string) => Promise<{ success: boolean; error: string | null }>;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   isLoading: true,
   signOut: async () => {},
+  checkSession: async () => {},
   activateUser: async () => ({ success: false, error: null }),
   sendVerificationEmail: async () => ({ success: false, error: null }),
   verifyEmail: async () => ({ success: false, error: null }),
@@ -37,10 +39,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const profile = useProfile(user?.id);
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
   
-  // Improved session initialization - more reliable and faster
-  const initializeAuth = useCallback(async () => {
+  // Improved session checking function that can be called manually
+  const checkSession = useCallback(async () => {
     try {
-      console.log('Getting initial session...');
+      console.log('Checking current session...');
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -61,20 +63,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
       }
       
-      // Complete initialization regardless of session state
+      // Complete initialization
       setIsLoading(false);
     } catch (error) {
-      console.error('Error initializing auth:', error);
+      console.error('Error checking auth session:', error);
       setIsLoading(false);
     }
   }, []);
 
+  // Initialize auth state on mount
   useEffect(() => {
     console.log('AuthContext initializing...');
     let authStateSubscription: { data: { subscription: { unsubscribe: () => void } } };
     
     // Immediately begin session retrieval
-    initializeAuth();
+    checkSession();
     
     // Set up auth state change listener
     const setupAuthListener = async () => {
@@ -83,14 +86,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           console.log('User signed in or token refreshed');
-          // No need to store in localStorage as Supabase SDK does this for us
+          setSession(newSession);
+          setUser(newSession?.user || null);
+          setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
+          setSession(null);
+          setUser(null);
+          setIsLoading(false);
         }
-        
-        setSession(newSession);
-        setUser(newSession?.user || null);
-        setIsLoading(false);
       });
     };
 
@@ -102,7 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('Auth loading timeout reached, forcing completion');
         setIsLoading(false);
       }
-    }, 1500); // Reduced timeout to prevent long waits
+    }, 1000); // Reduced timeout to prevent long waits
     
     return () => {
       console.log('Cleaning up auth subscription');
@@ -111,7 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         authStateSubscription.data.subscription.unsubscribe();
       }
     };
-  }, [initializeAuth]);
+  }, [checkSession]);
 
   const signOut = async () => {
     try {
@@ -126,7 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       console.log('User signed out successfully');
-      // No need to update state as onAuthStateChange will handle it
+      // onAuthStateChange will handle state updates
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -172,7 +176,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user, 
       profile, 
       isLoading, 
-      signOut, 
+      signOut,
+      checkSession, 
       activateUser,
       sendVerificationEmail,
       verifyEmail
