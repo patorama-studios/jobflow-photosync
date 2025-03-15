@@ -1,96 +1,43 @@
 
-<!doctype html>
-<html lang="en" class="light">
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Patorama Studios</title>
-    <meta name="description" content="Patorama Studios - Photography Management" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-      /* Ensure the body has a background color before JS loads */
-      body {
-        background-color: #ffffff;
-        color: #000000;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        font-family: 'Inter', sans-serif;
-      }
-      /* Dark mode will override this via JS */
-      .dark body {
-        background-color: #1a1a1a;
-        color: #ffffff;
-      }
-      /* Prevent page content from vanishing during load */
-      #root {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-      /* Simple loading indicator that shows before JS loads */
-      .initial-loader {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        width: 100%;
-      }
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    </style>
-    <script>
-      // Handle base URL for proper routing in all environments
-      (function() {
-        // This fixes routing in both development and production environments
-        window.PUBLIC_URL = window.location.origin;
-        
-        // Log environment info for debugging
-        console.log('App initializing at:', window.location.href);
-        console.log('Base URL set to:', window.PUBLIC_URL);
-        
-        // Handle potential 404 redirects (common with SPA hosting)
-        if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
-          console.log('Non-root path detected, will use client-side routing');
-        }
-        
-        // Initialize error tracking
-        window.__CONSOLE_ERROR_COUNT__ = 0;
-        
-        // Set up a simple global error handler
-        window.addEventListener('unhandledrejection', function(event) {
-          console.error('Unhandled Promise Rejection:', event.reason);
-          window.__CONSOLE_ERROR_COUNT__ = window.__CONSOLE_ERROR_COUNT__ + 1;
-        });
-      })();
-    </script>
+    <meta name="description" content="Patorama - Professional Photography Services" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta property="og:title" content="Patorama" />
+    <meta property="og:description" content="Professional Photography Services" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://book.patorama.com.au" />
+    <title>Patorama</title>
+    
+    <!-- Preconnect to important domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Primary Font -->
+    <link 
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" 
+      rel="stylesheet"
+    />
+    
+    <!-- Lovable script for new features -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
   </head>
   <body>
-    <div id="root">
-      <!-- Initial loading state before React loads -->
-      <div class="initial-loader">
-        <div class="spinner"></div>
-      </div>
-    </div>
+    <div id="root"></div>
+    
+    <!-- Error handling for script loading -->
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.target && (e.target.src || e.target.href)) {
+          console.error('Resource failed to load:', e.target.src || e.target.href);
+        }
+      }, true);
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
-    <noscript>
-      <div style="padding: 2rem; text-align: center;">
-        <h1>JavaScript Required</h1>
-        <p>This application requires JavaScript to function properly. Please enable JavaScript in your browser settings.</p>
-      </div>
-    </noscript>
   </body>
 </html>

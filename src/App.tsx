@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -7,7 +6,7 @@ import { queryClient } from '@/config/queryClient';
 import { HeaderSettingsProvider } from '@/hooks/useHeaderSettings';
 import { AIAssistantProvider } from '@/contexts/AIAssistantContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Eager loaded components
 import Home from './pages/Home';
