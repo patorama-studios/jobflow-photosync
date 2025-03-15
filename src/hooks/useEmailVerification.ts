@@ -25,8 +25,8 @@ export const useEmailVerification = () => {
       `;
       
       // Create an AbortController to handle timeouts
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 15000); // 15 second timeout
       
       try {
         const response = await supabase.functions.invoke('send-email', {
@@ -34,8 +34,8 @@ export const useEmailVerification = () => {
             to: email,
             subject: 'Verify Your Email - Patorama Studios',
             html: emailHtml,
-          },
-          signal: controller.signal
+          }
+          // Remove the signal property as it's not supported in FunctionInvokeOptions
         });
 
         clearTimeout(timeoutId);
@@ -78,13 +78,13 @@ export const useEmailVerification = () => {
       console.log(`Verifying email for: ${email}, type: ${type}`);
       
       // Create an AbortController to handle timeouts
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 15000); // 15 second timeout
       
       try {
         const response = await supabase.functions.invoke('verify-email', {
-          body: { email, token, type },
-          signal: controller.signal
+          body: { email, token, type }
+          // Remove the signal property as it's not supported in FunctionInvokeOptions
         });
 
         clearTimeout(timeoutId);

@@ -1,58 +1,34 @@
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { VerificationCard } from '@/components/verification/VerificationCard';
+import { useVerification } from '@/hooks/useVerification';
 
 const Verify = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { verifyEmail } = useAuth();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Verifying your email...');
-  const verificationAttempted = useRef(false);
 
   const email = searchParams.get('email');
   const token = searchParams.get('token') || 'token-placeholder'; // Token might not be needed with our approach
   const type = searchParams.get('type') || 'signup';
 
+  const {
+    status,
+    message,
+    verificationAttempted,
+    performVerification,
+    retryVerification
+  } = useVerification({ email, token, type });
+
   useEffect(() => {
     // Prevent duplicate verification attempts
     if (verificationAttempted.current) return;
 
-    const verify = async () => {
-      if (!email) {
-        setStatus('error');
-        setMessage('Missing email parameter. Unable to verify.');
-        return;
-      }
-
-      try {
-        verificationAttempted.current = true;
-        console.log(`Verifying email: ${email}, token: ${token}, type: ${type}`);
-        const { success, error } = await verifyEmail(email, token, type);
-        
-        if (success) {
-          setStatus('success');
-          setMessage('Your email has been verified successfully!');
-        } else {
-          setStatus('error');
-          setMessage(error || 'Failed to verify email. Please try again.');
-        }
-      } catch (err) {
-        console.error('Verification error:', err);
-        setStatus('error');
-        setMessage('An unexpected error occurred during verification.');
-      }
-    };
-
     // Add a small delay to ensure the component has mounted properly
     const timeoutId = setTimeout(() => {
-      verify();
+      performVerification();
     }, 500);
 
     return () => {
@@ -60,7 +36,7 @@ const Verify = () => {
       // Prevent any post-unmount state updates
       verificationAttempted.current = true;
     };
-  }, [email, token, type, verifyEmail]);
+  }, [performVerification, verificationAttempted]);
 
   const goToLogin = () => {
     // Ensure we navigate to the absolute path, not relative
@@ -72,80 +48,17 @@ const Verify = () => {
     navigate('/login', { state: { tab: 'signup' } });
   };
 
-  const retryVerification = async () => {
-    if (!email) return;
-    
-    setStatus('loading');
-    setMessage('Retrying verification...');
-    verificationAttempted.current = false;
-    
-    try {
-      const { success, error } = await verifyEmail(email, token, type);
-      
-      if (success) {
-        setStatus('success');
-        setMessage('Your email has been verified successfully!');
-      } else {
-        setStatus('error');
-        setMessage(error || 'Failed to verify email. Please try again.');
-      }
-    } catch (err) {
-      console.error('Retry verification error:', err);
-      setStatus('error');
-      setMessage('An unexpected error occurred during verification.');
-    }
-  };
-
   return (
     <ErrorBoundary>
       <PageTransition>
         <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4 py-12">
-          <Card className="w-full max-w-md">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Email Verification</CardTitle>
-              <CardDescription>
-                {status === 'loading' ? 'Processing your verification request' : 
-                 status === 'success' ? 'Your account is now active' : 
-                 'There was a problem with verification'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-center py-6">
-              {status === 'loading' && (
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                  <p className="text-gray-600">{message}</p>
-                </div>
-              )}
-              
-              {status === 'success' && (
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <CheckCircle className="h-16 w-16 text-green-500" />
-                  <p className="text-gray-600">{message}</p>
-                  <Button className="mt-4 w-full" onClick={goToLogin}>
-                    Sign In Now
-                  </Button>
-                </div>
-              )}
-              
-              {status === 'error' && (
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <XCircle className="h-16 w-16 text-red-500" />
-                  <p className="text-gray-600">{message}</p>
-                  <div className="flex flex-col sm:flex-row gap-3 w-full mt-4">
-                    <Button variant="outline" className="w-full" onClick={retryVerification}>
-                      Retry Verification
-                    </Button>
-                    <Button variant="outline" className="w-full" onClick={goToSignup}>
-                      Try Again
-                    </Button>
-                    <Button className="w-full" onClick={goToLogin}>
-                      Go to Login
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <VerificationCard
+            status={status}
+            message={message}
+            onRetry={retryVerification}
+            onGoToLogin={goToLogin}
+            onGoToSignup={goToSignup}
+          />
         </div>
       </PageTransition>
     </ErrorBoundary>
