@@ -10,6 +10,6 @@ interface ProtectedRouteProps {
  * A wrapper component that protects routes from unauthenticated access
  */
 export default function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
-  // Use our enhanced AuthRedirect component
+  // Pass the requireAuth prop to the AuthRedirect component
   return <AuthRedirect requireAuth={requireAuth}>{children}</AuthRedirect>;
 }

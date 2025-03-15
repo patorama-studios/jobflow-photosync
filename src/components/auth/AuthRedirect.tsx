@@ -1,6 +1,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageLoading } from "@/components/loading/PageLoading";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -22,13 +23,9 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     timestamp: new Date().toISOString()
   });
 
-  // Don't redirect while still loading auth state
+  // Show custom loading component while auth is initializing
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <PageLoading message="Verifying authentication..." />;
   }
 
   // If authentication is required and user is not authenticated, redirect to login

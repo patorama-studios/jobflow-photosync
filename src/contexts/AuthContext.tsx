@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
@@ -78,10 +79,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsLoading(false);
         });
         
-        // Ensure loading state is updated even if no auth change event fires
+        // Force loading state to complete after a short delay
+        // This ensures the app doesn't get stuck loading if no auth events fire
         setTimeout(() => {
           setIsLoading(false);
-        }, 1000); // Short timeout to ensure UI doesn't stay in loading state
+        }, 500); 
         
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -146,7 +148,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Help debug auth state for troubleshooting
   useEffect(() => {
-    console.log('Auth state initialized:', { 
+    console.log('Auth state updated:', { 
       hasSession: !!session, 
       hasUser: !!user,
       isLoading 
