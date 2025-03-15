@@ -36,7 +36,8 @@ const handler = async (req: Request): Promise<Response> => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const { email, token, type }: VerifyRequest = await req.json();
+    const requestBody = await req.json();
+    const { email, token, type }: VerifyRequest = requestBody;
 
     if (!email) {
       throw new Error("Email is required");
@@ -55,10 +56,12 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       if (userError) {
+        console.error("Error listing users:", userError);
         throw userError;
       }
       
       if (!userData.users || userData.users.length === 0) {
+        console.error("User not found for email:", email);
         throw new Error("User not found");
       }
       
@@ -71,7 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
         { email_confirm: true }
       );
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error confirming email:", error);
+        throw error;
+      }
       
       response = { message: "Email verified successfully", success: true };
     } else if (type === "recovery") {
@@ -93,7 +99,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in verify-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        success: false 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

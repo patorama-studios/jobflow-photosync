@@ -24,24 +24,39 @@ export const useEmailVerification = () => {
         <p>If you didn't sign up for Patorama Studios, you can safely ignore this email.</p>
       `;
       
-      const response = await supabase.functions.invoke('send-email', {
-        body: {
-          to: email,
-          subject: 'Verify Your Email - Patorama Studios',
-          html: emailHtml,
-        },
-      });
+      // Create an AbortController to handle timeouts
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      try {
+        const response = await supabase.functions.invoke('send-email', {
+          body: {
+            to: email,
+            subject: 'Verify Your Email - Patorama Studios',
+            html: emailHtml,
+          },
+          signal: controller.signal
+        });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to send verification email');
+        clearTimeout(timeoutId);
+
+        if (response.error) {
+          throw new Error(response.error.message || 'Failed to send verification email');
+        }
+
+        toast({
+          title: "Verification email sent",
+          description: "Please check your inbox for the verification link",
+        });
+
+        return { success: true, error: null };
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out. Please try again.');
+        }
+        throw error;
       }
-
-      toast({
-        title: "Verification email sent",
-        description: "Please check your inbox for the verification link",
-      });
-
-      return { success: true, error: null };
     } catch (error: any) {
       console.error('Error sending verification email:', error);
       toast({
@@ -54,28 +69,44 @@ export const useEmailVerification = () => {
   };
 
   const verifyEmail = async (email: string, token: string, type: string) => {
+    if (!email) {
+      console.error('Missing email for verification');
+      return { success: false, error: 'Email is required for verification' };
+    }
+    
     try {
-      if (!email) {
-        throw new Error("Email is required for verification");
-      }
-      
       console.log(`Verifying email for: ${email}, type: ${type}`);
       
-      const response = await supabase.functions.invoke('verify-email', {
-        body: { email, token, type },
-      });
+      // Create an AbortController to handle timeouts
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
+      try {
+        const response = await supabase.functions.invoke('verify-email', {
+          body: { email, token, type },
+          signal: controller.signal
+        });
 
-      if (response.error) {
-        console.error('Supabase function error:', response.error);
-        throw new Error(response.error.message || 'Failed to verify email');
+        clearTimeout(timeoutId);
+
+        if (response.error) {
+          console.error('Supabase function error:', response.error);
+          throw new Error(response.error.message || 'Failed to verify email');
+        }
+
+        toast({
+          title: "Email verified successfully",
+          description: "You can now sign in to your account",
+        });
+
+        return { success: true, error: null };
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Verification request timed out. Please try again.');
+        }
+        throw error;
       }
-
-      toast({
-        title: "Email verified successfully",
-        description: "You can now sign in to your account",
-      });
-
-      return { success: true, error: null };
     } catch (error: any) {
       console.error('Error verifying email:', error);
       toast({

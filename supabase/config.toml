@@ -29,8 +29,12 @@ enabled = true
 
 [auth]
 enabled = true
-site_url = "https://daf619e5-50c8-4d6e-ba5f-6c23df73b6ca.lovableproject.com"
-additional_redirect_urls = ["https://daf619e5-50c8-4d6e-ba5f-6c23df73b6ca.lovableproject.com/verify", "https://daf619e5-50c8-4d6e-ba5f-6c23df73b6ca.lovableproject.com/login"]
+site_url = "https://book.patorama.com.au"
+additional_redirect_urls =  [
+  "https://book.patorama.com.au/verify",
+  "https://book.patorama.com.au/login",
+  "https://book.patorama.com.au"
+]
 
 [realtime]
 enabled = true
