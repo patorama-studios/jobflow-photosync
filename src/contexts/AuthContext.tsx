@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const { toast } = useToast();
   
   const profile = useProfile(user?.id);
@@ -40,7 +41,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('AuthContext initializing...');
     let authStateSubscription: { data: { subscription: { unsubscribe: () => void } } };
-    let initTimeoutId: number;
     
     const initializeAuth = async () => {
       try {
@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Error getting session:', error);
           setIsLoading(false);
+          setAuthInitialized(true);
           return;
         }
         
@@ -66,25 +67,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Set up auth state change listener
         authStateSubscription = supabase.auth.onAuthStateChange((event, newSession) => {
           console.log('Auth state changed:', { event, hasSession: !!newSession });
+          
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            console.log('User signed in or token refreshed');
+            localStorage.setItem('supabase.auth.token', JSON.stringify(newSession));
+          } else if (event === 'SIGNED_OUT') {
+            console.log('User signed out');
+            localStorage.removeItem('supabase.auth.token');
+          }
+          
           setSession(newSession);
           setUser(newSession?.user || null);
           setIsLoading(false);
+          setAuthInitialized(true);
         });
+        
+        // Set initial loading state to false after a short delay
+        setTimeout(() => {
+          setIsLoading(false);
+          setAuthInitialized(true);
+        }, 500);
         
       } catch (error) {
         console.error('Error initializing auth:', error);
         setIsLoading(false);
-      } finally {
-        // Add a short timeout to avoid race conditions with initial rendering 
-        // This ensures we don't get stuck in loading state
-        initTimeoutId = window.setTimeout(() => {
-          console.log('Auth initialization complete, setting isLoading to false');
-          setIsLoading(false);
-        }, 1000); // Reduced from 1500ms to 1000ms for faster loading
+        setAuthInitialized(true);
       }
     };
 
-    // Initialize auth and clean up subscription when component unmounts
+    // Initialize auth
     initializeAuth();
     
     // Set a longer timeout as a fallback to ensure we don't get stuck
@@ -92,16 +103,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isLoading) {
         console.log('Fallback timer triggered - forcing auth loading to complete');
         setIsLoading(false);
+        setAuthInitialized(true);
       }
-    }, 5000);
+    }, 3000);
     
     return () => {
       console.log('Cleaning up auth subscription');
       if (authStateSubscription) {
         authStateSubscription.data.subscription.unsubscribe();
-      }
-      if (initTimeoutId) {
-        window.clearTimeout(initTimeoutId);
       }
       clearTimeout(fallbackTimer);
     };
@@ -109,7 +118,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        toast({
+          title: "Sign out failed",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
       console.log('User signed out successfully');
       // No need to update state as onAuthStateChange will handle it
     } catch (error) {
@@ -141,6 +159,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: false, error: error.message || 'Unknown error' };
     }
   };
+
+  // Help debug auth state for troubleshooting
+  useEffect(() => {
+    if (authInitialized) {
+      console.log('Auth state initialized:', { 
+        hasSession: !!session, 
+        hasUser: !!user,
+        isLoading 
+      });
+    }
+  }, [authInitialized, session, user, isLoading]);
 
   return (
     <AuthContext.Provider value={{ 
