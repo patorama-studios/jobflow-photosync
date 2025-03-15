@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
-  // Use relative base path for development, helps with some servers
-  base: "./",
+  // Use absolute base path for production, relative for development
+  base: mode === 'production' ? '/' : './',
   // Add caching for improved performance
   cacheDir: '.vite-cache',
   plugins: [
@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
         // Use ES module format for better compatibility
         format: 'es',
         // Simplify output naming for easier debugging and better compatibility
-        entryFileNames: 'assets/[name].js',
+        entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: (id) => {
