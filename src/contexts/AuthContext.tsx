@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
@@ -32,7 +31,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authInitialized, setAuthInitialized] = useState(false);
   const { toast } = useToast();
   
   const profile = useProfile(user?.id);
@@ -50,7 +48,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Error getting session:', error);
           setIsLoading(false);
-          setAuthInitialized(true);
           return;
         }
         
@@ -79,40 +76,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(newSession);
           setUser(newSession?.user || null);
           setIsLoading(false);
-          setAuthInitialized(true);
         });
         
-        // Set initial loading state to false after a short delay
+        // Ensure loading state is updated even if no auth change event fires
         setTimeout(() => {
           setIsLoading(false);
-          setAuthInitialized(true);
-        }, 500);
+        }, 1000); // Short timeout to ensure UI doesn't stay in loading state
         
       } catch (error) {
         console.error('Error initializing auth:', error);
         setIsLoading(false);
-        setAuthInitialized(true);
       }
     };
 
     // Initialize auth
     initializeAuth();
     
-    // Set a longer timeout as a fallback to ensure we don't get stuck
-    const fallbackTimer = setTimeout(() => {
-      if (isLoading) {
-        console.log('Fallback timer triggered - forcing auth loading to complete');
-        setIsLoading(false);
-        setAuthInitialized(true);
-      }
-    }, 3000);
-    
     return () => {
       console.log('Cleaning up auth subscription');
       if (authStateSubscription) {
         authStateSubscription.data.subscription.unsubscribe();
       }
-      clearTimeout(fallbackTimer);
     };
   }, []);
 
@@ -162,14 +146,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Help debug auth state for troubleshooting
   useEffect(() => {
-    if (authInitialized) {
-      console.log('Auth state initialized:', { 
-        hasSession: !!session, 
-        hasUser: !!user,
-        isLoading 
-      });
-    }
-  }, [authInitialized, session, user, isLoading]);
+    console.log('Auth state initialized:', { 
+      hasSession: !!session, 
+      hasUser: !!user,
+      isLoading 
+    });
+  }, [session, user, isLoading]);
 
   return (
     <AuthContext.Provider value={{ 

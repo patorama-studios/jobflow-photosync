@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -69,12 +70,11 @@ function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/login" element={<Auth />} />
-                {/* Fixed by using element with props instead of property on Route */}
                 <Route path="/register" element={<Auth defaultTab="register" />} />
                 <Route path="/verify" element={<Verify />} />
                 <Route path="/dashboard" element={
                   <ErrorBoundary fallback={PageError}>
-                    <ProtectedRoute>
+                    <ProtectedRoute requireAuth={true}>
                       <Dashboard />
                     </ProtectedRoute>
                   </ErrorBoundary>
