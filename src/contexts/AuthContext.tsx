@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const profile = useProfile(user?.id);
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
   
-  // Improved session initialization - more reliable
+  // Improved session initialization - more reliable and faster
   const initializeAuth = useCallback(async () => {
     try {
       console.log('Getting initial session...');
@@ -53,12 +53,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (currentSession) {
         console.log('User found in session:', currentSession.user?.id);
+        setSession(currentSession);
+        setUser(currentSession.user || null);
       } else {
         console.log('No active session found');
+        setSession(null);
+        setUser(null);
       }
-      
-      setSession(currentSession);
-      setUser(currentSession?.user || null);
       
       // Complete initialization regardless of session state
       setIsLoading(false);
@@ -82,10 +83,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           console.log('User signed in or token refreshed');
-          localStorage.setItem('supabase.auth.token', JSON.stringify(newSession));
+          // No need to store in localStorage as Supabase SDK does this for us
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
-          localStorage.removeItem('supabase.auth.token');
         }
         
         setSession(newSession);
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('Auth loading timeout reached, forcing completion');
         setIsLoading(false);
       }
-    }, 2000);
+    }, 1500); // Reduced timeout to prevent long waits
     
     return () => {
       console.log('Cleaning up auth subscription');

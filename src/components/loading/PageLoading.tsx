@@ -13,6 +13,7 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   message = "Loading content..."
 }) => {
   const [loadingTime, setLoadingTime] = useState(0);
+  const [hasRefreshed, setHasRefreshed] = useState(false);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -22,19 +23,22 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Simple refresh logic - only refresh once after timeout
+  // Only refresh once after timeout if we haven't refreshed already
   useEffect(() => {
-    if (loadingTime >= forceRefreshAfter) {
-      console.log(`Loading timeout reached (${forceRefreshAfter}s), refreshing page...`);
+    if (loadingTime >= forceRefreshAfter && !hasRefreshed) {
+      console.log(`Loading timeout reached (${forceRefreshAfter}s), attempting to continue...`);
       
-      // Simple timeout approach - just reload the page after our timeout
+      setHasRefreshed(true);
+      
+      // Only attempt to redirect to dashboard as a last resort after a small delay
       const timeoutId = setTimeout(() => {
+        // Try to go directly to dashboard if possible
         window.location.href = '/dashboard';
-      }, 1000);
+      }, 2000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [loadingTime, forceRefreshAfter]);
+  }, [loadingTime, forceRefreshAfter, hasRefreshed]);
   
   const handleManualRefresh = () => {
     window.location.reload();

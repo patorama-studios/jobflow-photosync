@@ -23,9 +23,10 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     timestamp: new Date().toISOString()
   });
 
-  // If still loading, show loading component but with shorter timeout
+  // If still loading, show loading component with a shorter timeout
   if (isLoading) {
-    return <PageLoading message="Verifying authentication..." forceRefreshAfter={3} />;
+    // Use a much shorter timeout to prevent getting stuck
+    return <PageLoading message="Verifying authentication..." forceRefreshAfter={5} />;
   }
 
   // If authentication is required and user is not authenticated, redirect to login
