@@ -4,33 +4,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
-import { Mail, Key, Loader2 } from "lucide-react";
+import { Mail, Key, Loader2, AlertCircle, User } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useFormValidation } from '@/hooks/useFormValidation';
+
+interface RegisterFormValues {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 export const RegisterForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    validateAllFields,
+    resetForm
+  } = useFormValidation<RegisterFormValues>(
+    {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    },
+    {
+      firstName: { required: true },
+      lastName: { required: true },
+      email: { required: true, email: true },
+      password: { required: true, minLength: 6 },
+      confirmPassword: { required: true, match: 'password' }
+    }
+  );
+  
+  const { firstName, lastName, email, password, confirmPassword } = values;
   
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate password match
-    if (registerPassword !== confirmPassword) {
-      toast.error('Passwords do not match', {
-        description: 'Please make sure your passwords match'
-      });
-      return;
-    }
-    
-    // Validate required fields
-    if (!firstName || !lastName || !registerEmail || !registerPassword) {
-      toast.error('Missing required fields', {
-        description: 'Please fill in all required fields'
+    if (!validateAllFields()) {
+      toast.error('Please fix the errors in the form', {
+        description: 'Make sure all fields are filled correctly'
       });
       return;
     }
@@ -39,8 +61,8 @@ export const RegisterForm: React.FC = () => {
     
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: registerEmail,
-        password: registerPassword,
+        email,
+        password,
         options: {
           data: {
             first_name: firstName,
@@ -59,11 +81,7 @@ export const RegisterForm: React.FC = () => {
       });
       
       // Clear registration form
-      setRegisterEmail('');
-      setRegisterPassword('');
-      setConfirmPassword('');
-      setFirstName('');
-      setLastName('');
+      resetForm();
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error('Registration failed', {
@@ -81,54 +99,90 @@ export const RegisterForm: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
-              <Input 
-                id="firstName" 
-                type="text" 
-                placeholder="John" 
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  id="firstName"
+                  name="firstName"
+                  type="text" 
+                  placeholder="John" 
+                  value={firstName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`pl-10 ${errors.firstName && touched.firstName ? 'border-destructive' : ''}`}
+                />
+                {errors.firstName && touched.firstName && (
+                  <div className="flex items-center mt-1 text-destructive text-sm">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.firstName}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
-              <Input 
-                id="lastName" 
-                type="text" 
-                placeholder="Doe" 
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  id="lastName"
+                  name="lastName"
+                  type="text" 
+                  placeholder="Doe" 
+                  value={lastName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`pl-10 ${errors.lastName && touched.lastName ? 'border-destructive' : ''}`}
+                />
+                {errors.lastName && touched.lastName && (
+                  <div className="flex items-center mt-1 text-destructive text-sm">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.lastName}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="registerEmail">Email</Label>
+            <Label htmlFor="email">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
               <Input 
-                id="registerEmail" 
+                id="email"
+                name="email"
                 type="email" 
                 placeholder="name@example.com" 
-                value={registerEmail}
-                onChange={(e) => setRegisterEmail(e.target.value)}
-                className="pl-10"
-                required
+                value={email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`pl-10 ${errors.email && touched.email ? 'border-destructive' : ''}`}
               />
+              {errors.email && touched.email && (
+                <div className="flex items-center mt-1 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.email}
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="registerPassword">Password</Label>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
               <Input 
-                id="registerPassword" 
+                id="password"
+                name="password"
                 type="password" 
-                value={registerPassword}
-                onChange={(e) => setRegisterPassword(e.target.value)}
-                className="pl-10"
-                required
+                value={password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`pl-10 ${errors.password && touched.password ? 'border-destructive' : ''}`}
               />
+              {errors.password && touched.password && (
+                <div className="flex items-center mt-1 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.password}
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -136,13 +190,20 @@ export const RegisterForm: React.FC = () => {
             <div className="relative">
               <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
               <Input 
-                id="confirmPassword" 
+                id="confirmPassword"
+                name="confirmPassword"
                 type="password" 
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pl-10"
-                required
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className={`pl-10 ${errors.confirmPassword && touched.confirmPassword ? 'border-destructive' : ''}`}
               />
+              {errors.confirmPassword && touched.confirmPassword && (
+                <div className="flex items-center mt-1 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.confirmPassword}
+                </div>
+              )}
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>

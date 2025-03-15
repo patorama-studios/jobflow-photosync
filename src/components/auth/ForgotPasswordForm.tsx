@@ -3,20 +3,36 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, AlertCircle } from "lucide-react";
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useFormValidation } from '@/hooks/useFormValidation';
+
+interface ForgotPasswordFormValues {
+  email: string;
+}
 
 export const ForgotPasswordForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  
+  const {
+    values: { email },
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    validateAllFields
+  } = useFormValidation<ForgotPasswordFormValues>(
+    { email: '' },
+    { email: { required: true, email: true } }
+  );
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email) {
-      toast.error('Email is required');
+    if (!validateAllFields()) {
+      toast.error('Please provide a valid email address');
       return;
     }
     
@@ -60,14 +76,21 @@ export const ForgotPasswordForm: React.FC<{ onClose: () => void }> = ({ onClose 
               <div className="relative">
                 <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                 <Input 
-                  id="reset-email" 
+                  id="reset-email"
+                  name="email"
                   type="email" 
                   placeholder="name@example.com" 
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`pl-10 ${errors.email && touched.email ? 'border-destructive' : ''}`}
                 />
+                {errors.email && touched.email && (
+                  <div className="flex items-center mt-1 text-destructive text-sm">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.email}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex justify-end space-x-2 pt-2">
