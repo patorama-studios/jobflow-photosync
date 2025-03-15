@@ -8,6 +8,13 @@ import { CardContent } from "@/components/ui/card";
 import { Mail, Key, Loader2 } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ForgotPasswordForm } from './ForgotPasswordForm';
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +22,7 @@ export const LoginForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   
   const from = location.state?.from?.pathname || "/dashboard";
   
@@ -72,7 +80,13 @@ export const LoginForm: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Button variant="link" className="px-0 text-xs" size="sm">
+              <Button 
+                variant="link" 
+                className="px-0 text-xs" 
+                size="sm" 
+                type="button"
+                onClick={() => setForgotPasswordOpen(true)}
+              >
                 Forgot password?
               </Button>
             </div>
@@ -100,6 +114,15 @@ export const LoginForm: React.FC = () => {
           </Button>
         </div>
       </form>
+      
+      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset your password</DialogTitle>
+          </DialogHeader>
+          <ForgotPasswordForm onClose={() => setForgotPasswordOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </CardContent>
   );
 };
