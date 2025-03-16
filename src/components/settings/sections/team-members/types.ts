@@ -11,40 +11,38 @@ export interface TeamMember {
 }
 
 export const RoleOptions = [
-  { value: 'admin', label: 'Administrator' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'photographer', label: 'Photographer' },
   { value: 'editor', label: 'Editor' },
-  { value: 'photographer', label: 'Photographer' }
+  { value: 'finance', label: 'Finance' },
+  { value: 'user', label: 'Regular User' }
 ];
 
-export function getInitials(name: string): string {
-  if (!name) return '??';
-  const parts = name.trim().split(' ');
-  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+export const getRoleLabel = (role: string): string => {
+  const option = RoleOptions.find(opt => opt.value === role);
+  return option ? option.label : role.charAt(0).toUpperCase() + role.slice(1);
+};
 
-export function getRoleBadgeClass(role: string): string {
-  switch (role?.toLowerCase()) {
+export const getRoleBadgeClass = (role: string): string => {
+  switch (role) {
     case 'admin':
-      return 'bg-red-100 text-red-800 border-red-200';
-    case 'editor':
-      return 'bg-purple-100 text-purple-800 border-purple-200';
+      return 'bg-red-100 text-red-800';
     case 'photographer':
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-blue-100 text-blue-800';
+    case 'editor':
+      return 'bg-purple-100 text-purple-800';
+    case 'finance':
+      return 'bg-green-100 text-green-800';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-gray-100 text-gray-800';
   }
-}
+};
 
-export function getRoleLabel(role: string): string {
-  switch (role?.toLowerCase()) {
-    case 'admin':
-      return 'Administrator';
-    case 'editor':
-      return 'Editor';
-    case 'photographer':
-      return 'Photographer';
-    default:
-      return role || 'User';
-  }
-}
+export const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(part => part.charAt(0))
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};

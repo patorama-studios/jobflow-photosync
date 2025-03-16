@@ -1,5 +1,5 @@
 
-project_id = "yuswvcremziknjbxwvsa"
+# This is the configuration file for all edge functions
 
-[api]
-port = 54321
+[yuswvcremziknjbxwvsa.send-invitation]
+verify_jwt = true

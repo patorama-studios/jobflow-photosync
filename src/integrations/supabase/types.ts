@@ -413,6 +413,33 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_settings: {
+        Row: {
+          id: string
+          integration_type: string
+          is_company_wide: boolean
+          settings: Json
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          integration_type: string
+          is_company_wide?: boolean
+          settings?: Json
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          integration_type?: string
+          is_company_wide?: boolean
+          settings?: Json
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -745,6 +772,27 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_settings: {
+        Row: {
+          id: string
+          settings: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          settings?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          settings?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           card_type: string
@@ -967,6 +1015,42 @@ export type Database = {
         }
         Relationships: []
       }
+      team_invitations: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          role: string
+          status: string
+          token: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          token?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          token?: string | null
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           created_at: string
@@ -1046,6 +1130,15 @@ export type Database = {
         }
         Returns: string
       }
+      add_team_member_with_invitation: {
+        Args: {
+          p_full_name: string
+          p_email: string
+          p_role: string
+          p_phone?: string
+        }
+        Returns: string
+      }
       create_company_team: {
         Args: {
           company_id_param: string
@@ -1072,6 +1165,15 @@ export type Database = {
       migrate_sample_orders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      send_team_invitation: {
+        Args: {
+          email: string
+          role: string
+          inviter_name: string
+          token: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

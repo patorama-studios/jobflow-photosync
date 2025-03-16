@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   Card, 
   CardContent, 
@@ -22,11 +21,10 @@ import {
   DialogHeader, 
   DialogTitle
 } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, Save, X } from 'lucide-react';
+import { AlertTriangle, Save, X, Loader2 } from 'lucide-react';
+import { useIntegrationSettings } from '@/hooks/useIntegrationSettings';
 
 interface EsoftSettings {
-  id: string;
   client_id: string;
   api_username: string;
   api_password: string;
@@ -34,15 +32,22 @@ interface EsoftSettings {
   auto_deliver_listings: boolean;
   default_order_reference_format: string | null;
   allow_reference_editing: boolean;
-  created_at: string;
-  updated_at: string | null;
 }
 
+const defaultSettings: EsoftSettings = {
+  client_id: '70100293',
+  api_username: 'pta-live',
+  api_password: 'UFRBRXNvZnRAMjAyNA==',
+  white_label_domain: 'https://upload.patorama.com.au',
+  auto_deliver_listings: false,
+  default_order_reference_format: '',
+  allow_reference_editing: true,
+};
+
 export function EsoftIntegrationSettings() {
-  const { toast } = useToast();
-  const [settings, setSettings] = useState<EsoftSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { settings, loading, saveSettings } = useIntegrationSettings('esoft', true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [clientId, setClientId] = useState('');
   const [apiUsername, setApiUsername] = useState('');
@@ -52,209 +57,115 @@ export function EsoftIntegrationSettings() {
   const [defaultOrderReferenceFormat, setDefaultOrderReferenceFormat] = useState('');
   const [allowReferenceEditing, setAllowReferenceEditing] = useState(true);
 
-  const fetchSettings = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('esoft_settings')
-        .select('*')
-        .maybeSingle();
-
-      if (error) throw error;
-      
-      if (data) {
-        setSettings(data);
-        setClientId(data.client_id);
-        setApiUsername(data.api_username);
-        setApiPassword(data.api_password);
-        setWhiteLabelDomain(data.white_label_domain || '');
-        setAutoDeliverListings(data.auto_deliver_listings);
-        setDefaultOrderReferenceFormat(data.default_order_reference_format || '');
-        setAllowReferenceEditing(data.allow_reference_editing);
-      } else {
-        // Default values for new settings
-        setClientId('70100293');
-        setApiUsername('pta-live');
-        setApiPassword('UFRBRXNvZnRAMjAyNA==');
-        setWhiteLabelDomain('https://upload.patorama.com.au');
-        setAutoDeliverListings(false);
-        setDefaultOrderReferenceFormat('');
-        setAllowReferenceEditing(true);
-      }
-    } catch (error) {
-      console.error('Error fetching Esoft settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load Esoft integration settings',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Load settings when they're available
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (settings) {
+      setClientId(settings.client_id || defaultSettings.client_id);
+      setApiUsername(settings.api_username || defaultSettings.api_username);
+      setApiPassword(settings.api_password || defaultSettings.api_password);
+      setWhiteLabelDomain(settings.white_label_domain || defaultSettings.white_label_domain || '');
+      setAutoDeliverListings(settings.auto_deliver_listings ?? defaultSettings.auto_deliver_listings);
+      setDefaultOrderReferenceFormat(settings.default_order_reference_format || defaultSettings.default_order_reference_format || '');
+      setAllowReferenceEditing(settings.allow_reference_editing ?? defaultSettings.allow_reference_editing);
+    } else if (!loading) {
+      // Set default values if no settings found
+      setClientId(defaultSettings.client_id);
+      setApiUsername(defaultSettings.api_username);
+      setApiPassword(defaultSettings.api_password);
+      setWhiteLabelDomain(defaultSettings.white_label_domain || '');
+      setAutoDeliverListings(defaultSettings.auto_deliver_listings);
+      setDefaultOrderReferenceFormat(defaultSettings.default_order_reference_format || '');
+      setAllowReferenceEditing(defaultSettings.allow_reference_editing);
+    }
+  }, [settings, loading]);
 
   const handleSaveCredentials = async () => {
-    try {
-      if (!clientId || !apiUsername || !apiPassword) {
-        toast({
-          title: 'Validation Error',
-          description: 'Client ID, API username, and API password are required',
-          variant: 'destructive'
-        });
-        return;
-      }
+    if (!clientId || !apiUsername || !apiPassword) {
+      return;
+    }
 
-      const updateData = {
+    setIsSaving(true);
+    try {
+      const updatedSettings = {
+        ...settings,
         client_id: clientId,
         api_username: apiUsername,
         api_password: apiPassword,
-        white_label_domain: whiteLabelDomain || null,
-        updated_at: new Date().toISOString()
+        white_label_domain: whiteLabelDomain || null
       };
-
-      if (settings) {
-        // Update existing
-        const { error } = await supabase
-          .from('esoft_settings')
-          .update(updateData)
-          .eq('id', settings.id);
-
-        if (error) throw error;
-      } else {
-        // Create new
-        const { error } = await supabase
-          .from('esoft_settings')
-          .insert(updateData);
-
-        if (error) throw error;
+      
+      const success = await saveSettings(updatedSettings);
+      if (!success) {
+        throw new Error('Failed to save Esoft credentials');
       }
-
-      toast({
-        title: 'Settings Saved',
-        description: 'Esoft credentials have been saved successfully'
-      });
-      fetchSettings();
     } catch (error) {
       console.error('Error saving Esoft credentials:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save Esoft credentials',
-        variant: 'destructive'
-      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateListingDelivery = async () => {
+    setIsSaving(true);
     try {
-      if (!settings) {
-        toast({
-          title: 'Error',
-          description: 'Please save credentials first',
-          variant: 'destructive'
-        });
-        return;
+      const updatedSettings = {
+        ...settings,
+        auto_deliver_listings: autoDeliverListings
+      };
+      
+      const success = await saveSettings(updatedSettings);
+      if (!success) {
+        throw new Error('Failed to update listing delivery settings');
       }
-
-      const { error } = await supabase
-        .from('esoft_settings')
-        .update({
-          auto_deliver_listings: autoDeliverListings,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', settings.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Settings Updated',
-        description: 'Listing delivery settings have been updated'
-      });
-      fetchSettings();
     } catch (error) {
       console.error('Error updating listing delivery settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update listing delivery settings',
-        variant: 'destructive'
-      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateOrderSettings = async () => {
+    setIsSaving(true);
     try {
-      if (!settings) {
-        toast({
-          title: 'Error',
-          description: 'Please save credentials first',
-          variant: 'destructive'
-        });
-        return;
+      const updatedSettings = {
+        ...settings,
+        default_order_reference_format: defaultOrderReferenceFormat || null,
+        allow_reference_editing: allowReferenceEditing
+      };
+      
+      const success = await saveSettings(updatedSettings);
+      if (!success) {
+        throw new Error('Failed to update Esoft order settings');
       }
-
-      const { error } = await supabase
-        .from('esoft_settings')
-        .update({
-          default_order_reference_format: defaultOrderReferenceFormat || null,
-          allow_reference_editing: allowReferenceEditing,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', settings.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Settings Updated',
-        description: 'Esoft order settings have been updated'
-      });
-      fetchSettings();
     } catch (error) {
       console.error('Error updating Esoft order settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update Esoft order settings',
-        variant: 'destructive'
-      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteIntegration = async () => {
+    setIsSaving(true);
     try {
-      if (!settings) {
-        setIsDeleteDialogOpen(false);
-        return;
+      const success = await saveSettings(null);
+      if (!success) {
+        throw new Error('Failed to remove Esoft integration');
       }
-
-      const { error } = await supabase
-        .from('esoft_settings')
-        .delete()
-        .eq('id', settings.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Integration Removed',
-        description: 'Esoft integration has been removed successfully'
-      });
-      setSettings(null);
-      setClientId('');
-      setApiUsername('');
-      setApiPassword('');
-      setWhiteLabelDomain('');
-      setAutoDeliverListings(false);
-      setDefaultOrderReferenceFormat('');
-      setAllowReferenceEditing(true);
+      
+      // Reset to defaults after deletion
+      setClientId(defaultSettings.client_id);
+      setApiUsername(defaultSettings.api_username);
+      setApiPassword(defaultSettings.api_password);
+      setWhiteLabelDomain(defaultSettings.white_label_domain || '');
+      setAutoDeliverListings(defaultSettings.auto_deliver_listings);
+      setDefaultOrderReferenceFormat(defaultSettings.default_order_reference_format || '');
+      setAllowReferenceEditing(defaultSettings.allow_reference_editing);
+      
       setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting Esoft integration:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to remove Esoft integration',
-        variant: 'destructive'
-      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -265,6 +176,11 @@ export function EsoftIntegrationSettings() {
           <CardTitle>Esoft Integration</CardTitle>
           <CardDescription>Loading settings...</CardDescription>
         </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -321,9 +237,18 @@ export function EsoftIntegrationSettings() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleSaveCredentials}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Esoft Credentials
+          <Button onClick={handleSaveCredentials} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Esoft Credentials
+              </>
+            )}
           </Button>
         </CardFooter>
       </Card>
@@ -353,7 +278,16 @@ export function EsoftIntegrationSettings() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleUpdateListingDelivery}>Update Listing Delivery</Button>
+          <Button onClick={handleUpdateListingDelivery} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Update Listing Delivery"
+            )}
+          </Button>
         </CardFooter>
       </Card>
 
@@ -394,7 +328,16 @@ export function EsoftIntegrationSettings() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleUpdateOrderSettings}>Update Esoft Order Settings</Button>
+          <Button onClick={handleUpdateOrderSettings} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Update Esoft Order Settings"
+            )}
+          </Button>
         </CardFooter>
       </Card>
 
@@ -411,7 +354,7 @@ export function EsoftIntegrationSettings() {
           <Button 
             variant="destructive" 
             onClick={() => setIsDeleteDialogOpen(true)}
-            disabled={!settings}
+            disabled={isSaving}
           >
             <X className="mr-2 h-4 w-4" />
             Remove Esoft Integration
@@ -434,11 +377,18 @@ export function EsoftIntegrationSettings() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isSaving}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteIntegration}>
-              Remove Integration
+            <Button variant="destructive" onClick={handleDeleteIntegration} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                "Remove Integration"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
