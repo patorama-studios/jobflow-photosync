@@ -2,19 +2,17 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/config/queryClient';
 import { AppProviders } from './providers/AppProviders';
 import { PageLoading } from '@/components/loading/PageLoading';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Eager loaded components
-import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Debug from './pages/Debug';
-import Login from './pages/Login';
-import Verify from './pages/Verify';
 import Auth from './pages/Auth';
+import Verify from './pages/Verify';
 
 // Lazy loaded pages with preloadable chunks
 const Dashboard = lazy(() => {
