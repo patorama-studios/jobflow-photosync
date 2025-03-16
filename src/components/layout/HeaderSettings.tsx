@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Settings, Upload, Palette, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -13,7 +12,7 @@ import { useHeaderSettings } from '@/hooks/useHeaderSettings';
 export const HeaderSettings: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { settings, updateSettings } = useHeaderSettings();
+  const { headerSettings, updateSettings } = useHeaderSettings();
 
   // Predefined colors
   const colors = [
@@ -33,7 +32,7 @@ export const HeaderSettings: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const logoUrl = event.target?.result as string;
-      updateSettings({ ...settings, logoUrl });
+      updateSettings({ ...headerSettings, logoUrl });
       toast({
         title: "Logo uploaded",
         description: "Your company logo has been updated",
@@ -43,11 +42,11 @@ export const HeaderSettings: React.FC = () => {
   };
 
   const handleHeightChange = (values: number[]) => {
-    updateSettings({ ...settings, height: values[0] });
+    updateSettings({ ...headerSettings, height: values[0] });
   };
 
   const handleColorChange = (color: string) => {
-    updateSettings({ ...settings, color });
+    updateSettings({ ...headerSettings, color });
   };
 
   return (
@@ -66,10 +65,10 @@ export const HeaderSettings: React.FC = () => {
           <div className="space-y-2">
             <Label>Company Logo</Label>
             <div className="flex items-center gap-2">
-              {settings.logoUrl ? (
+              {headerSettings.logoUrl ? (
                 <div className="w-10 h-10 rounded overflow-hidden border">
                   <img 
-                    src={settings.logoUrl} 
+                    src={headerSettings.logoUrl} 
                     alt="Company Logo" 
                     className="w-full h-full object-contain" 
                   />
@@ -101,10 +100,10 @@ export const HeaderSettings: React.FC = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <Label>Header Height</Label>
-              <span className="text-sm text-muted-foreground">{settings.height}px</span>
+              <span className="text-sm text-muted-foreground">{headerSettings.height}px</span>
             </div>
             <Slider
-              defaultValue={[settings.height]}
+              defaultValue={[headerSettings.height]}
               min={40}
               max={80}
               step={4}
@@ -124,7 +123,7 @@ export const HeaderSettings: React.FC = () => {
                   style={{ backgroundColor: color.value }}
                   onClick={() => handleColorChange(color.value)}
                 >
-                  {settings.color === color.value && (
+                  {headerSettings.color === color.value && (
                     <Check className="h-4 w-4 absolute text-white" />
                   )}
                 </Button>
@@ -133,13 +132,13 @@ export const HeaderSettings: React.FC = () => {
             <div className="flex items-center gap-2 mt-2">
               <Input 
                 type="color" 
-                value={settings.color || '#ffffff'}
+                value={headerSettings.color || '#ffffff'}
                 onChange={(e) => handleColorChange(e.target.value)}
                 className="w-10 h-10 p-1"
               />
               <Input
                 type="text"
-                value={settings.color || 'Default'}
+                value={headerSettings.color || 'Default'}
                 onChange={(e) => handleColorChange(e.target.value)}
                 placeholder="Custom color"
                 className="flex-1"

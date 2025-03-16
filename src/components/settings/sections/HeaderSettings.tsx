@@ -14,7 +14,7 @@ import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function HeaderSettings() {
-  const { settings: defaultSettings, updateSettings, loading } = useHeaderSettings();
+  const { headerSettings: defaultSettings, updateSettings, loading } = useHeaderSettings();
   const [settings, setSettings] = useState<HeaderSettingsType>({
     color: "#000000",
     height: 65,

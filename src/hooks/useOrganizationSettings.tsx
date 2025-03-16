@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { OrganizationSettings } from './types/user-settings-types';
 import { toast } from 'sonner';
+import { JsonValue } from './types/user-settings-types';
 
 export const useOrganizationSettings = () => {
   const [settings, setSettings] = useState<OrganizationSettings | null>(null);
@@ -27,7 +28,8 @@ export const useOrganizationSettings = () => {
       }
       
       if (data) {
-        setSettings(data.settings as OrganizationSettings);
+        // Cast the data.settings to OrganizationSettings with proper type assertion
+        setSettings(data.settings as unknown as OrganizationSettings);
       } else {
         // Create default settings if none exist
         const newSettings: OrganizationSettings = {
@@ -44,7 +46,7 @@ export const useOrganizationSettings = () => {
         const { error: createError } = await supabase
           .from('organization_settings')
           .insert({
-            settings: newSettings,
+            settings: newSettings as unknown as JsonValue,
             updated_by: (await supabase.auth.getUser()).data.user?.id
           });
         
@@ -110,7 +112,7 @@ export const useOrganizationSettings = () => {
         const { error } = await supabase
           .from('organization_settings')
           .update({
-            settings: newSettings,
+            settings: newSettings as unknown as JsonValue,
             updated_by: userData.user.id,
             updated_at: new Date().toISOString()
           })
@@ -126,7 +128,7 @@ export const useOrganizationSettings = () => {
         const { error } = await supabase
           .from('organization_settings')
           .insert({
-            settings: newSettings,
+            settings: newSettings as unknown as JsonValue,
             updated_by: userData.user.id
           });
         

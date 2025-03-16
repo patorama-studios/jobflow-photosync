@@ -20,14 +20,14 @@ import {
   Settings,
   Bell
 } from "lucide-react";
-import { Notifications } from "./Notifications"; // Fixed from default import to named import
+import { Notifications } from "./Notifications";
 import { useHeaderSettings } from "@/hooks/useHeaderSettings";
 import { GlobalSearch } from "./GlobalSearch";
 
 export function Header() {
   const { session, user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const { settings } = useHeaderSettings(); // Fixed from headerSettings to settings
+  const { headerSettings } = useHeaderSettings();
 
   const handleLogout = async () => {
     await signOut();
@@ -48,26 +48,26 @@ export function Header() {
     <header
       className="fixed top-0 left-0 right-0 z-10 border-b bg-background/80 backdrop-blur-sm"
       style={{
-        height: `${settings?.height || 65}px`,
-        backgroundColor: settings?.color || 'transparent',
+        height: `${headerSettings?.height || 65}px`,
+        backgroundColor: headerSettings?.color || 'transparent',
       }}
     >
       <div className="container flex h-full items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
-            {settings?.logoUrl ? (
-              <img src={settings.logoUrl} alt="Logo" className="h-8 w-auto" />
+            {headerSettings?.logoUrl ? (
+              <img src={headerSettings.logoUrl} alt="Logo" className="h-8 w-auto" />
             ) : (
               <span className="text-xl font-bold">Photorama</span>
             )}
-            {settings?.showCompanyName && (
+            {headerSettings?.showCompanyName && (
               <span className="hidden md:inline">Studios</span>
             )}
           </Link>
           <span className="hidden text-sm text-muted-foreground md:block">
-            {settings?.title && <div className="font-medium">{settings.title}</div>}
-            {settings?.description && (
-              <div className="text-xs">{settings.description}</div>
+            {headerSettings?.title && <div className="font-medium">{headerSettings.title}</div>}
+            {headerSettings?.description && (
+              <div className="text-xs">{headerSettings.description}</div>
             )}
           </span>
         </div>

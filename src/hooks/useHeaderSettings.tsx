@@ -13,7 +13,7 @@ const defaultHeaderSettings: HeaderSettings = {
 };
 
 export function useHeaderSettings() {
-  const { value, setValue, loading } = useAppSettings<HeaderSettings>('header_settings', defaultHeaderSettings);
+  const { value: headerSettings, setValue, loading } = useAppSettings<HeaderSettings>('header_settings', defaultHeaderSettings);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   
   // This function updates only the specific fields that have changed
@@ -25,7 +25,7 @@ export function useHeaderSettings() {
     
     // Don't save if the new values are the same as current values
     const hasChanges = Object.entries(updates).some(([key, newValue]) => {
-      const currentValue = value[key as keyof HeaderSettings];
+      const currentValue = headerSettings[key as keyof HeaderSettings];
       return newValue !== currentValue;
     });
     
@@ -33,7 +33,7 @@ export function useHeaderSettings() {
       return true;
     }
     
-    const updatedSettings = { ...value, ...updates };
+    const updatedSettings = { ...headerSettings, ...updates };
     const saveSuccess = await setValue(updatedSettings);
     
     if (saveSuccess) {
@@ -42,10 +42,10 @@ export function useHeaderSettings() {
     }
     
     return saveSuccess;
-  }, [value, setValue]);
+  }, [headerSettings, setValue]);
   
   return {
-    headerSettings: value,
+    headerSettings,
     loading,
     updateSettings,
     lastSaved

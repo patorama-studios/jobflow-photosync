@@ -2,7 +2,6 @@
 import React from 'react';
 import { ThemeProvider } from '../components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { HeaderSettingsProvider } from '../hooks/useHeaderSettings';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { AIAssistantProvider } from '../contexts/AIAssistantContext';
 import { AuthProvider } from '../contexts/AuthContext';
@@ -55,11 +54,9 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
                       </div>
                     </div>
                   }>
-                    <HeaderSettingsProvider>
-                      <ErrorBoundary>
-                        {children}
-                      </ErrorBoundary>
-                    </HeaderSettingsProvider>
+                    <ErrorBoundary>
+                      {children}
+                    </ErrorBoundary>
                   </React.Suspense>
                 </AIAssistantProvider>
               </NotificationsProvider>
