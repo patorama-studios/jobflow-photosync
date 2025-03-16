@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PageLoading } from "@/components/loading/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { debounce } from "@/utils/performance-optimizer";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   const sessionChecked = useRef(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [checkInProgress, setCheckInProgress] = useState(false);
+  const [forceShowContent, setForceShowContent] = useState(false);
 
   // Add more detailed debug logging
   console.log("AuthRedirect:", {
@@ -28,6 +30,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     sessionChecked: sessionChecked.current,
     initialCheckDone,
     checkInProgress,
+    forceShowContent,
     timestamp: new Date().toISOString()
   });
 
@@ -54,10 +57,20 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     };
     
     checkAuthStatus();
-  }, [checkSession, session, user]);
+
+    // Force content to show after a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (isLoading || !initialCheckDone) {
+        console.log("Forcing content to show after timeout");
+        setForceShowContent(true);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [checkSession, session, user, isLoading]);
 
   // If still loading and initial check is not done, show loading component
-  if (isLoading || !initialCheckDone || checkInProgress) {
+  if (!forceShowContent && (isLoading || !initialCheckDone || checkInProgress)) {
     return <PageLoading message="Verifying authentication..." forceRefreshAfter={5} />;
   }
 

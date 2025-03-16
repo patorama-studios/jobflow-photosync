@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabaseService } from '@/services/api/supabase-service';
 
 interface LoginFormValues {
   email: string;
@@ -49,13 +49,10 @@ export const useLoginForm = () => {
     
     try {
       console.log('Attempting login with:', values.email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      const result = await supabaseService.loginUser(values.email, values.password);
       
-      if (error) {
-        throw new Error(error.message);
+      if (!result.success) {
+        throw new Error(result.error);
       }
       
       toast.success('Login successful', {
@@ -65,12 +62,9 @@ export const useLoginForm = () => {
       // Force check session after successful login
       const success = await checkSession();
       
-      if (data.user && success) {
+      if (result.data.user && success) {
         console.log('Login successful, redirecting to:', from);
-        // Add a longer delay to make sure state updates
-        setTimeout(() => {
-          navigate(from, { replace: true });
-        }, 1500); // Increased delay to ensure state is fully updated
+        navigate(from, { replace: true });
       } else {
         console.error('Login succeeded but session check failed');
         toast.error('Session verification failed', { 

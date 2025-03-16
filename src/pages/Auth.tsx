@@ -1,11 +1,12 @@
 
+import React from 'react';
 import { AuthPage } from '@/components/auth/AuthPage';
+import { useLocation } from 'react-router-dom';
 
-interface AuthProps {
-  defaultTab?: string;
-}
-
-const Auth: React.FC<AuthProps> = ({ defaultTab = 'login' }) => {
+const Auth = () => {
+  const location = useLocation();
+  const defaultTab = location.state?.tab || 'login';
+  
   return <AuthPage defaultTab={defaultTab} />;
 };
 
