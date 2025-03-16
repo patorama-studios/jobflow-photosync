@@ -19,7 +19,22 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { email, role, fullName, token } = await req.json();
+    // Parse JSON body with error handling
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (parseError) {
+      console.error("Error parsing request JSON:", parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 400 
+        }
+      );
+    }
+
+    const { email, role, fullName, phone } = requestData;
     
     if (!email || !role || !fullName) {
       return new Response(
@@ -28,15 +43,12 @@ serve(async (req) => {
       );
     }
     
-    // In a production app, you would send an actual email here
-    // For now, we're just logging the invitation
-    console.log(`Invitation email would be sent to ${email} for role ${role}`);
-    
-    // Create the invitation in the database
+    // Call the database function to create the invitation
     const { data, error } = await supabaseClient.rpc('add_team_member_with_invitation', {
       p_full_name: fullName,
       p_email: email,
-      p_role: role
+      p_role: role,
+      p_phone: phone || null
     });
     
     if (error) {
@@ -47,6 +59,7 @@ serve(async (req) => {
       );
     }
     
+    // Always return a valid JSON response
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -58,7 +71,7 @@ serve(async (req) => {
   } catch (err) {
     console.error('Server error:', err);
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error' }),
+      JSON.stringify({ error: 'Internal Server Error', details: err.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

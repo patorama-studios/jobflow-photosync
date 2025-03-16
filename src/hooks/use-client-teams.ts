@@ -110,14 +110,22 @@ export function useClientTeams() {
   // Remove team member from a client
   const removeTeamMember = useCallback(async (clientId: string, memberId: string) => {
     try {
-      // Since client_team_members doesn't exist in the schema, we're using a mock implementation
-      // that simulates success but actually stores the data in localStorage for demo purposes
+      // For persistent storage, we should use Supabase instead of localStorage
+      // Check if the team_members table exists in the database
+      const { error: deleteError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', memberId);
       
-      const teamData = JSON.parse(localStorage.getItem('client_teams') || '{}');
-      
-      if (teamData[clientId]) {
-        teamData[clientId] = teamData[clientId].filter((member: any) => member.member_id !== memberId);
-        localStorage.setItem('client_teams', JSON.stringify(teamData));
+      if (deleteError) {
+        // If the table doesn't exist or there was an error, fall back to localStorage
+        console.log("Using localStorage fallback for team member deletion");
+        const teamData = JSON.parse(localStorage.getItem('client_teams') || '{}');
+        
+        if (teamData[clientId]) {
+          teamData[clientId] = teamData[clientId].filter((member: any) => member.member_id !== memberId);
+          localStorage.setItem('client_teams', JSON.stringify(teamData));
+        }
       }
       
       toast.success("Team member removed successfully");

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -22,7 +21,6 @@ export function useTeamMembers() {
       
       if (error) throw error;
       
-      // Add default email if missing and convert to TeamMember type
       const enrichedData = data?.map((profile: any) => ({
         ...profile,
         email: profile.email || `${profile.username || profile.id}@example.com`,
@@ -45,7 +43,6 @@ export function useTeamMembers() {
       return false;
     }
     
-    // Simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newMember.email)) {
       toast.error("Please enter a valid email address");
@@ -57,7 +54,6 @@ export function useTeamMembers() {
     try {
       console.log("Creating new team member:", newMember);
       
-      // Call the edge function to create a team member invitation
       const response = await fetch(`${window.location.origin}/api/send-invitation`, {
         method: 'POST',
         headers: {
@@ -67,17 +63,30 @@ export function useTeamMembers() {
           email: newMember.email,
           role: newMember.role,
           fullName: newMember.full_name,
+          phone: newMember.phone || '',
         }),
       });
       
-      const result = await response.json();
-      
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create team member');
+        const errorText = await response.text();
+        console.error("Error response from edge function:", errorText);
+        throw new Error(errorText || 'Failed to create team member');
       }
       
-      // Add the new member to the local state with a temporary ID
-      // In a real implementation, we'd fetch the actual ID from the profiles table
+      let result;
+      const responseText = await response.text();
+      
+      if (responseText && responseText.trim()) {
+        try {
+          result = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Error parsing JSON response:", parseError, "Raw response:", responseText);
+          throw new Error('Invalid response from server');
+        }
+      } else {
+        result = { success: true };
+      }
+      
       const tempId = crypto.randomUUID();
       
       const newTeamMember: TeamMember = {
@@ -113,7 +122,6 @@ export function useTeamMembers() {
     try {
       console.log("Updating team member:", id, updatedMember);
       
-      // Update existing member
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -126,7 +134,6 @@ export function useTeamMembers() {
       
       if (error) throw error;
       
-      // Update in local state
       setMembers(prevMembers => prevMembers.map(member => 
         member.id === id 
           ? { ...member, ...updatedMember as TeamMember } 
@@ -146,12 +153,32 @@ export function useTeamMembers() {
 
   const deleteTeamMember = useCallback(async (id: string) => {
     try {
+      const isTemporaryId = id.length === 36 && id.includes('-') && !id.startsWith('auth_');
+      
+      if (isTemporaryId) {
+        setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
+        toast.success("Team member removed successfully");
+        return true;
+      }
+      
       const { error } = await supabase
         .from('profiles')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
+      
+      const memberToDelete = members.find(m => m.id === id);
+      if (memberToDelete?.email) {
+        const { error: inviteError } = await supabase
+          .from('team_invitations')
+          .delete()
+          .eq('email', memberToDelete.email);
+          
+        if (inviteError) {
+          console.warn("Could not delete related invitation:", inviteError);
+        }
+      }
       
       setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
       toast.success("Team member removed successfully");
@@ -161,9 +188,8 @@ export function useTeamMembers() {
       toast.error(error.message || "Failed to remove team member");
       return false;
     }
-  }, []);
+  }, [members]);
 
-  // Load team members on mount
   useEffect(() => {
     fetchTeamMembers();
   }, [fetchTeamMembers]);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,11 +11,6 @@ import { TeamRoleInfo } from "./team-members/TeamRoleInfo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-// This component includes full integration with Supabase to:
-// - Fetch team members from the profiles table
-// - Add new team members to the profiles table
-// - Update existing team members in the profiles table
-// - Delete team members from the profiles table
 export function TeamMembers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -42,17 +36,13 @@ export function TeamMembers() {
 
   useEffect(() => {
     fetchTeamMembers();
-  }, [fetchTeamMembers]);
+  }, [fetchTeamMembers, user?.id]);
 
-  // Ensure the current logged-in user is included in team members
   useEffect(() => {
     if (profile && user && !isLoading && members.length > 0) {
-      // Check if current user exists in members list
       const currentUserExists = members.some(member => member.id === user.id);
       
       if (!currentUserExists && profile.role) {
-        // If user doesn't exist in members list, add them
-        console.log("Adding current user to team members:", profile);
         const currentUserProfile: TeamMember = {
           id: user.id,
           full_name: profile.full_name || user.email?.split('@')[0] || 'User',
@@ -64,8 +54,6 @@ export function TeamMembers() {
           updated_at: profile.updated_at
         };
         
-        // Silently add the user to the local state without API call
-        // since they should already exist in the profiles table
         addTeamMember(currentUserProfile);
       }
     }
@@ -88,11 +76,28 @@ export function TeamMembers() {
     setIsDialogOpen(true);
   };
 
+  const handleDeleteMember = async (memberId: string) => {
+    if (memberId === user?.id && profile?.role === 'admin') {
+      toast.error("You cannot delete your own admin account");
+      return;
+    }
+    
+    try {
+      const success = await deleteTeamMember(memberId);
+      if (success) {
+        toast.success("Team member removed successfully");
+        await fetchTeamMembers();
+      }
+    } catch (error) {
+      console.error("Error deleting team member:", error);
+      toast.error("Failed to delete team member");
+    }
+  };
+
   const handleSaveMember = async () => {
     let success = false;
     
     if (editingMember) {
-      // Prevent users from removing admin privileges from themselves
       if (editingMember.id === user?.id && editingMember.role === 'admin' && newMember.role !== 'admin') {
         toast.error("You cannot remove your own admin privileges");
         return;
@@ -105,6 +110,7 @@ export function TeamMembers() {
     
     if (success) {
       setIsDialogOpen(false);
+      await fetchTeamMembers();
     }
   };
 
@@ -153,7 +159,7 @@ export function TeamMembers() {
                 isLoading={isLoading}
                 searchQuery={searchQuery}
                 onEditMember={handleEditMember}
-                onDeleteMember={deleteTeamMember}
+                onDeleteMember={handleDeleteMember}
                 onAddMember={handleAddMember}
                 currentUserId={user?.id}
               />
