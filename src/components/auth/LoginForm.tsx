@@ -1,103 +1,25 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ForgotPasswordForm } from './ForgotPasswordForm';
-import { useFormValidation } from '@/hooks/useFormValidation';
-import { useAuth } from '@/contexts/AuthContext';
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
+import { AuthInput } from './form/AuthInput';
+import { ForgotPasswordDialog } from './form/ForgotPasswordDialog';
+import { useLoginForm } from './form/useLoginForm';
 
 export const LoginForm: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [loading, setLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
-  const { checkSession } = useAuth();
-  
-  const from = location.state?.from?.pathname || "/dashboard";
   
   const {
-    values: { email, password },
+    email,
+    password,
     errors,
     touched,
+    loading,
     handleChange,
     handleBlur,
-    validateAllFields,
-    resetForm
-  } = useFormValidation<LoginFormValues>(
-    { email: '', password: '' },
-    {
-      email: { required: true, email: true },
-      password: { required: true }
-    }
-  );
-  
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateAllFields()) {
-      toast.error('Please fix the errors in the form', {
-        description: 'Make sure all fields are filled correctly'
-      });
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      console.log('Attempting login with:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      toast.success('Login successful', {
-        description: 'Welcome back!'
-      });
-      
-      // Force check session after successful login
-      const success = await checkSession();
-      
-      if (data.user && success) {
-        console.log('Login successful, redirecting to:', from);
-        // Add a longer delay to make sure state updates
-        setTimeout(() => {
-          navigate(from, { replace: true });
-        }, 1500); // Increased delay to ensure state is fully updated
-      } else {
-        console.error('Login succeeded but session check failed');
-        toast.error('Session verification failed', { 
-          description: 'Please try refreshing the page'
-        });
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error('Login failed', {
-        description: error.message || 'Something went wrong'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    handleLogin
+  } = useLoginForm();
   
   return (
     <CardContent className="space-y-4">
@@ -105,38 +27,25 @@ export const LoginForm: React.FC = () => {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <div className="absolute left-3 top-2.5 text-muted-foreground">
+            <AuthInput
+              id="email"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={errors.email}
+              touched={touched.email}
+              icon={
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="16" x="2" y="4" rx="2" />
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
-              </div>
-              <Input 
-                id="email" 
-                name="email"
-                type="email" 
-                placeholder="name@example.com" 
-                value={email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`pl-10 ${errors.email && touched.email ? 'border-destructive' : ''}`}
-                aria-invalid={!!errors.email && touched.email}
-              />
-              {errors.email && touched.email && (
-                <div className="flex items-center mt-1 text-destructive text-sm">
-                  <div className="h-4 w-4 mr-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                  </div>
-                  {errors.email}
-                </div>
-              )}
-            </div>
+              }
+            />
           </div>
+          
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
@@ -150,37 +59,25 @@ export const LoginForm: React.FC = () => {
                 Forgot password?
               </Button>
             </div>
-            <div className="relative">
-              <div className="absolute left-3 top-2.5 text-muted-foreground">
+            <AuthInput
+              id="password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={errors.password}
+              touched={touched.password}
+              icon={
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
                   <circle cx="16.5" cy="7.5" r=".5" />
                 </svg>
-              </div>
-              <Input 
-                id="password" 
-                name="password"
-                type="password" 
-                value={password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={`pl-10 ${errors.password && touched.password ? 'border-destructive' : ''}`}
-                aria-invalid={!!errors.password && touched.password}
-              />
-              {errors.password && touched.password && (
-                <div className="flex items-center mt-1 text-destructive text-sm">
-                  <div className="h-4 w-4 mr-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                  </div>
-                  {errors.password}
-                </div>
-              )}
-            </div>
+              }
+            />
           </div>
+          
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <div className="flex items-center">
@@ -198,14 +95,10 @@ export const LoginForm: React.FC = () => {
         </div>
       </form>
       
-      <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reset your password</DialogTitle>
-          </DialogHeader>
-          <ForgotPasswordForm onClose={() => setForgotPasswordOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      <ForgotPasswordDialog 
+        open={forgotPasswordOpen} 
+        onOpenChange={setForgotPasswordOpen} 
+      />
     </CardContent>
   );
 };
