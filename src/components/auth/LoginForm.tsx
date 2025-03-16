@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
@@ -76,13 +75,19 @@ export const LoginForm: React.FC = () => {
       });
       
       // Force check session after successful login
-      await checkSession();
+      const success = await checkSession();
       
-      if (data.user) {
+      if (data.user && success) {
+        console.log('Login successful, redirecting to:', from);
         // Add a longer delay to make sure state updates
         setTimeout(() => {
           navigate(from, { replace: true });
-        }, 1000); // Increased delay to ensure state is fully updated
+        }, 1500); // Increased delay to ensure state is fully updated
+      } else {
+        console.error('Login succeeded but session check failed');
+        toast.error('Session verification failed', { 
+          description: 'Please try refreshing the page'
+        });
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -102,12 +107,10 @@ export const LoginForm: React.FC = () => {
             <Label htmlFor="email">Email</Label>
             <div className="relative">
               <div className="absolute left-3 top-2.5 text-muted-foreground">
-                <div className="h-5 w-5">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="20" height="16" x="2" y="4" rx="2" />
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                  </svg>
-                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
               </div>
               <Input 
                 id="email" 
@@ -123,7 +126,11 @@ export const LoginForm: React.FC = () => {
               {errors.email && touched.email && (
                 <div className="flex items-center mt-1 text-destructive text-sm">
                   <div className="h-4 w-4 mr-1">
-                    <AlertCircle className="h-4 w-4" />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
                   </div>
                   {errors.email}
                 </div>
@@ -145,12 +152,10 @@ export const LoginForm: React.FC = () => {
             </div>
             <div className="relative">
               <div className="absolute left-3 top-2.5 text-muted-foreground">
-                <div className="h-5 w-5">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
-                    <circle cx="16.5" cy="7.5" r=".5" />
-                  </svg>
-                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
+                  <circle cx="16.5" cy="7.5" r=".5" />
+                </svg>
               </div>
               <Input 
                 id="password" 
@@ -165,7 +170,11 @@ export const LoginForm: React.FC = () => {
               {errors.password && touched.password && (
                 <div className="flex items-center mt-1 text-destructive text-sm">
                   <div className="h-4 w-4 mr-1">
-                    <AlertCircle className="h-4 w-4" />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
                   </div>
                   {errors.password}
                 </div>

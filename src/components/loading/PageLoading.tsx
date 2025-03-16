@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type PageLoadingProps = {
@@ -32,8 +31,8 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
       
       // Only attempt to redirect to dashboard as a last resort after a small delay
       const timeoutId = setTimeout(() => {
-        // Try to go directly to dashboard if possible
-        window.location.href = '/dashboard';
+        // Try to clear any potential loop by redirecting to login
+        window.location.href = '/login';
       }, 2000);
       
       return () => clearTimeout(timeoutId);
@@ -43,10 +42,18 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   const handleManualRefresh = () => {
     window.location.reload();
   };
+
+  const handleGoToLogin = () => {
+    window.location.href = '/login';
+  };
   
   return (
     <div className="flex flex-col h-screen w-full items-center justify-center bg-background">
-      <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+      <div className="h-10 w-10 text-primary animate-spin mb-4">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+      </div>
       
       <p className="text-lg font-medium">{message}</p>
       <p className="text-sm text-muted-foreground mt-2">
@@ -54,22 +61,30 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
         {loadingTime > 2 && <span> ({loadingTime}s)</span>}
       </p>
       
-      {loadingTime > 4 && (
-        <Button 
-          onClick={handleManualRefresh}
-          className="mt-4"
-          variant="outline"
-        >
-          Refresh Page
-        </Button>
+      {loadingTime > 3 && (
+        <div className="flex gap-2 mt-4">
+          <Button 
+            onClick={handleManualRefresh}
+            variant="outline"
+          >
+            Refresh Page
+          </Button>
+          
+          <Button 
+            onClick={handleGoToLogin}
+          >
+            Go to Login
+          </Button>
+        </div>
       )}
       
-      {loadingTime > 8 && (
+      {loadingTime > 6 && (
         <div className="mt-6 max-w-md p-4 bg-muted/50 rounded-lg text-sm">
           <p className="font-medium mb-2">Taking longer than expected?</p>
           <ul className="list-disc pl-5 space-y-1">
+            <li>Try clearing your browser cache</li>
             <li>Check your internet connection</li>
-            <li>Try going directly to the <a href="/dashboard" className="text-primary underline">dashboard</a></li>
+            <li>Go directly to the <a href="/login" className="text-primary underline">login page</a></li>
           </ul>
         </div>
       )}

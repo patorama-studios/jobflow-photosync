@@ -16,6 +16,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   const location = useLocation();
   const sessionChecked = useRef(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [checkInProgress, setCheckInProgress] = useState(false);
 
   // Add more detailed debug logging
   console.log("AuthRedirect:", {
@@ -26,18 +27,20 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     requireAuth,
     sessionChecked: sessionChecked.current,
     initialCheckDone,
+    checkInProgress,
     timestamp: new Date().toISOString()
   });
 
   // Force refresh session on mount to ensure we have latest auth state
   useEffect(() => {
     const checkAuthStatus = async () => {
-      if (!sessionChecked.current) {
+      if (!sessionChecked.current && !checkInProgress) {
         try {
+          setCheckInProgress(true);
           // Explicitly check session when component mounts
-          await checkSession();
+          const success = await checkSession();
           sessionChecked.current = true;
-          console.log("Session checked", { hasSession: !!session, hasUser: !!user });
+          console.log("Session checked", { hasSession: !!session, hasUser: !!user, success });
         } catch (error) {
           console.error("Error checking session:", error);
           toast.error("Authentication error", {
@@ -45,6 +48,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
           });
         } finally {
           setInitialCheckDone(true);
+          setCheckInProgress(false);
         }
       }
     };
@@ -53,7 +57,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   }, [checkSession, session, user]);
 
   // If still loading and initial check is not done, show loading component
-  if (isLoading || !initialCheckDone) {
+  if (isLoading || !initialCheckDone || checkInProgress) {
     return <PageLoading message="Verifying authentication..." forceRefreshAfter={5} />;
   }
 

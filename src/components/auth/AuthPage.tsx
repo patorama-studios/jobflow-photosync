@@ -17,8 +17,9 @@ interface AuthPageProps {
 export const AuthPage: React.FC<AuthPageProps> = ({ defaultTab = 'login' }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, checkSession } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   const from = location.state?.from?.pathname || "/dashboard";
   
@@ -30,25 +31,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultTab = 'login' }) => {
       setActiveTab(defaultTab);
     }
   }, [location.state, defaultTab]);
+
+  // Force auth check on component mount
+  useEffect(() => {
+    const verifyAuth = async () => {
+      await checkSession();
+      setInitialLoadComplete(true);
+    };
+    verifyAuth();
+  }, [checkSession]);
   
   // Redirect if user is already logged in
   useEffect(() => {
-    console.log("Auth page session check:", { hasSession: !!session, isLoading });
-    if (session && !isLoading) {
+    console.log("Auth page session check:", { hasSession: !!session, isLoading, initialLoadComplete });
+    if (session && initialLoadComplete) {
       console.log("User already logged in, redirecting to:", from);
-      toast("Already logged in", {
+      toast.success("Already logged in", {
         description: "Redirecting to dashboard"
       });
       navigate(from, { replace: true });
     }
-  }, [session, navigate, from, isLoading]);
+  }, [session, navigate, from, isLoading, initialLoadComplete]);
   
-  if (isLoading) {
+  if (isLoading || !initialLoadComplete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading authentication state...</p>
+          <p>Verifying authentication state...</p>
         </div>
       </div>
     );

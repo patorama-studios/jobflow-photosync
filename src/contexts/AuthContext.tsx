@@ -12,7 +12,7 @@ type AuthContextType = {
   profile: any | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
-  checkSession: () => Promise<void>;
+  checkSession: () => Promise<boolean>;
   activateUser: (email: string) => Promise<{ success: boolean; error: string | null }>;
   sendVerificationEmail: (email: string) => Promise<{ success: boolean; error: string | null }>;
   verifyEmail: (email: string, token: string, type: string) => Promise<{ success: boolean; error: string | null }>;
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   isLoading: true,
   signOut: async () => {},
-  checkSession: async () => {},
+  checkSession: async () => false,
   activateUser: async () => ({ success: false, error: null }),
   sendVerificationEmail: async () => ({ success: false, error: null }),
   verifyEmail: async () => ({ success: false, error: null }),
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
   
   // Improved session checking function that can be called manually
-  const checkSession = useCallback(async () => {
+  const checkSession = useCallback(async (): Promise<boolean> => {
     try {
       console.log('Checking current session...');
       setIsLoading(true);
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast.error('Error checking authentication', {
           description: error.message
         });
-        return;
+        return false;
       }
       
       const currentSession = data.session;
@@ -62,15 +62,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('User found in session:', currentSession.user?.id);
         setSession(currentSession);
         setUser(currentSession.user || null);
+        setIsLoading(false);
+        initialCheckDone.current = true;
+        return true;
       } else {
         console.log('No active session found');
         setSession(null);
         setUser(null);
+        setIsLoading(false);
+        initialCheckDone.current = true;
+        return false;
       }
-      
-      // Complete initialization
-      setIsLoading(false);
-      initialCheckDone.current = true;
     } catch (error: any) {
       console.error('Error checking auth session:', error);
       toast.error('Authentication error', {
@@ -78,6 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       setIsLoading(false);
       initialCheckDone.current = true;
+      return false;
     }
   }, []);
 
@@ -99,6 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(newSession);
           setUser(newSession?.user || null);
           setIsLoading(false);
+          initialCheckDone.current = true;
           
           toast.success('Authentication updated', {
             description: event === 'SIGNED_IN' ? 'You are now signed in' : 'Your session was refreshed'
@@ -108,6 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(null);
           setUser(null);
           setIsLoading(false);
+          initialCheckDone.current = true;
           
           toast.info('Signed out', {
             description: 'You have been signed out'
@@ -125,7 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsLoading(false);
         initialCheckDone.current = true;
       }
-    }, 3000); // Timeout to prevent long waits
+    }, 2000); // Reduced timeout for better UX
     
     return () => {
       console.log('Cleaning up auth subscription');
@@ -134,7 +139,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         authStateSubscription.data.subscription.unsubscribe();
       }
     };
-  }, [checkSession, isLoading]);
+  }, [checkSession]);
 
   const signOut = async () => {
     try {
@@ -189,7 +194,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('Auth state updated:', { 
       hasSession: !!session, 
       hasUser: !!user,
-      isLoading 
+      isLoading,
+      initialCheckDone: initialCheckDone.current
     });
   }, [session, user, isLoading]);
 
