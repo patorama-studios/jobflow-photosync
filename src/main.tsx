@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
+import React from 'react' // Added explicit React import
 
 // Apply theme immediately to prevent layout shifts
 const applyThemeAndFont = () => {
@@ -89,9 +90,11 @@ const mountApp = () => {
     
     // Mount the app with error boundaries
     root.render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <React.StrictMode>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </React.StrictMode>
     );
     
     // Remove initial loading indicator after app mount with smooth transition
