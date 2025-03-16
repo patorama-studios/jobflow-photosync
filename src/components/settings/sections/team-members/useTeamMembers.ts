@@ -4,12 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
 import { toast } from "sonner";
 import { debounce } from "@/utils/performance-optimizer";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useTeamMembers() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const { user } = useAuth();
 
   const fetchTeamMembers = useCallback(async () => {
     try {
@@ -41,6 +44,18 @@ export function useTeamMembers() {
   }, []);
 
   const addTeamMember = useCallback(async (newMember: Partial<TeamMember>) => {
+    // If a complete TeamMember object is provided, just add it to the local state
+    if ('id' in newMember && newMember.id && newMember.full_name && newMember.email) {
+      setMembers(prev => {
+        // Check if member already exists in the list
+        if (prev.some(m => m.id === newMember.id)) {
+          return prev;
+        }
+        return [...prev, newMember as TeamMember];
+      });
+      return true;
+    }
+    
     if (!newMember.full_name || !newMember.email || !newMember.role) {
       toast.error("Please fill in all required fields");
       return false;
@@ -113,6 +128,15 @@ export function useTeamMembers() {
       return false;
     }
 
+    // Prevent current admin from downgrading themselves
+    if (id === user?.id && updatedMember.role !== 'admin') {
+      const currentMember = members.find(m => m.id === id);
+      if (currentMember?.role === 'admin') {
+        toast.error("You cannot downgrade your own admin privileges");
+        return false;
+      }
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -147,9 +171,18 @@ export function useTeamMembers() {
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [members, user]);
 
   const deleteTeamMember = useCallback(async (id: string) => {
+    // Prevent current admin from deleting themselves
+    if (id === user?.id) {
+      const currentMember = members.find(m => m.id === id);
+      if (currentMember?.role === 'admin') {
+        toast.error("You cannot delete your own admin account");
+        return false;
+      }
+    }
+    
     try {
       const { error } = await supabase
         .from('profiles')
@@ -170,7 +203,7 @@ export function useTeamMembers() {
       toast.error("Failed to remove team member");
       return false;
     }
-  }, []);
+  }, [members, user]);
 
   return {
     members,

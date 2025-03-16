@@ -58,7 +58,18 @@ export function UserProfileSettings() {
           <Card className="p-6">
             <AvatarSection 
               profile={profile} 
-              setProfile={updateProfile} 
+              // Using the correct type for setProfile to match the expected type
+              setProfile={(updatedProfile) => {
+                if (typeof updatedProfile === 'function') {
+                  // Handle the function case - this won't be used in our component
+                  // but TypeScript needs this check
+                  const newProfile = updatedProfile(profile);
+                  updateProfile(newProfile);
+                } else {
+                  // Handle the object case
+                  updateProfile(updatedProfile);
+                }
+              }}
               loading={isLoading}
             />
           </Card>

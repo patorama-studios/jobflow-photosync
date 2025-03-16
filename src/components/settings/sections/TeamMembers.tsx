@@ -9,6 +9,8 @@ import { useTeamMembers } from "./team-members/useTeamMembers";
 import { TeamMemberDialog } from "./team-members/TeamMemberDialog";
 import { TeamMembersTable } from "./team-members/TeamMembersTable";
 import { TeamRoleInfo } from "./team-members/TeamRoleInfo";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // This component includes full integration with Supabase to:
 // - Fetch team members from the profiles table
@@ -36,9 +38,38 @@ export function TeamMembers() {
     deleteTeamMember 
   } = useTeamMembers();
 
+  const { user, profile } = useAuth();
+
   useEffect(() => {
     fetchTeamMembers();
   }, [fetchTeamMembers]);
+
+  // Ensure the current logged-in user is included in team members
+  useEffect(() => {
+    if (profile && user && !isLoading && members.length > 0) {
+      // Check if current user exists in members list
+      const currentUserExists = members.some(member => member.id === user.id);
+      
+      if (!currentUserExists && profile.role) {
+        // If user doesn't exist in members list, add them
+        console.log("Adding current user to team members:", profile);
+        const currentUserProfile: TeamMember = {
+          id: user.id,
+          full_name: profile.full_name || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          phone: profile.phone || '',
+          role: profile.role,
+          username: profile.username,
+          avatar_url: profile.avatar_url,
+          updated_at: profile.updated_at
+        };
+        
+        // Silently add the user to the local state without API call
+        // since they should already exist in the profiles table
+        addTeamMember(currentUserProfile);
+      }
+    }
+  }, [user, profile, members, isLoading, addTeamMember]);
 
   const handleEditMember = (member: TeamMember) => {
     setEditingMember(member);
@@ -61,6 +92,12 @@ export function TeamMembers() {
     let success = false;
     
     if (editingMember) {
+      // Prevent users from removing admin privileges from themselves
+      if (editingMember.id === user?.id && editingMember.role === 'admin' && newMember.role !== 'admin') {
+        toast.error("You cannot remove your own admin privileges");
+        return;
+      }
+      
       success = await updateTeamMember(editingMember.id, newMember);
     } else {
       success = await addTeamMember(newMember);
@@ -118,6 +155,7 @@ export function TeamMembers() {
                 onEditMember={handleEditMember}
                 onDeleteMember={deleteTeamMember}
                 onAddMember={handleAddMember}
+                currentUserId={user?.id}
               />
             </div>
           )}
@@ -134,6 +172,7 @@ export function TeamMembers() {
         setNewMember={setNewMember}
         onSave={handleSaveMember}
         isSubmitting={isSubmitting}
+        isCurrentUser={editingMember?.id === user?.id}
       />
     </div>
   );
