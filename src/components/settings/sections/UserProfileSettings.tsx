@@ -1,35 +1,34 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { ProfileForm } from "./user-profile/ProfileForm";
-import { ProfileActions } from "./user-profile/ProfileActions";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "./user-profile/LoadingState";
 import { ErrorState } from "./user-profile/ErrorState";
-import { useProfileData } from "./user-profile/useProfileData";
+import { ProfileForm } from "./user-profile/ProfileForm";
 
 export function UserProfileSettings() {
-  const { profile, loading, saving, handleChange, saveProfile } = useProfileData();
-
-  if (loading) {
+  const { user, profile, isLoading } = useAuth();
+  
+  // Show loading state while profile is being fetched
+  if (isLoading) {
     return <LoadingState />;
   }
   
-  if (!profile) {
+  // Show error state if user is authenticated but no profile was found
+  if (!isLoading && user && !profile) {
     return <ErrorState />;
   }
-
+  
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <ProfileForm 
-          profile={profile} 
-          handleChange={handleChange} 
-        />
-        <ProfileActions 
-          saving={saving} 
-          saveProfile={saveProfile} 
-        />
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Profile Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Manage your account details and preferences.
+        </p>
+      </div>
+      
+      {profile && <ProfileForm profile={profile} />}
+    </div>
   );
 }

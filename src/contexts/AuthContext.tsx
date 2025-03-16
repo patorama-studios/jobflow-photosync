@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const userId = user?.id;
   
   // Only call useProfile when we have a user ID
-  const profile = useProfile(userId);
+  const { profile, isLoading: profileLoading } = useProfile(userId);
   
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
   const { activateUser } = useUserActivation();
@@ -99,16 +99,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       hasSession: !!session, 
       hasUser: !!user,
       isLoading,
+      profileLoading,
+      hasProfile: !!profile,
       initialCheckDone: initialCheckDone.current
     });
-  }, [session, user, isLoading, initialCheckDone]);
+  }, [session, user, profile, isLoading, profileLoading, initialCheckDone]);
 
-  // Create a context value object
+  // Create a context value object - combine session loading with profile loading
   const contextValue: AuthContextType = { 
     session, 
     user, 
     profile, 
-    isLoading, 
+    isLoading: isLoading || profileLoading, // Consider auth loading only complete when profile is also loaded
     signOut,
     checkSession, 
     activateUser,
