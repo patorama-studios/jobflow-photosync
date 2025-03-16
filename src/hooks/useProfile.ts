@@ -11,6 +11,7 @@ export const useProfile = (userId: string | undefined) => {
     // Reset states when userId changes
     setIsLoading(true);
     setError(null);
+    setProfile(null);
     
     // Only fetch profile if we have a userId
     if (!userId) {
@@ -20,11 +21,15 @@ export const useProfile = (userId: string | undefined) => {
 
     const fetchProfile = async () => {
       try {
+        console.log('Fetching profile for userId:', userId);
         // Use getProfile from supabaseService
         const data = await supabaseService.getProfile(userId);
         
         if (data) {
+          console.log('Profile data received:', data);
           setProfile(data);
+        } else {
+          console.log('No profile data found for user');
         }
         setIsLoading(false);
       } catch (error) {

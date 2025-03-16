@@ -2,11 +2,11 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ProfileType } from "@/hooks/types/user-settings-types";
+import { UserProfile } from "@/hooks/types/user-settings-types";
 
 interface ProfileFormProps {
-  profile: ProfileType;
-  handleChange: (field: keyof ProfileType, value: string) => void;
+  profile: UserProfile;
+  handleChange: (field: keyof UserProfile, value: string) => void;
 }
 
 export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
@@ -17,7 +17,7 @@ export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
           <Label htmlFor="firstName">First Name</Label>
           <Input 
             id="firstName" 
-            value={profile.firstName} 
+            value={profile.firstName || ''} 
             onChange={(e) => handleChange('firstName', e.target.value)}
           />
         </div>
@@ -26,7 +26,7 @@ export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
           <Label htmlFor="lastName">Last Name</Label>
           <Input 
             id="lastName" 
-            value={profile.lastName} 
+            value={profile.lastName || ''} 
             onChange={(e) => handleChange('lastName', e.target.value)}
           />
         </div>
@@ -36,7 +36,7 @@ export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
         <Label htmlFor="email">Email</Label>
         <Input 
           id="email" 
-          value={profile.email} 
+          value={profile.email || ''} 
           disabled 
           type="email"
         />
@@ -49,7 +49,7 @@ export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
         <Label htmlFor="phoneNumber">Phone Number</Label>
         <Input 
           id="phoneNumber" 
-          value={profile.phoneNumber} 
+          value={profile.phoneNumber || ''} 
           onChange={(e) => handleChange('phoneNumber', e.target.value)}
           type="tel"
         />
@@ -59,7 +59,7 @@ export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
         <Label htmlFor="title">Job Title</Label>
         <Input 
           id="title" 
-          value={profile.title} 
+          value={profile.title || ''} 
           onChange={(e) => handleChange('title', e.target.value)}
         />
       </div>
@@ -68,7 +68,7 @@ export function ProfileForm({ profile, handleChange }: ProfileFormProps) {
         <Label htmlFor="role">Role</Label>
         <Input 
           id="role" 
-          value={profile.role} 
+          value={profile.role || ''} 
           disabled
         />
         <p className="text-xs text-muted-foreground">
