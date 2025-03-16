@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { AuthHeader } from './AuthHeader';
-import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface AuthPageProps {
   defaultTab?: string;
@@ -17,7 +17,7 @@ interface AuthPageProps {
 export const AuthPage: React.FC<AuthPageProps> = ({ defaultTab = 'login' }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session } = useAuth();
+  const { session, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
   
   const from = location.state?.from?.pathname || "/dashboard";
@@ -33,11 +33,26 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultTab = 'login' }) => {
   
   // Redirect if user is already logged in
   useEffect(() => {
-    console.log("Auth page session check:", { hasSession: !!session });
-    if (session) {
+    console.log("Auth page session check:", { hasSession: !!session, isLoading });
+    if (session && !isLoading) {
+      console.log("User already logged in, redirecting to:", from);
+      toast("Already logged in", {
+        description: "Redirecting to dashboard"
+      });
       navigate(from, { replace: true });
     }
-  }, [session, navigate, from]);
+  }, [session, navigate, from, isLoading]);
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading authentication state...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

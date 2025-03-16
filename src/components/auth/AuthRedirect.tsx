@@ -2,7 +2,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLoading } from "@/components/loading/PageLoading";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   const { session, user, isLoading, checkSession } = useAuth();
   const location = useLocation();
   const sessionChecked = useRef(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   // Add more detailed debug logging
   console.log("AuthRedirect:", {
@@ -23,6 +25,7 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     isLoading,
     requireAuth,
     sessionChecked: sessionChecked.current,
+    initialCheckDone,
     timestamp: new Date().toISOString()
   });
 
@@ -30,20 +33,28 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   useEffect(() => {
     const checkAuthStatus = async () => {
       if (!sessionChecked.current) {
-        // Explicitly check session when component mounts
-        await checkSession();
-        sessionChecked.current = true;
-        console.log("Session checked", { hasSession: !!session, hasUser: !!user });
+        try {
+          // Explicitly check session when component mounts
+          await checkSession();
+          sessionChecked.current = true;
+          console.log("Session checked", { hasSession: !!session, hasUser: !!user });
+        } catch (error) {
+          console.error("Error checking session:", error);
+          toast.error("Authentication error", {
+            description: "Failed to verify your login status. Please try again."
+          });
+        } finally {
+          setInitialCheckDone(true);
+        }
       }
     };
     
     checkAuthStatus();
   }, [checkSession, session, user]);
 
-  // If still loading, show loading component
-  if (isLoading) {
-    // Use a shorter timeout to prevent getting stuck
-    return <PageLoading message="Verifying authentication..." forceRefreshAfter={3} />;
+  // If still loading and initial check is not done, show loading component
+  if (isLoading || !initialCheckDone) {
+    return <PageLoading message="Verifying authentication..." forceRefreshAfter={5} />;
   }
 
   // If authentication is required and user is not authenticated, redirect to login
