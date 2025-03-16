@@ -1,5 +1,5 @@
 
-import { Order } from '@/types/order-types';
+import { Order, OrderStatus } from '@/types/order-types';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleOrders } from '@/data/sampleOrders';
 import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
@@ -53,7 +53,7 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
         // Ensure sample order has the correct status type
         const validOrder = {
           ...sampleOrder,
-          status: validateStatus(sampleOrder.status)
+          status: validateStatus(sampleOrder.status) as OrderStatus
         };
         return { order: validOrder, error: null };
       }
