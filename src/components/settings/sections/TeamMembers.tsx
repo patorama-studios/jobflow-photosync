@@ -10,6 +10,11 @@ import { TeamMemberDialog } from "./team-members/TeamMemberDialog";
 import { TeamMembersTable } from "./team-members/TeamMembersTable";
 import { TeamRoleInfo } from "./team-members/TeamRoleInfo";
 
+// This component includes full integration with Supabase to:
+// - Fetch team members from the profiles table
+// - Add new team members to the profiles table
+// - Update existing team members in the profiles table
+// - Delete team members from the profiles table
 export function TeamMembers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -18,7 +23,7 @@ export function TeamMembers() {
     full_name: "",
     email: "",
     phone: "",
-    role: "staff"
+    role: "photographer" // Default role set to photographer
   });
   
   const { 
@@ -47,7 +52,7 @@ export function TeamMembers() {
       full_name: "",
       email: "",
       phone: "",
-      role: "staff"
+      role: "photographer" // Default role set to photographer
     });
     setIsDialogOpen(true);
   };

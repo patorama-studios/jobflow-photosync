@@ -1,15 +1,15 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingState } from "./user-profile/LoadingState";
 import { ErrorState } from "./user-profile/ErrorState";
 import { ProfileForm } from "./user-profile/ProfileForm";
-import { Button } from "@/components/ui/button";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { ProfileActions } from "./user-profile/ProfileActions";
 import { toast } from "sonner";
 import { AvatarSection } from "./user-profile/AvatarSection";
+import { UserProfile } from "@/hooks/types/user-settings-types";
 
 export function UserProfileSettings() {
   const { user, isLoading: authLoading } = useAuth();
@@ -33,7 +33,7 @@ export function UserProfileSettings() {
     return <ErrorState />;
   }
   
-  const handleChange = (field, value) => {
+  const handleChange = (field: keyof UserProfile, value: string) => {
     updateProfile({ [field]: value });
   };
   
@@ -58,7 +58,7 @@ export function UserProfileSettings() {
           <Card className="p-6">
             <AvatarSection 
               profile={profile} 
-              setProfile={(newProfile) => updateProfile(newProfile)} 
+              setProfile={updateProfile} 
               loading={isLoading}
             />
           </Card>

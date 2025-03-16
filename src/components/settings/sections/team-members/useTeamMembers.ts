@@ -61,7 +61,7 @@ export function useTeamMembers() {
       // Generate a proper UUID using crypto API
       const memberId = crypto.randomUUID();
       
-      // Create new team member
+      // Create new team member in profiles table
       const { data, error } = await supabase
         .from('profiles')
         .insert({

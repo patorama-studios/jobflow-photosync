@@ -44,10 +44,12 @@ export function TeamMemberDialog({
       newErrors.full_name = 'Full name is required';
     }
     
-    if (!newMember.email || newMember.email.trim() === '') {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newMember.email)) {
-      newErrors.email = 'Email is invalid';
+    if (!editingMember) {
+      if (!newMember.email || newMember.email.trim() === '') {
+        newErrors.email = 'Email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newMember.email)) {
+        newErrors.email = 'Email is invalid';
+      }
     }
     
     if (!newMember.role) {
