@@ -41,9 +41,9 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
         try {
           setCheckInProgress(true);
           // Explicitly check session when component mounts
-          const success = await checkSession();
+          await checkSession();
           sessionChecked.current = true;
-          console.log("Session checked", { hasSession: !!session, hasUser: !!user, success });
+          console.log("Session checked", { hasSession: !!session, hasUser: !!user });
         } catch (error) {
           console.error("Error checking session:", error);
           toast.error("Authentication error", {

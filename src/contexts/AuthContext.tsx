@@ -8,7 +8,8 @@ import { useSessionManagement } from '@/hooks/useSessionManagement';
 import { useUserActivation } from '@/hooks/useUserActivation';
 import type { AuthContextType } from '@/types/auth-types';
 
-const AuthContext = createContext<AuthContextType>({
+// Create a default context value with all required properties
+const defaultContextValue: AuthContextType = {
   session: null,
   user: null,
   profile: null,
@@ -18,9 +19,12 @@ const AuthContext = createContext<AuthContextType>({
   activateUser: async () => ({ success: false, error: null }),
   sendVerificationEmail: async () => ({ success: false, error: null }),
   verifyEmail: async () => ({ success: false, error: null }),
-});
+};
+
+const AuthContext = createContext<AuthContextType>(defaultContextValue);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // Use the session management hook
   const { 
     session, 
     user, 
@@ -31,7 +35,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signOut
   } = useSessionManagement();
   
-  const profile = useProfile(user?.id);
+  // Only call useProfile when we have a user ID
+  const profile = user ? useProfile(user.id) : null;
+  
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
   const { activateUser } = useUserActivation();
   
@@ -94,18 +100,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [session, user, isLoading, initialCheckDone]);
 
+  // Create a context value object
+  const contextValue: AuthContextType = { 
+    session, 
+    user, 
+    profile, 
+    isLoading, 
+    signOut,
+    checkSession, 
+    activateUser,
+    sendVerificationEmail,
+    verifyEmail
+  };
+
   return (
-    <AuthContext.Provider value={{ 
-      session, 
-      user, 
-      profile, 
-      isLoading, 
-      signOut,
-      checkSession, 
-      activateUser,
-      sendVerificationEmail,
-      verifyEmail
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

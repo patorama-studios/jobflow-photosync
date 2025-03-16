@@ -1,29 +1,30 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/api/supabase-service';
 
 export const useProfile = (userId: string | undefined) => {
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    if (!userId) return;
+    // Only fetch profile if we have a userId
+    if (!userId) {
+      return;
+    }
 
     const fetchProfile = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
+        const { data, error } = await supabaseService.getUserProfile(userId);
+        
         if (error) {
-          console.error('Error fetching profile:', error);
+          console.error('Error fetching user profile:', error);
           return;
         }
         
-        setProfile(data);
+        if (data) {
+          setProfile(data);
+        }
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Exception fetching user profile:', error);
       }
     };
 
