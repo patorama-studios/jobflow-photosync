@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter,
   DialogClose
@@ -81,8 +81,8 @@ export const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
           <DialogTitle>Reset your password</DialogTitle>
           <DialogDescription>
             {!isSubmitted 
-              ? 'Enter your email address and we'll send you a link to reset your password.'
-              : 'Check your email for a link to reset your password.'}
+              ? "Enter your email address and we'll send you a link to reset your password."
+              : "Check your email for a link to reset your password."}
           </DialogDescription>
         </DialogHeader>
         
@@ -132,7 +132,7 @@ export const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
               </div>
             </div>
             <p className="text-center text-sm mb-6">
-              We've sent an email to <strong>{email}</strong> with instructions to reset your password.
+              We&apos;ve sent an email to <strong>{email}</strong> with instructions to reset your password.
             </p>
             <Button className="w-full" onClick={() => handleOpenChange(false)}>
               Close
