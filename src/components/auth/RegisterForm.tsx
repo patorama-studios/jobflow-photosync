@@ -79,6 +79,7 @@ export const RegisterForm: React.FC = () => {
               id="password"
               name="password"
               type="password" 
+              placeholder="Enter your password" 
               value={password}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -93,6 +94,7 @@ export const RegisterForm: React.FC = () => {
               id="confirmPassword"
               name="confirmPassword"
               type="password" 
+              placeholder="Confirm your password" 
               value={confirmPassword}
               onChange={handleChange}
               onBlur={handleBlur}
