@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -37,7 +36,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Auth />} />
-        <Route path="/register" element={<Auth defaultTab="register" />} />
+        <Route path="/register" element={<Navigate to="/auth" state={{ tab: "register" }} replace />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/dashboard" element={
           <React.Suspense fallback={<PageLoading message="Loading Dashboard..." />}>

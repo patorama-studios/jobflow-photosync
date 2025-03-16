@@ -13,12 +13,8 @@ export const useProfile = (userId: string | undefined) => {
 
     const fetchProfile = async () => {
       try {
-        const { data, error } = await supabaseService.getUserProfile(userId);
-        
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return;
-        }
+        // Use getProfile instead of getUserProfile
+        const data = await supabaseService.getProfile(userId);
         
         if (data) {
           setProfile(data);

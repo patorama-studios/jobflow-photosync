@@ -17,7 +17,7 @@ export const useUserActivation = () => {
       return { success: true, error: null };
     } catch (error: any) {
       console.error('Error activating user:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'Unknown error occurred' };
     } finally {
       setIsActivating(false);
     }
