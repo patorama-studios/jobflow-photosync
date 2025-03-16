@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,6 +7,14 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function TeamPermissionsCard() {
   return (
@@ -15,46 +22,36 @@ export function TeamPermissionsCard() {
       <CardHeader>
         <CardTitle>Team Permissions</CardTitle>
         <CardDescription>
-          Control what actions team members can perform.
+          Understanding team member roles and permissions.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-md p-4">
-              <h3 className="font-semibold mb-2">Team Leader</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• View and manage all orders</li>
-                <li>• Manage team members</li>
-                <li>• Access billing information</li>
-                <li>• Receive all notifications</li>
-              </ul>
-            </div>
-            <div className="border rounded-md p-4">
-              <h3 className="font-semibold mb-2">Admin Role</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• View and manage orders</li>
-                <li>• Receive order notifications</li>
-                <li>• Cannot access billing</li>
-                <li>• Cannot manage team</li>
-              </ul>
-            </div>
-            <div className="border rounded-md p-4">
-              <h3 className="font-semibold mb-2">Finance Role</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• View order summaries</li>
-                <li>• Access billing information</li>
-                <li>• Receive invoice notifications</li>
-                <li>• Cannot manage team</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button variant="outline">
-              Customize Permissions
-            </Button>
-          </div>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[200px]">Role</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Capabilities</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="font-medium">Team Leader</TableCell>
+              <TableCell>Primary account owner</TableCell>
+              <TableCell>Full access to all client information and billing data</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Admin</TableCell>
+              <TableCell>Team administrator</TableCell>
+              <TableCell>Can view/edit orders and client information</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">Finance</TableCell>
+              <TableCell>Financial access only</TableCell>
+              <TableCell>Can view billing information and invoices only</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
