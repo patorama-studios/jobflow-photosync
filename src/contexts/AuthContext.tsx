@@ -35,8 +35,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signOut
   } = useSessionManagement();
   
+  // Get the user ID safely
+  const userId = user?.id;
+  
   // Only call useProfile when we have a user ID
-  const profile = user ? useProfile(user.id) : null;
+  const profile = useProfile(userId);
   
   const { sendVerificationEmail, verifyEmail } = useEmailVerification();
   const { activateUser } = useUserActivation();
