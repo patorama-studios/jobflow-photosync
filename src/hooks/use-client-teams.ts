@@ -72,6 +72,8 @@ export function useClientTeams() {
   // Add team member to a client with better error handling
   const addTeamMember = useCallback(async (clientId: string, member: TeamMember) => {
     try {
+      console.log("Adding team member:", clientId, member);
+      
       // Check if member already exists in team
       const { data: existingMembers, error: checkError } = await supabase
         .from('team_members')
@@ -85,6 +87,7 @@ export function useClientTeams() {
       }
       
       if (existingMembers && existingMembers.length > 0) {
+        console.log("Member already exists in team:", existingMembers);
         return { success: false, error: { message: "This member is already in the team" } };
       }
       
@@ -92,7 +95,7 @@ export function useClientTeams() {
       const { data, error } = await supabase
         .from('team_members')
         .insert({
-          team_id: clientId, // Using clientId as the team_id
+          team_id: clientId,
           name: member.name,
           email: member.email,
           role: member.role
@@ -101,15 +104,13 @@ export function useClientTeams() {
       
       if (error) {
         console.error("Error inserting team member:", error);
-        toast.error("Failed to add team member: " + error.message);
         return { success: false, error };
       }
       
-      toast.success(`Added ${member.name} to team`);
+      console.log("Team member added successfully:", data);
       return { success: true, data };
     } catch (error) {
       console.error("Error adding team member:", error);
-      toast.error("Failed to add team member");
       return { success: false, error };
     }
   }, []);
@@ -117,10 +118,12 @@ export function useClientTeams() {
   // Remove team member from a client with improved persistence
   const removeTeamMember = useCallback(async (clientId: string, memberId: string) => {
     try {
+      console.log("Removing team member:", clientId, memberId);
+      
       // Check if this is a temporary ID (client-side generated, starts with "tm")
       if (memberId.startsWith("tm")) {
         // Just return success for temporary IDs
-        toast.success("Team member removed successfully");
+        console.log("Temporary ID detected, no database operation needed");
         return true;
       }
       
@@ -133,15 +136,13 @@ export function useClientTeams() {
       
       if (error) {
         console.error("Error deleting team member:", error);
-        toast.error("Failed to remove team member: " + error.message);
-        return false;
+        throw error;
       }
       
-      toast.success("Team member removed successfully");
+      console.log("Team member removed successfully");
       return true;
     } catch (error) {
       console.error("Error removing team member:", error);
-      toast.error("Failed to remove team member");
       return false;
     }
   }, []);
@@ -149,6 +150,8 @@ export function useClientTeams() {
   // Get team members for a specific client with improved error handling
   const getClientTeam = useCallback(async (clientId: string) => {
     try {
+      console.log("Fetching team for client:", clientId);
+      
       // Get team members from the team_members table
       const { data, error } = await supabase
         .from('team_members')
@@ -157,9 +160,10 @@ export function useClientTeams() {
       
       if (error) {
         console.error("Error fetching team members:", error);
-        toast.error("Failed to load team members");
-        return [];
+        throw error;
       }
+      
+      console.log("Team members fetched:", data);
       
       // Map the response to TeamMember structure
       const teamMembers: TeamMember[] = (data || []).map((item: any) => ({

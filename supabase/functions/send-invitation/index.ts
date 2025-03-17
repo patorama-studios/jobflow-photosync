@@ -43,6 +43,8 @@ serve(async (req) => {
       );
     }
     
+    console.log("Creating team member invitation:", { email, role, fullName });
+    
     // Call the database function to create the invitation
     const { data, error } = await supabaseClient.rpc('add_team_member_with_invitation', {
       p_full_name: fullName,
@@ -54,10 +56,12 @@ serve(async (req) => {
     if (error) {
       console.error('Error creating invitation:', error);
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ success: false, error: error.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
+    
+    console.log("Invitation created successfully:", data);
     
     // Return valid JSON response with success message
     return new Response(
@@ -72,7 +76,7 @@ serve(async (req) => {
     console.error('Server error:', err);
     // Always return a valid JSON response even for errors
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error', details: err.message }),
+      JSON.stringify({ success: false, error: 'Internal Server Error', details: err.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
