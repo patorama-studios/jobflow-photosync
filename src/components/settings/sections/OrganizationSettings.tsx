@@ -1,18 +1,62 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function OrganizationSettings() {
-  const { settings, loading, updateSettings } = useOrganizationSettings();
+  const { settings, loading, updateSettings, fetchSettings } = useOrganizationSettings();
   const [isSaving, setIsSaving] = useState(false);
+  const [localSettings, setLocalSettings] = useState<any>(null);
+  const { user, profile } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    if (profile) {
+      setIsAdmin(profile.role === 'admin');
+    }
+  }, [profile]);
+  
+  useEffect(() => {
+    if (settings) {
+      setLocalSettings({...settings});
+    }
+  }, [settings]);
+  
+  const handleChange = (key: string, value: any) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+  
+  const handleSave = async () => {
+    if (!isAdmin) {
+      toast.error("Only admins can update organization settings");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const success = await updateSettings(localSettings);
+      if (success) {
+        toast.success("Organization settings saved successfully");
+        await fetchSettings(); // Refresh settings from server
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("An error occurred while saving settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   if (loading) {
     return (
@@ -23,14 +67,17 @@ export function OrganizationSettings() {
     );
   }
   
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updateSettings(settings || {});
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <AlertTriangle className="h-8 w-8 text-amber-500" />
+        <p className="text-lg font-medium">Admin Access Required</p>
+        <p className="text-muted-foreground text-center max-w-md">
+          Only administrators can view and manage organization settings.
+        </p>
+      </div>
+    );
+  }
   
   const timezones = [
     "America/New_York",
@@ -49,7 +96,7 @@ export function OrganizationSettings() {
     "Detailed format: {street}\n{city}, {state}\n{postal_code}\n{country}",
   ];
   
-  if (!settings) return null;
+  if (!localSettings) return null;
   
   return (
     <div className="space-y-6">
@@ -70,8 +117,8 @@ export function OrganizationSettings() {
             <Label htmlFor="companyName">Company Name</Label>
             <Input 
               id="companyName" 
-              value={settings.name || ''}
-              onChange={(e) => updateSettings({ name: e.target.value })}
+              value={localSettings.name || ''}
+              onChange={(e) => handleChange('name', e.target.value)}
             />
           </div>
           
@@ -80,8 +127,8 @@ export function OrganizationSettings() {
             <Input 
               id="website" 
               type="url" 
-              value={settings.website || ''}
-              onChange={(e) => updateSettings({ website: e.target.value })}
+              value={localSettings.website || ''}
+              onChange={(e) => handleChange('website', e.target.value)}
             />
           </div>
           
@@ -90,8 +137,8 @@ export function OrganizationSettings() {
             <Input 
               id="supportEmail" 
               type="email" 
-              value={settings.email || ''}
-              onChange={(e) => updateSettings({ email: e.target.value })}
+              value={localSettings.email || ''}
+              onChange={(e) => handleChange('email', e.target.value)}
             />
           </div>
           
@@ -100,16 +147,16 @@ export function OrganizationSettings() {
             <Input 
               id="companyPhone" 
               type="tel" 
-              value={settings.phone || ''}
-              onChange={(e) => updateSettings({ phone: e.target.value })}
+              value={localSettings.phone || ''}
+              onChange={(e) => handleChange('phone', e.target.value)}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="companyTimezone">Company Timezone</Label>
             <Select 
-              value={settings.timezone || 'America/New_York'}
-              onValueChange={(value) => updateSettings({ timezone: value })}
+              value={localSettings.timezone || 'America/New_York'}
+              onValueChange={(value) => handleChange('timezone', value)}
             >
               <SelectTrigger id="companyTimezone">
                 <SelectValue placeholder="Select timezone" />
@@ -136,16 +183,16 @@ export function OrganizationSettings() {
             <Label htmlFor="companyAddress">Company Address</Label>
             <Textarea 
               id="companyAddress" 
-              value={settings.address || ''}
-              onChange={(e) => updateSettings({ address: e.target.value })}
+              value={localSettings.address || ''}
+              onChange={(e) => handleChange('address', e.target.value)}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="addressFormat">Address Format</Label>
             <Select 
-              value={settings.addressFormat || addressFormats[0]}
-              onValueChange={(value) => updateSettings({ addressFormat: value })}
+              value={localSettings.addressFormat || addressFormats[0]}
+              onValueChange={(value) => handleChange('addressFormat', value)}
             >
               <SelectTrigger id="addressFormat">
                 <SelectValue placeholder="Select address format" />

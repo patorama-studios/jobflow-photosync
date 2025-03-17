@@ -19,18 +19,20 @@ export const useOrganizationSettings = () => {
         .from('organization_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" - not an error for us
+      if (error) {
         console.error('Error fetching organization settings:', error);
         toast.error('Failed to load organization settings');
         return;
       }
       
       if (data) {
+        console.log('Loaded organization settings:', data);
         // Cast the data.settings to OrganizationSettings with proper type assertion
         setSettings(data.settings as unknown as OrganizationSettings);
       } else {
+        console.log('No organization settings found, creating defaults');
         // Create default settings if none exist
         const newSettings: OrganizationSettings = {
           name: '',
@@ -82,21 +84,23 @@ export const useOrganizationSettings = () => {
         .from('profiles')
         .select('role')
         .eq('id', userData.user.id)
-        .single();
+        .maybeSingle();
         
       if (!profileData || profileData.role !== 'admin') {
         toast.error('Only admins can update organization settings');
         return false;
       }
       
+      console.log('Updating organization settings with:', updatedSettings);
+      
       // Get existing settings to update
       const { data, error: fetchError } = await supabase
         .from('organization_settings')
         .select('id, settings')
         .limit(1)
-        .single();
+        .maybeSingle();
       
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError) {
         console.error('Error fetching current organization settings:', fetchError);
         toast.error('Failed to update organization settings');
         return false;
@@ -106,6 +110,8 @@ export const useOrganizationSettings = () => {
         ...(settings || {}),
         ...updatedSettings
       };
+      
+      console.log('New settings to save:', newSettings, 'Data:', data);
       
       if (data?.id) {
         // Update existing settings
@@ -140,7 +146,7 @@ export const useOrganizationSettings = () => {
       }
       
       setSettings(newSettings as OrganizationSettings);
-      toast.success('Organization settings updated successfully');
+      console.log('Organization settings updated successfully');
       return true;
     } catch (error) {
       console.error('Error updating organization settings:', error);

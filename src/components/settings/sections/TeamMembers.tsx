@@ -35,15 +35,21 @@ export function TeamMembers() {
 
   const { user, profile } = useAuth();
 
+  // Fetch team members on load and whenever auth changes
   useEffect(() => {
-    fetchTeamMembers();
+    if (user?.id) {
+      console.log("Fetching team members on auth change");
+      fetchTeamMembers();
+    }
   }, [fetchTeamMembers, user?.id]);
 
+  // Add current user profile if not already in the list
   useEffect(() => {
     if (profile && user && !isLoading && members.length > 0) {
       const currentUserExists = members.some(member => member.id === user.id);
       
       if (!currentUserExists && profile.role) {
+        console.log("Adding current user to team members list");
         const currentUserProfile: TeamMember = {
           id: user.id,
           full_name: profile.full_name || user.email?.split('@')[0] || 'User',
@@ -84,6 +90,7 @@ export function TeamMembers() {
     }
     
     try {
+      console.log("Deleting team member:", memberId);
       const success = await deleteTeamMember(memberId);
       if (success) {
         toast.success("Team member removed successfully");
@@ -99,20 +106,26 @@ export function TeamMembers() {
   const handleSaveMember = async () => {
     let success = false;
     
-    if (editingMember) {
-      if (editingMember.id === user?.id && editingMember.role === 'admin' && newMember.role !== 'admin') {
-        toast.error("You cannot remove your own admin privileges");
-        return;
+    try {
+      if (editingMember) {
+        if (editingMember.id === user?.id && editingMember.role === 'admin' && newMember.role !== 'admin') {
+          toast.error("You cannot remove your own admin privileges");
+          return;
+        }
+        
+        success = await updateTeamMember(editingMember.id, newMember);
+      } else {
+        success = await addTeamMember(newMember);
       }
       
-      success = await updateTeamMember(editingMember.id, newMember);
-    } else {
-      success = await addTeamMember(newMember);
-    }
-    
-    if (success) {
-      setIsDialogOpen(false);
-      await fetchTeamMembers();
+      if (success) {
+        setIsDialogOpen(false);
+        // Refresh team members to ensure UI matches database state
+        await fetchTeamMembers();
+      }
+    } catch (error) {
+      console.error("Error saving team member:", error);
+      toast.error("Failed to save team member");
     }
   };
 

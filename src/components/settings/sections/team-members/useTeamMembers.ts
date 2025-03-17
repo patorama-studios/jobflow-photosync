@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -87,6 +88,19 @@ export function useTeamMembers() {
         result = { success: true };
       }
       
+      // Create a record in team_invitations table
+      const { error: inviteError } = await supabase
+        .from('team_invitations')
+        .insert({
+          email: newMember.email,
+          role: newMember.role,
+          status: 'pending'
+        });
+        
+      if (inviteError) {
+        console.warn("Could not create team invitation record:", inviteError);
+      }
+      
       const tempId = crypto.randomUUID();
       
       const newTeamMember: TeamMember = {
@@ -155,17 +169,33 @@ export function useTeamMembers() {
     try {
       console.log("Attempting to delete team member with ID:", id);
       
+      // If it's a temporary ID (for invited members who haven't registered yet)
       const isTemporaryId = id.length === 36 && id.includes('-') && !id.startsWith('auth_');
       
       if (isTemporaryId) {
         console.log("Handling temporary ID deletion");
-        // Remove from local state only for temporary IDs
+        
+        // Find the email to delete from invitations
+        const memberToDelete = members.find(m => m.id === id);
+        if (memberToDelete?.email) {
+          console.log("Deleting related team invitation for email:", memberToDelete.email);
+          const { error: inviteError } = await supabase
+            .from('team_invitations')
+            .delete()
+            .eq('email', memberToDelete.email);
+            
+          if (inviteError) {
+            console.warn("Could not delete related invitation:", inviteError);
+          }
+        }
+        
+        // Remove from local state
         setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
         return true;
       }
       
+      // For registered users, delete from profiles table
       console.log("Deleting from Supabase profiles table");
-      // For real DB IDs, first delete from profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -173,10 +203,17 @@ export function useTeamMembers() {
       
       if (profileError) {
         console.error("Error deleting from profiles:", profileError);
-        throw profileError;
+        // Don't throw, try to delete from other tables
       }
       
-      // Find related invitation to delete
+      // Delete from auth.users (needs RPC function with admin rights)
+      const { error: authError } = await supabase.rpc('delete_user', { user_id: id });
+      if (authError) {
+        console.warn("Could not delete from auth.users:", authError);
+        // Continue execution
+      }
+      
+      // Delete from team_invitations if exists
       const memberToDelete = members.find(m => m.id === id);
       if (memberToDelete?.email) {
         console.log("Deleting related team invitations for email:", memberToDelete.email);
@@ -190,7 +227,7 @@ export function useTeamMembers() {
         }
       }
       
-      // Also check and delete from team_members table if exists
+      // Delete from team_members table if exists
       const { error: teamMemberError } = await supabase
         .from('team_members')
         .delete()
@@ -198,10 +235,9 @@ export function useTeamMembers() {
       
       if (teamMemberError) {
         console.warn("Note: Could not delete from team_members:", teamMemberError);
-        // Continue execution as this might not be a critical error
       }
       
-      // Remove from local state after successful DB deletion
+      // Remove from local state
       setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
       return true;
     } catch (error: any) {
