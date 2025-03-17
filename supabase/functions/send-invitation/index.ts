@@ -59,7 +59,7 @@ serve(async (req) => {
       );
     }
     
-    // Always return a valid JSON response
+    // Return valid JSON response with success message
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -70,6 +70,7 @@ serve(async (req) => {
     );
   } catch (err) {
     console.error('Server error:', err);
+    // Always return a valid JSON response even for errors
     return new Response(
       JSON.stringify({ error: 'Internal Server Error', details: err.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

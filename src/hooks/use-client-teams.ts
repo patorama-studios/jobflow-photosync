@@ -72,43 +72,23 @@ export function useClientTeams() {
   // Add team member to a client with better error handling
   const addTeamMember = useCallback(async (clientId: string, member: TeamMember) => {
     try {
-      // Since client_team_members doesn't exist in the schema, we're using a mock implementation
-      // that simulates success but actually stores the data in localStorage for demo purposes
-      
-      // Load existing data with safety checks
-      let teamData = {};
-      try {
-        const storedData = localStorage.getItem('client_teams');
-        teamData = storedData ? JSON.parse(storedData) : {};
-      } catch (e) {
-        console.error("Error parsing stored team data:", e);
-        teamData = {};
-      }
-      
-      if (!teamData[clientId]) {
-        teamData[clientId] = [];
-      }
-      
-      // Check if member already exists
-      if (!teamData[clientId].find((m: any) => m.id === member.id || m.member_id === member.id)) {
-        teamData[clientId].push({
-          client_id: clientId,
-          member_id: member.id,
-          role: member.role,
-          member: {
-            id: member.id,
-            name: member.name,
-            email: member.email,
-            photoUrl: member.photoUrl
-          }
+      // Insert the team member into the team_members table
+      const { error } = await supabase
+        .from('team_members')
+        .insert({
+          team_id: clientId, // Using clientId as the team_id
+          name: member.name,
+          email: member.email,
+          role: member.role
         });
-        
-        localStorage.setItem('client_teams', JSON.stringify(teamData));
-        toast.success(`Added ${member.name} to team`);
-      } else {
-        toast.info(`${member.name} is already on this team`);
+      
+      if (error) {
+        console.error("Error inserting team member:", error);
+        toast.error("Failed to add team member: " + error.message);
+        return { success: false, error };
       }
       
+      toast.success(`Added ${member.name} to team`);
       return { success: true };
     } catch (error) {
       console.error("Error adding team member:", error);
@@ -120,54 +100,21 @@ export function useClientTeams() {
   // Remove team member from a client with improved persistence
   const removeTeamMember = useCallback(async (clientId: string, memberId: string) => {
     try {
-      // First try to delete from Supabase
-      try {
-        const { error: deleteError } = await supabase
-          .from('team_members')
-          .delete()
-          .eq('id', memberId);
-          
-        if (deleteError) {
-          console.log("Supabase deletion failed, using localStorage fallback:", deleteError);
-        } else {
-          // Successfully deleted from database
-          toast.success("Team member removed successfully");
-          return true;
-        }
-      } catch (dbError) {
-        console.error("Database deletion error:", dbError);
+      // Try to delete the team member from the database
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('id', memberId)
+        .eq('team_id', clientId);
+      
+      if (error) {
+        console.error("Error deleting team member:", error);
+        toast.error("Failed to remove team member: " + error.message);
+        return false;
       }
       
-      // Fall back to localStorage if database delete fails or isn't available
-      try {
-        const storedData = localStorage.getItem('client_teams');
-        if (!storedData) return false;
-        
-        const teamData = JSON.parse(storedData);
-        
-        if (teamData[clientId]) {
-          // Find if the member exists before attempting removal
-          const initialLength = teamData[clientId].length;
-          teamData[clientId] = teamData[clientId].filter(
-            (member: any) => member.member_id !== memberId && member.id !== memberId
-          );
-          
-          // Only save and notify if we actually removed something
-          if (teamData[clientId].length < initialLength) {
-            localStorage.setItem('client_teams', JSON.stringify(teamData));
-            toast.success("Team member removed successfully");
-            return true;
-          } else {
-            console.log("Member not found in client team", memberId);
-            return false;
-          }
-        }
-      } catch (localError) {
-        console.error("LocalStorage operation error:", localError);
-        toast.error("Failed to remove team member");
-      }
-      
-      return false;
+      toast.success("Team member removed successfully");
+      return true;
     } catch (error) {
       console.error("Error removing team member:", error);
       toast.error("Failed to remove team member");
@@ -178,48 +125,25 @@ export function useClientTeams() {
   // Get team members for a specific client with improved error handling
   const getClientTeam = useCallback(async (clientId: string) => {
     try {
-      // First try to get from database (if it existed)
-      try {
-        const { data, error } = await supabase
-          .from('client_team_members')
-          .select('*')
-          .eq('client_id', clientId);
-          
-        if (!error && data && data.length > 0) {
-          // Map the response to TeamMember structure
-          return data.map((item: any) => ({
-            id: item.member_id,
-            name: item.member?.name || 'Unknown',
-            email: item.member?.email || 'no-email@example.com',
-            role: item.role as TeamMemberRole,
-            photoUrl: item.member?.photoUrl || ''
-          }));
-        }
-      } catch (dbError) {
-        console.log("Database fetch error, using localStorage fallback:", dbError);
-      }
+      // Get team members from the team_members table
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('team_id', clientId);
       
-      // Fall back to localStorage
-      let teamData = {};
-      try {
-        const storedData = localStorage.getItem('client_teams');
-        if (storedData) {
-          teamData = JSON.parse(storedData);
-        }
-      } catch (e) {
-        console.error("Error parsing stored team data:", e);
+      if (error) {
+        console.error("Error fetching team members:", error);
+        toast.error("Failed to load team members");
         return [];
       }
       
-      const clientTeam = teamData[clientId] || [];
-      
       // Map the response to TeamMember structure
-      const teamMembers: TeamMember[] = clientTeam.map((item: any) => ({
-        id: item.member_id,
-        name: item.member?.name || 'Unknown',
-        email: item.member?.email || 'no-email@example.com',
+      const teamMembers: TeamMember[] = (data || []).map((item: any) => ({
+        id: item.id,
+        name: item.name || 'Unknown',
+        email: item.email || 'no-email@example.com',
         role: item.role as TeamMemberRole,
-        photoUrl: item.member?.photoUrl || ''
+        photoUrl: item.photo_url || ''
       }));
       
       return teamMembers;
