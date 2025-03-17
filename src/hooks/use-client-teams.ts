@@ -72,15 +72,32 @@ export function useClientTeams() {
   // Add team member to a client with better error handling
   const addTeamMember = useCallback(async (clientId: string, member: TeamMember) => {
     try {
+      // Check if member already exists in team
+      const { data: existingMembers, error: checkError } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('team_id', clientId)
+        .eq('email', member.email);
+      
+      if (checkError) {
+        console.error("Error checking for existing team member:", checkError);
+        throw checkError;
+      }
+      
+      if (existingMembers && existingMembers.length > 0) {
+        return { success: false, error: { message: "This member is already in the team" } };
+      }
+      
       // Insert the team member into the team_members table
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('team_members')
         .insert({
           team_id: clientId, // Using clientId as the team_id
           name: member.name,
           email: member.email,
           role: member.role
-        });
+        })
+        .select();
       
       if (error) {
         console.error("Error inserting team member:", error);
@@ -89,7 +106,7 @@ export function useClientTeams() {
       }
       
       toast.success(`Added ${member.name} to team`);
-      return { success: true };
+      return { success: true, data };
     } catch (error) {
       console.error("Error adding team member:", error);
       toast.error("Failed to add team member");
@@ -100,6 +117,13 @@ export function useClientTeams() {
   // Remove team member from a client with improved persistence
   const removeTeamMember = useCallback(async (clientId: string, memberId: string) => {
     try {
+      // Check if this is a temporary ID (client-side generated, starts with "tm")
+      if (memberId.startsWith("tm")) {
+        // Just return success for temporary IDs
+        toast.success("Team member removed successfully");
+        return true;
+      }
+      
       // Try to delete the team member from the database
       const { error } = await supabase
         .from('team_members')

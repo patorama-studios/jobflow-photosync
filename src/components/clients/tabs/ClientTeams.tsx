@@ -20,33 +20,34 @@ export function ClientTeams({ client }: ClientTeamsProps) {
   
   const { allClients, isLoading: clientsLoading, addTeamMember, removeTeamMember, getClientTeam } = useClientTeams();
   
+  // Function to load team members
+  const loadTeamMembers = async () => {
+    setIsLoading(true);
+    try {
+      const teamMembers = await getClientTeam(client.id);
+      if (teamMembers.length > 0) {
+        setTeam(teamMembers);
+      } else if (client.team && client.team.length > 0) {
+        // If no team members in DB yet but we have them in client object, use those
+        setTeam(client.team);
+        
+        // Optionally, save these to the database for future fetches
+        for (const member of client.team) {
+          await addTeamMember(client.id, member);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading team members:", error);
+      toast.error("Failed to load team members");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Load team members on component mount and whenever the client changes
   useEffect(() => {
-    const loadTeamMembers = async () => {
-      setIsLoading(true);
-      try {
-        const teamMembers = await getClientTeam(client.id);
-        if (teamMembers.length > 0) {
-          setTeam(teamMembers);
-        } else if (client.team && client.team.length > 0) {
-          // If no team members in DB yet but we have them in client object, use those
-          setTeam(client.team);
-          
-          // Optionally, save these to the database for future fetches
-          for (const member of client.team) {
-            await addTeamMember(client.id, member);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading team members:", error);
-        toast.error("Failed to load team members");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     loadTeamMembers();
-  }, [client.id, client.team, getClientTeam, addTeamMember]);
+  }, [client.id]);
   
   // Add a team member
   const handleAddTeamMember = async (member) => {
@@ -61,10 +62,11 @@ export function ClientTeams({ client }: ClientTeamsProps) {
       const result = await addTeamMember(client.id, member);
       if (result.success) {
         // Refresh the team list
-        const updatedTeam = await getClientTeam(client.id);
-        setTeam(updatedTeam);
+        await loadTeamMembers();
         setShowAddDialog(false);
         toast.success(`Added ${member.name} to the team`);
+      } else {
+        toast.error(result.error?.message || "Failed to add team member");
       }
     } catch (error) {
       console.error("Error adding team member:", error);
@@ -90,8 +92,7 @@ export function ClientTeams({ client }: ClientTeamsProps) {
       const success = await removeTeamMember(client.id, memberId);
       if (success) {
         // Refresh the team list to ensure UI is in sync with the database
-        const updatedTeam = await getClientTeam(client.id);
-        setTeam(updatedTeam);
+        await loadTeamMembers();
         toast.success("Team member removed successfully");
       }
     } catch (error) {

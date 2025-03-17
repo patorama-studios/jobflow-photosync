@@ -5,69 +5,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Patorama - Professional Photography Services" />
-    <meta name="theme-color" content="#ffffff" />
-    <meta property="og:title" content="Patorama" />
-    <meta property="og:description" content="Professional Photography Services" />
-    <meta property="og:image" content="/og-image.png" />
-    <meta property="og:url" content="https://book.patorama.com.au" />
-    <title>Patorama</title>
-    
-    <!-- Preconnect to important domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Primary Font -->
-    <link 
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" 
-      rel="stylesheet"
-    />
-    
-    <!-- Add explicit dependency for react-is to prevent issues -->
-    <script>
-      // Add fallback error detection
-      window.addEventListener('error', function(e) {
-        console.error('Resource error:', e);
-        if (e.message && (e.message.includes('forwardRef') || e.message.includes('react-is'))) {
-          console.error('React dependency error detected');
-          if (!window.location.search.includes('retry=true')) {
-            localStorage.clear();
-            window.location.search = '?retry=true';
-          }
-        }
-      });
-    </script>
+    <title>Lovable App</title>
+    <meta name="description" content="A powerful web application built with Lovable" />
   </head>
   <body>
-    <div id="root">
-      <!-- Initial loading state -->
-      <div id="initial-loading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100%;position:fixed;top:0;left:0;background-color:white;z-index:9999;">
-        <div style="width:40px;height:40px;border:3px solid #eee;border-top-color:#3498db;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px;"></div>
-        <p style="font-family:system-ui,sans-serif;color:#555;">Loading application...</p>
-        <style>
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-          .dark #initial-loading {
-            background-color: #1a1a1a;
-          }
-          .dark #initial-loading p {
-            color: #ccc;
-          }
-        </style>
-      </div>
-    </div>
-    
-    <!-- Error handling for script loading -->
-    <script>
-      window.addEventListener('error', function(e) {
-        if (e.target && (e.target.src || e.target.href)) {
-          console.error('Resource failed to load:', e.target.src || e.target.href);
-        }
-      }, true);
-    </script>
-    
+    <div id="root"></div>
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
