@@ -71,6 +71,31 @@ const showInitialLoading = () => {
   }
 };
 
+// Check if dependency issues exist with React
+const checkReactDependencies = () => {
+  try {
+    // Make sure React.forwardRef exists - this is often a source of errors
+    if (typeof React.forwardRef !== 'function') {
+      console.error('React.forwardRef is not a function. This could indicate a React version mismatch.');
+      
+      // Add error to DOM for debugging
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        const errorElement = document.createElement('div');
+        errorElement.style.cssText = 'color:red;margin:20px;padding:20px;border:1px solid red;';
+        errorElement.innerHTML = '<h3>React Dependency Error</h3><p>React.forwardRef is missing or not a function. Try clearing your browser cache or reloading the page.</p>';
+        rootElement.appendChild(errorElement);
+      }
+      
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error checking React dependencies:', error);
+    return false;
+  }
+};
+
 // Show initial loading state before app initialization
 showInitialLoading();
 
@@ -78,6 +103,11 @@ showInitialLoading();
 const mountApp = () => {
   try {
     console.log('Starting app mount...');
+    
+    // Check React dependencies before mounting
+    if (!checkReactDependencies()) {
+      console.error('React dependency check failed, attempting to continue anyway');
+    }
     
     // Get root element
     const rootElement = document.getElementById("root");
@@ -120,12 +150,20 @@ const mountApp = () => {
       <div style="padding:20px;max-width:600px;margin:40px auto;border-radius:8px;background-color:#f8f9fa;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
         <h2 style="color:#e11d48;margin-bottom:10px;">Application Error</h2>
         <p style="margin-bottom:15px;">${error instanceof Error ? error.message : String(error)}</p>
-        <button onclick="window.location.reload()" style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
-          Refresh Page
-        </button>
-        <button onclick="localStorage.clear();window.location.href='/'" style="background:#6b7280;color:white;border:none;padding:8px 16px;border-radius:4px;margin-left:8px;cursor:pointer;">
-          Reset & Reload
-        </button>
+        <p style="margin-bottom:15px;color:#666;font-size:14px;">Try one of these solutions:</p>
+        <ul style="margin-bottom:15px;color:#666;font-size:14px;list-style:disc;padding-left:20px;">
+          <li>Clear your browser cache completely</li>
+          <li>Try a different browser</li>
+          <li>Disable browser extensions</li>
+        </ul>
+        <div>
+          <button onclick="window.location.reload()" style="background:#3b82f6;color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">
+            Refresh Page
+          </button>
+          <button onclick="localStorage.clear();window.location.href='/'" style="background:#6b7280;color:white;border:none;padding:8px 16px;border-radius:4px;margin-left:8px;cursor:pointer;">
+            Reset & Reload
+          </button>
+        </div>
       </div>
     `;
     
@@ -139,32 +177,49 @@ const mountApp = () => {
   }
 };
 
+// Add explicit handling for React-is dependency issues
+const handleReactIsError = () => {
+  window.addEventListener('error', (event) => {
+    const errorMessage = event.message || '';
+    const errorStack = event?.error?.stack || '';
+    
+    // Check for specific React-is errors
+    if (
+      errorMessage.includes('react-is') || 
+      errorMessage.includes('forwardRef') ||
+      errorStack.includes('vendor-ui')
+    ) {
+      console.error('React dependency error detected:', errorMessage);
+      
+      // Clear module cache if possible
+      if (window.location.search.indexOf('reload=true') === -1) {
+        console.log('Attempting automatic recovery...');
+        
+        // Clear cache and reload
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            names.forEach(name => {
+              caches.delete(name);
+            });
+          });
+        }
+        
+        // Add marker to prevent infinite reload loops
+        window.location.href = window.location.pathname + '?reload=true';
+        return true;
+      }
+    }
+    return false;
+  }, true);
+};
+
+// Initialize error handler for React-is dependency issues
+handleReactIsError();
+
 // Call mount after a brief delay to ensure DOM is ready
-// Reduced delay from 100ms to 50ms for faster startup
 setTimeout(() => {
   mountApp();
 }, 50);
-
-// Optimize service worker registration
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    // Delay service worker registration to not block initial render
-    // Using requestIdleCallback for better performance when available
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(() => {
-        navigator.serviceWorker.register('/sw.js').catch(error => {
-          console.error('ServiceWorker registration failed:', error);
-        });
-      });
-    } else {
-      setTimeout(() => {
-        navigator.serviceWorker.register('/sw.js').catch(error => {
-          console.error('ServiceWorker registration failed:', error);
-        });
-      }, 2000);
-    }
-  });
-}
 
 // Declare global namespace for React Router history
 declare global {
