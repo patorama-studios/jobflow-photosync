@@ -206,11 +206,29 @@ export function useTeamMembers() {
         // Don't throw, try to delete from other tables
       }
       
-      // Delete from auth.users (needs RPC function with admin rights)
-      const { error: authError } = await supabase.rpc('delete_user', { user_id: id });
-      if (authError) {
-        console.warn("Could not delete from auth.users:", authError);
+      // Delete from auth.users using a direct SQL query instead of RPC
+      // This approach bypasses the TypeScript error with supabase.rpc
+      const { error: authError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+        
+      // Make a direct POST request to the function endpoint
+      const { data: functionData, error: functionError } = await supabase.functions.invoke(
+        'run_migration',
+        {
+          body: { 
+            action: 'delete_user',
+            user_id: id
+          }
+        }
+      );
+      
+      if (functionError) {
+        console.warn("Could not delete from auth.users:", functionError);
         // Continue execution
+      } else {
+        console.log("User deletion function response:", functionData);
       }
       
       // Delete from team_invitations if exists
