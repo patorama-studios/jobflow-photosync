@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -86,7 +87,6 @@ export function TeamMembers() {
       const success = await deleteTeamMember(memberId);
       if (success) {
         toast.success("Team member removed successfully");
-        await fetchTeamMembers();
       }
     } catch (error) {
       console.error("Error deleting team member:", error);

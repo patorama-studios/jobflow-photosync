@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -156,11 +157,13 @@ export function useTeamMembers() {
       const isTemporaryId = id.length === 36 && id.includes('-') && !id.startsWith('auth_');
       
       if (isTemporaryId) {
+        // Remove from local state only for temporary IDs
         setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
         toast.success("Team member removed successfully");
         return true;
       }
       
+      // For real DB IDs, delete from Supabase
       const { error } = await supabase
         .from('profiles')
         .delete()
@@ -168,6 +171,7 @@ export function useTeamMembers() {
       
       if (error) throw error;
       
+      // Find related invitation to delete
       const memberToDelete = members.find(m => m.id === id);
       if (memberToDelete?.email) {
         const { error: inviteError } = await supabase
@@ -180,8 +184,8 @@ export function useTeamMembers() {
         }
       }
       
+      // Remove from local state after successful DB deletion
       setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
-      toast.success("Team member removed successfully");
       return true;
     } catch (error: any) {
       console.error("Error deleting team member:", error);

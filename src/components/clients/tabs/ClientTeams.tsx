@@ -42,6 +42,7 @@ export function ClientTeams({ client }: ClientTeamsProps) {
         }
       } else {
         console.log("No team members found at all");
+        setTeam([]);
       }
     } catch (error) {
       console.error("Error loading team members:", error);
@@ -105,9 +106,8 @@ export function ClientTeams({ client }: ClientTeamsProps) {
       const success = await removeTeamMember(client.id, memberId);
       
       if (success) {
-        // On success, either refresh from DB or update local state
-        console.log("Team member removed successfully");
-        await loadTeamMembers();
+        // Remove from local state immediately for better UX
+        setTeam(currentTeam => currentTeam.filter(m => m.id !== memberId));
         toast.success("Team member removed successfully");
       } else {
         toast.error("Failed to remove team member");
