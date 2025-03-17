@@ -87,6 +87,8 @@ export function TeamMembers() {
       const success = await deleteTeamMember(memberId);
       if (success) {
         toast.success("Team member removed successfully");
+        // Refresh the members list to ensure UI matches database state
+        await fetchTeamMembers();
       }
     } catch (error) {
       console.error("Error deleting team member:", error);

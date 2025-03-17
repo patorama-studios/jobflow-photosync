@@ -109,6 +109,9 @@ export function ClientTeams({ client }: ClientTeamsProps) {
         // Remove from local state immediately for better UX
         setTeam(currentTeam => currentTeam.filter(m => m.id !== memberId));
         toast.success("Team member removed successfully");
+        
+        // Also refresh from database to ensure consistency
+        await loadTeamMembers();
       } else {
         toast.error("Failed to remove team member");
       }

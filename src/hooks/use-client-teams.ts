@@ -139,10 +139,11 @@ export function useClientTeams() {
         throw error;
       }
       
-      console.log("Team member removed successfully");
+      console.log("Team member removed successfully from database");
       return true;
     } catch (error) {
       console.error("Error removing team member:", error);
+      toast.error("Database error: Failed to remove team member");
       return false;
     }
   }, []);

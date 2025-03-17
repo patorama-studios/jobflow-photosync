@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -154,26 +153,33 @@ export function useTeamMembers() {
 
   const deleteTeamMember = useCallback(async (id: string) => {
     try {
+      console.log("Attempting to delete team member with ID:", id);
+      
       const isTemporaryId = id.length === 36 && id.includes('-') && !id.startsWith('auth_');
       
       if (isTemporaryId) {
+        console.log("Handling temporary ID deletion");
         // Remove from local state only for temporary IDs
         setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
-        toast.success("Team member removed successfully");
         return true;
       }
       
-      // For real DB IDs, delete from Supabase
-      const { error } = await supabase
+      console.log("Deleting from Supabase profiles table");
+      // For real DB IDs, first delete from profiles table
+      const { error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (profileError) {
+        console.error("Error deleting from profiles:", profileError);
+        throw profileError;
+      }
       
       // Find related invitation to delete
       const memberToDelete = members.find(m => m.id === id);
       if (memberToDelete?.email) {
+        console.log("Deleting related team invitations for email:", memberToDelete.email);
         const { error: inviteError } = await supabase
           .from('team_invitations')
           .delete()
@@ -182,6 +188,17 @@ export function useTeamMembers() {
         if (inviteError) {
           console.warn("Could not delete related invitation:", inviteError);
         }
+      }
+      
+      // Also check and delete from team_members table if exists
+      const { error: teamMemberError } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('user_id', id);
+      
+      if (teamMemberError) {
+        console.warn("Note: Could not delete from team_members:", teamMemberError);
+        // Continue execution as this might not be a critical error
       }
       
       // Remove from local state after successful DB deletion
