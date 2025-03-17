@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PageLoading } from "@/components/loading/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { debounce } from "@/utils/performance-optimizer";
 
 interface AuthRedirectProps {
   children: React.ReactNode;
@@ -17,7 +16,6 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   const location = useLocation();
   const sessionChecked = useRef(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
-  const [checkInProgress, setCheckInProgress] = useState(false);
   const [forceShowContent, setForceShowContent] = useState(false);
 
   // Add more detailed debug logging
@@ -29,21 +27,17 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     requireAuth,
     sessionChecked: sessionChecked.current,
     initialCheckDone,
-    checkInProgress,
-    forceShowContent,
-    timestamp: new Date().toISOString()
+    forceShowContent
   });
 
   // Force refresh session on mount to ensure we have latest auth state
   useEffect(() => {
     const checkAuthStatus = async () => {
-      if (!sessionChecked.current && !checkInProgress) {
+      if (!sessionChecked.current) {
         try {
-          setCheckInProgress(true);
           // Explicitly check session when component mounts
           await checkSession();
           sessionChecked.current = true;
-          console.log("Session checked", { hasSession: !!session, hasUser: !!user });
         } catch (error) {
           console.error("Error checking session:", error);
           toast.error("Authentication error", {
@@ -51,7 +45,6 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
           });
         } finally {
           setInitialCheckDone(true);
-          setCheckInProgress(false);
         }
       }
     };
@@ -67,10 +60,10 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
     }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [checkSession, session, user, isLoading]);
+  }, [checkSession]);
 
   // If still loading and initial check is not done, show loading component
-  if (!forceShowContent && (isLoading || !initialCheckDone || checkInProgress)) {
+  if (!forceShowContent && (isLoading || !initialCheckDone)) {
     return <PageLoading message="Verifying authentication..." forceRefreshAfter={5} />;
   }
 
@@ -82,6 +75,5 @@ export function AuthRedirect({ children, redirectTo = "/login", requireAuth = tr
   }
 
   // User is authenticated or auth not required, allow access
-  console.log("Access allowed to:", location.pathname);
   return <>{children}</>;
 }

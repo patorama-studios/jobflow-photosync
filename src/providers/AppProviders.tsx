@@ -18,7 +18,6 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      // In tanstack/react-query v5, error handling is moved inside meta
       meta: {
         onError: (error: Error) => {
           console.error('Query error:', error);
@@ -28,18 +27,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, queryClien
   });
 
   return (
-    <ErrorBoundary fallback={({ error, resetErrorBoundary }) => (
-      <div className="m-4 p-4 bg-red-50 border border-red-200 rounded-md">
-        <h2 className="text-red-700 text-lg font-semibold mb-2">Provider Error</h2>
-        <p className="text-red-600 mb-4">{error?.message || "An unknown error occurred in AppProviders"}</p>
-        <button 
-          onClick={resetErrorBoundary}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Try Again
-        </button>
-      </div>
-    )}>
+    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="patorama-theme">
           <ErrorBoundary>

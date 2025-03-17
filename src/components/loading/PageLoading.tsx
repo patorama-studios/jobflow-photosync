@@ -26,16 +26,7 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   useEffect(() => {
     if (loadingTime >= forceRefreshAfter && !hasRefreshed) {
       console.log(`Loading timeout reached (${forceRefreshAfter}s), attempting to continue...`);
-      
       setHasRefreshed(true);
-      
-      // Only attempt to redirect to dashboard as a last resort after a small delay
-      const timeoutId = setTimeout(() => {
-        // Try to clear any potential loop by redirecting to login
-        window.location.href = '/login';
-      }, 2000);
-      
-      return () => clearTimeout(timeoutId);
     }
   }, [loadingTime, forceRefreshAfter, hasRefreshed]);
   
@@ -43,10 +34,6 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
     window.location.reload();
   };
 
-  const handleGoToLogin = () => {
-    window.location.href = '/login';
-  };
-  
   return (
     <div className="flex flex-col h-screen w-full items-center justify-center bg-background">
       <div className="h-10 w-10 text-primary animate-spin mb-4">
@@ -61,31 +48,14 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
         {loadingTime > 2 && <span> ({loadingTime}s)</span>}
       </p>
       
-      {loadingTime > 3 && (
-        <div className="flex gap-2 mt-4">
+      {loadingTime > 5 && (
+        <div className="mt-4">
           <Button 
             onClick={handleManualRefresh}
             variant="outline"
           >
             Refresh Page
           </Button>
-          
-          <Button 
-            onClick={handleGoToLogin}
-          >
-            Go to Login
-          </Button>
-        </div>
-      )}
-      
-      {loadingTime > 6 && (
-        <div className="mt-6 max-w-md p-4 bg-muted/50 rounded-lg text-sm">
-          <p className="font-medium mb-2">Taking longer than expected?</p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>Try clearing your browser cache</li>
-            <li>Check your internet connection</li>
-            <li>Go directly to the <a href="/login" className="text-primary underline">login page</a></li>
-          </ul>
         </div>
       )}
     </div>
