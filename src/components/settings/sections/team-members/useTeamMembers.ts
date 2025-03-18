@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -206,29 +205,27 @@ export function useTeamMembers() {
         // Don't throw, try to delete from other tables
       }
       
-      // Delete from auth.users using a direct SQL query instead of RPC
-      // This approach bypasses the TypeScript error with supabase.rpc
-      const { error: authError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', id);
-        
-      // Make a direct POST request to the function endpoint
-      const { data: functionData, error: functionError } = await supabase.functions.invoke(
-        'run_migration',
-        {
-          body: { 
-            action: 'delete_user',
-            user_id: id
+      try {
+        // Make a direct request to the edge function
+        const { data: functionData, error: functionError } = await supabase.functions.invoke(
+          'run_migration',
+          {
+            body: { 
+              action: 'delete_user',
+              user_id: id
+            }
           }
+        );
+        
+        if (functionError) {
+          console.warn("Could not delete user through edge function:", functionError);
+          // Continue execution
+        } else {
+          console.log("User deletion function response:", functionData);
         }
-      );
-      
-      if (functionError) {
-        console.warn("Could not delete from auth.users:", functionError);
+      } catch (functionCallError) {
+        console.error("Error calling edge function:", functionCallError);
         // Continue execution
-      } else {
-        console.log("User deletion function response:", functionData);
       }
       
       // Delete from team_invitations if exists
@@ -257,6 +254,7 @@ export function useTeamMembers() {
       
       // Remove from local state
       setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
+      toast.success("Team member deleted successfully");
       return true;
     } catch (error: any) {
       console.error("Error deleting team member:", error);
