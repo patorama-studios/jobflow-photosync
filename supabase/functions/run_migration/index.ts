@@ -26,7 +26,20 @@ serve(async (req) => {
     );
 
     // Get request body
-    const requestData = await req.json();
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (e) {
+      console.error("Error parsing request JSON:", e);
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON in request body" }), 
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 400 
+        }
+      );
+    }
+    
     const { action, user_id } = requestData;
     
     console.log(`Running migration action: ${action}`);

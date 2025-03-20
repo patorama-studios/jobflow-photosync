@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -190,6 +191,7 @@ export function useTeamMembers() {
         
         // Remove from local state
         setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
+        toast.success("Team member invitation removed successfully");
         return true;
       }
       
@@ -206,13 +208,17 @@ export function useTeamMembers() {
       }
       
       try {
-        // Make a direct request to the edge function
+        // Call the Edge Function with proper error handling
+        console.log("Calling edge function to delete user");
         const { data: functionData, error: functionError } = await supabase.functions.invoke(
           'run_migration',
           {
-            body: { 
+            body: JSON.stringify({ 
               action: 'delete_user',
               user_id: id
+            }),
+            headers: {
+              'Content-Type': 'application/json'
             }
           }
         );
@@ -255,13 +261,19 @@ export function useTeamMembers() {
       // Remove from local state
       setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
       toast.success("Team member deleted successfully");
+      
+      // Refresh to ensure state is in sync with database
+      setTimeout(() => {
+        fetchTeamMembers();
+      }, 500);
+      
       return true;
     } catch (error: any) {
       console.error("Error deleting team member:", error);
       toast.error(error.message || "Failed to remove team member");
       return false;
     }
-  }, [members]);
+  }, [members, fetchTeamMembers]);
 
   useEffect(() => {
     fetchTeamMembers();
