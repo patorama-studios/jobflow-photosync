@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
@@ -210,28 +209,28 @@ export function useTeamMembers() {
       try {
         // Call the Edge Function with proper error handling
         console.log("Calling edge function to delete user");
-        const { data: functionData, error: functionError } = await supabase.functions.invoke(
-          'run_migration',
-          {
-            body: JSON.stringify({ 
-              action: 'delete_user',
-              user_id: id
-            }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
         
-        if (functionError) {
-          console.warn("Could not delete user through edge function:", functionError);
-          // Continue execution
+        // First check if the function exists before calling it
+        const response = await fetch(`${window.location.origin}/api/run_migration`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            action: 'delete_user',
+            user_id: id
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Edge function response:", data);
         } else {
-          console.log("User deletion function response:", functionData);
+          console.warn("Edge function returned error:", await response.text());
         }
       } catch (functionCallError) {
         console.error("Error calling edge function:", functionCallError);
-        // Continue execution
+        // Continue execution even if function call fails
       }
       
       // Delete from team_invitations if exists

@@ -47,29 +47,40 @@ serve(async (req) => {
     if (action === 'delete_user' && user_id) {
       console.log(`Attempting to delete user with ID: ${user_id}`);
       
-      // Execute the delete_user function 
-      const { data, error } = await supabaseAdmin.rpc('delete_user', { 
-        user_id 
-      });
-      
-      if (error) {
-        console.error('Error executing delete_user function:', error);
+      try {
+        // Execute the delete_user function 
+        const { data, error } = await supabaseAdmin.rpc('delete_user', { 
+          user_id 
+        });
+        
+        if (error) {
+          console.error('Error executing delete_user function:', error);
+          return new Response(
+            JSON.stringify({ success: false, error: error.message }), 
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+              status: 500 
+            }
+          );
+        }
+        
+        console.log('User deletion successful:', data);
         return new Response(
-          JSON.stringify({ success: false, error: error.message }), 
+          JSON.stringify({ success: true, result: data }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      } catch (execError) {
+        console.error('Error executing RPC:', execError);
+        return new Response(
+          JSON.stringify({ success: false, error: execError.message || 'Failed to execute delete_user function' }), 
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
             status: 500 
           }
         );
       }
-      
-      console.log('User deletion successful:', data);
-      return new Response(
-        JSON.stringify({ success: true, result: data }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
     }
     
     return new Response(
