@@ -1,27 +1,32 @@
 
-import React, { ReactNode } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export interface OrderTabsContainerProps {
+interface OrderTabsContainerProps {
+  children: React.ReactNode;
   activeTab: string;
   onTabChange: (value: string) => void;
-  children: ReactNode;
+  isNewOrder?: boolean;
 }
 
-export function OrderTabsContainer({
-  activeTab,
+export function OrderTabsContainer({ 
+  children, 
+  activeTab, 
   onTabChange,
-  children
+  isNewOrder = false 
 }: OrderTabsContainerProps) {
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange}>
-      <TabsList className="grid w-full grid-cols-4 md:max-w-3xl">
+    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-4">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="details">Details</TabsTrigger>
-        <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
-        <TabsTrigger value="production">Production</TabsTrigger>
-        <TabsTrigger value="communication">Communication</TabsTrigger>
+        {!isNewOrder && (
+          <>
+            <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
+            <TabsTrigger value="production">Production</TabsTrigger>
+            <TabsTrigger value="communication">Communication</TabsTrigger>
+          </>
+        )}
       </TabsList>
-      
       {children}
     </Tabs>
   );

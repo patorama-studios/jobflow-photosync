@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useOrderSinglePage } from '@/hooks/use-order-single-page';
+import { OrderDetailsError } from '@/components/orders/details/OrderDetailsError';
 
 export default function OrderSinglePage() {
   const {
@@ -28,6 +29,7 @@ export default function OrderSinglePage() {
     activeTab,
     setActiveTab,
     isEditing,
+    isNewOrder,
     handleDeleteClick,
     confirmDelete,
     handleEditClick,
@@ -39,6 +41,65 @@ export default function OrderSinglePage() {
     navigate,
   } = useOrderSinglePage();
 
+  // Special rendering for new order page
+  if (isNewOrder) {
+    // If we're still loading, show skeleton
+    if (isLoading) {
+      return (
+        <MainLayout>
+          <PageTransition>
+            <div className="container p-6 mx-auto">
+              <Skeleton className="h-12 w-60 mb-6" />
+              <Skeleton className="h-4 w-40 mb-2" />
+              <Skeleton className="h-4 w-32 mb-8" />
+              <Skeleton className="h-10 w-full mb-8" />
+              <div className="space-y-10">
+                <Skeleton className="h-48 w-full" />
+              </div>
+            </div>
+          </PageTransition>
+        </MainLayout>
+      );
+    }
+    
+    // Once data is loaded (or in this case, the empty order template is ready)
+    return (
+      <MainLayout>
+        <PageTransition>
+          <div className="container p-6 mx-auto">
+            <OrderSinglePageHeader 
+              order={order}
+              isNewOrder={true}
+              isEditing={isEditing}
+              onEdit={handleEditClick}
+              onCancel={handleCancelClick}
+              onSave={handleSaveClick}
+              onDelete={handleDeleteClick}
+              onBack={handleBackClick}
+            />
+            
+            <OrderTabsContainer 
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              isNewOrder={true}
+            >
+              <OrderDetailsTab 
+                order={order}
+                editedOrder={editedOrder}
+                isEditing={isEditing}
+                isNewOrder={true}
+                onInputChange={handleInputChange}
+                onStatusChange={handleStatusChange}
+              />
+              {/* Don't show other tabs for new orders */}
+            </OrderTabsContainer>
+          </div>
+        </PageTransition>
+      </MainLayout>
+    );
+  }
+
+  // Regular loading state for existing orders
   if (isLoading) {
     return (
       <MainLayout>
@@ -61,21 +122,22 @@ export default function OrderSinglePage() {
     );
   }
 
+  // Handle errors for existing orders
   if (error || !order) {
     return (
       <MainLayout>
         <PageTransition>
-          <div className="container p-6 mx-auto text-center py-20">
-            <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Error Loading Order</h2>
-            <p className="text-muted-foreground mb-8">{error || "The order could not be found or has been deleted."}</p>
-            <Button onClick={handleBackClick}>Return to Orders</Button>
-          </div>
+          <OrderDetailsError 
+            error={error} 
+            onRetry={refetch}
+            isNewOrderPage={orderId === 'new'} 
+          />
         </PageTransition>
       </MainLayout>
     );
   }
 
+  // Regular order details view for existing orders
   return (
     <MainLayout>
       <PageTransition>

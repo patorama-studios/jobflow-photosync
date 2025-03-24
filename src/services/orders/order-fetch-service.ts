@@ -35,6 +35,11 @@ export const fetchOrderDetails = async (orderId?: string | number): Promise<{ or
       return { order: null, error: 'No order ID provided' };
     }
     
+    // Special case for the "new" route - don't try to fetch from database
+    if (orderId === 'new') {
+      return { order: null, error: 'new_order_page' };
+    }
+    
     const orderIdString = String(orderId); // Convert to string to ensure compatibility
     
     // Try with order_id column first

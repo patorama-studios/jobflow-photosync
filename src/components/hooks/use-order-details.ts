@@ -11,6 +11,7 @@ export function useOrderDetails(orderId: string) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [isNewOrder, setIsNewOrder] = useState(orderId === 'new');
 
   // Fetch order details with react-query
   const {
@@ -21,8 +22,14 @@ export function useOrderDetails(orderId: string) {
   } = useQuery({
     queryKey: ['order', orderId],
     queryFn: async () => {
+      // For the "new" route, don't try to fetch an order
+      if (orderId === 'new') {
+        setIsEditing(true); // Auto-enable editing for new orders
+        return null;
+      }
+      
       const { order, error } = await fetchOrderDetails(orderId);
-      if (error) throw new Error(error);
+      if (error && error !== 'new_order_page') throw new Error(error);
       return order;
     },
     enabled: !!orderId
@@ -32,8 +39,30 @@ export function useOrderDetails(orderId: string) {
   useEffect(() => {
     if (order) {
       setLocalOrder(order);
+    } else if (isNewOrder && !localOrder) {
+      // Initialize a new empty order if we're on the new order page
+      const newEmptyOrder: Order = {
+        id: 'new',
+        orderNumber: `ORD-${Date.now()}`,
+        client: '',
+        clientEmail: '',
+        clientPhone: '',
+        address: '',
+        city: '',
+        state: '',
+        zip: '',
+        scheduledDate: new Date().toISOString().split('T')[0],
+        scheduledTime: '09:00',
+        photographer: '',
+        propertyType: 'Residential',
+        squareFeet: 0,
+        price: 0,
+        status: 'pending' as OrderStatus
+      };
+      setLocalOrder(newEmptyOrder);
+      setIsEditing(true);
     }
-  }, [order]);
+  }, [order, isNewOrder, localOrder]);
 
   // Function to handle order editing
   const handleEditClick = () => {
@@ -47,6 +76,11 @@ export function useOrderDetails(orderId: string) {
       setLocalOrder(order);
     }
     setIsEditing(false);
+    
+    // If this is a new order and we cancel, navigate back to orders list
+    if (isNewOrder) {
+      window.history.back();
+    }
   };
 
   // Function to update a field in the local order state
@@ -87,7 +121,12 @@ export function useOrderDetails(orderId: string) {
       if (result.success) {
         toast.success('Order details saved successfully');
         setIsEditing(false);
-        refetch(); // Refresh order data from the server
+        // If this was a new order, redirect to the newly created order
+        if (isNewOrder && result.orderId) {
+          window.location.href = `/orders/${result.orderId}`;
+        } else {
+          refetch(); // Refresh order data from the server
+        }
       } else {
         toast.error(`Failed to save changes: ${result.error}`);
       }
@@ -110,6 +149,7 @@ export function useOrderDetails(orderId: string) {
     error,
     isEditing,
     isSaving,
+    isNewOrder,
     activeTab,
     setActiveTab,
     handleEditClick,

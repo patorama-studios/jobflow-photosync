@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useOrderDetails } from './use-order-details';
 import { toast } from 'sonner';
@@ -36,15 +36,27 @@ export function useOrderSinglePage() {
     isLoading, 
     error, 
     refetch, 
-    deleteOrder 
+    deleteOrder,
+    isNewOrder,
+    isEditing: orderIsEditing,
+    handleEditClick: orderHandleEditClick,
+    handleCancelClick: orderHandleCancelClick,
+    handleSaveClick: orderHandleSaveClick,
+    updateOrderField,
+    updateOrderStatus
   } = useOrderDetails(orderId || '');
   
+  // Sync editing state with the useOrderDetails hook
+  useEffect(() => {
+    setIsEditing(orderIsEditing);
+  }, [orderIsEditing]);
+  
   // Update editedOrder when order data changes
-  useState(() => {
+  useEffect(() => {
     if (order) {
       setEditedOrder(order);
     }
-  });
+  }, [order]);
   
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
@@ -52,9 +64,11 @@ export function useOrderSinglePage() {
   
   const confirmDelete = async () => {
     try {
-      deleteOrder();
-      toast.success("Order deleted successfully");
-      navigate('/orders');
+      if (deleteOrder) {
+        await deleteOrder();
+        toast.success("Order deleted successfully");
+        navigate('/orders');
+      }
     } catch (error) {
       toast.error("Failed to delete order");
       console.error(error);
@@ -62,27 +76,15 @@ export function useOrderSinglePage() {
   };
   
   const handleEditClick = () => {
-    setIsEditing(true);
+    orderHandleEditClick();
   };
   
   const handleCancelClick = () => {
-    setIsEditing(false);
-    // Reset edited order to original values
-    if (order) {
-      setEditedOrder(order);
-    }
+    orderHandleCancelClick();
   };
   
   const handleSaveClick = async () => {
-    // This would be implemented for saving edits
-    try {
-      // Save logic would go here
-      toast.success("Order updated successfully");
-      setIsEditing(false);
-    } catch (error) {
-      toast.error("Failed to update order");
-      console.error(error);
-    }
+    orderHandleSaveClick();
   };
   
   const handleBackClick = () => {
@@ -91,17 +93,11 @@ export function useOrderSinglePage() {
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setEditedOrder(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    updateOrderField(name as keyof Order, value);
   };
   
   const handleStatusChange = (status: OrderStatus) => {
-    setEditedOrder(prev => ({
-      ...prev,
-      status
-    }));
+    updateOrderStatus(status);
   };
 
   return {
@@ -118,6 +114,7 @@ export function useOrderSinglePage() {
     activeTab,
     setActiveTab,
     isEditing,
+    isNewOrder,
     handleDeleteClick,
     confirmDelete,
     handleEditClick,

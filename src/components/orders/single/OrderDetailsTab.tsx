@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TabsContent } from '@/components/ui/tabs';
 
 export interface OrderDetailsTabProps {
-  order: Order;
+  order: Order | null;
   editedOrder: Order | null;
   isEditing: boolean;
+  isNewOrder?: boolean;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onStatusChange: (status: string) => void;
 }
@@ -20,9 +21,12 @@ export function OrderDetailsTab({
   order,
   editedOrder,
   isEditing,
+  isNewOrder = false,
   onInputChange,
   onStatusChange
 }: OrderDetailsTabProps) {
+  if (!order) return null;
+  
   const displayOrder = editedOrder || order;
   
   return (
@@ -121,6 +125,7 @@ export function OrderDetailsTab({
                 value={displayOrder.client}
                 onChange={onInputChange}
                 readOnly={!isEditing}
+                required={isNewOrder}
               />
             </div>
             
@@ -129,6 +134,7 @@ export function OrderDetailsTab({
               <Input 
                 id="clientEmail"
                 name="clientEmail"
+                type="email"
                 value={displayOrder.clientEmail || displayOrder.client_email || ''}
                 onChange={onInputChange}
                 readOnly={!isEditing}
@@ -163,6 +169,43 @@ export function OrderDetailsTab({
                 value={displayOrder.address}
                 onChange={onInputChange}
                 readOnly={!isEditing}
+                required={isNewOrder}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input 
+                id="city"
+                name="city"
+                value={displayOrder.city || ''}
+                onChange={onInputChange}
+                readOnly={!isEditing}
+                required={isNewOrder}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input 
+                id="state"
+                name="state"
+                value={displayOrder.state || ''}
+                onChange={onInputChange}
+                readOnly={!isEditing}
+                required={isNewOrder}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="zip">ZIP Code</Label>
+              <Input 
+                id="zip"
+                name="zip"
+                value={displayOrder.zip || ''}
+                onChange={onInputChange}
+                readOnly={!isEditing}
+                required={isNewOrder}
               />
             </div>
             
@@ -174,6 +217,7 @@ export function OrderDetailsTab({
                 value={displayOrder.propertyType || displayOrder.property_type || ''}
                 onChange={onInputChange}
                 readOnly={!isEditing}
+                required={isNewOrder}
               />
             </div>
             
@@ -186,6 +230,31 @@ export function OrderDetailsTab({
                 value={displayOrder.squareFeet || displayOrder.square_feet || 0}
                 onChange={onInputChange}
                 readOnly={!isEditing}
+                required={isNewOrder}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="photographer">Photographer</Label>
+              <Input 
+                id="photographer"
+                name="photographer"
+                value={displayOrder.photographer || ''}
+                onChange={onInputChange}
+                readOnly={!isEditing}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
+              <Input 
+                id="price"
+                name="price"
+                type="number"
+                value={displayOrder.price || 0}
+                onChange={onInputChange}
+                readOnly={!isEditing}
+                required={isNewOrder}
               />
             </div>
           </div>

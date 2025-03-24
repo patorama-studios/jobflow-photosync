@@ -9,10 +9,22 @@ import { Order } from '@/types/order-types';
 interface OrderDetailsErrorProps {
   error: string | null;
   onRetry?: (options?: RefetchOptions) => Promise<QueryObserverResult<Order, Error>>;
+  isNewOrderPage?: boolean;
 }
 
-export const OrderDetailsError: React.FC<OrderDetailsErrorProps> = ({ error, onRetry }) => {
+export const OrderDetailsError: React.FC<OrderDetailsErrorProps> = ({ 
+  error, 
+  onRetry, 
+  isNewOrderPage = false 
+}) => {
   const navigate = useNavigate();
+  
+  // If we're on the "new" order page but getting an error, it's probably because
+  // we're trying to fetch an order with ID "new"
+  if (isNewOrderPage && error?.includes('invalid input syntax for type uuid')) {
+    // Render a different component or redirect to create order form
+    return null; // This component will not render on the new order route
+  }
   
   return (
     <div className="container py-12 flex flex-col items-center justify-center">
