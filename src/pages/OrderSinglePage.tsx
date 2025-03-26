@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
@@ -68,9 +69,9 @@ export default function OrderSinglePage() {
               order={order}
               isNewOrder={true}
               isEditing={isEditing}
-              onEdit={handleEditClick}
-              onCancel={handleCancelClick}
-              onSave={handleSaveClick}
+              onEdit={handleEditClick as () => void}
+              onCancel={handleCancelClick as () => void}
+              onSave={handleSaveClick as () => Promise<void>}
               onDelete={handleDeleteClick}
               onBack={handleBackClick}
             />
@@ -138,9 +139,9 @@ export default function OrderSinglePage() {
           <OrderSinglePageHeader 
             order={order}
             isEditing={isEditing}
-            onEdit={handleEditClick}
-            onCancel={handleCancelClick}
-            onSave={handleSaveClick}
+            onEdit={handleEditClick as () => void}
+            onCancel={handleCancelClick as () => void}
+            onSave={handleSaveClick as () => Promise<void>}
             onDelete={handleDeleteClick}
             onBack={handleBackClick}
           />

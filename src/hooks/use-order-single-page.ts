@@ -42,13 +42,33 @@ export function useOrderSinglePage() {
   } = orderDetailsResult;
   
   // Extract the additional properties safely with proper types
-  const orderIsEditing = 'isEditing' in orderDetailsResult ? orderDetailsResult.isEditing : false;
-  const isNewOrder = 'isNewOrder' in orderDetailsResult ? orderDetailsResult.isNewOrder : false;
-  const handleEditClick = 'handleEditClick' in orderDetailsResult ? orderDetailsResult.handleEditClick : () => {};
-  const handleCancelClick = 'handleCancelClick' in orderDetailsResult ? orderDetailsResult.handleCancelClick : () => {};
-  const handleSaveClick = 'handleSaveClick' in orderDetailsResult ? orderDetailsResult.handleSaveClick : async () => {};
-  const updateOrderField = 'updateOrderField' in orderDetailsResult ? orderDetailsResult.updateOrderField : (field: keyof Order, value: any) => {};
-  const updateOrderStatus = 'updateOrderStatus' in orderDetailsResult ? orderDetailsResult.updateOrderStatus : (status: OrderStatus) => {};
+  const orderIsEditing = 'isEditing' in orderDetailsResult && typeof orderDetailsResult.isEditing === 'boolean' 
+    ? orderDetailsResult.isEditing 
+    : false;
+  
+  const isNewOrder = 'isNewOrder' in orderDetailsResult && typeof orderDetailsResult.isNewOrder === 'boolean'
+    ? orderDetailsResult.isNewOrder 
+    : false;
+  
+  const handleEditClick = 'handleEditClick' in orderDetailsResult && typeof orderDetailsResult.handleEditClick === 'function'
+    ? orderDetailsResult.handleEditClick 
+    : () => {};
+  
+  const handleCancelClick = 'handleCancelClick' in orderDetailsResult && typeof orderDetailsResult.handleCancelClick === 'function'
+    ? orderDetailsResult.handleCancelClick 
+    : () => {};
+  
+  const handleSaveClick = 'handleSaveClick' in orderDetailsResult && typeof orderDetailsResult.handleSaveClick === 'function'
+    ? orderDetailsResult.handleSaveClick 
+    : async () => {};
+  
+  const updateOrderField = 'updateOrderField' in orderDetailsResult && typeof orderDetailsResult.updateOrderField === 'function'
+    ? orderDetailsResult.updateOrderField 
+    : (field: keyof Order, value: any) => {};
+  
+  const updateOrderStatus = 'updateOrderStatus' in orderDetailsResult && typeof orderDetailsResult.updateOrderStatus === 'function'
+    ? orderDetailsResult.updateOrderStatus 
+    : (status: OrderStatus) => {};
   
   // Sync editing state with the useOrderDetails hook
   useEffect(() => {
@@ -68,7 +88,7 @@ export function useOrderSinglePage() {
   
   const confirmDelete = async () => {
     try {
-      if (deleteOrder) {
+      if (deleteOrder && typeof deleteOrder === 'function') {
         await deleteOrder();
         toast.success("Order deleted successfully");
         navigate('/orders');
@@ -85,11 +105,15 @@ export function useOrderSinglePage() {
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    updateOrderField(name as keyof Order, value);
+    if (typeof updateOrderField === 'function') {
+      updateOrderField(name as keyof Order, value);
+    }
   };
   
   const handleStatusChange = (status: OrderStatus) => {
-    updateOrderStatus(status);
+    if (typeof updateOrderStatus === 'function') {
+      updateOrderStatus(status);
+    }
   };
 
   return {
