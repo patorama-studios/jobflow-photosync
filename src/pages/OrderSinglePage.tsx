@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { OrderSinglePageHeader } from '@/components/orders/single/OrderSinglePageHeader';
@@ -20,6 +19,7 @@ export default function OrderSinglePage() {
     order,
     isLoading,
     error,
+    refetch,
     orderId,
     editedOrder,
     refundsForOrder,
@@ -41,9 +41,7 @@ export default function OrderSinglePage() {
     navigate,
   } = useOrderSinglePage();
 
-  // Special rendering for new order page
   if (isNewOrder) {
-    // If we're still loading, show skeleton
     if (isLoading) {
       return (
         <MainLayout>
@@ -62,7 +60,6 @@ export default function OrderSinglePage() {
       );
     }
     
-    // Once data is loaded (or in this case, the empty order template is ready)
     return (
       <MainLayout>
         <PageTransition>
@@ -91,7 +88,6 @@ export default function OrderSinglePage() {
                 onInputChange={handleInputChange}
                 onStatusChange={handleStatusChange}
               />
-              {/* Don't show other tabs for new orders */}
             </OrderTabsContainer>
           </div>
         </PageTransition>
@@ -99,7 +95,6 @@ export default function OrderSinglePage() {
     );
   }
 
-  // Regular loading state for existing orders
   if (isLoading) {
     return (
       <MainLayout>
@@ -122,7 +117,6 @@ export default function OrderSinglePage() {
     );
   }
 
-  // Handle errors for existing orders
   if (error || !order) {
     return (
       <MainLayout>
@@ -137,7 +131,6 @@ export default function OrderSinglePage() {
     );
   }
 
-  // Regular order details view for existing orders
   return (
     <MainLayout>
       <PageTransition>

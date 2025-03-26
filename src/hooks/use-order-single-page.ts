@@ -31,20 +31,24 @@ export function useOrderSinglePage() {
   
   const [editedOrder, setEditedOrder] = useState<Order>(emptyOrder);
   
+  const orderDetailsResult = useOrderDetails(orderId || '');
+  
   const { 
     order, 
     isLoading, 
     error, 
-    refetch, 
-    deleteOrder,
-    isNewOrder,
-    isEditing: orderIsEditing,
-    handleEditClick: orderHandleEditClick,
-    handleCancelClick: orderHandleCancelClick,
-    handleSaveClick: orderHandleSaveClick,
-    updateOrderField,
-    updateOrderStatus
-  } = useOrderDetails(orderId || '');
+    refetch,
+    deleteOrder
+  } = orderDetailsResult;
+  
+  // Extract the additional properties safely with proper types
+  const orderIsEditing = 'isEditing' in orderDetailsResult ? orderDetailsResult.isEditing : false;
+  const isNewOrder = 'isNewOrder' in orderDetailsResult ? orderDetailsResult.isNewOrder : false;
+  const handleEditClick = 'handleEditClick' in orderDetailsResult ? orderDetailsResult.handleEditClick : () => {};
+  const handleCancelClick = 'handleCancelClick' in orderDetailsResult ? orderDetailsResult.handleCancelClick : () => {};
+  const handleSaveClick = 'handleSaveClick' in orderDetailsResult ? orderDetailsResult.handleSaveClick : async () => {};
+  const updateOrderField = 'updateOrderField' in orderDetailsResult ? orderDetailsResult.updateOrderField : (field: keyof Order, value: any) => {};
+  const updateOrderStatus = 'updateOrderStatus' in orderDetailsResult ? orderDetailsResult.updateOrderStatus : (status: OrderStatus) => {};
   
   // Sync editing state with the useOrderDetails hook
   useEffect(() => {
@@ -73,18 +77,6 @@ export function useOrderSinglePage() {
       toast.error("Failed to delete order");
       console.error(error);
     }
-  };
-  
-  const handleEditClick = () => {
-    orderHandleEditClick();
-  };
-  
-  const handleCancelClick = () => {
-    orderHandleCancelClick();
-  };
-  
-  const handleSaveClick = async () => {
-    orderHandleSaveClick();
   };
   
   const handleBackClick = () => {
