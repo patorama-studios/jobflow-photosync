@@ -5,7 +5,7 @@ import { ClientDetailsView } from "@/components/clients/ClientDetailsView";
 import { useParams } from "react-router-dom";
 
 const ClientDetails = () => {
-  const { clientId } = useParams<{ clientId: string }>();
+  const { id: clientId } = useParams<{ id: string }>();
   
   return (
     <MainLayout>

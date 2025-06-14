@@ -8,7 +8,7 @@ import { validateStatus } from '@/utils/order-status-utils';
 
 export function useOrderSinglePage() {
   const navigate = useNavigate();
-  const { orderId } = useParams<{ orderId: string }>();
+  const { id: orderId } = useParams<{ id: string }>();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [isEditing, setIsEditing] = useState(false);

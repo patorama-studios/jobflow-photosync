@@ -15,7 +15,7 @@ import { OrderActivityTab } from '@/components/orders/details/OrderActivityTab';
 import { useOrderDetailsView } from '@/hooks/use-order-details-view';
 
 export default function OrderDetails() {
-  const { orderId } = useParams<{ orderId: string }>();
+  const { id: orderId } = useParams<{ id: string }>();
   const {
     order,
     isLoading,

@@ -5,7 +5,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { CompanyDetailsView } from "@/components/customers/CompanyDetailsView";
 
 export default function CompanyDetails() {
-  const { companyId } = useParams<{ companyId: string }>();
+  const { id: companyId } = useParams<{ id: string }>();
   
   if (!companyId) {
     return (
