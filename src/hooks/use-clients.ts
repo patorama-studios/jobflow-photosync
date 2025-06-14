@@ -1,23 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { clientService, Client, ClientStatus } from '@/services/mysql/client-service';
 
-export type ClientStatus = 'active' | 'inactive';
-
-export interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  status: ClientStatus;
-  company?: string;
-  company_id?: string;
-  photo_url?: string;
-  created_at?: string;
-  outstanding_jobs?: number;
-  outstanding_payment?: number;
-  total_jobs?: number;
-}
+// Re-export types for compatibility
+export type { Client, ClientStatus } from '@/services/mysql/client-service';
 
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -27,23 +13,15 @@ export const useClients = () => {
   const fetchClients = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-
-      // Transform the data to match our Client interface
-      const formattedClients = data.map((client: any) => ({
-        ...client,
-        status: client.status as ClientStatus || 'active'
-      }));
-
-      setClients(formattedClients);
+      console.log('🔧 useClients: Fetching clients from MySQL');
+      
+      const clientsData = await clientService.getAllClients();
+      console.log('🔧 useClients: Clients loaded:', clientsData.length);
+      
+      setClients(clientsData);
       setError(null);
     } catch (err: any) {
-      console.error('Error fetching clients:', err);
+      console.error('🔧 useClients: Error fetching clients:', err);
       setError(err);
     } finally {
       setIsLoading(false);
@@ -56,48 +34,37 @@ export const useClients = () => {
 
   const addClient = async (client: Omit<Client, 'id'>) => {
     try {
-      const newClient = {
-        ...client,
-        created_at: new Date().toISOString(),
-        status: client.status || 'active'
-      };
-
-      const { data, error } = await supabase
-        .from('clients')
-        .insert(newClient)
-        .select();
-
-      if (error) throw error;
+      console.log('🔧 useClients: Adding new client');
       
-      if (data && data.length > 0) {
-        setClients([...clients, data[0] as Client]);
-        return data[0] as Client;
+      const newClient = await clientService.addClient(client);
+      
+      if (newClient) {
+        setClients([...clients, newClient]);
+        console.log('🔧 useClients: Client added successfully');
+        return newClient;
       }
       
       return null;
     } catch (err) {
-      console.error('Error adding client:', err);
+      console.error('🔧 useClients: Error adding client:', err);
       throw err;
     }
   };
 
   const updateClient = async (id: string, updates: Partial<Client>) => {
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .update(updates)
-        .eq('id', id)
-        .select();
-
-      if (error) throw error;
-
-      if (data) {
+      console.log('🔧 useClients: Updating client:', id);
+      
+      const updatedClient = await clientService.updateClient(id, updates);
+      
+      if (updatedClient) {
         setClients(clients.map(client => 
-          client.id === id ? { ...client, ...updates } : client
+          client.id === id ? updatedClient : client
         ));
+        console.log('🔧 useClients: Client updated successfully');
       }
     } catch (err) {
-      console.error('Error updating client:', err);
+      console.error('🔧 useClients: Error updating client:', err);
       throw err;
     }
   };
@@ -106,27 +73,14 @@ export const useClients = () => {
     if (!query || query.length < 2) return [];
     
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .order('name')
-        .limit(10);
-
-      if (error) throw error;
-
-      // Transform the data to match our Client interface
-      const results = data.map((client: any) => ({
-        ...client,
-        status: client.status as ClientStatus || 'active'
-      }));
+      console.log('🔧 useClients: Searching clients:', query);
       
-      // Update the local state with the search results
-      setClients(results);
+      const results = await clientService.searchClients(query);
       
+      console.log('🔧 useClients: Search results:', results.length);
       return results;
     } catch (err) {
-      console.error('Error searching clients:', err);
+      console.error('🔧 useClients: Error searching clients:', err);
       return [];
     }
   };

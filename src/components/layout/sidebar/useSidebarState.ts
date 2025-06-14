@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSampleOrders } from '@/hooks/useSampleOrders';
 import { Photographer } from './types';
@@ -11,28 +11,37 @@ export const useSidebarState = (showCalendarSubmenu = false) => {
   const location = useLocation();
   const { orders } = useSampleOrders();
 
-  // Create array of photographer objects from orders
-  const photographers: Photographer[] = Array.from(
-    new Set(orders.map(order => order.photographer))
-  ).map((name, index) => {
-    return { 
-      id: index + 1, 
-      name,
-      color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` // Random color
-    };
-  });
+  // Create array of photographer objects from orders - memoized to prevent infinite rerenders
+  const photographers: Photographer[] = useMemo(() => {
+    const uniquePhotographers = Array.from(
+      new Set(orders.map(order => order.photographer))
+    );
+    
+    return uniquePhotographers.map((name, index) => {
+      return { 
+        id: index + 1, 
+        name,
+        color: `hsl(${(index * 137.5) % 360}, 70%, 50%)` // Deterministic colors
+      };
+    });
+  }, [orders]);
 
   // Get selected photographers from localStorage or use all by default
   const [selectedPhotographers, setSelectedPhotographers] = useState<number[]>(() => {
     const saved = localStorage.getItem('selectedPhotographers');
-    return saved ? JSON.parse(saved) : photographers.map(p => p.id);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return []; // Start empty to prevent dependency issues
   });
 
-  // Update selected photographers if photographers list changes
+  // Update selected photographers when photographers list changes
   useEffect(() => {
     const saved = localStorage.getItem('selectedPhotographers');
-    if (!saved) {
-      setSelectedPhotographers(photographers.map(p => p.id));
+    if (!saved && photographers.length > 0) {
+      const allIds = photographers.map(p => p.id);
+      setSelectedPhotographers(allIds);
+      localStorage.setItem('selectedPhotographers', JSON.stringify(allIds));
     }
   }, [photographers]);
 

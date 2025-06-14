@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/MySQLAuthContext";
 import { LoadingState } from "./user-profile/LoadingState";
 import { ErrorState } from "./user-profile/ErrorState";
 import { ProfileForm } from "./user-profile/ProfileForm";

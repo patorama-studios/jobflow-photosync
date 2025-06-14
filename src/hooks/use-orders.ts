@@ -1,10 +1,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order-types';
-import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
 import { toast } from 'sonner';
-import { deleteAllOrders } from '@/services/orders/order-delete-service';
+import { orderService } from '@/services/mysql/order-service';
 
 export function useOrders() {
   const queryClient = useQueryClient();
@@ -17,67 +15,78 @@ export function useOrders() {
   } = useQuery({
     queryKey: ['orders'],
     queryFn: async (): Promise<Order[]> => {
-      console.log('Fetching orders...');
-      
-      // Try fetching with new column name structure
-      let { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('appointment_start', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching orders with appointment_start ordering:', error);
-        
-        // Try alternative approach with scheduled_date
-        const result = await supabase
-          .from('orders')
-          .select('*')
-          .order('scheduled_date', { ascending: false });
-        
-        if (result.error) {
-          console.error('Error fetching orders with scheduled_date:', result.error);
-          
-          // Final fallback - just get all orders without ordering
-          const fallbackResult = await supabase
-            .from('orders')
-            .select('*');
-          
-          if (fallbackResult.error) {
-            console.error('Error fetching orders:', fallbackResult.error);
-            throw new Error(fallbackResult.error.message);
-          }
-          
-          data = fallbackResult.data;
-        } else {
-          data = result.data;
-        }
-      }
-      
-      console.log('Orders fetched:', data?.length || 0);
-      return mapSupabaseOrdersToOrderType(data || []);
+      console.log('🔧 useOrders: Fetching orders from MySQL...');
+      const ordersData = await orderService.getAllOrders();
+      console.log('🔧 useOrders: Orders fetched:', ordersData?.length || 0);
+      return ordersData;
     }
   });
 
   // Add a function to handle clearing all orders
   const clearAllOrders = async () => {
     try {
-      const result = await deleteAllOrders();
-      if (result.success) {
+      const success = await orderService.deleteAllOrders();
+      if (success) {
         toast.success('All orders have been cleared');
         refetch();
       } else {
-        toast.error(`Failed to clear orders: ${result.error}`);
+        toast.error('Failed to clear orders');
       }
     } catch (error: any) {
       toast.error(`Error clearing orders: ${error.message}`);
     }
   };
 
+  const createOrderMutation = useMutation({
+    mutationFn: async (orderData: Omit<Order, 'id' | 'orderNumber'>) => {
+      return await orderService.createOrder(orderData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Order created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to create order: ${error.message}`);
+    }
+  });
+
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Order> }) => {
+      return await orderService.updateOrder(id, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Order updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update order: ${error.message}`);
+    }
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await orderService.deleteOrder(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Order deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete order: ${error.message}`);
+    }
+  });
+
   return {
     orders,
     isLoading,
     error,
     refetch,
-    clearAllOrders
+    clearAllOrders,
+    createOrder: createOrderMutation.mutate,
+    updateOrder: updateOrderMutation.mutate,
+    deleteOrder: deleteOrderMutation.mutate,
+    isCreating: createOrderMutation.isPending,
+    isUpdating: updateOrderMutation.isPending,
+    isDeleting: deleteOrderMutation.isPending
   };
 }

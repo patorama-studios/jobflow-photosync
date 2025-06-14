@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/mysql/mock-client';
 
 /**
  * Service for user profile operations
@@ -14,19 +14,13 @@ export const profileService = {
       
       console.log('Fetching profile for user ID:', userId);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error fetching profile:', error.message);
-        return null;
-      }
+      const profile = await db.queryOne(
+        'SELECT id, email, full_name, username, phone, avatar_url, role, created_at, updated_at, email_verified FROM profiles WHERE id = ?',
+        [userId]
+      );
       
-      console.log('Profile data:', data);
-      return data;
+      console.log('Profile data:', profile);
+      return profile;
     } catch (error: any) {
       console.error('Error in getProfile:', error.message);
       return null;
@@ -49,39 +43,32 @@ export const profileService = {
       console.log('Updating profile for user ID:', userId, 'with data:', updates);
       
       // Check if profile exists
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      let result;
+      const existingProfile = await db.queryOne(
+        'SELECT id FROM profiles WHERE id = ?',
+        [userId]
+      );
       
       if (existingProfile) {
         // Update existing profile
         console.log('Updating existing profile');
-        result = await supabase
-          .from('profiles')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', userId);
+        const updateData = {
+          ...updates,
+          updated_at: new Date()
+        };
+        
+        await db.update('profiles', updateData, { id: userId });
       } else {
         // Create new profile
         console.log('Creating new profile');
-        result = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            ...updates,
-            updated_at: new Date().toISOString()
-          });
-      }
-      
-      if (result.error) {
-        console.error('Error updating profile:', result.error);
-        throw result.error;
+        const insertData = {
+          id: userId,
+          ...updates,
+          created_at: new Date(),
+          updated_at: new Date(),
+          email_verified: false
+        };
+        
+        await db.insert('profiles', insertData);
       }
       
       return true;

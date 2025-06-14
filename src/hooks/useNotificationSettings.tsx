@@ -1,12 +1,14 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { NotificationSetting } from './types/user-settings-types';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/MySQLAuthContext';
+import { notificationService } from '@/services/mysql/notification-service';
 
 export const useNotificationSettings = () => {
   const [settings, setSettings] = useState<NotificationSetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, session } = useAuth();
   
   const notificationTypes = [
     "Order Created", 
@@ -17,80 +19,48 @@ export const useNotificationSettings = () => {
     "System Alert"
   ];
   
-  // Initialize with default notification settings
-  const defaultSettings: NotificationSetting[] = notificationTypes.map((type, index) => ({
-    id: `notification-${index}`,
-    name: type,
-    description: `Notification for when a ${type.toLowerCase()} occurs`,
-    enabled: true,
-    type: type,
-    channels: {
-      email: false,
-      sms: false,
-      push: false
-    }
-  }));
-  
   const fetchNotificationSettings = useCallback(async () => {
     try {
       setLoading(true);
       
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        console.log('No authenticated user found');
-        setSettings(defaultSettings);
+      if (!user || !session) {
+        console.log('🔧 No authenticated user found');
+        setLoading(false);
         return;
       }
       
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('*')
-        .eq('key', 'notification_settings')
-        .eq('user_id', userData.user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching notification settings:', error);
-        setSettings(defaultSettings);
-        return;
-      }
-      
-      if (data && data.value) {
-        // Cast the data to ensure it matches our NotificationSetting type
-        setSettings(data.value as unknown as NotificationSetting[]);
-      } else {
-        console.log('No notification settings found, using defaults');
-        setSettings(defaultSettings);
-      }
+      console.log('🔧 Fetching notification settings for user:', user.id);
+      const userSettings = await notificationService.getNotificationSettings(user.id);
+      setSettings(userSettings);
     } catch (error) {
-      console.error('Failed to fetch notification settings:', error);
-      setSettings(defaultSettings);
+      console.error('🔧 Failed to fetch notification settings:', error);
+      toast.error('Failed to load notification settings');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, session]);
   
   useEffect(() => {
     fetchNotificationSettings();
   }, [fetchNotificationSettings]);
   
-  const updateChannelForType = (type: string, channel: 'email' | 'sms' | 'push', enabled: boolean) => {
-    setSettings(prev => 
-      prev.map(setting => 
-        setting.type === type 
-          ? { 
-              ...setting, 
-              channels: { 
-                ...setting.channels, 
-                [channel]: enabled 
-              } 
-            } 
-          : setting
-      )
-    );
-    
-    // In a real app, you'd save this to the database
-    toast.success(`${channel} notifications ${enabled ? 'enabled' : 'disabled'} for ${type}`);
+  const updateChannelForType = async (type: string, channel: 'email' | 'sms' | 'push', enabled: boolean) => {
+    if (!user || !session) {
+      toast.error('You must be logged in to update notification settings');
+      return;
+    }
+
+    try {
+      console.log('🔧 Updating notification channel:', { type, channel, enabled });
+      
+      const updatedSettings = await notificationService.updateChannelForType(user.id, type, channel, enabled);
+      setSettings(updatedSettings);
+      
+      toast.success(`${channel} notifications ${enabled ? 'enabled' : 'disabled'} for ${type}`);
+    } catch (error) {
+      console.error('🔧 Failed to update notification settings:', error);
+      toast.error('Failed to save notification settings');
+    }
   };
   
   return {

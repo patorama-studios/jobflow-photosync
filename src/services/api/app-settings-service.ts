@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/mysql/mock-client';
 
 /**
  * Service for application settings operations
@@ -10,18 +10,21 @@ export const appSettingsService = {
    */
   getAppSettings: async (key: string) => {
     try {
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('*')
-        .eq('key', key)
-        .maybeSingle();
-        
-      if (error) {
-        console.error(`Error fetching ${key} settings:`, error);
+      const setting = await db.queryOne(
+        'SELECT * FROM app_settings WHERE `key` = ?',
+        [key]
+      );
+      
+      if (!setting) {
         return null;
       }
       
-      return data?.value;
+      // Parse JSON value if it's a string
+      try {
+        return typeof setting.value === 'string' ? JSON.parse(setting.value) : setting.value;
+      } catch {
+        return setting.value;
+      }
     } catch (error: any) {
       console.error(`Error in getAppSettings(${key}):`, error.message);
       return null;
@@ -39,38 +42,30 @@ export const appSettingsService = {
   ) => {
     try {
       // Check if setting exists
-      const { data: existingData } = await supabase
-        .from('app_settings')
-        .select('id')
-        .eq('key', key)
-        .maybeSingle();
-        
-      let result;
+      const existingData = await db.queryOne(
+        'SELECT id FROM app_settings WHERE `key` = ?',
+        [key]
+      );
+      
+      // Serialize value as JSON string
+      const serializedValue = JSON.stringify(value);
       
       if (existingData) {
         // Update existing setting
-        result = await supabase
-          .from('app_settings')
-          .update({ 
-            value,
-            updated_at: new Date().toISOString() 
-          })
-          .eq('key', key);
+        await db.update('app_settings', {
+          value: serializedValue,
+          updated_at: new Date()
+        }, { key });
       } else {
         // Create new setting
-        result = await supabase
-          .from('app_settings')
-          .insert({
-            key,
-            value,
-            user_id: userId,
-            is_global: isGlobal,
-          });
-      }
-      
-      if (result.error) {
-        console.error(`Error saving ${key} settings:`, result.error);
-        return false;
+        await db.insert('app_settings', {
+          key,
+          value: serializedValue,
+          user_id: userId || null,
+          is_global: isGlobal,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
       }
       
       return true;

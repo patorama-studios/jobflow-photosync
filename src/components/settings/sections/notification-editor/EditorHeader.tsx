@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle, LogIn } from 'lucide-react';
 import { useNotificationTemplates } from '@/contexts/NotificationTemplateContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/MySQLAuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export const EditorHeader: React.FC<{ isAuthenticated?: boolean | null }> = ({ isAuthenticated }) => {

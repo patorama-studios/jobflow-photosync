@@ -108,7 +108,7 @@ export default function OrderSinglePageNew() {
                       </div>
                       <div className="mt-4">
                         <h4 className="font-medium mb-2">Booking notes</h4>
-                        <p className="text-gray-600">Gate code 1234</p>
+                        <p className="text-gray-600">{order.customerNotes || order.notes || 'No booking notes available'}</p>
                       </div>
                       
                       {/* Map placeholder */}
@@ -118,12 +118,14 @@ export default function OrderSinglePageNew() {
                             <MapPin className="h-8 w-8 text-red-500 mx-auto mb-2" />
                             <p className="text-sm text-gray-600">Map view of {order.address}</p>
                           </div>
-                          <div className="absolute bottom-4 right-4 bg-white rounded-lg p-2 shadow-sm">
-                            <div className="text-sm">
-                              <div className="font-medium">Drive time</div>
-                              <div className="text-blue-600">25 min before</div>
+                          {order.drivingTimeMin && (
+                            <div className="absolute bottom-4 right-4 bg-white rounded-lg p-2 shadow-sm">
+                              <div className="text-sm">
+                                <div className="font-medium">Drive time</div>
+                                <div className="text-blue-600">{order.drivingTimeMin} min before</div>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -141,15 +143,15 @@ export default function OrderSinglePageNew() {
                       <div className="flex items-center justify-between py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className="font-medium">Photography — Daylight</span>
+                          <span className="font-medium">{order.package || 'Photography Package'}</span>
                         </div>
                         <div className="flex items-center gap-4">
-                          <Badge variant="outline">Not Started</Badge>
-                          <span className="text-sm text-gray-600">45 mins</span>
+                          <Badge variant="outline">{order.status === 'scheduled' ? 'Not Started' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}</Badge>
+                          <span className="text-sm text-gray-600">${order.price}</span>
                         </div>
                       </div>
                       <div className="mt-4 pt-4 border-t">
-                        <div className="text-sm text-gray-600">15 mins</div>
+                        <div className="text-sm text-gray-600">Property: {order.propertyType} • {order.squareFeet} sq ft</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -168,8 +170,8 @@ export default function OrderSinglePageNew() {
                           <User className="h-5 w-5 text-gray-600" />
                         </div>
                         <div>
-                          <div className="font-medium">Kristen Peters</div>
-                          <div className="text-sm text-gray-600">Editor</div>
+                          <div className="font-medium">{order.photographer}</div>
+                          <div className="text-sm text-gray-600">Photographer</div>
                         </div>
                       </div>
                     </CardContent>
@@ -189,19 +191,15 @@ export default function OrderSinglePageNew() {
                           <User className="h-6 w-6 text-gray-600" />
                         </div>
                         <div>
-                          <div className="font-semibold">Steven Murphy</div>
-                          <div className="text-sm text-gray-600">Editor</div>
+                          <div className="font-semibold">{order.photographer}</div>
+                          <div className="text-sm text-gray-600">Photographer</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="h-6 w-6 text-gray-600" />
+                      {order.photographerPayoutRate && (
+                        <div className="text-sm text-gray-600 mt-2">
+                          Payout Rate: ${order.photographerPayoutRate}/hour
                         </div>
-                        <div>
-                          <div className="font-semibold">Rebecca Ress</div>
-                          <div className="text-sm text-gray-600">Content Creator</div>
-                        </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -210,22 +208,28 @@ export default function OrderSinglePageNew() {
                     <CardHeader>
                       <CardTitle>Order Notes</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <Button variant="link" className="p-0 h-auto text-blue-600">
-                        Kristen Property Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Additional Order Notes Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Order Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="link" className="p-0 h-auto text-blue-600">
-                        View Property Details
-                      </Button>
+                    <CardContent className="space-y-3">
+                      {order.notes && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">General Notes</h4>
+                          <p className="text-sm text-gray-600">{order.notes}</p>
+                        </div>
+                      )}
+                      {order.internalNotes && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">Internal Notes</h4>
+                          <p className="text-sm text-gray-600">{order.internalNotes}</p>
+                        </div>
+                      )}
+                      {order.customerNotes && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">Customer Notes</h4>
+                          <p className="text-sm text-gray-600">{order.customerNotes}</p>
+                        </div>
+                      )}
+                      {(!order.notes && !order.internalNotes && !order.customerNotes) && (
+                        <p className="text-sm text-gray-400">No notes available</p>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -253,11 +257,35 @@ export default function OrderSinglePageNew() {
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span className="font-medium">Photography — Daylight</span>
+                        <div>
+                          <span className="font-medium">{order.package || 'Photography Package'}</span>
+                          <div className="text-sm text-gray-500">{order.propertyType} • {order.squareFeet} sq ft</div>
+                        </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <Badge variant="outline">Not Started</Badge>
-                        <span className="text-sm text-gray-600">45 mins</span>
+                        <Badge variant="outline">{order.status === 'scheduled' ? 'Not Started' : order.status.charAt(0).toUpperCase() + order.status.slice(1)}</Badge>
+                        <span className="text-sm font-medium">${order.price}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium mb-2">Order Details</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500">Client:</span>
+                          <span className="ml-2 font-medium">{order.client}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Photographer:</span>
+                          <span className="ml-2 font-medium">{order.photographer}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Scheduled:</span>
+                          <span className="ml-2">{order.scheduledDate} at {order.scheduledTime}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Order #:</span>
+                          <span className="ml-2">{order.orderNumber}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { auth } from '@/integrations/mysql/mock-client';
 
 /**
  * Service for authentication operations
@@ -16,22 +16,14 @@ export const authService = {
     try {
       console.log('Registering new user:', email);
       
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-          }
-        }
-      });
+      const result = await auth.signUp(email, password, userData);
       
-      if (error) {
-        console.error('Error registering user:', error);
-        throw error;
+      if (!result.success) {
+        console.error('Error registering user:', result.error);
+        throw new Error(result.error);
       }
       
-      return { success: true, data };
+      return { success: true, data: result.data };
     } catch (error: any) {
       console.error('Error in registerUser:', error);
       return { success: false, error: error.message };
@@ -45,17 +37,14 @@ export const authService = {
     try {
       console.log('Logging in user:', email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const result = await auth.signInWithPassword(email, password);
       
-      if (error) {
-        console.error('Error logging in user:', error);
-        throw error;
+      if (!result.success) {
+        console.error('Error logging in user:', result.error);
+        throw new Error(result.error);
       }
       
-      return { success: true, data };
+      return { success: true, data: result.data };
     } catch (error: any) {
       console.error('Error in loginUser:', error);
       return { success: false, error: error.message };

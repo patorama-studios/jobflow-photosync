@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+// import { supabase } from '@/integrations/supabase/client'; // Using mock client instead
 import { useToast } from '@/components/ui/use-toast';
 
 type Message = {

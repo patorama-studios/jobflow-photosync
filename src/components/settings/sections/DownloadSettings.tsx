@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DownloadSettings as DownloadSettingsType } from "@/hooks/types/user-settings-types";
+import { useAuth } from "@/contexts/MySQLAuthContext";
+import { downloadService } from "@/services/mysql/download-service";
 
 const defaultSettings: DownloadSettingsType = {
   automaticDownloads: false,
@@ -25,52 +26,32 @@ export function DownloadSettings() {
   const [settings, setSettings] = useState<DownloadSettingsType>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { user, session } = useAuth();
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
         
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) {
+        if (!user || !session) {
+          console.log('🔧 No authenticated user found');
+          setLoading(false);
           return;
         }
         
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .eq('key', 'download_settings')
-          .eq('user_id', userData.user.id)
-          .maybeSingle();
-          
-        if (error) {
-          console.error('Error fetching download settings:', error);
-          return;
-        }
-        
-        if (data && data.value) {
-          const loadedSettings = data.value as Record<string, any>;
-          setSettings({
-            automaticDownloads: loadedSettings.automaticDownloads || false,
-            downloadPath: loadedSettings.downloadPath || "",
-            qualityPreference: loadedSettings.qualityPreference || "high",
-            organizationMethod: loadedSettings.organizationMethod || "date",
-            maxDimension: loadedSettings.maxDimension || 2000,
-            imageQuality: loadedSettings.imageQuality || 80,
-            dpi: loadedSettings.dpi || "300",
-            fileNaming: loadedSettings.fileNaming || "original",
-            customFormat: loadedSettings.customFormat
-          });
-        }
+        console.log('🔧 Fetching download settings for user:', user.id);
+        const userSettings = await downloadService.getDownloadSettings(user.id);
+        setSettings(userSettings);
       } catch (error) {
-        console.error('Failed to fetch download settings:', error);
+        console.error('🔧 Failed to fetch download settings:', error);
+        toast.error('Failed to load download settings');
       } finally {
         setLoading(false);
       }
     };
     
     fetchSettings();
-  }, []);
+  }, [user, session]);
 
   const handleChange = (field: keyof DownloadSettingsType, value: any) => {
     setSettings(prev => ({
@@ -80,30 +61,24 @@ export function DownloadSettings() {
   };
 
   const saveSettings = async () => {
+    if (!user || !session) {
+      toast.error('You must be logged in to save settings');
+      return;
+    }
+
     setSaving(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        toast.error('You must be logged in to save settings');
-        return;
+      console.log('🔧 Saving download settings to MySQL:', settings);
+      
+      const success = await downloadService.saveDownloadSettings(user.id, settings);
+      
+      if (success) {
+        toast.success('Download settings saved successfully');
+      } else {
+        throw new Error('Failed to save settings to database');
       }
-      
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({
-          key: 'download_settings',
-          value: settings as any,
-          user_id: userData.user.id,
-          updated_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success('Download settings saved successfully');
     } catch (error) {
-      console.error('Error saving download settings:', error);
+      console.error('🔧 Error saving download settings:', error);
       toast.error('Failed to save download settings');
     } finally {
       setSaving(false);

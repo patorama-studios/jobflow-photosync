@@ -9,7 +9,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Loader2, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/MySQLAuthContext";
 
 export function OrganizationSettings() {
   const { settings, loading, updateSettings, fetchSettings } = useOrganizationSettings();

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/MySQLAuthContext";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ export function Header() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login');
+    navigate('/auth');
   };
 
   const getInitials = () => {
@@ -105,10 +105,10 @@ export function Header() {
             </>
           ) : (
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => navigate('/login')} size="sm">
+              <Button variant="ghost" onClick={() => navigate('/auth')} size="sm">
                 Login
               </Button>
-              <Button onClick={() => navigate('/register')} size="sm">
+              <Button onClick={() => navigate('/auth', { state: { tab: 'register' } })} size="sm">
                 Register
               </Button>
             </div>

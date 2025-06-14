@@ -9,7 +9,7 @@ import { useTeamMembers } from "./team-members/useTeamMembers";
 import { TeamMemberDialog } from "./team-members/TeamMemberDialog";
 import { TeamMembersTable } from "./team-members/TeamMembersTable";
 import { TeamRoleInfo } from "./team-members/TeamRoleInfo";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/MySQLAuthContext";
 import { toast } from "sonner";
 
 export function TeamMembers() {

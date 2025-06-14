@@ -1,29 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { companyService, Company, CompanyStatus } from '@/services/mysql/company-service';
 
-export type CompanyStatus = 'active' | 'inactive';
-
-export interface Company {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  status: CompanyStatus;
-  industry: string;
-  logo_url?: string;
-  website?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  total_jobs?: number;
-  open_jobs?: number;
-  total_revenue?: number;
-  outstanding_amount?: number;
-  created_at: string;
-}
+// Re-export types for compatibility
+export type { Company, CompanyStatus } from '@/services/mysql/company-service';
 
 export const useCompanies = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -33,23 +14,15 @@ export const useCompanies = () => {
   const fetchCompanies = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-
-      // Transform the data to match our Company interface
-      const formattedCompanies = data.map((company: any) => ({
-        ...company,
-        status: company.status as CompanyStatus || 'active'
-      }));
-
-      setCompanies(formattedCompanies);
+      console.log('🔧 useCompanies: Fetching companies from MySQL');
+      
+      const companiesData = await companyService.getAllCompanies();
+      console.log('🔧 useCompanies: Companies loaded:', companiesData.length);
+      
+      setCompanies(companiesData);
       setError(null);
     } catch (err: any) {
-      console.error('Error fetching companies:', err);
+      console.error('🔧 useCompanies: Error fetching companies:', err);
       setError(err);
     } finally {
       setIsLoading(false);
@@ -62,49 +35,43 @@ export const useCompanies = () => {
 
   const addCompany = async (company: Omit<Company, 'id' | 'created_at'>) => {
     try {
-      const newCompany = {
-        ...company,
-        created_at: new Date().toISOString(),
-        status: company.status || 'active',
-        industry: company.industry || 'real estate'
-      };
-
-      const { data, error } = await supabase
-        .from('companies')
-        .insert(newCompany)
-        .select();
-
-      if (error) throw error;
+      console.log('🔧 useCompanies: Adding new company');
       
-      if (data && data.length > 0) {
-        setCompanies([...companies, data[0] as Company]);
-        return data[0] as Company;
+      const newCompany = await companyService.addCompany(company);
+      
+      if (newCompany) {
+        setCompanies([...companies, newCompany]);
+        toast.success('Company added successfully');
+        console.log('🔧 useCompanies: Company added successfully');
+        return newCompany;
+      } else {
+        throw new Error('Failed to add company');
       }
-      
-      return null;
     } catch (err) {
-      console.error('Error adding company:', err);
+      console.error('🔧 useCompanies: Error adding company:', err);
+      toast.error('Failed to add company');
       throw err;
     }
   };
 
   const updateCompany = async (id: string, updates: Partial<Company>) => {
     try {
-      const { data, error } = await supabase
-        .from('companies')
-        .update(updates)
-        .eq('id', id)
-        .select();
-
-      if (error) throw error;
-
-      if (data) {
+      console.log('🔧 useCompanies: Updating company:', id);
+      
+      const updatedCompany = await companyService.updateCompany(id, updates);
+      
+      if (updatedCompany) {
         setCompanies(companies.map(company => 
-          company.id === id ? { ...company, ...updates } : company
+          company.id === id ? updatedCompany : company
         ));
+        toast.success('Company updated successfully');
+        console.log('🔧 useCompanies: Company updated successfully');
+      } else {
+        throw new Error('Failed to update company');
       }
     } catch (err) {
-      console.error('Error updating company:', err);
+      console.error('🔧 useCompanies: Error updating company:', err);
+      toast.error('Failed to update company');
       throw err;
     }
   };
@@ -113,24 +80,14 @@ export const useCompanies = () => {
     if (!query || query.length < 2) return [];
     
     try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .order('name')
-        .limit(10);
-
-      if (error) throw error;
-
-      // Transform the data to match our Company interface
-      const results = data.map((company: any) => ({
-        ...company,
-        status: company.status as CompanyStatus || 'active'
-      }));
+      console.log('🔧 useCompanies: Searching companies:', query);
       
+      const results = await companyService.searchCompanies(query);
+      
+      console.log('🔧 useCompanies: Search results:', results.length);
       return results;
     } catch (err) {
-      console.error('Error searching companies:', err);
+      console.error('🔧 useCompanies: Error searching companies:', err);
       return [];
     }
   };

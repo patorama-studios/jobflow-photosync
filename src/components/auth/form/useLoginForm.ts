@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useFormValidation } from '@/hooks/useFormValidation';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabaseService } from '@/services/api/supabase-service';
+import { useAuth } from '@/contexts/MySQLAuthContext';
 
 interface LoginFormValues {
   email: string;
@@ -15,7 +14,7 @@ export const useLoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const { checkSession } = useAuth();
+  const { checkSession, signIn } = useAuth();
   
   const from = location.state?.from?.pathname || "/dashboard";
   
@@ -49,7 +48,7 @@ export const useLoginForm = () => {
     
     try {
       console.log('Attempting login with:', values.email);
-      const result = await supabaseService.loginUser(values.email, values.password);
+      const result = await signIn(values.email, values.password);
       
       if (!result.success) {
         throw new Error(result.error);
@@ -59,18 +58,8 @@ export const useLoginForm = () => {
         description: 'Welcome back!'
       });
       
-      // Force check session after successful login
-      const success = await checkSession();
-      
-      if (result.data.user && success) {
-        console.log('Login successful, redirecting to:', from);
-        navigate(from, { replace: true });
-      } else {
-        console.error('Login succeeded but session check failed');
-        toast.error('Session verification failed', { 
-          description: 'Please try refreshing the page'
-        });
-      }
+      console.log('Login successful, redirecting to:', from);
+      navigate(from, { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error('Login failed', {

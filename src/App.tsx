@@ -80,7 +80,7 @@ function App() {
         <Route path="/orders/:id" element={
           <ProtectedRoute>
             <React.Suspense fallback={<PageLoading message="Loading Order Details..." />}>
-              <OrderDetails />
+              <OrderSinglePage />
             </React.Suspense>
           </ProtectedRoute>
         } />

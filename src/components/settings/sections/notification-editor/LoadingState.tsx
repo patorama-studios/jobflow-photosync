@@ -4,7 +4,7 @@ import { Loader2, AlertCircle, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useNotificationTemplates } from '@/contexts/NotificationTemplateContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/MySQLAuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export const LoadingState: React.FC<{ isAuthenticated?: boolean | null }> = ({ isAuthenticated }) => {

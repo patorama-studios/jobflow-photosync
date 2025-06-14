@@ -1,7 +1,9 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { Session, User } from '@supabase/supabase-js';
+// Mock types for compatibility
+type Session = { user: any; access_token: string } | null;
+type User = { id: string; email: string } | null;
 import { toast } from 'sonner';
 import { debounce } from '@/utils/performance-optimizer';
 

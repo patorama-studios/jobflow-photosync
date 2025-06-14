@@ -1,11 +1,9 @@
 
 import { useState } from 'react';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types/order-types';
-import { mapSupabaseOrdersToOrderType } from '@/utils/map-supabase-orders';
-import { deleteOrder as deleteOrderService } from '@/services/order-service';
 import { toast } from 'sonner';
+import { orderService } from '@/services/mysql/order-service';
 
 export function useOrderDetails(orderId: string) {
   const queryClient = useQueryClient();
@@ -23,19 +21,15 @@ export function useOrderDetails(orderId: string) {
         throw new Error('Order ID is required');
       }
       
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      console.log('🔧 useOrderDetails: Fetching order from MySQL:', orderId);
+      const orderData = await orderService.getOrderById(orderId);
       
-      if (error) {
-        console.error('Error fetching order details:', error);
-        throw new Error(error.message);
+      if (!orderData) {
+        throw new Error('Order not found');
       }
       
-      const orders = mapSupabaseOrdersToOrderType([data]);
-      return orders[0];
+      console.log('🔧 useOrderDetails: Order fetched successfully');
+      return orderData;
     },
     enabled: !!orderId
   });
@@ -43,15 +37,17 @@ export function useOrderDetails(orderId: string) {
   // Delete order mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const result = await deleteOrderService(orderId);
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to delete order');
+      console.log('🔧 useOrderDetails: Deleting order:', orderId);
+      const success = await orderService.deleteOrder(orderId);
+      if (!success) {
+        throw new Error('Failed to delete order');
       }
-      return result;
+      return { success: true };
     },
     onSuccess: () => {
       toast.success('Order deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
     },
     onError: (error: any) => {
       toast.error(`Failed to delete order: ${error.message}`);

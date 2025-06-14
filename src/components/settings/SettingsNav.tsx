@@ -91,11 +91,6 @@ export function SettingsNav({ activeCategory, onCategoryChange }: SettingsNavPro
       category: "production-status",
       label: "Production Status",
       icon: <Workflow className="mr-2 h-4 w-4" />
-    },
-    {
-      category: "esoft-integration",
-      label: "Esoft Integration",
-      icon: <ExternalLink className="mr-2 h-4 w-4" />
     }
   ];
   

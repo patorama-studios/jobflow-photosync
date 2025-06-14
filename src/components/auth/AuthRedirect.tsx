@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/MySQLAuthContext";
 import { PageLoading } from "@/components/loading/PageLoading";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

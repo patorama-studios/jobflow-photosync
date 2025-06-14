@@ -9,10 +9,12 @@ import {
   Plug, 
   BarChart, 
   Megaphone,
-  CreditCard
+  CreditCard,
+  MapPin,
+  Camera
 } from 'lucide-react';
 import { Integration } from './types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/MySQLAuthContext';
 
 interface AppsOverviewProps {
   hideHeader?: boolean;
@@ -82,6 +84,22 @@ export const AppsOverview = memo(function AppsOverview({ hideHeader = false }: A
         icon: Megaphone,
         connected: false,
         status: 'pending'
+      },
+      {
+        id: 'google-maps',
+        name: 'Google Maps',
+        description: 'Enable address autocomplete and location services',
+        icon: MapPin,
+        connected: false,
+        status: 'pending'
+      },
+      {
+        id: 'esoft',
+        name: 'Esoft',
+        description: 'Professional photo editing and processing services',
+        icon: Camera,
+        connected: false,
+        status: 'pending'
       }
     ];
     
@@ -89,6 +107,14 @@ export const AppsOverview = memo(function AppsOverview({ hideHeader = false }: A
     const boxToken = localStorage.getItem('box_access_token');
     const boxMasterFolder = localStorage.getItem('box_master_folder_id');
     const isBoxConnected = !!(boxToken && boxMasterFolder);
+    
+    // Check if Google Maps is connected
+    const googleMapsApiKey = localStorage.getItem('google_maps_api_key');
+    const isGoogleMapsConnected = !!googleMapsApiKey;
+    
+    // Check if Esoft is connected by checking for integration settings
+    // We'll assume it's connected if there are saved credentials
+    const isEsoftConnected = false; // This will be updated by the dialog when settings exist
     
     // Get authentication time for last synced info
     const boxAuthTime = localStorage.getItem('box_auth_time');
@@ -108,6 +134,22 @@ export const AppsOverview = memo(function AppsOverview({ hideHeader = false }: A
           connected: true,
           status: 'active' as const,
           lastSynced: lastSyncedTime
+        };
+      }
+      if (integration.id === 'google-maps' && isGoogleMapsConnected) {
+        return {
+          ...integration,
+          connected: true,
+          status: 'active' as const,
+          lastSynced: 'Active'
+        };
+      }
+      if (integration.id === 'esoft' && isEsoftConnected) {
+        return {
+          ...integration,
+          connected: true,
+          status: 'active' as const,
+          lastSynced: 'Active'
         };
       }
       return integration;

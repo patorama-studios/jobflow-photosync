@@ -1,7 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import MainLayout from '@/components/layout/MainLayout';
-import { PageTransition } from '@/components/layout/PageTransition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomerHeader } from './CustomerHeader';
 import { CompaniesTab } from './tabs/CompaniesTab';
@@ -51,9 +49,7 @@ export function CustomersView() {
   };
   
   return (
-    <MainLayout>
-      <PageTransition>
-        <div className="container p-6 mx-auto space-y-6">
+    <div className="container p-6 mx-auto space-y-6">
           <CustomerHeader 
             activeTab={activeTab}
             onAddClick={() => {
@@ -119,8 +115,6 @@ export function CustomersView() {
               onClientCreated={handleClientCreated}
             />
           )}
-        </div>
-      </PageTransition>
-    </MainLayout>
+    </div>
   );
 }

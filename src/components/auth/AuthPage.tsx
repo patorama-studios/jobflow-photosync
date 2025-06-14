@@ -4,7 +4,7 @@ import { Card, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/MySQLAuthContext';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { AuthHeader } from './AuthHeader';
@@ -44,7 +44,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ defaultTab = 'login' }) => {
   // Redirect if user is already logged in
   useEffect(() => {
     console.log("Auth page session check:", { hasSession: !!session, isLoading, initialLoadComplete });
-    if (session && initialLoadComplete) {
+    if (session && initialLoadComplete && !isLoading) {
       console.log("User already logged in, redirecting to:", from);
       toast.success("Already logged in", {
         description: "Redirecting to dashboard"

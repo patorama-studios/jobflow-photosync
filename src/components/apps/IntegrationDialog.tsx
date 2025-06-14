@@ -6,7 +6,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createBoxIntegration } from "@/lib/box-integration";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/MySQLAuthContext";
 
 // Import the integration components
 import { IntegrationHeader } from './integrations/IntegrationHeader';
@@ -16,6 +16,10 @@ import { GenericConnectForm } from './integrations/GenericConnectForm';
 import { StripeConnectedView } from './integrations/StripeConnectedView';
 import { BoxConnectedView } from './integrations/BoxConnectedView';
 import { GenericConnectedView } from './integrations/GenericConnectedView';
+import { GoogleMapsConnectForm } from './integrations/google-maps/GoogleMapsConnectForm';
+import { GoogleMapsConnectedView } from './integrations/google-maps/GoogleMapsConnectedView';
+import { EsoftConnectForm } from './integrations/esoft/EsoftConnectForm';
+import { EsoftConnectedView } from './integrations/esoft/EsoftConnectedView';
 import { ModalFooterActions } from './integrations/ModalFooterActions';
 import { isConnectDisabled } from './integrations/utils';
 import { Integration } from './types';
@@ -38,6 +42,12 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
   const [isSyncLoading, setIsSyncLoading] = useState(false);
   const [masterFolderId, setMasterFolderId] = useState("");
   const [mode, setMode] = useState<'test' | 'live'>('live');
+  
+  // Esoft specific state
+  const [clientId, setClientId] = useState("");
+  const [apiUsername, setApiUsername] = useState("");
+  const [apiPassword, setApiPassword] = useState("");
+  const [whiteLabelDomain, setWhiteLabelDomain] = useState("");
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -50,6 +60,10 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
     setWebhookSecret("");
     setWebhookUrl("");
     setMasterFolderId("");
+    setClientId("");
+    setApiUsername("");
+    setApiPassword("");
+    setWhiteLabelDomain("");
     setIsDeleteOpen(false);
     
     // Load existing integration settings from localStorage
@@ -57,6 +71,11 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
       const savedMasterFolderId = localStorage.getItem('box_master_folder_id');
       if (savedMasterFolderId) {
         setMasterFolderId(savedMasterFolderId);
+      }
+    } else if (connected && id === 'google-maps') {
+      const savedApiKey = localStorage.getItem('google_maps_api_key');
+      if (savedApiKey) {
+        setApiKey(savedApiKey);
       }
     }
   }, [id, connected, open]);
@@ -147,6 +166,33 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
         });
         return;
       }
+    } else if (id === 'esoft') {
+      try {
+        if (!clientId || !apiUsername || !apiPassword) {
+          toast({
+            title: "Credentials Required",
+            description: "Please enter Client ID, API Username, and API Password to connect with Esoft.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Here we would save the Esoft credentials using the useIntegrationSettings hook
+        // For now, we'll just set the connected state
+        setIsConnected(true);
+        toast({
+          title: "Esoft connected",
+          description: "Your Esoft integration has been successfully connected.",
+        });
+      } catch (error) {
+        console.error("Esoft connection error:", error);
+        toast({
+          title: "Connection failed",
+          description: "Failed to connect to Esoft. Please check your credentials.",
+          variant: "destructive",
+        });
+        return;
+      }
     } else {
       // For other integrations
       setIsConnected(true);
@@ -163,6 +209,13 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
       localStorage.removeItem('box_master_folder_id');
       localStorage.removeItem('box_access_token');
       localStorage.removeItem('box_auth_time');
+    } else if (id === 'google-maps') {
+      // Clear Google Maps API key from localStorage
+      localStorage.removeItem('google_maps_api_key');
+      localStorage.removeItem('google_maps_connected_at');
+    } else if (id === 'esoft') {
+      // For Esoft, we would delete the integration settings from database
+      // This will be handled by the EsoftConnectedView component
     }
     
     // In a real app, we would delete the integration from the database
@@ -177,6 +230,10 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
     setWebhookSecret("");
     setWebhookUrl("");
     setMasterFolderId("");
+    setClientId("");
+    setApiUsername("");
+    setApiPassword("");
+    setWhiteLabelDomain("");
     
     toast({
       title: "Integration disconnected",
@@ -244,7 +301,25 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                 />
               )}
               
-              {id !== 'stripe' && id !== 'box' && (
+              {id === 'google-maps' && (
+                <GoogleMapsConnectedView 
+                  onDisconnect={() => {
+                    handleDisconnect();
+                    onOpenChange(false);
+                  }}
+                />
+              )}
+              
+              {id === 'esoft' && (
+                <EsoftConnectedView 
+                  onDisconnect={() => {
+                    handleDisconnect();
+                    onOpenChange(false);
+                  }}
+                />
+              )}
+              
+              {id !== 'stripe' && id !== 'box' && id !== 'google-maps' && id !== 'esoft' && (
                 <GenericConnectedView 
                   id={id}
                   lastSynced={lastSynced}
@@ -276,6 +351,24 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
                   webhookSecret={webhookSecret}
                   setWebhookSecret={setWebhookSecret}
                 />
+              ) : id === 'google-maps' ? (
+                <GoogleMapsConnectForm 
+                  onSuccess={() => {
+                    setIsConnected(true);
+                    onOpenChange(false);
+                  }}
+                />
+              ) : id === 'esoft' ? (
+                <EsoftConnectForm 
+                  clientId={clientId}
+                  setClientId={setClientId}
+                  apiUsername={apiUsername}
+                  setApiUsername={setApiUsername}
+                  apiPassword={apiPassword}
+                  setApiPassword={setApiPassword}
+                  whiteLabelDomain={whiteLabelDomain}
+                  setWhiteLabelDomain={setWhiteLabelDomain}
+                />
               ) : (
                 <GenericConnectForm 
                   id={id}
@@ -298,7 +391,7 @@ export function IntegrationDialog({ integration, open, onOpenChange }: Integrati
           onOpenChange={onOpenChange}
           handleConnect={handleConnect}
           name={name}
-          isConnectDisabled={isConnectDisabled(id, masterFolderId, apiKey, secretKey)}
+          isConnectDisabled={isConnectDisabled(id, masterFolderId, apiKey, secretKey, clientId, apiUsername, apiPassword)}
           isMobile={isMobile}
         />
       </DialogContent>

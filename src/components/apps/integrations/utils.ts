@@ -5,12 +5,17 @@ export function isConnectDisabled(
   id: string, 
   masterFolderId: string, 
   apiKey: string, 
-  secretKey: string
+  secretKey: string,
+  clientId?: string,
+  apiUsername?: string,
+  apiPassword?: string
 ): boolean {
   if (id === 'box') {
     return !masterFolderId;
   } else if (id === 'stripe') {
     return !apiKey || !secretKey;
+  } else if (id === 'esoft') {
+    return !clientId || !apiUsername || !apiPassword;
   } else {
     return !apiKey;
   }

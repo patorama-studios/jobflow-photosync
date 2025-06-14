@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { TeamMember } from "./types";
 import { toast } from "sonner";
+import { teamService } from "@/services/mysql/team-service";
 
 export function useTeamMembers() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -14,22 +14,13 @@ export function useTeamMembers() {
       setIsLoading(true);
       setError(null);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('full_name');
+      console.log('🔧 Fetching team members from MySQL');
+      const teamMembers = await teamService.getTeamMembers();
       
-      if (error) throw error;
-      
-      const enrichedData = data?.map((profile: any) => ({
-        ...profile,
-        email: profile.email || `${profile.username || profile.id}@example.com`,
-        phone: profile.phone || ''
-      })) || [];
-      
-      setMembers(enrichedData as TeamMember[]);
+      setMembers(teamMembers);
+      console.log('🔧 Loaded team members:', teamMembers.length);
     } catch (error) {
-      console.error("Error fetching team members:", error);
+      console.error("🔧 Error fetching team members:", error);
       setError("Failed to load team members");
       toast.error("Failed to load team members");
     } finally {
@@ -52,71 +43,24 @@ export function useTeamMembers() {
     setIsSubmitting(true);
     
     try {
-      console.log("Creating new team member:", newMember);
+      console.log("🔧 Creating new team member:", newMember);
       
-      const response = await fetch(`${window.location.origin}/api/send-invitation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: newMember.email,
-          role: newMember.role,
-          fullName: newMember.full_name,
-          phone: newMember.phone || '',
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response from edge function:", errorText);
-        throw new Error(errorText || 'Failed to create team member');
-      }
-      
-      let result;
-      const responseText = await response.text();
-      
-      if (responseText && responseText.trim()) {
-        try {
-          result = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("Error parsing JSON response:", parseError, "Raw response:", responseText);
-          throw new Error('Invalid response from server');
-        }
-      } else {
-        result = { success: true };
-      }
-      
-      // Create a record in team_invitations table
-      const { error: inviteError } = await supabase
-        .from('team_invitations')
-        .insert({
-          email: newMember.email,
-          role: newMember.role,
-          status: 'pending'
-        });
-        
-      if (inviteError) {
-        console.warn("Could not create team invitation record:", inviteError);
-      }
-      
-      const tempId = crypto.randomUUID();
-      
-      const newTeamMember: TeamMember = {
-        id: tempId,
+      const createdMember = await teamService.addTeamMember({
         full_name: newMember.full_name,
         email: newMember.email,
         phone: newMember.phone || '',
-        role: newMember.role,
-        username: newMember.email.split('@')[0],
-        updated_at: new Date().toISOString()
-      };
+        role: newMember.role
+      });
       
-      setMembers(prev => [...prev, newTeamMember]);
-      toast.success("Team member invited successfully");
-      return true;
+      if (createdMember) {
+        setMembers(prev => [...prev, createdMember]);
+        toast.success("Team member invited successfully! Invitation email sent.");
+        return true;
+      } else {
+        throw new Error('Failed to create team member');
+      }
     } catch (error: any) {
-      console.error("Error saving team member:", error);
+      console.error("🔧 Error saving team member:", error);
       toast.error(error.message || "Failed to save team member");
       return false;
     } finally {
@@ -133,30 +77,22 @@ export function useTeamMembers() {
     setIsSubmitting(true);
     
     try {
-      console.log("Updating team member:", id, updatedMember);
+      console.log("🔧 Updating team member:", id, updatedMember);
       
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: updatedMember.full_name,
-          phone: updatedMember.phone || null,
-          role: updatedMember.role,
-          username: updatedMember.username || updatedMember.email?.split('@')[0] || null
-        })
-        .eq('id', id);
+      const updated = await teamService.updateTeamMember(id, updatedMember);
       
-      if (error) throw error;
-      
-      setMembers(prevMembers => prevMembers.map(member => 
-        member.id === id 
-          ? { ...member, ...updatedMember as TeamMember } 
-          : member
-      ));
-      
-      toast.success("Team member updated successfully");
-      return true;
+      if (updated) {
+        setMembers(prevMembers => prevMembers.map(member => 
+          member.id === id ? updated : member
+        ));
+        
+        toast.success("Team member updated successfully");
+        return true;
+      } else {
+        throw new Error('Failed to update team member');
+      }
     } catch (error: any) {
-      console.error("Error updating team member:", error);
+      console.error("🔧 Error updating team member:", error);
       toast.error(error.message || "Failed to update team member");
       return false;
     } finally {
@@ -166,113 +102,23 @@ export function useTeamMembers() {
 
   const deleteTeamMember = useCallback(async (id: string) => {
     try {
-      console.log("Attempting to delete team member with ID:", id);
+      console.log("🔧 Attempting to delete team member with ID:", id);
       
-      // If it's a temporary ID (for invited members who haven't registered yet)
-      const isTemporaryId = id.length === 36 && id.includes('-') && !id.startsWith('auth_');
+      const success = await teamService.deleteTeamMember(id);
       
-      if (isTemporaryId) {
-        console.log("Handling temporary ID deletion");
-        
-        // Find the email to delete from invitations
-        const memberToDelete = members.find(m => m.id === id);
-        if (memberToDelete?.email) {
-          console.log("Deleting related team invitation for email:", memberToDelete.email);
-          const { error: inviteError } = await supabase
-            .from('team_invitations')
-            .delete()
-            .eq('email', memberToDelete.email);
-            
-          if (inviteError) {
-            console.warn("Could not delete related invitation:", inviteError);
-          }
-        }
-        
-        // Remove from local state
+      if (success) {
         setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
-        toast.success("Team member invitation removed successfully");
+        toast.success("Team member deleted successfully");
         return true;
+      } else {
+        throw new Error('Failed to delete team member');
       }
-      
-      // For registered users, delete from profiles table
-      console.log("Deleting from Supabase profiles table");
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', id);
-      
-      if (profileError) {
-        console.error("Error deleting from profiles:", profileError);
-        // Don't throw, try to delete from other tables
-      }
-      
-      try {
-        // Call the Edge Function with proper error handling
-        console.log("Calling edge function to delete user");
-        
-        // First check if the function exists before calling it
-        const response = await fetch(`${window.location.origin}/api/run_migration`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            action: 'delete_user',
-            user_id: id
-          }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Edge function response:", data);
-        } else {
-          console.warn("Edge function returned error:", await response.text());
-        }
-      } catch (functionCallError) {
-        console.error("Error calling edge function:", functionCallError);
-        // Continue execution even if function call fails
-      }
-      
-      // Delete from team_invitations if exists
-      const memberToDelete = members.find(m => m.id === id);
-      if (memberToDelete?.email) {
-        console.log("Deleting related team invitations for email:", memberToDelete.email);
-        const { error: inviteError } = await supabase
-          .from('team_invitations')
-          .delete()
-          .eq('email', memberToDelete.email);
-          
-        if (inviteError) {
-          console.warn("Could not delete related invitation:", inviteError);
-        }
-      }
-      
-      // Delete from team_members table if exists
-      const { error: teamMemberError } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('user_id', id);
-      
-      if (teamMemberError) {
-        console.warn("Note: Could not delete from team_members:", teamMemberError);
-      }
-      
-      // Remove from local state
-      setMembers(prevMembers => prevMembers.filter(member => member.id !== id));
-      toast.success("Team member deleted successfully");
-      
-      // Refresh to ensure state is in sync with database
-      setTimeout(() => {
-        fetchTeamMembers();
-      }, 500);
-      
-      return true;
     } catch (error: any) {
-      console.error("Error deleting team member:", error);
+      console.error("🔧 Error deleting team member:", error);
       toast.error(error.message || "Failed to remove team member");
       return false;
     }
-  }, [members, fetchTeamMembers]);
+  }, []);
 
   useEffect(() => {
     fetchTeamMembers();
