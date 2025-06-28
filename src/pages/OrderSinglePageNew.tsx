@@ -21,14 +21,15 @@ export default function OrderSinglePageNew() {
     error,
     refetch,
     orderId,
-    activeTab,
-    setActiveTab,
     handleBackClick,
   } = useOrderSinglePage();
 
+  // Local state for this component
+  const [activeTab, setActiveTab] = useState("overview");
+  
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editedOrder, setEditedOrder] = useState(order);
+  const [editedOrder, setEditedOrder] = useState(order || null);
 
   useEffect(() => {
     if (order) {
@@ -45,7 +46,9 @@ export default function OrderSinglePageNew() {
     console.log('Saving order changes:', editedOrder);
     setEditDialogOpen(false);
     // Refetch the order data
-    refetch();
+    if (refetch) {
+      refetch();
+    }
   };
 
   if (isLoading) {
@@ -70,7 +73,7 @@ export default function OrderSinglePageNew() {
     );
   }
 
-  if (error || !order) {
+  if (error || (!isLoading && !order)) {
     return (
       <MainLayout>
         <PageTransition>
@@ -79,6 +82,29 @@ export default function OrderSinglePageNew() {
             onRetry={refetch}
             isNewOrderPage={orderId === 'new'} 
           />
+        </PageTransition>
+      </MainLayout>
+    );
+  }
+
+  // Don't render if we don't have order data yet
+  if (!order) {
+    return (
+      <MainLayout>
+        <PageTransition>
+          <div className="container mx-auto p-6">
+            <Skeleton className="h-8 w-96 mb-4" />
+            <Skeleton className="h-10 w-full mb-6" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Skeleton className="h-96 w-full" />
+              </div>
+              <div className="space-y-4">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            </div>
+          </div>
         </PageTransition>
       </MainLayout>
     );
@@ -138,33 +164,41 @@ export default function OrderSinglePageNew() {
                       {/* Google Map */}
                       <div className="mt-6">
                         <div className="bg-gray-100 rounded-lg h-64 relative overflow-hidden">
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            allowFullScreen
-                            referrerPolicy="no-referrer-when-downgrade"
-                            src={`https://www.google.com/maps/embed/v1/place?key=${localStorage.getItem('google_maps_api_key') || process.env.REACT_APP_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(order.address)}`}
-                            onError={() => {
-                              // Fallback to static map if API key is not available
-                              console.log('Google Maps API key not found, showing fallback');
-                            }}
-                          ></iframe>
+                          {(() => {
+                            try {
+                              const apiKey = localStorage.getItem('google_maps_api_key') || 
+                                           (typeof process !== 'undefined' && process.env?.REACT_APP_GOOGLE_MAPS_API_KEY) || 
+                                           (typeof process !== 'undefined' && process.env?.VITE_GOOGLE_MAPS_API_KEY) || '';
+                              
+                              if (apiKey && order?.address) {
+                                return (
+                                  <iframe
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    allowFullScreen
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    src={`https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(order.address)}`}
+                                  ></iframe>
+                                );
+                              }
+                            } catch (e) {
+                              console.log('Error accessing Google Maps API key:', e);
+                            }
+                            return null;
+                          })()}
                           
                           {/* Fallback content */}
-                          <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center" 
-                               style={{ 
-                                 display: localStorage.getItem('google_maps_api_key') || process.env.REACT_APP_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY ? 'none' : 'flex' 
-                               }}>
+                          <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
                             <div className="text-center">
                               <MapPin className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                              <p className="text-sm text-gray-600">Map view of {order.address}</p>
+                              <p className="text-sm text-gray-600">Map view of {order?.address || 'Property location'}</p>
                               <p className="text-xs text-gray-500 mt-1">Configure Google Maps API key in integrations to view map</p>
                             </div>
                           </div>
                           
-                          {order.drivingTimeMin && (
+                          {order?.drivingTimeMin && (
                             <div className="absolute bottom-4 right-4 bg-white rounded-lg p-2 shadow-sm">
                               <div className="text-sm">
                                 <div className="font-medium">Drive time</div>

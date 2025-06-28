@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Form Date/Time Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 10px 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .log-area { max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Order Form Date/Time Test</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Test Instructions</h3>
+        <ol>
+            <li>Open your browser's Developer Tools (F12)</li>
+            <li>Go to the Console tab</li>
+            <li>Set a date and time below</li>
+            <li>Click "Test Order Creation"</li>
+            <li>Check the console logs for date/time values being processed</li>
+            <li>Verify the date/time is saved correctly to the database</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🗓️ Test Date/Time Selection</h3>
+        <label>
+            📅 Date: 
+            <input type="date" id="testDate" />
+        </label>
+        <br><br>
+        <label>
+            ⏰ Time: 
+            <input type="time" id="testTime" />
+        </label>
+        <br><br>
+        <button onclick="testOrderDateTimeHandling()">Test Order Creation</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Results & Logs</h3>
+        <div id="logArea" class="log-area">
+            <em>Click "Test Order Creation" to see results here...</em>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 Manual Testing Steps</h3>
+        <p><strong>To test in the actual application:</strong></p>
+        <ol>
+            <li>Go to <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+            <li>Navigate to Orders page</li>
+            <li>Click "Create New Job" or "Add Order"</li>
+            <li>Fill in the date and time fields</li>
+            <li>Complete the form and submit</li>
+            <li>Check browser console for the debug logs we added:
+                <ul>
+                    <li><code>🔍 OrderForm: Raw form data for date/time</code></li>
+                    <li><code>🔍 OrderForm: Order data being sent to service</code></li>
+                    <li><code>🔧 OrderService: Creating order with data</code></li>
+                    <li><code>🔧 OrderService: Final order data for database</code></li>
+                </ul>
+            </li>
+            <li>Verify the created order shows the correct date and time</li>
+        </ol>
+    </div>
+
+    <script>
+        // Set default values
+        document.addEventListener('DOMContentLoaded', function() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('testDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('testTime').value = '14:30';
+        });
+
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.marginBottom = '5px';
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007bff';
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logArea').innerHTML = '<em>Logs cleared...</em>';
+        }
+
+        function testOrderDateTimeHandling() {
+            const testDate = document.getElementById('testDate').value;
+            const testTime = document.getElementById('testTime').value;
+            
+            if (!testDate || !testTime) {
+                log('❌ Please select both date and time', 'error');
+                return;
+            }
+
+            clearLogs();
+            log('🧪 Starting date/time handling test...', 'info');
+            log(`📅 Input Date: ${testDate}`, 'info');
+            log(`⏰ Input Time: ${testTime}`, 'info');
+
+            // Test date/time parsing
+            const combinedDateTime = new Date(`${testDate}T${testTime}`);
+            log(`📊 Parsed DateTime: ${combinedDateTime}`, 'info');
+            log(`📊 ISO String: ${combinedDateTime.toISOString()}`, 'info');
+            log(`📊 Local String: ${combinedDateTime.toLocaleString()}`, 'info');
+
+            // Test the format that should be sent to the database
+            const dbDate = testDate; // YYYY-MM-DD format for MySQL DATE
+            const dbTime = testTime + ':00'; // HH:MM:SS format for MySQL TIME
+            log(`🗄️ Database Date Format: ${dbDate}`, 'success');
+            log(`🗄️ Database Time Format: ${dbTime}`, 'success');
+
+            // Instructions for manual testing
+            log('', 'info');
+            log('✅ Date/time formats look correct!', 'success');
+            log('📝 To complete the test:', 'info');
+            log('1. Go to your app and create a new order', 'info');
+            log('2. Set the date and time fields', 'info');
+            log('3. Check the browser console for debug logs', 'info');
+            log('4. Verify the order saves with correct date/time', 'info');
+
+            console.log('🧪 Order Form Date/Time Test Results:', {
+                inputDate: testDate,
+                inputTime: testTime,
+                parsedDateTime: combinedDateTime,
+                isoString: combinedDateTime.toISOString(),
+                databaseDate: dbDate,
+                databaseTime: dbTime
+            });
+        }
+    </script>
+</body>
+</html>

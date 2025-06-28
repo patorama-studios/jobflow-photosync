@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -54,268 +54,211 @@ import {
   AlertTriangle 
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { teamManagementService, TeamMember, PermissionSet } from '@/services/mysql/team-management-service';
+import { useAuth } from '@/contexts/MySQLAuthContext';
 
-// Type definitions
-type Role = "owner" | "admin" | "editor" | "photographer";
+// Type definitions for form
+type Role = "owner" | "admin" | "Team Leader" | "Admin Staff" | "Agent" | "photographer" | "editor" | "Property Management";
 
-interface TeamMember {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  avatarUrl?: string;
-  role: Role;
-  status: "active" | "invited" | "inactive";
-  lastActive?: string;
-}
-
-// Permission schema
-interface PermissionSet {
-  viewAllOrders: boolean;
-  showOrderPricing: boolean;
-  displayClientInfo: boolean;
-  calendarAllEvents: boolean;
-  manageProducts: boolean;
-  accessReports: boolean;
-  viewOrderNotes: boolean;
-  managePayroll: boolean;
-  createOrders: boolean;
-  updateProductionStatus: boolean;
-  sendNotifications: boolean;
-}
-
-// Mock data for demonstration
-const mockTeamMembers: TeamMember[] = [
-  {
-    id: "1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    avatarUrl: "",
-    role: "owner",
-    status: "active",
-    lastActive: "2023-06-10T10:30:00",
-  },
-  {
-    id: "2",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane.smith@example.com",
-    phone: "+1 (555) 987-6543",
-    avatarUrl: "",
-    role: "admin",
-    status: "active",
-    lastActive: "2023-06-09T14:45:00",
-  },
-  {
-    id: "3",
-    firstName: "Mike",
-    lastName: "Johnson",
-    email: "mike.johnson@example.com",
-    phone: "+1 (555) 456-7890",
-    avatarUrl: "",
-    role: "photographer",
-    status: "active",
-    lastActive: "2023-06-08T09:15:00",
-  },
-  {
-    id: "4",
-    firstName: "Sarah",
-    lastName: "Williams",
-    email: "sarah.williams@example.com",
-    phone: "+1 (555) 234-5678",
-    avatarUrl: "",
-    role: "editor",
-    status: "invited",
-    lastActive: undefined,
-  },
-];
-
-// Default permissions for each role
-const rolePermissions: Record<Role, PermissionSet> = {
-  owner: {
-    viewAllOrders: true,
-    showOrderPricing: true,
-    displayClientInfo: true,
-    calendarAllEvents: true,
-    manageProducts: true,
-    accessReports: true,
-    viewOrderNotes: true,
-    managePayroll: true,
-    createOrders: true,
-    updateProductionStatus: true,
-    sendNotifications: true,
-  },
-  admin: {
-    viewAllOrders: true,
-    showOrderPricing: true,
-    displayClientInfo: true,
-    calendarAllEvents: true,
-    manageProducts: true,
-    accessReports: true,
-    viewOrderNotes: true,
-    managePayroll: true,
-    createOrders: true,
-    updateProductionStatus: true,
-    sendNotifications: true,
-  },
-  editor: {
-    viewAllOrders: false,
-    showOrderPricing: false,
-    displayClientInfo: true,
-    calendarAllEvents: false,
-    manageProducts: false,
-    accessReports: false,
-    viewOrderNotes: true,
-    managePayroll: false,
-    createOrders: false,
-    updateProductionStatus: true,
-    sendNotifications: false,
-  },
-  photographer: {
-    viewAllOrders: false,
-    showOrderPricing: false,
-    displayClientInfo: true,
-    calendarAllEvents: false,
-    manageProducts: false,
-    accessReports: false,
-    viewOrderNotes: true,
-    managePayroll: false,
-    createOrders: false,
-    updateProductionStatus: true,
-    sendNotifications: false,
-  },
-};
+// Get available roles from service
+const availableRoles = teamManagementService.getAvailableRoles();
 
 // User form schema
 const userFormSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  full_name: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  role: z.enum(["owner", "admin", "editor", "photographer"]),
-  avatarUrl: z.string().optional(),
+  role: z.enum(["owner", "admin", "Team Leader", "Admin Staff", "Agent", "photographer", "editor", "Property Management"]),
+  job_title: z.string().optional(),
 });
 
-// Function to get initials from name
-const getInitials = (firstName: string, lastName: string) => {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+// Function to get initials from full name
+const getInitials = (fullName: string) => {
+  if (!fullName) return "";
+  const names = fullName.split(' ');
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+  return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
 };
 
 export function TeamSettings() {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(mockTeamMembers);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all-users");
-  const [selectedUserPermissions, setSelectedUserPermissions] = useState<PermissionSet>(
-    rolePermissions.photographer
-  );
-  const { toast } = useToast();
+  const [selectedUserPermissions, setSelectedUserPermissions] = useState<PermissionSet>({
+    viewAllOrders: false,
+    showOrderPricing: false,
+    displayClientInfo: true,
+    calendarAllEvents: false,
+    manageProducts: false,
+    accessReports: false,
+    viewOrderNotes: true,
+    managePayroll: false,
+    createOrders: false,
+    updateProductionStatus: true,
+    sendNotifications: false,
+  });
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   // Form for adding/editing users
   const form = useForm<z.infer<typeof userFormSchema>>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      full_name: "",
       email: "",
       phone: "",
-      role: "photographer",
-      avatarUrl: "",
+      role: "Agent",
+      job_title: "",
     },
   });
 
-  const handleAddUser = (data: z.infer<typeof userFormSchema>) => {
-    const newUser: TeamMember = {
-      id: `${teamMembers.length + 1}`,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone || "",
-      role: data.role,
-      avatarUrl: data.avatarUrl,
-      status: "invited",
-    };
+  // Load team members on component mount
+  useEffect(() => {
+    loadTeamMembers();
+  }, []);
 
-    setTeamMembers([...teamMembers, newUser]);
-    setIsAddUserDialogOpen(false);
-    form.reset();
-
-    toast({
-      title: "User invitation sent",
-      description: `An invitation has been sent to ${data.email}`,
-    });
+  const loadTeamMembers = async () => {
+    try {
+      setLoading(true);
+      const members = await teamManagementService.getTeamMembers();
+      setTeamMembers(members);
+    } catch (error) {
+      console.error('Error loading team members:', error);
+      toast.error('Failed to load team members');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEditUser = (data: z.infer<typeof userFormSchema>) => {
+  const handleAddUser = async (data: z.infer<typeof userFormSchema>) => {
+    try {
+      if (!user) {
+        toast.error('You must be logged in to add team members');
+        return;
+      }
+
+      // For now, we'll use a default company_id - in a real app, this would come from the user's context
+      const newUserData = {
+        company_id: 'default-company-id', // TODO: Get from user context
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone || "",
+        role: data.role,
+        job_title: data.job_title || "",
+        status: "pending" as const,
+      };
+
+      const newUser = await teamManagementService.addTeamMember(newUserData);
+      
+      if (newUser) {
+        await loadTeamMembers(); // Refresh the list
+        setIsAddUserDialogOpen(false);
+        form.reset();
+        
+        // Send invitation email
+        await teamManagementService.sendInvitation(data.email, data.role, 'Your Company');
+        toast.success(`User invitation sent - An invitation has been sent to ${data.email}`);
+      } else {
+        toast.error('Failed to add team member');
+      }
+    } catch (error) {
+      console.error('Error adding team member:', error);
+      toast.error('Failed to add team member');
+    }
+  };
+
+  const handleEditUser = async (data: z.infer<typeof userFormSchema>) => {
     if (!selectedMember) return;
 
-    const updatedMembers = teamMembers.map((member) =>
-      member.id === selectedMember.id
-        ? {
-            ...member,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            phone: data.phone || "",
-            role: data.role,
-            avatarUrl: data.avatarUrl,
-          }
-        : member
-    );
+    try {
+      const updateData = {
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone || "",
+        role: data.role,
+        job_title: data.job_title || "",
+      };
 
-    setTeamMembers(updatedMembers);
-    setIsEditUserDialogOpen(false);
-    form.reset();
-
-    toast({
-      title: "User updated",
-      description: `${data.firstName} ${data.lastName}'s profile has been updated`,
-    });
+      const updatedMember = await teamManagementService.updateTeamMember(selectedMember.id, updateData);
+      
+      if (updatedMember) {
+        await loadTeamMembers(); // Refresh the list
+        setIsEditUserDialogOpen(false);
+        form.reset();
+        toast.success(`User updated - ${data.full_name}'s profile has been updated`);
+      } else {
+        toast.error('Failed to update team member');
+      }
+    } catch (error) {
+      console.error('Error updating team member:', error);
+      toast.error('Failed to update team member');
+    }
   };
 
-  const handleDeleteUser = (id: string) => {
-    setTeamMembers(teamMembers.filter((member) => member.id !== id));
-    
-    toast({
-      title: "User removed",
-      description: "The user has been removed from your team",
-    });
+  const handleDeleteUser = async (id: string | number) => {
+    try {
+      const success = await teamManagementService.deleteTeamMember(id);
+      
+      if (success) {
+        await loadTeamMembers(); // Refresh the list
+        toast.success("User removed - The user has been removed from your team");
+      } else {
+        toast.error('Failed to remove team member');
+      }
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+      toast.error('Failed to remove team member');
+    }
   };
 
   const editUser = (member: TeamMember) => {
     setSelectedMember(member);
     form.reset({
-      firstName: member.firstName,
-      lastName: member.lastName,
+      full_name: member.full_name,
       email: member.email,
-      phone: member.phone,
+      phone: member.phone || "",
       role: member.role,
-      avatarUrl: member.avatarUrl,
+      job_title: member.job_title || "",
     });
     setIsEditUserDialogOpen(true);
   };
 
-  const openPermissionsDialog = (member: TeamMember) => {
+  const openPermissionsDialog = async (member: TeamMember) => {
     setSelectedMember(member);
-    setSelectedUserPermissions(rolePermissions[member.role]);
+    
+    // Load permissions from database
+    const permissions = await teamManagementService.getTeamMemberPermissions(member.id);
+    if (permissions) {
+      setSelectedUserPermissions(permissions);
+    }
+    
     setIsPermissionsDialogOpen(true);
   };
 
-  const savePermissions = () => {
-    // In a real app, this would save to a database
-    toast({
-      title: "Permissions updated",
-      description: `Permissions for ${selectedMember?.firstName} ${selectedMember?.lastName} have been updated`,
-    });
-    setIsPermissionsDialogOpen(false);
+  const savePermissions = async () => {
+    if (!selectedMember) return;
+    
+    try {
+      const success = await teamManagementService.saveTeamMemberPermissions(selectedMember.id, selectedUserPermissions);
+      
+      if (success) {
+        toast.success(`Permissions updated - Permissions for ${selectedMember.full_name} have been updated`);
+        setIsPermissionsDialogOpen(false);
+      } else {
+        toast.error('Failed to save permissions');
+      }
+    } catch (error) {
+      console.error('Error saving permissions:', error);
+      toast.error('Failed to save permissions');
+    }
   };
 
   // Filter users based on the active tab
@@ -326,6 +269,17 @@ export function TeamSettings() {
     if (activeTab === "admins") return member.role === "admin" || member.role === "owner";
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mb-4 mx-auto"></div>
+          <p>Loading team members...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -376,11 +330,11 @@ export function TeamSettings() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={member.avatarUrl} alt={`${member.firstName} ${member.lastName}`} />
-                      <AvatarFallback>{getInitials(member.firstName, member.lastName)}</AvatarFallback>
+                      <AvatarImage src={member.avatarUrl} alt={member.full_name} />
+                      <AvatarFallback>{getInitials(member.full_name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium">{`${member.firstName} ${member.lastName}`}</div>
+                      <div className="font-medium">{member.full_name}</div>
                       <div className="text-sm text-muted-foreground">{member.email}</div>
                     </div>
                   </div>
@@ -476,35 +430,19 @@ export function TeamSettings() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <FormField
                 control={form.control}
@@ -536,6 +474,20 @@ export function TeamSettings() {
               
               <FormField
                 control={form.control}
+                name="job_title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Job Title (optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Senior Photographer" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -550,10 +502,11 @@ export function TeamSettings() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="photographer">Photographer</SelectItem>
-                        <SelectItem value="editor">Editor</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="owner">Owner</SelectItem>
+                        {availableRoles.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -591,10 +544,10 @@ export function TeamSettings() {
                 <div className="relative">
                   <Avatar className="h-24 w-24">
                     {selectedMember?.avatarUrl ? (
-                      <AvatarImage src={selectedMember.avatarUrl} alt={`${selectedMember.firstName} ${selectedMember.lastName}`} />
+                      <AvatarImage src={selectedMember.avatarUrl} alt={selectedMember.full_name} />
                     ) : (
                       <AvatarFallback>
-                        {selectedMember ? getInitials(selectedMember.firstName, selectedMember.lastName) : ""}
+                        {selectedMember ? getInitials(selectedMember.full_name) : ""}
                       </AvatarFallback>
                     )}
                   </Avatar>
@@ -610,35 +563,19 @@ export function TeamSettings() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <FormField
                 control={form.control}
@@ -670,6 +607,20 @@ export function TeamSettings() {
               
               <FormField
                 control={form.control}
+                name="job_title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Job Title (optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
@@ -684,10 +635,11 @@ export function TeamSettings() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="photographer">Photographer</SelectItem>
-                        <SelectItem value="editor">Editor</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="owner">Owner</SelectItem>
+                        {availableRoles.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -715,7 +667,7 @@ export function TeamSettings() {
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <ShieldCheck className="mr-2 h-5 w-5" />
-              Permissions for {selectedMember?.firstName} {selectedMember?.lastName}
+              Permissions for {selectedMember?.full_name}
             </DialogTitle>
             <DialogDescription>
               Customize what this team member can access and modify.
@@ -731,7 +683,14 @@ export function TeamSettings() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setSelectedUserPermissions(rolePermissions[selectedMember?.role || "photographer"])}
+                onClick={async () => {
+                  if (selectedMember) {
+                    const defaultPermissions = await teamManagementService.getTeamMemberPermissions(selectedMember.id);
+                    if (defaultPermissions) {
+                      setSelectedUserPermissions(defaultPermissions);
+                    }
+                  }
+                }}
               >
                 Reset to Role Defaults
               </Button>
@@ -914,3 +873,5 @@ export function TeamSettings() {
     </div>
   );
 }
+
+export default TeamSettings;

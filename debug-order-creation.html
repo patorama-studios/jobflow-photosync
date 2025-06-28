@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Order Creation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Order Creation Debug Tool</h1>
+    
+    <div class="info">
+        <h3>Instructions:</h3>
+        <p>1. Open your browser's Developer Tools (F12)</p>
+        <p>2. Go to the Console tab</p>
+        <p>3. Fill in the form below and click "Test Order Creation"</p>
+        <p>4. Check the console for detailed logs</p>
+    </div>
+
+    <form id="testForm">
+        <h3>Test Order Data:</h3>
+        <div>
+            <label>Date: <input type="date" id="testDate" required /></label>
+        </div>
+        <div>
+            <label>Time: <input type="time" id="testTime" required /></label>
+        </div>
+        <div>
+            <label>Client Name: <input type="text" id="testClient" value="Test Client" required /></label>
+        </div>
+        <div>
+            <label>Client Email: <input type="email" id="testEmail" value="test@example.com" required /></label>
+        </div>
+        <div>
+            <label>Address: <input type="text" id="testAddress" value="123 Test St, Test City, TS 12345" required /></label>
+        </div>
+        <button type="button" onclick="testOrderCreation()">Test Order Creation</button>
+        <button type="button" onclick="debugDateTimeHandling()">Debug Date/Time Handling</button>
+        <button type="button" onclick="checkDatabaseSchema()">Check Database Schema</button>
+    </form>
+
+    <div id="results"></div>
+
+    <script>
+        // Set default date/time to tomorrow at 2 PM
+        document.addEventListener('DOMContentLoaded', function() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('testDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('testTime').value = '14:00';
+        });
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testOrderCreation() {
+            clearResults();
+            console.log('🔍 Starting order creation test...');
+            
+            const testData = {
+                scheduledDate: document.getElementById('testDate').value,
+                scheduledTime: document.getElementById('testTime').value,
+                client: document.getElementById('testClient').value,
+                clientEmail: document.getElementById('testEmail').value,
+                address: document.getElementById('testAddress').value,
+                city: 'Test City',
+                state: 'TS',
+                zip: '12345',
+                price: 150.00,
+                propertyType: 'Residential',
+                squareFeet: 2000,
+                package: 'Test Package',
+                photographer: 'Test Photographer',
+                status: 'scheduled'
+            };
+
+            console.log('📝 Test order data:', testData);
+            addResult(`<strong>Test Data:</strong><pre>${JSON.stringify(testData, null, 2)}</pre>`, 'info');
+
+            try {
+                // Check if we're running in the actual app context
+                if (typeof window.orderService === 'undefined') {
+                    addResult('❌ This debug tool needs to be run in the context of your application. Please:', 'error');
+                    addResult('1. Open your app in the browser (http://localhost:5178/)', 'warning');
+                    addResult('2. Open Developer Tools (F12)', 'warning');
+                    addResult('3. Copy and paste this debug code in the Console', 'warning');
+                    
+                    // Provide the debug code to copy-paste
+                    const debugCode = `
+// Debug Order Creation
+const testData = ${JSON.stringify(testData, null, 2)};
+
+console.log('🔍 Testing order creation with data:', testData);
+
+// Import the order service
+import { orderService } from '/src/services/mysql/order-service.ts';
+
+// Test the order creation
+try {
+    const result = await orderService.createOrder(testData);
+    console.log('✅ Order created successfully:', result);
+    
+    // Check what was actually saved to database
+    if (result && result.id) {
+        const savedOrder = await orderService.getOrderById(result.id);
+        console.log('📊 Saved order from database:', savedOrder);
+        
+        // Compare dates
+        console.log('📅 Date comparison:');
+        console.log('  Input date:', testData.scheduledDate);
+        console.log('  Saved date:', savedOrder.scheduled_date);
+        console.log('  Input time:', testData.scheduledTime);
+        console.log('  Saved time:', savedOrder.scheduled_time);
+    }
+} catch (error) {
+    console.error('❌ Order creation failed:', error);
+}
+                    `;
+                    
+                    addResult(`<strong>Copy this code to your browser console:</strong><pre>${debugCode}</pre>`, 'warning');
+                    return;
+                }
+
+                // If we're in the app context, run the actual test
+                const result = await window.orderService.createOrder(testData);
+                
+                if (result) {
+                    console.log('✅ Order created successfully:', result);
+                    addResult(`✅ Order created successfully! Order ID: ${result.id}`, 'success');
+                    
+                    // Check what was actually saved
+                    const savedOrder = await window.orderService.getOrderById(result.id);
+                    console.log('📊 Saved order from database:', savedOrder);
+                    
+                    addResult(`<strong>Saved Order:</strong><pre>${JSON.stringify(savedOrder, null, 2)}</pre>`, 'success');
+                    
+                    // Compare dates
+                    console.log('📅 Date/Time comparison:');
+                    console.log('  Input date:', testData.scheduledDate);
+                    console.log('  Saved date:', savedOrder.scheduled_date || savedOrder.scheduledDate);
+                    console.log('  Input time:', testData.scheduledTime);
+                    console.log('  Saved time:', savedOrder.scheduled_time || savedOrder.scheduledTime);
+                    
+                    if (savedOrder.scheduled_date !== testData.scheduledDate) {
+                        addResult(`⚠️ Date mismatch! Input: ${testData.scheduledDate}, Saved: ${savedOrder.scheduled_date}`, 'warning');
+                    }
+                    if (savedOrder.scheduled_time !== testData.scheduledTime) {
+                        addResult(`⚠️ Time mismatch! Input: ${testData.scheduledTime}, Saved: ${savedOrder.scheduled_time}`, 'warning');
+                    }
+                } else {
+                    console.error('❌ Order creation returned null');
+                    addResult('❌ Order creation returned null - check console for errors', 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Order creation failed:', error);
+                addResult(`❌ Order creation failed: ${error.message}`, 'error');
+            }
+        }
+
+        function debugDateTimeHandling() {
+            clearResults();
+            console.log('🔍 Debugging date/time handling...');
+            
+            const inputDate = document.getElementById('testDate').value;
+            const inputTime = document.getElementById('testTime').value;
+            
+            console.log('📅 Input date:', inputDate);
+            console.log('⏰ Input time:', inputTime);
+            
+            // Test date parsing
+            const parsedDate = new Date(inputDate + 'T' + inputTime);
+            console.log('📊 Parsed DateTime:', parsedDate);
+            console.log('📊 ISO String:', parsedDate.toISOString());
+            
+            // Test timezone utilities if available
+            if (typeof window.formatForMySQL !== 'undefined') {
+                console.log('🌍 formatForMySQL result:', window.formatForMySQL(parsedDate));
+            }
+            
+            addResult(`<strong>Date/Time Debug:</strong><pre>
+Input Date: ${inputDate}
+Input Time: ${inputTime}
+Parsed DateTime: ${parsedDate}
+ISO String: ${parsedDate.toISOString()}
+Local String: ${parsedDate.toLocaleString()}
+</pre>`, 'info');
+        }
+
+        async function checkDatabaseSchema() {
+            clearResults();
+            console.log('🔍 Checking database schema...');
+            
+            addResult('📊 Expected orders table schema should include:', 'info');
+            addResult(`<pre>
+scheduled_date DATE NOT NULL
+scheduled_time TIME NOT NULL
+</pre>`, 'info');
+            
+            addResult('🔧 If the order creation is failing, the issue might be:', 'warning');
+            addResult(`<ul>
+<li>Database schema mismatch (columns don't exist)</li>
+<li>Date/time format conversion issues</li>
+<li>Timezone transformation problems</li>
+<li>Field mapping errors in the order service</li>
+</ul>`, 'warning');
+        }
+    </script>
+</body>
+</html>
